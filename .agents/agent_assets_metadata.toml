@@ -500,3 +500,17 @@ mtime_ms = 1789056369606
 storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/ba9c70ff-4df2-4959-9bf2-734dcdc10310/88e6914d-afe6-41fc-9ed6-98e0f7f3f1a5"
 storage_version_token = "1789056376439204"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YsTFk6aZzilLxv2JR9HZr"
+uri = "file://artifacts/mobile/garmin/bin/SagaTrail-prg-safe-area-6723f206.zip"
+type = "unspecified"
+title = "SagaTrail Garmin PRG – Safe Area 6723f206"
+description = "Eindeutig neu benannter Download, damit kein alter Browsercache verwendet wird. Enthält die aktuelle SagaTrail.prg mit Safe-Area-Layout."
+logical_id = "eb411bdf-a968-4f9c-9ab0-437050d8dee2"
+content_hash = "sha256:321560b06e41c298d5ee1c9ae089b141373454adc2c401a7c097aa3470c3bf3e"
+size = 53993
+mtime_ms = 1789056559472
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/eb411bdf-a968-4f9c-9ab0-437050d8dee2/28543737-ca4d-4981-b4b6-0824dd2b5eab"
+storage_version_token = "1789056567566952"
+content_type = "application/octet-stream"
