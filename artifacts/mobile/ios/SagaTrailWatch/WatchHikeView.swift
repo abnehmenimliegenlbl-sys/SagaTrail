@@ -480,7 +480,7 @@ struct WatchHikeView: View {
                 map: map,
                 offline: !hike.isReachable || hike.isStale,
                 language: state.language,
-                height: 56,
+                height: 96,
                 showControls: false
               )
               .overlay(alignment: .topTrailing) {
