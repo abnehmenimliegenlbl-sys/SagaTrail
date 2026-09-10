@@ -63,6 +63,12 @@ Bei der sichtbaren Terrain-Geometrie dürfen einzelne fehlende DTM-Zellen keine 
 
 **How to apply:** Autoritative Höhen- und Routendaten unverändert lassen; ausschließlich die gerenderte Mesh-Höhe auffüllen und Navigation/Marker nicht aus diesen Ersatzwerten ableiten.
 
+Native Three.js `lookAt()` kann beim Wechsel aus der Overview-Kamera einen Rollwinkel übernehmen; im Flugmodus Pitch/Yaw aus `lookAt()` behalten, danach Roll explizit auf 0 setzen.
+
+**Why:** Gerätediagnosen zeigten trotz korrekter Kamera-Höhe und vollständigem Terrain echte Z-Rollwerte von etwa 1,7–2,6 Radiant; das invertierte Boden/Himmel-Bild war kein DTM- oder Texture-Problem.
+
+**How to apply:** Nach `camera.lookAt(target)` mit `camera.rotation.set(camera.rotation.x, camera.rotation.y, 0, "YXZ")` den Horizont nivellieren.
+
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 
 **Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.
