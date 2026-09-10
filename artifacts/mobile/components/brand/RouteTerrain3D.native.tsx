@@ -71,10 +71,10 @@ type LoadedFlightTile = {
 };
 
 const gradeColors = {
-  green: "#39FF14",
-  yellow: "#FFF700",
-  orange: "#FF7A00",
-  red: "#FF1744",
+  green: "#B6FF00",
+  yellow: "#FFFF00",
+  orange: "#FF8000",
+  red: "#FF003C",
 };
 const ThreeLine: any = "line";
 const radians = Math.PI / 180;
@@ -613,7 +613,7 @@ function FlightMarker({
     >
       <sphereGeometry args={[6, 16, 10]} />
       <meshBasicMaterial
-        color="#39FF14"
+        color="#B6FF00"
         side={DoubleSide}
         depthTest={false}
         depthWrite={false}
@@ -765,10 +765,10 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
   useFrame((_, delta) => {
     phase.current = (phase.current + delta * 4.2) % (Math.PI * 2);
     const wave = (Math.sin(phase.current) + 1) / 2;
-    const scale = 0.82 + wave * 0.58;
+    const scale = 0.74 + wave * 1.06;
     group.current?.scale.setScalar(scale);
     if (haloMaterial.current) {
-      haloMaterial.current.opacity = 0.16 + wave * 0.34;
+      haloMaterial.current.opacity = 0.38 + wave * 0.52;
     }
   });
 
@@ -777,13 +777,14 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
       ref={group}
       position={[position.x, position.y + 10, position.z]}
       renderOrder={30}
+      frustumCulled={false}
     >
       <mesh>
-        <sphereGeometry args={[30, 16, 10]} />
+        <sphereGeometry args={[48, 16, 10]} />
         <meshBasicMaterial
-          color="#B8FF3B"
+          color="#C8FF00"
           transparent
-          opacity={0.08}
+          opacity={0.18}
           blending={AdditiveBlending}
           depthTest={false}
           depthWrite={false}
@@ -791,11 +792,11 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
         />
       </mesh>
       <mesh>
-        <sphereGeometry args={[21, 16, 10]} />
+        <sphereGeometry args={[34, 16, 10]} />
         <meshBasicMaterial
-          color="#B8FF3B"
+          color="#C8FF00"
           transparent
-          opacity={0.14}
+          opacity={0.28}
           blending={AdditiveBlending}
           depthTest={false}
           depthWrite={false}
@@ -803,10 +804,10 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
         />
       </mesh>
       <mesh>
-        <sphereGeometry args={[13, 16, 10]} />
+        <sphereGeometry args={[22, 16, 10]} />
         <meshBasicMaterial
           ref={haloMaterial}
-          color="#B8FF3B"
+          color="#E7FF66"
           transparent
           opacity={0.3}
           blending={AdditiveBlending}
@@ -816,7 +817,7 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
         />
       </mesh>
       <mesh>
-        <sphereGeometry args={[4.5, 16, 10]} />
+        <sphereGeometry args={[8, 16, 10]} />
         <meshBasicMaterial
           color="#FFFFFF"
           transparent
