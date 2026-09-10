@@ -2700,6 +2700,91 @@ export default function LiveHike() {
       startsInM: Math.max(0, Math.round((section.startKm - currentKm) * 1000)),
     };
   }, [terrainProfile, terrainSections, watchRouteProgress]);
+  const watchStoryAudio = useMemo(() => {
+    const language = storyLanguage.toLowerCase().split("-")[0];
+    const labels = {
+      introduction: language === "en" ? "Introduction"
+        : language === "fr" ? "Introduction"
+          : language === "it" ? "Introduzione"
+            : language === "es" ? "Introducción"
+              : language === "nl" ? "Inleiding"
+                : language === "pt" ? "Introdução"
+                  : "Einleitung",
+      decision: language === "en" ? "Decision question"
+        : language === "fr" ? "Question de décision"
+          : language === "it" ? "Domanda decisionale"
+            : language === "es" ? "Pregunta de decisión"
+              : language === "nl" ? "Beslissingsvraag"
+                : language === "pt" ? "Pergunta de decisão"
+                  : "Entscheidungsfrage",
+      feedback: language === "en" ? "Feedback"
+        : language === "fr" ? "Retour"
+          : language === "it" ? "Feedback"
+            : language === "es" ? "Feedback"
+              : language === "nl" ? "Feedback"
+                : language === "pt" ? "Feedback"
+                  : "Feedback",
+      navigation: language === "en" ? "Navigation"
+        : language === "fr" ? "Navigation"
+          : language === "it" ? "Navigazione"
+            : language === "es" ? "Navegación"
+              : language === "nl" ? "Navigatie"
+                : language === "pt" ? "Navegação"
+                  : "Navigation",
+    };
+    const chapter = chapters[currentIndex];
+    const question = chapter?.decision?.question?.trim();
+    const title = nowPlaying?.title?.trim();
+    let text: string;
+
+    if (nowPlayingVisible && nowPlaying) {
+      switch (nowPlaying.kind) {
+        case "introduction":
+          text = labels.introduction;
+          break;
+        case "chapter":
+          text = t.chapterMark(currentIndex + 1, Math.max(1, chapters.length));
+          break;
+        case "feedback":
+          text = awaitingDecision
+            ? `${labels.decision}${question ? ` · ${question}` : ""}`
+            : `${labels.feedback}${title ? ` · ${title}` : ""}`;
+          break;
+        case "navigation":
+          text = `${labels.navigation} · ${title || nowPlaying.text}`;
+          break;
+        default:
+          text = `${nowPlaying.label}${title ? ` · ${title}` : ""}`;
+          break;
+      }
+    } else if (preparing) {
+      text = labels.introduction;
+    } else if (awaitingDecision) {
+      text = `${labels.decision}${question ? ` · ${question}` : ""}`;
+    } else if (decisionFeedbackPending) {
+      text = labels.feedback;
+    } else if (chapters.length > 0) {
+      text = t.chapterMark(currentIndex + 1, chapters.length);
+    } else {
+      text = t.readAloud;
+    }
+
+    return {
+      isPlaying: speaking || (nowPlayingVisible && nowPlaying?.kind === "navigation"),
+      text: text.slice(0, 2_000),
+    };
+  }, [
+    awaitingDecision,
+    chapters,
+    currentIndex,
+    decisionFeedbackPending,
+    nowPlaying,
+    nowPlayingVisible,
+    preparing,
+    speaking,
+    storyLanguage,
+    t,
+  ]);
 
   useEffect(() => {
     const now = Date.now();
@@ -2766,6 +2851,7 @@ export default function LiveHike() {
           }
         : null,
       poiStory: watchPoiStory,
+      storyAudio: watchStoryAudio,
       language: storyLanguage,
       elapsedSec: preparing ? null : elapsedSec,
       walkedDistanceM: distance > 0 ? Math.round(distance * 1000) : null,
@@ -2838,7 +2924,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchSunsetAtEpochMs, watchTerrainSection, watchWeather]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, storyLanguage, totalKm, totalMin, watchDiscoveryAlert, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchStoryAudio, watchSunsetAtEpochMs, watchTerrainSection, watchWeather]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;

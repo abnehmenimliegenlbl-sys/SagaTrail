@@ -76,6 +76,11 @@ export interface WatchPoiStory {
   text: string;
 }
 
+export interface WatchStoryAudio {
+  isPlaying: boolean;
+  text: string;
+}
+
 export interface HikeLiveState {
   version: typeof HIKE_LIVE_STATE_VERSION;
   sequence: number;
@@ -92,6 +97,7 @@ export interface HikeLiveState {
   weather?: WatchWeather | null;
   daylight?: WatchDaylight | null;
   poiStory?: WatchPoiStory | null;
+  storyAudio?: WatchStoryAudio | null;
   language?: string;
   elapsedSec: number | null;
   walkedDistanceM: number | null;
@@ -322,6 +328,14 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
         (typeof state.poiStory.imageUrl !== "string" ||
           state.poiStory.imageUrl.length > 2_000 ||
           !/^https?:\/\//i.test(state.poiStory.imageUrl)))
+    ) return false;
+  }
+  if (state.storyAudio !== undefined && state.storyAudio !== null) {
+    if (
+      typeof state.storyAudio.isPlaying !== "boolean" ||
+      typeof state.storyAudio.text !== "string" ||
+      state.storyAudio.text.length === 0 ||
+      state.storyAudio.text.length > 2_000
     ) return false;
   }
   for (const plannedValue of [state.plannedAscentM, state.remainingAscentM]) {

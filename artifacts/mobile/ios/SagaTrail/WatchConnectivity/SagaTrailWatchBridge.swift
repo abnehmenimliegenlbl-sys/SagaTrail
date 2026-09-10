@@ -255,6 +255,10 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if let poiStory = state["poiStory"] as? [String: Any], !validPoiStoryPayload(poiStory) {
       throw ProtocolError.invalidPoiStoryPayload
     }
+    if let storyAudio = state["storyAudio"] as? [String: Any],
+       !validStoryAudioPayload(storyAudio) {
+      throw ProtocolError.invalidStoryAudioPayload
+    }
     let navigation = state["nextNavigation"] as? [String: Any]
     let upcomingNavigations = state["upcomingNavigations"] as? [[String: Any]] ?? []
     let alert = state["activeAlert"] as? [String: Any]
@@ -314,7 +318,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if let poiStory = state["poiStory"] as? [String: Any] {
       watchState["poiStory"] = poiStory
     }
-    if let alert,
+    if let storyAudio = state["storyAudio"] as? [String: Any] {
+      watchState["storyAudio"] = storyAudio
+    } else if let alert,
        let kind = alert["kind"] as? String,
        (kind == "narration" || kind == "discovery"),
        let text = alert["text"] as? String {
@@ -535,6 +541,16 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     return !containsCoordinate(name) && !containsCoordinate(text)
   }
 
+  private func validStoryAudioPayload(_ value: [String: Any]) -> Bool {
+    guard let isPlaying = value["isPlaying"] as? Bool,
+          let text = value["text"] as? String,
+          !text.isEmpty,
+          text.count <= 2_000 else {
+      return false
+    }
+    return !containsCoordinate(text)
+  }
+
   private func containsForbiddenCoordinates(in value: Any, allowingMapPayload: Bool = false) -> Bool {
     let forbidden = Set(["latitude", "longitude", "lat", "lng", "coordinate", "coordinates"])
     if let dictionary = value as? [String: Any] {
@@ -610,7 +626,7 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   private enum ProtocolError: LocalizedError {
     case coordinatesNotAllowed, missingUpdatedAt, invalidAlert, invalidCanonicalState,
          invalidMapPayload, invalidOffRoutePayload, invalidWeatherPayload, invalidDaylightPayload,
-         invalidPoiStoryPayload, invalidPropertyListPayload
+          invalidPoiStoryPayload, invalidStoryAudioPayload, invalidPropertyListPayload
     var errorDescription: String? {
       switch self {
       case .coordinatesNotAllowed: return "Coordinates are not allowed in the watch protocol."
@@ -622,6 +638,7 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       case .invalidWeatherPayload: return "The watch weather payload is invalid."
       case .invalidDaylightPayload: return "The watch daylight payload is invalid."
       case .invalidPoiStoryPayload: return "The watch POI story payload is invalid."
+      case .invalidStoryAudioPayload: return "The watch story audio payload is invalid."
       case .invalidPropertyListPayload: return "The watch payload contains a value that WatchConnectivity cannot transport."
       }
     }
