@@ -392,6 +392,7 @@ struct WatchHikeView: View {
     let checkin = state.safetyCheckin
     let active = checkin?.status == "active"
     let overdue = checkin?.status == "overdue"
+    let showCountdown = checkin?.status != nil && checkin?.status != "idle"
     return VStack(alignment: .leading, spacing: 3) {
       HStack {
          Label(
@@ -438,15 +439,18 @@ struct WatchHikeView: View {
         .accessibilityLabel(copy.t("sos"))
       }
       .frame(maxWidth: .infinity)
-      if let checkin, active || overdue {
+      if let checkin, showCountdown {
         VStack(spacing: 2) {
           Text(checkin.liveLinkActive ? copy.t("liveLink") : copy.t("localTimer"))
-            .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.mutedWhite)
+            .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.ink)
             .lineLimit(1)
           Text(formatCheckinTime(checkin.remainingSeconds))
             .font(WatchType.metric)
-            .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.ink)
+            .foregroundStyle(WatchPalette.white)
             .monospacedDigit()
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
+            .background(WatchPalette.red, in: Capsule())
         }
         .frame(maxWidth: .infinity)
       }
