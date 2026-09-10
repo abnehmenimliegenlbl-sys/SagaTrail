@@ -129,19 +129,19 @@ struct WatchHikeView: View {
               map: map,
               offline: !hike.isReachable || hike.isStale,
               language: state.language,
-              height: max(0, proxy.size.height - 12),
-              showControls: true
+              height: proxy.size.height,
+              showControls: true,
+              cornerRadius: 0
             )
-            .padding(6)
             .background(WatchPalette.surface.ignoresSafeArea())
             .overlay(alignment: .topLeading) {
               Button {
                 isMapPresented = false
               } label: {
                 Image(systemName: "xmark")
-                  .font(.system(size: 10, weight: .bold))
+                  .font(.system(size: 13, weight: .bold))
                   .foregroundStyle(WatchPalette.black)
-                  .frame(width: 26, height: 26)
+                  .frame(width: 34, height: 34)
                   .background(WatchPalette.white, in: Circle())
                   .overlay(
                     Circle()
@@ -149,7 +149,11 @@ struct WatchHikeView: View {
                   )
               }
               .buttonStyle(.plain)
-              .padding(10)
+              .frame(width: 44, height: 44)
+              .contentShape(Rectangle())
+              .padding(.leading, 2)
+              .padding(.top, 32)
+              .zIndex(20)
             }
           }
           .frame(width: proxy.size.width, height: proxy.size.height)
@@ -159,10 +163,10 @@ struct WatchHikeView: View {
         .zIndex(10)
       }
     }
-    .padding(.horizontal, 4)
+    .padding(.horizontal, isMapPresented ? 0 : 4)
     .scrollContentBackground(.hidden)
     .background(WatchPalette.surface.ignoresSafeArea())
-    .ignoresSafeArea(.container, edges: .top)
+    .ignoresSafeArea(.container, edges: isMapPresented ? .all : .top)
     .tint(WatchPalette.red)
     .preferredColorScheme(.light)
     .focusable(true)
@@ -547,7 +551,8 @@ struct WatchHikeView: View {
                 offline: !hike.isReachable || hike.isStale,
                 language: state.language,
                 height: 96,
-                showControls: false
+                showControls: false,
+                cornerRadius: 12
               )
               .overlay(alignment: .topTrailing) {
                 Image(systemName: "arrow.up.left.and.arrow.down.right")
@@ -615,7 +620,7 @@ struct WatchHikeView: View {
             offRouteCard(offRoute)
           }
         }
-         .frame(minHeight: 145, maxWidth: .infinity, alignment: .topLeading)
+         .frame(maxWidth: .infinity, minHeight: 145, alignment: .topLeading)
       }
     }
   }
@@ -687,7 +692,7 @@ struct WatchHikeView: View {
               .lineLimit(2)
           }
         }
-        .frame(minHeight: 145, maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, minHeight: 145, alignment: .center)
       }
     }
   }
@@ -748,6 +753,7 @@ private struct WatchRouteMap: View {
   let language: String
   let height: CGFloat
   let showControls: Bool
+  let cornerRadius: CGFloat
   @State private var position: MapCameraPosition = .automatic
   @State private var zoom: Double = 1
   @State private var routeUp = false
@@ -861,7 +867,7 @@ private struct WatchRouteMap: View {
           .frame(height: height)
         }
       }
-      .clipShape(RoundedRectangle(cornerRadius: 12))
+      .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
       if showControls {
         VStack(alignment: .leading, spacing: 3) {
           if !map.gpsFresh {
@@ -892,7 +898,8 @@ private struct WatchRouteMap: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(routeUp ? copy.t("route") : copy.t("north"))
-        .padding(6)
+        .padding(.top, 32)
+        .padding(.trailing, 6)
       }
     }
     .digitalCrownRotation($zoom, from: 0.5, through: 2.0, by: 0.1, sensitivity: .medium, isContinuous: false)
@@ -901,10 +908,12 @@ private struct WatchRouteMap: View {
     .onChange(of: map.current?.latitude) { _, _ in
       if map.current != nil { recenter() }
     }
-    .overlay(
-      RoundedRectangle(cornerRadius: 12)
-         .stroke(WatchPalette.white.opacity(0.2), lineWidth: 1)
-    )
+    .overlay {
+      if cornerRadius > 0 {
+        RoundedRectangle(cornerRadius: cornerRadius)
+          .stroke(WatchPalette.white.opacity(0.2), lineWidth: 1)
+      }
+    }
   }
 }
 
