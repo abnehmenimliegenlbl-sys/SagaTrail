@@ -25,6 +25,7 @@ import {
   NormalBlending,
   SRGBColorSpace,
   Texture,
+  Quaternion,
   Vector3,
   Mesh,
 } from "three";
@@ -318,65 +319,70 @@ function flightCameraPlan(
   );
   if (!marker) return null;
 
-  // Sample ahead of the marker so the camera follows the local route direction
-  // instead of using a fixed world-space offset at every bend.
-  const slopeSampleDistanceKm = 0.22;
+  // Use a longer centered tangent so sharp route bends do not throw the
+  // aircraft into a sudden turn. The terrain remains vertically exaggerated,
+  // but the flight camera must not inherit that exaggeration as pitch.
+  const directionSampleDistanceKm = 0.32;
+  const behind =
+    pointAtRouteDistance(
+      route,
+      routeDistanceList,
+      Math.max(0, revealedDistanceKm - directionSampleDistanceKm),
+    ) ?? marker;
   const ahead =
     pointAtRouteDistance(
       route,
       routeDistanceList,
       Math.min(
         routeDistanceList.at(-1) ?? revealedDistanceKm,
-        revealedDistanceKm + slopeSampleDistanceKm,
+        revealedDistanceKm + directionSampleDistanceKm,
       ),
     ) ?? marker;
   const horizontalDirection = new Vector3(
-    ahead.x - marker.x,
+    ahead.x - behind.x,
     0,
-    ahead.z - marker.z,
+    ahead.z - behind.z,
   );
   const horizontalDistance = horizontalDirection.length();
   if (horizontalDistance < 0.001) {
-    horizontalDirection.set(0, 0, -1);
-  } else {
+    horizontalDirection.set(ahead.x - marker.x, 0, ahead.z - marker.z);
+    if (horizontalDirection.length() < 0.001) {
+      horizontalDirection.set(0, 0, -1);
+    }
+  }
+  if (horizontalDirection.length() >= 0.001) {
     horizontalDirection.normalize();
+  } else {
+    horizontalDirection.set(0, 0, -1);
   }
 
-  // Elevation is intentionally exaggerated by the terrain renderer. The
-  // resulting world-space slope is therefore the correct value for framing.
+  // Only use the local grade to make a small framing adjustment. Never aim the
+  // camera by the full exaggerated terrain slope: that creates the upside-down
+  // roller-coaster view on steep sections.
   const slope =
-    (ahead.y - marker.y) / Math.max(1, horizontalDistance);
-  const absoluteSlope = Math.min(1.5, Math.abs(slope));
+    (ahead.y - behind.y) / Math.max(1, horizontalDistance);
+  const absoluteSlope = Math.min(0.8, Math.abs(slope));
   const cameraDistance = clampNumber(
-    170 + absoluteSlope * 90,
-    150,
-    300,
+    125 + absoluteSlope * 45,
+    110,
+    175,
   );
   const cameraHeight = clampNumber(
-    100 + absoluteSlope * 90 + Math.max(0, slope) * 25,
-    85,
-    240,
+    52 + absoluteSlope * 20 + Math.max(0, slope) * 8,
+    42,
+    88,
   );
-  const lookAheadDistance = clampNumber(
-    150 + absoluteSlope * 100,
-    130,
-    300,
-  );
-
   const desiredCamera = marker
     .clone()
     .addScaledVector(horizontalDirection, -cameraDistance);
-  desiredCamera.y =
-    marker.y +
-    cameraHeight +
-    Math.max(0, slope) * cameraDistance * 0.35;
+  desiredCamera.y = marker.y + cameraHeight;
 
-  const desiredTarget = marker
-    .clone()
-    .addScaledVector(horizontalDirection, lookAheadDistance);
-  desiredTarget.y =
-    marker.y +
-    slope * lookAheadDistance * 0.72;
+  // Center the aircraft itself. Looking far ahead makes the marker drift to
+  // the lower edge during climbs and can expose the edge of the terrain tile.
+  const desiredTarget = marker.clone();
+  // Keep a stable, slightly downward view toward the route surface without
+  // making the camera pitch follow every elevation spike.
+  desiredTarget.y = marker.y - 8;
 
   const safeCamera = clampFlightPointToTerrain(
     desiredCamera,
@@ -810,9 +816,10 @@ function FlightMarker({
   return (
     <mesh
       position={[position.x, position.y + 8, position.z]}
-      renderOrder={10}
+      renderOrder={1000}
+      frustumCulled={false}
     >
-      <sphereGeometry args={[3, 16, 10]} />
+      <sphereGeometry args={[4, 16, 10]} />
       <meshBasicMaterial
         color="#B6FF00"
         side={DoubleSide}
@@ -1217,6 +1224,8 @@ function Scene({
   const flightCompleted = useRef(false);
   const camera = useThree((state) => state.camera);
   const viewport = useThree((state) => state.size);
+  const smoothedFlightTarget = useRef<Vector3 | null>(null);
+  const smoothedFlightRotation = useRef<Quaternion | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -1623,8 +1632,23 @@ function Scene({
         : null;
     if (cameraPlan) {
       camera.up.set(0, 1, 0);
-      camera.position.lerp(cameraPlan.cameraPosition, 0.05);
-      camera.lookAt(cameraPlan.target);
+      camera.position.lerp(cameraPlan.cameraPosition, 0.028);
+      if (!smoothedFlightTarget.current) {
+        smoothedFlightTarget.current = cameraPlan.target.clone();
+      } else {
+        smoothedFlightTarget.current.lerp(cameraPlan.target, 0.05);
+      }
+      camera.lookAt(smoothedFlightTarget.current);
+      const desiredRotation = camera.quaternion.clone();
+      if (!smoothedFlightRotation.current) {
+        smoothedFlightRotation.current = desiredRotation;
+      } else {
+        smoothedFlightRotation.current.slerp(desiredRotation, 0.045);
+        camera.quaternion.copy(smoothedFlightRotation.current);
+      }
+    } else if (mode !== "flight") {
+      smoothedFlightTarget.current = null;
+      smoothedFlightRotation.current = null;
     }
   });
 
