@@ -8,6 +8,7 @@ export interface EinstellungenStrings {
   saveLabel: string;
   sectionProfil: string;
   sectionWanderung: string;
+  sectionGeraete: string;
   sectionNotfallkontakt: string;
   sectionAbonnement: string;
   sectionRechtDaten: string;
@@ -24,6 +25,9 @@ export interface EinstellungenStrings {
   weatherNotifHint: string;
   powerSaveLabel: string;
   powerSaveHint: string;
+  garminLabel: string;
+  garminHint: string;
+  garminConnectButton: string;
   themeModeLabel: string;
   themeModeHint: string;
   themeModeHell: string;
@@ -77,6 +81,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     saveLabel: "Speichern",
     sectionProfil: "Profil",
     sectionWanderung: "Wanderung",
+    sectionGeraete: "Geräte",
     sectionNotfallkontakt: "Notfallkontakt",
     sectionAbonnement: "Abonnement",
     sectionRechtDaten: "Recht & Daten",
@@ -93,6 +98,9 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     weatherNotifHint: "Benachrichtigung bei schlechtem Wetter auf deiner gespeicherten Route",
     powerSaveLabel: "Energiesparmodus",
     powerSaveHint: "Reduziert GPS-Genauigkeit und Kartenaktualisierung",
+    garminLabel: "Garmin-Uhr",
+    garminHint: "Garmin Connect Mobile öffnen und eine Uhr auswählen",
+    garminConnectButton: "Garmin verbinden",
     themeModeLabel: "Anzeigemodus",
     themeModeHint: "Schweizer Rot-Weiss-Design in Hell oder Dunkel",
     themeModeHell: "Hell",
