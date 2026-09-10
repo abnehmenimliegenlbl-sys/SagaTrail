@@ -45,17 +45,11 @@ WMS image dimensions must follow each geographic bounds rectangle's physical met
 
 **How to apply:** Convert longitude span to meters using the center-latitude cosine before choosing WIDTH/HEIGHT. Keep fallback deepest, then base imagery, detail imagery, and transparent relief on successively closer polygon-offset layers.
 
-In flight mode, hide the fallback terrain entirely once all aerial tiles are loaded; do not rely on polygon offset alone to make coplanar fallback and imagery safe on iOS GL.
+Flight imagery quality depends on keeping the high-resolution detail layer enabled; removing it is not an acceptable fallback for the orientation problem.
 
-**Why:** Some iOS/Expo GL devices still show the fallback through imagery despite render order and polygon offsets, so the only reliable fix is to remove the competing mesh after texture readiness.
+**Why:** The detail layer supplies the sharp aerial texture in the flight corridor. Disabling it made the scene visibly black/low-resolution without fixing the inverted orientation.
 
-**How to apply:** Keep the fallback only during tile loading. After the complete tile set is ready, render imagery/detail/relief without any coplanar gray base underneath.
-
-Der Flugkamera-Orientierung darf nicht über manuelle YXZ-Eulerwinkel aus Zielvektoren zusammengesetzt werden; `camera.lookAt(smoothedTarget)` mit `camera.up = (0,1,0)` ist die robuste Ausrichtung.
-
-**Why:** Auf iOS/Expo GL kann die manuelle Pitch/Yaw-Kombination bei geglätteten Flugzielen die komplette Szene invertieren, sodass Boden oben und Himmel unten erscheinen.
-
-**How to apply:** Position und Ziel weiterhin glätten, danach die Three.js-Kamera direkt auf das Ziel ausrichten und die Weltmatrix aktualisieren.
+**How to apply:** Keep base and detail imagery active while investigating camera orientation separately. Do not ship a camera-orientation experiment together with a detail-layer removal.
 
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 
