@@ -139,9 +139,9 @@ struct WatchHikeView: View {
                 isMapPresented = false
               } label: {
                 Image(systemName: "xmark")
-                  .font(.system(size: 13, weight: .bold))
+                  .font(.system(size: 10, weight: .bold))
                   .foregroundStyle(WatchPalette.black)
-                  .frame(width: 34, height: 34)
+                  .frame(width: 20, height: 20)
                   .background(WatchPalette.white, in: Circle())
                   .overlay(
                     Circle()
