@@ -5832,6 +5832,13 @@ export default function LiveHike() {
             if (tileId === "safety-checkin") {
               safetyCheckinRef.current?.open();
             }
+            if (tileId === "condition-report") {
+              setConditionSubmitResult(null);
+              setSelectedCondition(null);
+              setConditionNote("");
+              setConditionSubmitting(false);
+              setShowConditionForm(true);
+            }
           }}
           tiles={[
             {
