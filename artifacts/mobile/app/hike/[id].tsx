@@ -1251,6 +1251,10 @@ export default function LiveHike() {
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [partnerTranslation, setPartnerTranslation] = useState<{ beschreibung: string | null; angebot: string | null } | null>(null);
+  const [partnerAnnouncementText, setPartnerAnnouncementText] = useState<{
+    partnerId: string;
+    text: string;
+  } | null>(null);
   const [karteVollbild, setKarteVollbild] = useState(false);
   const [karteCloseSignal, setKarteCloseSignal] = useState(0);
   const [routeTerrain3dOpen, setRouteTerrain3dOpen] = useState(false);
@@ -3241,12 +3245,20 @@ export default function LiveHike() {
           // durch den alten "skip while awaiting" verloren.
           if (text && !awaitingDecisionRef.current) {
             announcedPremiumPartnerIdsRef.current.add(partnerId);
-             speakRef.current?.(text, undefined, {
-               useOpenAI: true,
-               partnerInterrupt: true,
-               kind: "partner",
-               displayTitle: partner.name,
-             });
+            setPartnerAnnouncementText({ partnerId, text });
+            if (karteVollbild) {
+              pendingKarteActionRef.current = () => setSelectedPartner(partner);
+              setKarteVollbild(false);
+              setKarteCloseSignal((value) => value + 1);
+            } else {
+              setSelectedPartner(partner);
+            }
+            speakRef.current?.(text, undefined, {
+              useOpenAI: true,
+              partnerInterrupt: true,
+              kind: "partner",
+              displayTitle: partner.name,
+            });
           }
         })
         .catch(() => {
@@ -3256,7 +3268,7 @@ export default function LiveHike() {
           announcingPremiumPartnerIdsRef.current.delete(partnerId);
         });
     }
-  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, preparing, awaitingDecision, locState, hasFreshGps]);
+  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, preparing, awaitingDecision, locState, hasFreshGps, karteVollbild]);
 
   // GPS-Foto-Challenge: sobald der Wanderer den Herzort der Sage betritt
   // (150-m-Radius um die Sagen-Koordinate), erscheint einmalig eine
@@ -5889,6 +5901,7 @@ export default function LiveHike() {
                   onPartnerPress={(id) => {
                     const partner = partners.find((p) => p.id === id);
                     if (!partner) return;
+                    setPartnerAnnouncementText(null);
                     if (karteVollbild) {
                       pendingKarteActionRef.current = () => setSelectedPartner(partner);
                       setKarteVollbild(false);
@@ -6908,9 +6921,15 @@ export default function LiveHike() {
               ) : null}
 
               {/* Beschreibung — nicht für Basic */}
-              {!!(partnerTranslation?.beschreibung ?? selectedPartner.beschreibung) && selectedPartner.paket !== "basic" && (
+              {!!(
+                partnerAnnouncementText?.partnerId === String(selectedPartner.id)
+                  ? partnerAnnouncementText.text
+                  : (partnerTranslation?.beschreibung ?? selectedPartner.beschreibung)
+              ) && selectedPartner.paket !== "basic" && (
                 <Text style={[styles.poiSummary, { color: colors.foreground }]}>
-                  {partnerTranslation?.beschreibung ?? selectedPartner.beschreibung}
+                  {partnerAnnouncementText?.partnerId === String(selectedPartner.id)
+                    ? partnerAnnouncementText.text
+                    : (partnerTranslation?.beschreibung ?? selectedPartner.beschreibung)}
                 </Text>
               )}
 
