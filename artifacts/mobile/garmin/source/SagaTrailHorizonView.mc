@@ -13,12 +13,10 @@ class SagaTrailHorizonView extends WatchUi.View {
     var app;
     var confirmSos = false;
     var page = 0;
-    var logo;
 
     function initialize(appRef) {
         View.initialize();
         app = appRef;
-        logo = WatchUi.loadResource(Rez.Drawables.LauncherIcon);
     }
 
     function setSosConfirmation(value) {
@@ -257,9 +255,10 @@ class SagaTrailHorizonView extends WatchUi.View {
 
     function drawHeader(dc, state) {
         var inset = safeInset(dc);
-        if (logo != null) {
-            dc.drawBitmap(inset, 3, logo);
-        }
+        // Draw the compact brand mark with primitives. The launcher SVG is
+        // valid as an app icon but cannot be passed to drawBitmap() reliably
+        // on every Connect IQ simulator/device combination.
+        drawBrandMark(dc, inset, 3);
         dc.setColor(HORIZON_INK, HORIZON_PAPER);
         dc.drawText(inset + 28, 10, Graphics.FONT_XTINY,
             "SAGATRAIL", Graphics.TEXT_JUSTIFY_LEFT);
@@ -268,6 +267,16 @@ class SagaTrailHorizonView extends WatchUi.View {
             gpsFresh(state) ? HORIZON_GREEN : HORIZON_RED);
         dc.setColor(HORIZON_LIGHT, HORIZON_PAPER);
         dc.drawLine(inset + 12, 31, dc.getWidth() - inset - 12, 31);
+    }
+
+    function drawBrandMark(dc, x, y) {
+        dc.setColor(HORIZON_INK, HORIZON_PAPER);
+        dc.drawLine(x, y + 18, x + 7, y + 7);
+        dc.drawLine(x + 7, y + 7, x + 12, y + 14);
+        dc.drawLine(x + 12, y + 14, x + 17, y + 9);
+        dc.drawLine(x + 17, y + 9, x + 23, y + 18);
+        dc.setColor(HORIZON_RED, HORIZON_PAPER);
+        dc.fillCircle(x + 16, y + 4, 2);
     }
 
     function drawDirectionArrow(dc, x, y, direction, color) {
