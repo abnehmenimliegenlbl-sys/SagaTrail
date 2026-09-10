@@ -438,8 +438,33 @@ function flightCameraPlan(
   };
 }
 
+function swissMapImageDimensions(
+  bounds: MapBounds,
+  maximumEdge: number,
+): { width: number; height: number } {
+  const centerLat = (bounds.south + bounds.north) / 2;
+  const widthM =
+    Math.max(bounds.east - bounds.west, 1e-9) *
+    111_320 *
+    Math.cos(centerLat * radians);
+  const heightM =
+    Math.max(bounds.north - bounds.south, 1e-9) * 111_320;
+  const aspect = widthM / Math.max(heightM, 1);
+  if (aspect >= 1) {
+    return {
+      width: maximumEdge,
+      height: Math.max(64, Math.round(maximumEdge / aspect)),
+    };
+  }
+  return {
+    width: Math.max(64, Math.round(maximumEdge * aspect)),
+    height: maximumEdge,
+  };
+}
+
 function swissTopoTextureUrl(bounds: MapBounds, size: number): string {
   const { south, west, north, east } = bounds;
+  const { width, height } = swissMapImageDimensions(bounds, size);
   return `https://wms.geo.admin.ch/?${new URLSearchParams({
     SERVICE: "WMS",
     REQUEST: "GetMap",
@@ -448,14 +473,15 @@ function swissTopoTextureUrl(bounds: MapBounds, size: number): string {
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: `${south},${west},${north},${east}`,
-    WIDTH: String(size),
-    HEIGHT: String(size),
+    WIDTH: String(width),
+    HEIGHT: String(height),
     FORMAT: "image/jpeg",
   }).toString()}`;
 }
 
 function swissSurfaceReliefUrl(grid: TerrainGrid, size: number): string {
   const { south, west, north, east } = grid.bounds;
+  const { width, height } = swissMapImageDimensions(grid.bounds, size);
   return `https://wms.geo.admin.ch/?${new URLSearchParams({
     SERVICE: "WMS",
     REQUEST: "GetMap",
@@ -465,8 +491,8 @@ function swissSurfaceReliefUrl(grid: TerrainGrid, size: number): string {
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: `${south},${west},${north},${east}`,
-    WIDTH: String(size),
-    HEIGHT: String(size),
+    WIDTH: String(width),
+    HEIGHT: String(height),
     FORMAT: "image/png",
     TRANSPARENT: "TRUE",
   }).toString()}`;
@@ -1808,13 +1834,20 @@ function Scene({
         />
       </mesh>
       {textures.map((texture, index) => (
-        <mesh key={tiles[index].key} geometry={tileTerrains[index]}>
+        <mesh
+          key={tiles[index].key}
+          geometry={tileTerrains[index]}
+          renderOrder={1}
+        >
           <meshStandardMaterial
             map={texture}
             color="#fff"
             roughness={1}
             metalness={0}
             side={DoubleSide}
+            polygonOffset
+            polygonOffsetFactor={-1}
+            polygonOffsetUnits={-1}
           />
         </mesh>
       ))}
@@ -1825,6 +1858,7 @@ function Scene({
             side={DoubleSide}
             polygonOffset
             polygonOffsetFactor={-2}
+            polygonOffsetUnits={-2}
             toneMapped={false}
           />
         </mesh>
@@ -1837,7 +1871,8 @@ function Scene({
             opacity={0.16}
             depthWrite={false}
             polygonOffset
-            polygonOffsetFactor={-1}
+            polygonOffsetFactor={-3}
+            polygonOffsetUnits={-3}
             side={DoubleSide}
             toneMapped={false}
           />

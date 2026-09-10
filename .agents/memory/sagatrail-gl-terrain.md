@@ -39,6 +39,12 @@ Keep swissALTI3D-derived DTM values as the authoritative ground geometry in the 
 
 **How to apply:** Load SWISSIMAGE as the required base texture and `ch.swisstopo.swisssurface3d-reliefschattierung-multidirektional` as an optional transparent overlay. If the overlay fails, keep the satellite texture visible.
 
+WMS image dimensions must follow each geographic bounds rectangle's physical meter aspect, and stacked fallback/base/detail/relief meshes need distinct polygon offsets.
+
+**Why:** Square WMS requests distorted portrait route tiles, while coplanar fallback and imagery meshes caused GPU depth fighting that appeared as giant alternating gray and aerial-photo triangles.
+
+**How to apply:** Convert longitude span to meters using the center-latitude cosine before choosing WIDTH/HEIGHT. Keep fallback deepest, then base imagery, detail imagery, and transparent relief on successively closer polygon-offset layers.
+
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 
 **Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.
