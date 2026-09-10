@@ -886,7 +886,7 @@ private struct WatchRouteMap: View {
             }
             if let finish = coordinates.last {
               Annotation(copy.t("finishMarker"), coordinate: finish) {
-                WatchRouteMarker(color: WatchPalette.black, systemImage: "flag.checkered")
+                WatchFinishMarker()
               }
             }
             if let current = map.current {
@@ -961,35 +961,55 @@ private struct WatchRouteMap: View {
   }
 }
 
-private struct WatchRouteMarker: View {
-  let color: Color
-  let systemImage: String
-
+private struct WatchFinishMarker: View {
   var body: some View {
-    Image(systemName: systemImage)
-      .font(.system(size: 10, weight: .bold))
-      .foregroundStyle(WatchPalette.white)
-      .frame(width: 22, height: 22)
-      .background(color, in: Circle())
-      .overlay(
-        Circle()
-          .stroke(WatchPalette.white.opacity(0.85), lineWidth: 1)
+    Canvas { context, size in
+      let poleX = size.width / 2
+      let poleTop: CGFloat = 2
+      let flagWidth: CGFloat = 10
+      let flagHeight: CGFloat = 8
+      var pole = Path()
+      pole.move(to: CGPoint(x: poleX, y: poleTop))
+      pole.addLine(to: CGPoint(x: poleX, y: size.height - 2))
+      context.stroke(
+        pole,
+        with: .color(WatchPalette.black),
+        style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
       )
+      let flag = CGRect(x: poleX, y: poleTop, width: flagWidth, height: flagHeight)
+      context.fill(Path(flag), with: .color(WatchPalette.white))
+      context.stroke(Path(flag), with: .color(WatchPalette.black), lineWidth: 0.7)
+      let cellWidth = flag.width / 2
+      let cellHeight = flag.height / 2
+      for row in 0..<2 {
+        for column in 0..<2 where (row + column).isMultiple(of: 2) {
+          context.fill(
+            Path(CGRect(
+              x: flag.minX + CGFloat(column) * cellWidth,
+              y: flag.minY + CGFloat(row) * cellHeight,
+              width: cellWidth,
+              height: cellHeight
+            )),
+            with: .color(WatchPalette.black)
+          )
+        }
+      }
+    }
+    .frame(width: 22, height: 22)
       .shadow(color: WatchPalette.black.opacity(0.22), radius: 2, y: 1)
   }
 }
 
 private struct WatchStartMarker: View {
   var body: some View {
-    ZStack(alignment: .leading) {
+    ZStack {
       Rectangle()
         .fill(WatchPalette.white)
         .frame(width: 1.5, height: 17)
-        .offset(x: 3, y: 1)
       TrianglePennant()
         .fill(WatchPalette.routeStart)
-        .frame(width: 17, height: 11)
-        .offset(x: 4, y: -2)
+        .frame(width: 14, height: 10)
+        .offset(x: 7, y: -3.5)
     }
     .frame(width: 22, height: 22)
     .shadow(color: WatchPalette.black.opacity(0.22), radius: 2, y: 1)
