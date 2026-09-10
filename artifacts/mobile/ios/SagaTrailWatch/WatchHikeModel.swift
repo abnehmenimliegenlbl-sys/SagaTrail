@@ -29,6 +29,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var turnHapticArmed = true
   private var lastAlertKey: String?
   private var lastSafetyStatus: String?
+  private var lastAppliedUpdatedAt: Date?
   private var isSceneActive = false
 
   var isStale: Bool {
@@ -96,6 +97,9 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   private func sendToPhone(_ message: [String: Any]) {
     let session = WCSession.default
+    if session.activationState != .activated {
+      session.activate()
+    }
     // Safety/SOS commands are durable actions: always enqueue a background
     // transfer, then additionally use the low-latency channel when reachable.
     // The phone deduplicates both deliveries by action + requestedAt.
@@ -247,6 +251,16 @@ final class WatchHikeModel: NSObject, ObservableObject {
               Array(payload.keys).sorted().joined(separator: ","))
         return
       }
+      // The same snapshot may arrive through application context, direct
+      // message, and transferred user info in a different order. Never let a
+      // delayed delivery roll a live safety/SOS state back.
+      if let lastAppliedUpdatedAt, decoded.updatedAt <= lastAppliedUpdatedAt {
+        NSLog("[SagaTrail Watch] Ignored stale live state (updatedAt: %@, last: %@)",
+              String(decoded.updatedAt.timeIntervalSince1970),
+              String(lastAppliedUpdatedAt.timeIntervalSince1970))
+        return
+      }
+      lastAppliedUpdatedAt = decoded.updatedAt
       NSLog("[SagaTrail Watch] Applied live state (status: %@, isHiking: %@, updatedAt: %@)",
             decoded.sessionStatus,
             String(decoded.isHiking),

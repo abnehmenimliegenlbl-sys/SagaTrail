@@ -13,6 +13,7 @@ final class SagaTrailCompanion: RCTEventEmitter {
   private var lastHeartRateMeasuredAt: Int64 = 0
   private var hasJavaScriptListeners = false
   private var pendingWatchActions: [(name: String, body: [String: Any])] = []
+  private let pendingWatchActionsKey = "sagatrail.pending.watch.actions"
 
   override init() {
     super.init()
@@ -39,7 +40,9 @@ final class SagaTrailCompanion: RCTEventEmitter {
     NotificationCenter.default.removeObserver(self)
   }
 
-  @objc override static func requiresMainQueueSetup() -> Bool { false }
+  // WatchConnectivity callbacks and the React Native listener lifecycle can
+  // overlap during cold start. Keep the emitter state on the main queue.
+  @objc override static func requiresMainQueueSetup() -> Bool { true }
 
   override func supportedEvents() -> [String] {
     ["SagaTrailWatchEvent", "SagaTrailWatchStatus", "SagaTrailCompanion.heartRate", "SagaTrailCompanion.sosRequest", "SagaTrailCompanion.hikeCommand"]
@@ -47,9 +50,20 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   override func startObserving() {
     hasJavaScriptListeners = true
-    let pending = pendingWatchActions
+    let persisted = (UserDefaults.standard.array(forKey: pendingWatchActionsKey) as? [[String: Any]] ?? [])
+      .compactMap { item -> (name: String, body: [String: Any])? in
+        guard let name = item["name"] as? String,
+              let body = item["body"] as? [String: Any] else {
+          return nil
+        }
+        return (name: name, body: body)
+      }
+    // UserDefaults mirrors the in-memory queue. Prefer it when present so a
+    // cold-start replay does not emit the same command twice.
+    let pending = persisted.isEmpty ? pendingWatchActions : persisted
     pendingWatchActions.removeAll()
     pending.forEach { sendEvent(withName: $0.name, body: $0.body) }
+    UserDefaults.standard.removeObject(forKey: pendingWatchActionsKey)
   }
 
   override func stopObserving() {
@@ -212,6 +226,10 @@ final class SagaTrailCompanion: RCTEventEmitter {
       if pendingWatchActions.count > 20 {
         pendingWatchActions.removeFirst(pendingWatchActions.count - 20)
       }
+      UserDefaults.standard.set(
+        pendingWatchActions.map { ["name": $0.name, "body": $0.body] },
+        forKey: pendingWatchActionsKey
+      )
       return
     }
     sendEvent(withName: name, body: body)
@@ -231,9 +249,11 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   private var actionHandler: (([String: Any]) -> Void)?
   private var pendingActions: [[String: Any]] = []
   private var deliveredActionKeys: [String] = []
+  private let pendingActionsKey = "sagatrail.pending.watch.actions.native"
 
   private override init() {
     super.init()
+    pendingActions = UserDefaults.standard.array(forKey: pendingActionsKey) as? [[String: Any]] ?? []
   }
 
   func activate() {
@@ -248,6 +268,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     actionHandler = handler
     let queued = pendingActions
     pendingActions.removeAll()
+    UserDefaults.standard.removeObject(forKey: pendingActionsKey)
     actionLock.unlock()
     queued.forEach(handler)
   }
@@ -272,10 +293,10 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     return cachedLatestHeartRate
   }
 
-  func sendLiveState(_ state: [String: Any]) throws {
+  func sendLiveState(_ state: [String: Any], durable: Bool = false) throws {
     let payload = try validatedLiveState(state)
     let message = try propertyListSafeEnvelope(envelope(type: "liveState", payload: payload))
-    send(message, preferApplicationContext: true)
+    send(message, preferApplicationContext: true, durable: durable)
   }
 
   func publishCanonicalLiveState(_ state: [String: Any]) throws {
@@ -406,7 +427,11 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       watchState["arrivalAtEpochMs"] = arrivalAt
     }
     if let heartRate { watchState["heartRateBpm"] = heartRate["bpm"] }
-    try sendLiveState(watchState)
+    let durable = state["safetyCheckin"] is [String: Any]
+      || status == "sos_requested"
+      || (alert?["kind"] as? String) == "safety"
+      || (alert?["kind"] as? String) == "sos"
+    try sendLiveState(watchState, durable: durable)
     if let alert, let text = alert["text"] as? String, !text.isEmpty {
       let haptic = (alert["haptic"] as? String)
         ?? ((alert["kind"] as? String) == "safety"
@@ -436,13 +461,22 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if alert["action"] as? String == "openPoiStory" {
       payload["action"] = "openPoiStory"
     }
-    send(try propertyListSafeEnvelope(envelope(type: "alert", payload: payload)), preferApplicationContext: false)
+    send(
+      try propertyListSafeEnvelope(envelope(type: "alert", payload: payload)),
+      preferApplicationContext: false,
+      durable: true
+    )
   }
 
-  private func send(_ message: [String: Any], preferApplicationContext: Bool) {
+  private func send(_ message: [String: Any], preferApplicationContext: Bool, durable: Bool = false) {
     guard WCSession.isSupported() else { return }
     let session = WCSession.default
     var contextUpdated = false
+    if durable {
+      // Application context is replaceable state, not an action queue. Safety
+      // and SOS transitions must also survive a missed direct delivery.
+      session.transferUserInfo(message)
+    }
     if preferApplicationContext {
       if session.activationState == .activated {
         do {
@@ -460,8 +494,13 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if session.isReachable {
       session.sendMessage(message, replyHandler: nil) { error in
         NSLog("[SagaTrail Watch] Could not send message: %@", error.localizedDescription)
+        // Reachability is only a point-in-time hint. Retain critical state
+        // when the direct channel fails.
+        if durable || preferApplicationContext {
+          session.transferUserInfo(message)
+        }
       }
-    } else if !contextUpdated {
+    } else if !contextUpdated && !durable {
       session.transferUserInfo(message)
     }
   }
@@ -708,6 +747,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if pendingActions.count > 20 {
       pendingActions.removeFirst(pendingActions.count - 20)
     }
+    UserDefaults.standard.set(pendingActions, forKey: pendingActionsKey)
     actionLock.unlock()
   }
 

@@ -804,9 +804,12 @@ export default function LiveHike() {
     });
   }, [navigationGeometry]);
   // Kennwerte der Route (mit sinnvollen Rueckfallwerten)
-  const totalKm = acceptedRouteGeometry
-    ? Math.max(0.01, geometryLengthKm(acceptedRouteGeometry))
+  const rawTotalKm = acceptedRouteGeometry
+    ? geometryLengthKm(acceptedRouteGeometry)
     : (route?.distanceKm ?? 6.4);
+  const totalKm = Number.isFinite(rawTotalKm) && rawTotalKm > 0
+    ? Math.max(0.01, rawTotalKm)
+    : 6.4;
   const [terrainProfile, setTerrainProfile] =
     useState<TerrainProfilePoint[] | null>(null);
   const [terrainProfileGeometry, setTerrainProfileGeometry] =
@@ -869,9 +872,10 @@ export default function LiveHike() {
       return { ...point, gradeBand: gradeSegments[segmentIndex]?.band ?? "green" };
     });
   }, [activeProfileReady, navigationGeometry, terrainProfile, watchMapRoute]);
-  const ascentM = activeProfileReady
+  const rawAscentM = activeProfileReady
     ? calculateProfileAscentM(terrainProfile)
     : (route?.ascentM ?? 480);
+  const ascentM = Number.isFinite(rawAscentM) && rawAscentM >= 0 ? rawAscentM : 0;
   const allTerrainSections = useMemo(
     () => buildTerrainSections(terrainProfile),
     [terrainProfile],
@@ -880,9 +884,10 @@ export default function LiveHike() {
     () => limitTerrainSectionsForSpeech(allTerrainSections),
     [allTerrainSections],
   );
-  const totalMin = activeProfileReady
+  const rawTotalMin = activeProfileReady
     ? estimateRouteMinutes(totalKm, ascentM)
     : (route?.minutes ?? 165);
+  const totalMin = Number.isFinite(rawTotalMin) && rawTotalMin >= 0 ? rawTotalMin : 0;
   const sac = route?.sac ?? "T3";
   // Einmalig beim Mount gesetzt — aendert sich danach nicht mehr, um einen
   // sichtbaren Kartensprung zu vermeiden, wenn die Route kurz nach der Saga
@@ -1298,18 +1303,28 @@ export default function LiveHike() {
   const [decisionCountdown, setDecisionCountdown] = useState<number | null>(null);
   // Live-Wetter am Wanderungsstart — wird einmalig geladen, sobald Route-Koordinaten bekannt sind.
   const [hikeWeather, setHikeWeather] = useState<WeatherReport | null>(null);
-  const watchWeather = useMemo<WatchWeather | null>(() => (
-    hikeWeather && Number.isFinite(hikeWeather.temperatureC) && Number.isFinite(hikeWeather.weatherCode)
-      ? {
-          temperatureC: hikeWeather.temperatureC,
-          weatherCode: hikeWeather.weatherCode,
-          windKmh: hikeWeather.windKmh,
-          windGustsKmh: hikeWeather.windGustsKmh,
-          precipitationMm: hikeWeather.precipitationMm,
-          isThunderstorm: hikeWeather.isThunderstorm ?? false,
-        }
-      : null
-  ), [hikeWeather]);
+  const watchWeather = useMemo<WatchWeather | null>(() => {
+    if (!hikeWeather) return null;
+    const weatherValues = [
+      hikeWeather.temperatureC,
+      hikeWeather.weatherCode,
+      hikeWeather.windKmh,
+      hikeWeather.windGustsKmh,
+      hikeWeather.precipitationMm,
+    ];
+    // The Watch protocol is deliberately strict. If a partially populated
+    // weather response ever reaches the client, omit the optional weather
+    // block instead of rejecting the complete live snapshot.
+    if (weatherValues.some((value) => !Number.isFinite(value))) return null;
+    return {
+      temperatureC: hikeWeather.temperatureC,
+      weatherCode: hikeWeather.weatherCode,
+      windKmh: hikeWeather.windKmh,
+      windGustsKmh: hikeWeather.windGustsKmh,
+      precipitationMm: hikeWeather.precipitationMm,
+      isThunderstorm: hikeWeather.isThunderstorm ?? false,
+    };
+  }, [hikeWeather]);
 
   const addRecognitionEntry = useCallback((entry: RecognitionJournalEntry) => {
     setRecognitionEntries((current) => {
@@ -2928,7 +2943,7 @@ export default function LiveHike() {
       nextNavigation: nextWatchNavigation,
       upcomingNavigations: nextWatchNavigations,
       plannedAscentM: Number.isFinite(ascentM) ? Math.max(0, Math.round(ascentM)) : null,
-      remainingAscentM: watchRouteProgress == null
+      remainingAscentM: watchRouteProgress == null || !Number.isFinite(ascentM)
         ? null
         : Math.max(0, Math.round(ascentM * (1 - watchRouteProgress))),
       terrainSection: watchTerrainSection,
@@ -2969,15 +2984,25 @@ export default function LiveHike() {
         : null,
       activeAlert,
       audioPlaying: speaking,
-      remainingDistanceM: Math.max(0, totalKm - distance) * 1000,
-      remainingSeconds: Math.max(
-        0,
-        Math.round(totalMin * 60 * (1 - (totalKm > 0 ? Math.min(1, distance / totalKm) : 0))),
-      ),
-      arrivalAtEpochMs: now + Math.max(
-        0,
-        Math.round(totalMin * 60 * (1 - (totalKm > 0 ? Math.min(1, distance / totalKm) : 0))),
-      ) * 1000,
+      remainingDistanceM: Number.isFinite(distance)
+        ? Math.max(0, totalKm - distance) * 1000
+        : null,
+      remainingSeconds: Number.isFinite(distance) && Number.isFinite(totalMin)
+        ? Math.max(
+            0,
+            Math.round(
+              totalMin * 60 * (1 - (totalKm > 0 ? Math.min(1, distance / totalKm) : 0)),
+            ),
+          )
+        : null,
+      arrivalAtEpochMs: Number.isFinite(distance) && Number.isFinite(totalMin)
+        ? now + Math.max(
+            0,
+            Math.round(
+              totalMin * 60 * (1 - (totalKm > 0 ? Math.min(1, distance / totalKm) : 0)),
+            ),
+          ) * 1000
+        : null,
       sosAcknowledgement,
       isHiking: !sosOpen && !finished && !hikePaused && !preparing,
       sessionStatus: sosOpen

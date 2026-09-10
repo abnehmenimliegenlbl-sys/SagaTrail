@@ -380,7 +380,8 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
       (state.poiStory.kind !== undefined &&
         state.poiStory.kind !== "poi" &&
         state.poiStory.kind !== "partner") ||
-      (state.poiStory.imageUrl !== null &&
+      (state.poiStory.imageUrl !== undefined &&
+        state.poiStory.imageUrl !== null &&
         (typeof state.poiStory.imageUrl !== "string" ||
           state.poiStory.imageUrl.length > 2_000 ||
           !/^https?:\/\//i.test(state.poiStory.imageUrl)))
