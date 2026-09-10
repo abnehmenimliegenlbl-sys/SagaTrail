@@ -134,7 +134,7 @@ struct WatchHikeView: View {
               cornerRadius: 0
             )
             .background(WatchPalette.surface.ignoresSafeArea())
-            .overlay(alignment: .topLeading) {
+            .overlay(alignment: .bottomLeading) {
               Button {
                 isMapPresented = false
               } label: {
@@ -151,8 +151,8 @@ struct WatchHikeView: View {
               .buttonStyle(.plain)
               .frame(width: 44, height: 44)
               .contentShape(Rectangle())
-              .padding(.leading, 2)
-              .padding(.top, 32)
+              .padding(.leading, 8)
+              .padding(.bottom, 18)
               .zIndex(20)
             }
           }
