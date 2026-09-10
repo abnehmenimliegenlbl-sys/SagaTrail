@@ -356,22 +356,13 @@ function flightCameraPlan(
     horizontalDirection.set(0, 0, -1);
   }
 
-  // Only use the local grade to make a small framing adjustment. Never aim the
-  // camera by the full exaggerated terrain slope: that creates the upside-down
-  // roller-coaster view on steep sections.
+  // Keep the flight frame independent of route grade. The route elevation is
+  // vertically exaggerated in world space; changing the camera height from
+  // that value makes an ascent-to-descent transition look like an overflight.
   const slope =
     (ahead.y - behind.y) / Math.max(1, horizontalDistance);
-  const absoluteSlope = Math.min(0.8, Math.abs(slope));
-  const cameraDistance = clampNumber(
-    125 + absoluteSlope * 45,
-    110,
-    175,
-  );
-  const cameraHeight = clampNumber(
-    52 + absoluteSlope * 20 + Math.max(0, slope) * 8,
-    42,
-    88,
-  );
+  const cameraDistance = 92;
+  const cameraHeight = 38;
   const desiredCamera = marker
     .clone()
     .addScaledVector(horizontalDirection, -cameraDistance);
@@ -387,7 +378,7 @@ function flightCameraPlan(
   const safeCamera = clampFlightPointToTerrain(
     desiredCamera,
     terrainBounds,
-    90,
+    32,
   );
   const safeTarget = clampFlightPointToTerrain(
     desiredTarget,
@@ -1632,7 +1623,15 @@ function Scene({
         : null;
     if (cameraPlan) {
       camera.up.set(0, 1, 0);
-      camera.position.lerp(cameraPlan.cameraPosition, 0.028);
+      // Follow horizontal movement gently, but settle the vertical offset
+      // faster so a steep climb-to-descent change cannot leave the camera
+      // below the route surface for several frames.
+      camera.position.x +=
+        (cameraPlan.cameraPosition.x - camera.position.x) * 0.028;
+      camera.position.z +=
+        (cameraPlan.cameraPosition.z - camera.position.z) * 0.028;
+      camera.position.y +=
+        (cameraPlan.cameraPosition.y - camera.position.y) * 0.08;
       if (!smoothedFlightTarget.current) {
         smoothedFlightTarget.current = cameraPlan.target.clone();
       } else {
