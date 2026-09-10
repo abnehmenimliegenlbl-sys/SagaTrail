@@ -38,9 +38,6 @@ import {
 } from "@/lib/terrainCues";
 import { hapticRigid } from "@/lib/haptics";
 import { parseTerrainCorridor, type TerrainGrid } from "@/lib/routeTerrain3d";
-import { makeLogger } from "@/lib/debugLog";
-
-const terrainDebugLog = makeLogger("[Terrain3D]", "terrain3d");
 
 type Props = {
   visible: boolean;
@@ -1831,76 +1828,6 @@ function Scene({
     () => Array.from(loadedFlightTiles.current.values()),
     [flightTileVersion],
   );
-  useEffect(() => {
-    if (mode !== "flight") return;
-    const positions = terrain.getAttribute("position");
-    const index = terrain.getIndex();
-    let validCells = 0;
-    let minimumElevation = Infinity;
-    let maximumElevation = -Infinity;
-    for (const row of model.grid.grid) {
-      for (const cell of row) {
-        if (cell.elevationM == null) continue;
-        validCells += 1;
-        minimumElevation = Math.min(minimumElevation, cell.elevationM);
-        maximumElevation = Math.max(maximumElevation, cell.elevationM);
-      }
-    }
-    terrainDebugLog("flight-render-snapshot", {
-      grid: `${model.grid.rows}x${model.grid.columns}`,
-      validCells,
-      totalCells: model.grid.rows * model.grid.columns,
-      minimumElevation,
-      maximumElevation,
-      terrainVertices: positions?.count ?? 0,
-      terrainIndices: index?.count ?? 0,
-      baseTextures: textures.length,
-      detailTextures: visibleFlightTiles.length,
-      routePoints: route.length,
-      routeMinimumY: route.length
-        ? Math.min(...route.map((point) => point.y))
-        : null,
-      routeMaximumY: route.length
-        ? Math.max(...route.map((point) => point.y))
-        : null,
-    });
-    const timer = setTimeout(() => {
-      terrainDebugLog("flight-camera-snapshot", {
-        position: {
-          x: camera.position.x,
-          y: camera.position.y,
-          z: camera.position.z,
-        },
-        rotation: {
-          x: camera.rotation.x,
-          y: camera.rotation.y,
-          z: camera.rotation.z,
-        },
-        quaternion: {
-          x: camera.quaternion.x,
-          y: camera.quaternion.y,
-          z: camera.quaternion.z,
-          w: camera.quaternion.w,
-        },
-        target: smoothedFlightTarget.current
-          ? {
-              x: smoothedFlightTarget.current.x,
-              y: smoothedFlightTarget.current.y,
-              z: smoothedFlightTarget.current.z,
-            }
-          : null,
-      });
-    }, 2_000);
-    return () => clearTimeout(timer);
-  }, [
-    camera,
-    mode,
-    model.grid,
-    route,
-    terrain,
-    textures.length,
-    visibleFlightTiles.length,
-  ]);
   const showTerrainFallback =
     mode !== "flight" || textures.length < tiles.length;
 
