@@ -35,6 +35,45 @@ class SagaTrailDelegate extends WatchUi.BehaviorDelegate {
         return false;
     }
 
+    function onNextPage() {
+        app.changeInfoPage(1);
+        return true;
+    }
+
+    function onPreviousPage() {
+        app.changeInfoPage(-1);
+        return true;
+    }
+
+    function onNextMode() {
+        app.changeInfoPage(1);
+        return true;
+    }
+
+    function onPreviousMode() {
+        app.changeInfoPage(-1);
+        return true;
+    }
+
+    function onSelect() {
+        if (app.isSosConfirmationArmed()) {
+            app.setSosConfirmation(false);
+            app.requestSos();
+        } else {
+            Attention.vibrate([new Attention.VibeProfile(50, 100)]);
+            app.setSosConfirmation(true);
+        }
+        return true;
+    }
+
+    function onBack() {
+        if (app.isSosConfirmationArmed()) {
+            app.setSosConfirmation(false);
+            return true;
+        }
+        return false;
+    }
+
     function onMenu() {
         var menu = new WatchUi.Menu();
         menu.setTitle("SagaTrail");

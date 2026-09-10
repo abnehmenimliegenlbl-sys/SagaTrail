@@ -153,6 +153,7 @@
 - [Garmin Connect IQ signing](sagatrail-garmin-signing.md) — PRG packaging needs the actual private DER key; secret aliases alone are not evidence that a valid signing key is available.
 - [Garmin Horizon UI](sagatrail-garmin-horizon-ui.md) — selected round-safe design uses a ridge horizon, small brand mark, and only simple left/right/straight/U-turn arrows.
 - [Garmin simulator header rendering](sagatrail-garmin-svg-rendering.md) — keep the first header render text-only; decorative logo calls crashed the SDK 9.2 simulator.
+- [Garmin page-button callbacks](sagatrail-garmin-page-buttons.md) — BehaviorDelegate needs page/mode callbacks; raw KEY_UP/KEY_DOWN alone may do nothing in the simulator.
 - [Garmin iOS SDK imports](sagatrail-garmin-ios-sdk-imports.md) — official SPM repo is connectiq-companion-app-sdk-ios; Swift imports rename selection/app APIs and use UUID/store labels.
 - [Modern Watch app lifecycle](sagatrail-watch-frontmost-timeout.md) — never instantiate WKExtension in a single-target SwiftUI Watch app; use scenePhase for foreground state.
 - [Watch live-state finite values](sagatrail-watch-live-state-finite.md) — one NaN in an active derived field rejects the complete HikeLiveState before WatchConnectivity.
