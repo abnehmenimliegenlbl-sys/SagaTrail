@@ -5,6 +5,7 @@ private enum WatchPalette {
   // Shared SagaTrail light-theme tokens, adapted for watchOS contrast.
   static let red = Color(red: 204 / 255, green: 0, blue: 0)
   static let gpsGreen = Color(red: 28 / 255, green: 155 / 255, blue: 87 / 255)
+  static let routeStart = Color(red: 204 / 255, green: 0, blue: 0)
   static let gold = Color(red: 184 / 255, green: 147 / 255, blue: 90 / 255)
   static let black = Color(red: 16 / 255, green: 18 / 255, blue: 22 / 255)
   static let white = Color.white
@@ -742,12 +743,14 @@ private struct WatchRouteMap: View {
             MapPolyline(coordinates: coordinates)
               .stroke(WatchPalette.red, lineWidth: 4)
             if let start = coordinates.first {
-              Marker(copy.t("startMarker"), systemImage: "flag.fill", coordinate: start)
-                .tint(WatchPalette.black)
+              Annotation(copy.t("startMarker"), coordinate: start) {
+                WatchRouteMarker(color: WatchPalette.routeStart, systemImage: "flag.fill")
+              }
             }
             if let finish = coordinates.last {
-              Marker(copy.t("finishMarker"), systemImage: "flag.checkered", coordinate: finish)
-                .tint(WatchPalette.red)
+              Annotation(copy.t("finishMarker"), coordinate: finish) {
+                WatchRouteMarker(color: WatchPalette.black, systemImage: "flag.checkered")
+              }
             }
             if let current = map.current {
               Annotation("Du", coordinate: CLLocationCoordinate2D(
@@ -808,6 +811,24 @@ private struct WatchRouteMap: View {
       RoundedRectangle(cornerRadius: 12)
          .stroke(WatchPalette.white.opacity(0.2), lineWidth: 1)
     )
+  }
+}
+
+private struct WatchRouteMarker: View {
+  let color: Color
+  let systemImage: String
+
+  var body: some View {
+    Image(systemName: systemImage)
+      .font(.system(size: 10, weight: .bold))
+      .foregroundStyle(WatchPalette.white)
+      .frame(width: 22, height: 22)
+      .background(color, in: Circle())
+      .overlay(
+        Circle()
+          .stroke(WatchPalette.white.opacity(0.85), lineWidth: 1)
+      )
+      .shadow(color: WatchPalette.black.opacity(0.22), radius: 2, y: 1)
   }
 }
 
