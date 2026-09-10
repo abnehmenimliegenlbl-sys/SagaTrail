@@ -735,7 +735,7 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
           linewidth={6}
           transparent
           opacity={1}
-          blending={AdditiveBlending}
+          blending={NormalBlending}
           depthTest={false}
           depthWrite={false}
           toneMapped={false}
