@@ -76,6 +76,14 @@ final class SagaTrailCompanion: RCTEventEmitter {
   override func startObserving() {
     hasJavaScriptListeners = true
     NSLog("[SagaTrail Watch] JS listeners attached; pending actions stay queued until explicit drain")
+    // DeviceEventEmitter may register its listeners just before React Native
+    // finishes flipping the emitter into the observing state. The JS-side
+    // drain can therefore arrive while hasJavaScriptListeners is still false.
+    // Retry from the native observing boundary once the emitter is ready.
+    DispatchQueue.main.async { [weak self] in
+      guard let self else { return }
+      self.drainPendingWatchActions()
+    }
   }
 
   @objc func drainPendingWatchActions() {
