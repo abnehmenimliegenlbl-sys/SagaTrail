@@ -162,6 +162,7 @@ import { makeLogger } from "@/lib/debugLog";
 const watchLiveStateLog = makeLogger("[WATCH-STATE]", "watch_state");
 const watchPoiLog = makeLogger("[WATCH-POI]", "watch_poi");
 const locationPermissionLog = makeLogger("[LOCATION-PERM]", "location_permission");
+const decisionFlowLog = makeLogger("[DECISION-FLOW]", "decision_flow");
 const locationDiagnosticContext = () => ({
   ...getRuntimeDiagnostics(),
   appState: AppState.currentState,
@@ -1679,10 +1680,87 @@ export default function LiveHike() {
    *  Kapitel-Index aufgerufen wird, wenn chapters-Mutationen (Group-Sync,
    *  async Enrichment) den Kapitel-Effekt erneut ausloesen. */
   const lastDecisionTriggeredRef = useRef<number>(-1);
+  /** Diagnosezaehler bleiben ueber die gesamte Wanderung erhalten. */
+  const decisionTriggerCountRef = useRef<Map<number, number>>(new Map());
+  const decisionPromptCountRef = useRef<Map<number, number>>(new Map());
+  const decisionDebugSequenceRef = useRef(0);
+  const promptedDecisionRef = useRef<number>(-1);
   /** Wird synchron gesetzt, sobald eine Antwort angenommen wurde. Dadurch
    *  kann derselbe Entscheidungspunkt auch bei einem verspäteten Render,
    *  Queue-Eintrag oder Sprach-Callback nicht erneut öffnen. */
   const resolvedDecisionIndexRef = useRef<number | null>(null);
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
+  const logDecisionFlow = useCallback(
+    (event: string, chapterIndex: number, details: Record<string, unknown> = {}) => {
+      const chapterDecision = decisionsRef.current[chapterIndex]?.decision;
+      const chapter = decisionsRef.current[chapterIndex];
+      decisionFlowLog(event, {
+        localSequence: ++decisionDebugSequenceRef.current,
+        chapterIndex,
+        currentIndex: currentIndexRef.current,
+        awaitingDecision: awaitingDecisionRef.current,
+        decisionFeedbackPending: decisionFeedbackPendingRef.current,
+        chosenOptionIndex: chapter?.chosenOptionIndex ?? null,
+        resolved: resolvedDecisionIndexRef.current === chapterIndex,
+        triggerCount: decisionTriggerCountRef.current.get(chapterIndex) ?? 0,
+        promptCount: decisionPromptCountRef.current.get(chapterIndex) ?? 0,
+        ...details,
+      });
+    },
+    [],
+  );
+  const triggerDecision = useCallback(
+    (chapterIndex: number, reason: string) => {
+      const triggerCount = (decisionTriggerCountRef.current.get(chapterIndex) ?? 0) + 1;
+      decisionTriggerCountRef.current.set(chapterIndex, triggerCount);
+      const chapter = decisionsRef.current[chapterIndex];
+      const alreadyResolved =
+        chapter?.chosenOptionIndex != null ||
+        resolvedDecisionIndexRef.current === chapterIndex;
+      const duplicateOpen =
+        lastDecisionTriggeredRef.current === chapterIndex &&
+        awaitingDecisionRef.current;
+      logDecisionFlow("trigger_attempt", chapterIndex, {
+        reason,
+        triggerCount,
+        blocked: alreadyResolved || duplicateOpen,
+        blockReason: alreadyResolved
+          ? "already_resolved"
+          : duplicateOpen
+            ? "already_open"
+            : null,
+      });
+      if (triggerCount > 1) {
+        logDecisionFlow("duplicate_trigger_detected", chapterIndex, {
+          reason,
+          triggerCount,
+        });
+      }
+      if (
+        chapterIndex !== currentIndexRef.current ||
+        alreadyResolved ||
+        lastDecisionTriggeredRef.current === chapterIndex
+      ) {
+        logDecisionFlow("trigger_blocked", chapterIndex, {
+          reason,
+          blockReason:
+            chapterIndex !== currentIndexRef.current
+              ? "not_current_chapter"
+              : alreadyResolved
+                ? "already_resolved"
+                : "already_triggered",
+        });
+        return false;
+      }
+      lastDecisionTriggeredRef.current = chapterIndex;
+      awaitingDecisionRef.current = true;
+      setAwaitingDecision(true);
+      logDecisionFlow("opened", chapterIndex, { reason });
+      return true;
+    },
+    [logDecisionFlow],
+  );
   // true waehrend eine Navigationsansage laeuft und die Erzaehlung pausiert ist.
   const navInterruptingRef = useRef(false);
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
@@ -2036,6 +2114,12 @@ export default function LiveHike() {
       if (cancelled) return;
       setChapters(story);
       decisionsRef.current = story;
+      decisionTriggerCountRef.current.clear();
+      decisionPromptCountRef.current.clear();
+      decisionDebugSequenceRef.current = 0;
+      lastDecisionTriggeredRef.current = -1;
+      resolvedDecisionIndexRef.current = null;
+      promptedDecisionRef.current = -1;
       const resumeAt = resumeIndexRef.current;
       resumeIndexRef.current = null;
       if (resumeAt != null && resumeAt > 0 && resumeAt < story.length) {
@@ -2049,6 +2133,10 @@ export default function LiveHike() {
       setStoryProgressBaseline(null);
       setFinished(false);
       setPreparing(false);
+      logDecisionFlow("story_loaded", resumeAt ?? 0, {
+        chapterCount: story.length,
+        resumeAt: resumeAt ?? null,
+      });
     })();
     return () => {
       cancelled = true;
@@ -2107,8 +2195,6 @@ export default function LiveHike() {
   // Entscheidungen). Entscheidungen trifft ausschliesslich die Leitung.
   // Jedes Ereignis wird genau einmal verarbeitet (receivedAt als Marke).
   const verarbeitetesEreignisRef = useRef<number>(0);
-  const currentIndexRef = useRef(currentIndex);
-  currentIndexRef.current = currentIndex;
   const advanceStoryChapter = useCallback(
     (chapterIndex: number) => {
       if (
@@ -2136,6 +2222,7 @@ export default function LiveHike() {
       ) {
         return;
       }
+      awaitingDecisionRef.current = false;
       setAwaitingDecision(false);
       setCurrentIndex(chapterIndex + 1);
     },
@@ -2154,9 +2241,19 @@ export default function LiveHike() {
       return;
     }
     if (event.kind === "decision") {
+      logDecisionFlow("group_decision_received", event.chapterIndex, {
+        optionIndex: event.optionIndex,
+        receivedAt: groupHikeEvent.receivedAt,
+      });
       const gewaehlt =
         chapters[event.chapterIndex]?.decision?.options[event.optionIndex]?.label;
-      if (!gewaehlt) return;
+      if (!gewaehlt) {
+        logDecisionFlow("group_decision_ignored", event.chapterIndex, {
+          optionIndex: event.optionIndex,
+          reason: "invalid_option",
+        });
+        return;
+      }
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
       setChoiceFeedback(t.leaderChose(gewaehlt));
       feedbackTimerRef.current = setTimeout(() => setChoiceFeedback(null), 3000);
@@ -2173,7 +2270,11 @@ export default function LiveHike() {
       // Der offene Entscheidungspunkt wird nur geschlossen, wenn die
       // Entscheidung tatsaechlich das aktuell angezeigte Kapitel betrifft.
       if (event.chapterIndex === currentIndexRef.current) {
+        awaitingDecisionRef.current = false;
         setAwaitingDecision(false);
+        logDecisionFlow("group_decision_closed", event.chapterIndex, {
+          optionIndex: event.optionIndex,
+        });
         if (!speakingRef.current) {
           advanceStoryChapter(event.chapterIndex);
         } else {
@@ -4683,7 +4784,7 @@ export default function LiveHike() {
         narratedThroughRef.current = Math.max(narratedThroughRef.current, capturedIndex);
         const latestChapter = decisionsRef.current[capturedIndex];
         if (latestChapter?.isDecisionPoint && latestChapter.chosenOptionIndex == null) {
-          setAwaitingDecision(true);
+          triggerDecision(capturedIndex, "chapter_audio_finished");
           return;
         }
         const pendingGroupDecisionAdvance =
@@ -4751,13 +4852,10 @@ export default function LiveHike() {
         );
       }
     }
-    if (ch.isDecisionPoint && ch.chosenOptionIndex == null &&
-        resolvedDecisionIndexRef.current !== currentIndex &&
-        lastDecisionTriggeredRef.current !== currentIndex) {
-      lastDecisionTriggeredRef.current = currentIndex;
-      setAwaitingDecision(true);
+    if (ch.isDecisionPoint && ch.chosenOptionIndex == null) {
+      triggerDecision(currentIndex, "chapter_effect");
     }
-  }, [advanceStoryChapter, currentIndex, preparing, startAudioReleased, startGateConfirmed, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
+  }, [advanceStoryChapter, currentIndex, preparing, startAudioReleased, startGateConfirmed, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage, logDecisionFlow, triggerDecision]);
 
   // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
   // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
@@ -5582,10 +5680,25 @@ export default function LiveHike() {
   // Bestaetigungs-Audio abzuwarten.
   const stopVoiceDecisionRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
-  const chooseOption = async (optionIndex: number) => {
+  const chooseOption = async (
+    optionIndex: number,
+    source: "button" | "voice" | "timeout" = "button",
+  ) => {
+    const decisionIndex = currentIndex;
+    logDecisionFlow("choice_attempt", decisionIndex, {
+      optionIndex,
+      source,
+    });
     // Mitglieder einer Gruppenwanderung entscheiden nicht selbst — sie
     // warten auf die Entscheidung der Gruppenleitung.
-    if (folgtGruppenleitung) return;
+    if (folgtGruppenleitung) {
+      logDecisionFlow("choice_blocked", decisionIndex, {
+        optionIndex,
+        source,
+        blockReason: "follows_group_leader",
+      });
+      return;
+    }
     // Eine Entscheidung darf nur einmal verarbeitet werden. Das Ref wird
     // synchron mit dem State aktualisiert, sodass ein schneller Tap parallel
     // zu einem Sprach-Treffer weder Ack noch Persoenlichkeits-Feedback doppelt
@@ -5594,15 +5707,23 @@ export default function LiveHike() {
       decisionsRef.current[currentIndex]?.chosenOptionIndex != null ||
       resolvedDecisionIndexRef.current === currentIndex
     ) {
+      logDecisionFlow("choice_blocked", decisionIndex, {
+        optionIndex,
+        source,
+        blockReason: "already_resolved",
+      });
       return;
     }
-    const decisionIndex = currentIndex;
     // Antwort, Ack und persoenliches Feedback sind EIN atomarer
     // Entscheidungsabschluss. GPS-Fortschritt darf in diesem Fenster nicht
     // schon zum naechsten (moeglicherweise ebenfalls entscheidenden) Kapitel
     // springen und dort eine neue Frage samt Mikrofon starten.
     setDecisionFeedbackPendingNow(true);
     resolvedDecisionIndexRef.current = currentIndex;
+    logDecisionFlow("choice_accepted", decisionIndex, {
+      optionIndex,
+      source,
+    });
     // Ein verspäteter Prompt darf nicht hinter dem Antwort-Ack weiterlaufen.
     narrationQueueRef.current = [];
     // Sofort synchronisieren: Die Sprach-Erkennung kann den Treffer melden,
@@ -5649,6 +5770,9 @@ export default function LiveHike() {
       const ackUri = ackAudioUriRef.current ?? undefined;
       const completeDecision = () => {
         setDecisionFeedbackPendingNow(false);
+        logDecisionFlow("feedback_complete", decisionIndex, {
+          optionIndex,
+        });
         advanceStoryChapter(decisionIndex);
       };
       // Bei Button-Taps beendet die Hook-Cleanup-Funktion die Erkennung erst
@@ -5688,6 +5812,10 @@ export default function LiveHike() {
       }
     } else {
       setDecisionFeedbackPendingNow(false);
+      logDecisionFlow("decision_complete", decisionIndex, {
+        optionIndex,
+        source,
+      });
       advanceStoryChapter(decisionIndex);
     }
     // Leitung: Entscheidung an alle Mitglieder verteilen.
@@ -5705,25 +5833,50 @@ export default function LiveHike() {
   // vor, damit Wandernde auch ohne Blick aufs Display wissen, dass sie jetzt
   // sprechen koennen. Ein Ref verhindert, dass dieselbe Aufforderung mehrfach
   // abgespielt wird (z. B. bei kurzem speaking-Flackern).
-  const promptedDecisionRef = useRef<number>(-1);
   useEffect(() => {
     if (!awaitingDecision || speaking) return;
-    if (resolvedDecisionIndexRef.current === currentIndex) return;
-    if (promptedDecisionRef.current === currentIndex) return;
+    if (resolvedDecisionIndexRef.current === currentIndex) {
+      logDecisionFlow("prompt_blocked", currentIndex, {
+        blockReason: "already_resolved",
+      });
+      return;
+    }
+    if (promptedDecisionRef.current === currentIndex) {
+      logDecisionFlow("prompt_blocked", currentIndex, {
+        blockReason: "already_prompted",
+      });
+      return;
+    }
     promptedDecisionRef.current = currentIndex;
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
     // Kapitel-Daten ueber Ref lesen, NICHT aus State-Dep — sonst loest jede
     // chapters-Aenderung (z. B. chosenOptionIndex nach Wahl, Group-Sync) den
     // Effekt erneut aus und die Frage wird ein zweites Mal vorgelesen.
     const decision = decisionsRef.current[currentIndex]?.decision;
-    if (decisionsRef.current[currentIndex]?.chosenOptionIndex != null) return;
+    if (decisionsRef.current[currentIndex]?.chosenOptionIndex != null) {
+      logDecisionFlow("prompt_blocked", currentIndex, {
+        blockReason: "already_chosen",
+      });
+      return;
+    }
     const opts = decision?.options?.map((o) => o.label) ?? [];
     const question = decision?.question;
+    const previousPromptCount = decisionPromptCountRef.current.get(currentIndex) ?? 0;
+    if (previousPromptCount > 0) {
+      logDecisionFlow("duplicate_prompt_detected", currentIndex, {
+        blockReason: "prompt_count_guard",
+        previousPromptCount,
+      });
+      return;
+    }
+    const promptCount = previousPromptCount + 1;
+    decisionPromptCountRef.current.set(currentIndex, promptCount);
+    logDecisionFlow("prompt_started", currentIndex, { promptCount });
     speakRef.current?.(pack.buildDecisionPrompt(opts, question), undefined, {
       kind: "feedback",
       displayTitle: t.perception,
     });
-  }, [awaitingDecision, speaking, currentIndex, storyLanguage]);
+  }, [awaitingDecision, speaking, currentIndex, storyLanguage, logDecisionFlow]);
 
   // 30-Sekunden-Countdown fuer Entscheidungspunkte: laeuft automatisch an,
   // sobald der Entscheidungspunkt aktiv und die Erzaehlung fertig ist.
@@ -5750,7 +5903,7 @@ export default function LiveHike() {
     if (decisionCountdown !== 0 || !awaitingDecision) return;
     const opts = chapters[currentIndex]?.decision?.options ?? [];
     const defaultIdx = opts.findIndex((o) => o.isTimeoutDefault);
-    chooseOptionRef.current(defaultIdx >= 0 ? defaultIdx : 0);
+      chooseOptionRef.current(defaultIdx >= 0 ? defaultIdx : 0, "timeout");
   }, [decisionCountdown, awaitingDecision, chapters, currentIndex]);
 
   // Freihaendige Sprachsteuerung: sobald ein Entscheidungspunkt aktiv ist,
@@ -5773,7 +5926,7 @@ export default function LiveHike() {
       !folgtGruppenleitung,
     resolveLang(storyLanguage),
     decisionOptions,
-    chooseOption
+    (optionIndex) => chooseOption(optionIndex, "voice")
   );
   stopVoiceDecisionRef.current = stopVoiceDecision;
 
