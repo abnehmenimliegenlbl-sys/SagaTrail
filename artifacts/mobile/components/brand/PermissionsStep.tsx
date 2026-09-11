@@ -3,7 +3,7 @@ import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { Pedometer } from "expo-sensors";
 import React, { useEffect, useState } from "react";
-import { AppState, Platform, StyleSheet, Text, View } from "react-native";
+import { AppState, Linking, Platform, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { GLAS_3D } from "@/constants/depth";
@@ -104,10 +104,11 @@ export function PermissionsStep({
   const requestNative = async (key: PermissionKey) => {
     if (Platform.OS === "web") {
       setStatuses((s) => ({ ...s, [key]: "granted" }));
-      return;
+      return { granted: true, canAskAgain: true };
     }
     try {
       let granted = false;
+      let canAskAgain = true;
       if (key === "location") {
         const foreground = await Location.requestForegroundPermissionsAsync();
         // Foreground access is sufficient for live navigation. Background
@@ -115,24 +116,30 @@ export function PermissionsStep({
         // active hike, so onboarding is not blocked by iOS's separate
         // "Always" decision.
         granted = foreground.status === Location.PermissionStatus.GRANTED;
+        canAskAgain = foreground.canAskAgain;
       } else if (key === "microphone") {
         if (NATIVE_MODULES_AVAILABLE) {
           const mod = await import("expo-speech-recognition");
           const perm = await mod.ExpoSpeechRecognitionModule.requestPermissionsAsync();
           granted = isSpeechPermissionGranted(perm);
+          canAskAgain = perm.canAskAgain;
         } else {
           granted = false;
         }
       } else if (key === "motion") {
         const perm = await Pedometer.requestPermissionsAsync();
         granted = !!perm.granted;
+        canAskAgain = perm.canAskAgain;
       } else if (key === "notifications") {
         const perm = await Notifications.requestPermissionsAsync();
         granted = perm.status === "granted";
+        canAskAgain = perm.canAskAgain;
       }
       setStatuses((s) => ({ ...s, [key]: granted ? "granted" : "denied" }));
+      return { granted, canAskAgain };
     } catch {
       setStatuses((s) => ({ ...s, [key]: "denied" }));
+      return { granted: false, canAskAgain: true };
     }
   };
 
@@ -140,10 +147,17 @@ export function PermissionsStep({
     if (requestingAll || allGranted) return;
     setRequestingAll(true);
     try {
+      let requiresSettings = false;
       for (const key of keys) {
         if (statuses[key] !== "granted") {
-          await requestNative(key);
+          const result = await requestNative(key);
+          if (!result.granted && !result.canAskAgain) {
+            requiresSettings = true;
+          }
         }
+      }
+      if (requiresSettings) {
+        await Linking.openSettings();
       }
     } finally {
       setRequestingAll(false);

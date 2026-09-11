@@ -153,3 +153,4 @@
 - [Watch alert/live-state ordering](sagatrail-watch-alert-live-state-order.md) — Watch alerts and live-state payloads can arrive separately; action confirmations must queue navigation until the state page exists.
 - [Watch JS action readiness](watch-js-action-readiness.md) — mark the native action bridge ready explicitly after DeviceEventEmitter listeners attach; RCTEventEmitter startObserving can lag and strand safety commands.
 - [Speech permission status](sagatrail-speech-permission-status.md) — iOS speech-permission responses use status, not always granted; normalize before starting automatic decision listening.
+- [Required permission gate](sagatrail-required-permission-gate.md) — every authenticated foreground entry trusts live OS status; stored grants are diagnostic evidence only.
