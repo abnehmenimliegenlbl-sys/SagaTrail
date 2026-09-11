@@ -160,6 +160,7 @@ export interface WatchLiveSnapshot {
 
 type CompanionModule = {
   activate?: () => void;
+  markWatchActionListenersReady?: () => void;
   drainPendingWatchActions?: () => void;
   selectGarminDevice?: () => void;
   publishLiveState?: (state: HikeLiveState) => void | Promise<void>;
@@ -717,8 +718,9 @@ export function subscribeToCompanionEvents(handlers: {
   // Register every event-specific listener before activation or draining the
   // native queue so a cold-start safety command cannot be replayed too early.
   activateNativeCompanion(module);
+  module.markWatchActionListenersReady?.();
   module.drainPendingWatchActions?.();
-  watchCompanionLog("pending watch actions drain requested");
+  watchCompanionLog("watch action listeners marked ready; pending actions drain requested");
   void module.getLatestHeartRate?.()
     .then((event) => {
       watchCompanionLog("latest heart-rate replay received", { present: event != null });

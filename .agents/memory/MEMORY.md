@@ -154,3 +154,4 @@
 - [Watch live-state finite values](sagatrail-watch-live-state-finite.md) — one NaN in an active derived field rejects the complete HikeLiveState before WatchConnectivity.
 - [Watch action remote diagnostics](sagatrail-watch-action-diagnostics.md) — safety actions need privacy-safe remote logs at every Watch→phone→JS boundary; JS-only logs cannot locate pre-JS failures.
 - [Watch alert/live-state ordering](sagatrail-watch-alert-live-state-order.md) — Watch alerts and live-state payloads can arrive separately; action confirmations must queue navigation until the state page exists.
+- [Watch JS action readiness](watch-js-action-readiness.md) — mark the native action bridge ready explicitly after DeviceEventEmitter listeners attach; RCTEventEmitter startObserving can lag and strand safety commands.

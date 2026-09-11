@@ -126,6 +126,16 @@ final class SagaTrailCompanion: RCTEventEmitter {
     pending.forEach { sendEvent(withName: $0.name, body: $0.body) }
   }
 
+  /// DeviceEventEmitter can have active JS listeners before RCTEventEmitter's
+  /// startObserving callback flips its internal flag. JS calls this explicit
+  /// readiness boundary after registering all event listeners so a safety
+  /// check-in received during that race is drained instead of waiting forever.
+  @objc func markWatchActionListenersReady() {
+    hasJavaScriptListeners = true
+    NSLog("[SagaTrail Watch] JS action listeners explicitly marked ready")
+    drainPendingWatchActions()
+  }
+
   override func stopObserving() {
     hasJavaScriptListeners = false
     NSLog("[SagaTrail Watch] JS listeners detached")
