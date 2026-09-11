@@ -14,3 +14,5 @@ Bash tool has a hard 120s limit — long `eas` uploads get killed. The notebook 
 **Polling:** `timeout 90 npx eas build:view <id> --json` from bash (plain calls can exceed 120s). Log URLs from logFiles expire in 900s; fetch with `curl --compressed`.
 
 **Submission status:** this EAS CLI version has no `submit:view` or `submit:list`; query `submissions.byId(submissionId: ...)` through authenticated GraphQL at `https://api.expo.dev/graphql` and inspect `status`, `error`, and `completedAt`.
+
+Every native-build workflow, including iOS development, must require a one-use `/tmp/*-go` guard before invoking EAS. A production workflow restart can coincide with other configured workflows starting; an unguarded development command consumed the next remote build number and forced cancellation/resynchronization.
