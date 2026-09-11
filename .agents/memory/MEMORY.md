@@ -120,6 +120,7 @@
 - [Object recognition geo context](sagatrail-object-recognition-geo-context.md) — Foto-Kontext darf nur Live-POIs im 500-m-Radius verwenden, nie entfernte POIs aus dem Routen-Korridor.
 - [Cloud Vision authentication](sagatrail-cloud-vision-auth.md) — Cloud Vision uses a dedicated service account; keep it separate from EAS/Google Play submission credentials.
 - [Live-GPS safety gate](sagatrail-gps-safety.md) — stale or unavailable GPS must pause route progress, POI triggers, turn cues, and terrain narration; never show a simulated point as live.
+- [Location permission cold start](sagatrail-location-permission-cold-start.md) — retry native permission reads after TestFlight/cold-start races; transient read errors are unknown, not denial.
 - [Group location consent](sagatrail-group-location-consent.md) — member location sharing must be explicit opt-in, foreground-only, and immediately clearable.
 - [Safety share links](sagatrail-safety-share-links.md) — public links expose only route/status/latest fresh GPS; token hashes are stored server-side and expiry/revocation are authoritative.
 - [Watch companion](sagatrail-watch-companion.md) — phone remains authoritative; Watch now receives a simplified MapKit route/current point and fresh HealthKit heart rate, never simulated values.

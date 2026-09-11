@@ -159,6 +159,7 @@ import { HikeSession, LatLng, StoryChapter } from "@/types";
 import { makeLogger } from "@/lib/debugLog";
 
 const watchLiveStateLog = makeLogger("[WATCH-STATE]", "watch_state");
+const locationPermissionLog = makeLogger("[LOCATION-PERM]", "location_permission");
 
 const WEB_TOP = 67;
 const COMPASS_GOLD = "#D8A84E";
@@ -1445,12 +1446,22 @@ export default function LiveHike() {
     if (Platform.OS === "web") return;
     try {
       const current = await Location.getForegroundPermissionsAsync();
+      locationPermissionLog("request started", {
+        status: current.status,
+        granted: current.granted,
+        canAskAgain: current.canAskAgain,
+      });
       const permission =
-        current.status === Location.PermissionStatus.GRANTED
+        current.granted
           ? current
           : await Location.requestForegroundPermissionsAsync();
 
-      if (permission.status === Location.PermissionStatus.GRANTED) {
+      locationPermissionLog("request finished", {
+        status: permission.status,
+        granted: permission.granted,
+        canAskAgain: permission.canAskAgain,
+      });
+      if (permission.granted) {
         setLocState("idle");
         setLocationPermissionRetry((value) => value + 1);
         return;
@@ -1463,6 +1474,62 @@ export default function LiveHike() {
     } catch {
       setLocState("denied");
     }
+  }, []);
+  const readForegroundLocationPermission = useCallback(async (reason: string) => {
+    if (Platform.OS === "web") return true;
+
+    // iOS can briefly report an incomplete permission state while a freshly
+    // updated process is reconnecting to Core Location. Do not turn that
+    // transient state into the user-facing "denied" banner immediately.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const permission = await Location.getForegroundPermissionsAsync();
+        locationPermissionLog("read", {
+          reason,
+          attempt: attempt + 1,
+          status: permission.status,
+          granted: permission.granted,
+          canAskAgain: permission.canAskAgain,
+        });
+        if (permission.granted) {
+          setLocState("granted");
+          return true;
+        }
+        if (attempt < 2) {
+          await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+          continue;
+        }
+        // A confirmed non-granted response is different from a failed read:
+        // only the former should show the action banner.
+        setLocState("denied");
+        return false;
+      } catch (error) {
+        locationPermissionLog("read failed", {
+          reason,
+          attempt: attempt + 1,
+          errorName: error instanceof Error ? error.name : "unknown",
+        });
+        if (attempt < 2) {
+          await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+          continue;
+        }
+        // Keep the UI neutral after a native read failure. AppState retry
+        // below will check again when the app is active.
+        setLocState("idle");
+        return false;
+      }
+    }
+    return false;
+  }, []);
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        // Re-read after returning from Settings or after a cold native
+        // restart, when Core Location may only become ready a moment later.
+        setLocationPermissionRetry((value) => value + 1);
+      }
+    });
+    return () => subscription.remove();
   }, []);
   const requestPhoneSideSos = useCallback(() => {
     // A request from a wrist device deliberately opens the established phone
@@ -3635,13 +3702,9 @@ export default function LiveHike() {
         return;
       }
       try {
-        const { status } = await Location.getForegroundPermissionsAsync();
         if (cancelled) return;
-        if (status !== "granted") {
-          setLocState("denied");
-          return;
-        }
-        setLocState("granted");
+        const permissionGranted = await readForegroundLocationPermission("hike-start");
+        if (cancelled || !permissionGranted) return;
         // Energiesparmodus: groebere GPS-Genauigkeit und seltenere Fixes
         // schonen den Akku spuerbar auf langen Touren.
         const trackingOptions: Location.LocationOptions = energiesparmodus
@@ -3765,6 +3828,7 @@ export default function LiveHike() {
     t.backgroundNotificationTitle,
     t.backgroundNotificationBody,
     locationPermissionRetry,
+    readForegroundLocationPermission,
   ]);
 
   // iOS uses Core Location's calibrated heading so Panorama and Apple Maps
