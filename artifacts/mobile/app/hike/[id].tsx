@@ -3145,6 +3145,11 @@ export default function LiveHike() {
     const heartRateFreshness = !heartRate ? null
       : now - heartRate.measuredAt <= 30_000 ? "fresh" as const
       : "stale" as const;
+    const isPoiNarration =
+      nowPlaying?.kind === "poi" ||
+      nowPlaying?.kind === "partner" ||
+      watchPoiStory?.kind === "poi" ||
+      watchPoiStory?.kind === "partner";
     const activeAlert = sosOpen
       ? { kind: "sos" as const, text: "SOS requested on phone", critical: true }
       : !startGateConfirmed
@@ -3159,7 +3164,7 @@ export default function LiveHike() {
               action: watchDiscoveryAlert.action,
               critical: false,
             }
-        : speaking && !watchPoiStory
+        : speaking && !isPoiNarration
           ? {
               kind: "narration" as const,
               text: storyLanguage === "de" || storyLanguage === "gsw"
@@ -3331,7 +3336,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, storyLanguage, totalKm, totalMin, watchDiscoveryAlert, watchLifecycleRevision, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchStoryAudio, watchSunsetAtEpochMs, watchTerrainSection, watchUpcomingAttraction, watchUpcomingGradeChange, watchUpcomingSurfaceChange, watchWeather, startGateConfirmed]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, nowPlaying?.kind, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, storyLanguage, totalKm, totalMin, watchDiscoveryAlert, watchLifecycleRevision, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchStoryAudio, watchSunsetAtEpochMs, watchTerrainSection, watchUpcomingAttraction, watchUpcomingGradeChange, watchUpcomingSurfaceChange, watchWeather, startGateConfirmed]);
 
   useEffect(() => {
     if (!startGateConfirmedRef.current) return;
