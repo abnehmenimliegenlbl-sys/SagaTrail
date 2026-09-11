@@ -121,11 +121,19 @@ export function useVoiceDecision(
         // ein verspäteter Reset das Mikrofon nach dem Start wieder deaktivieren.
         await new Promise<void>((r) => setTimeout(r, 250));
         if (cancelled) return;
-        const perm = await ExpoSpeechRecognitionModule!.getPermissionsAsync();
+        let perm = await ExpoSpeechRecognitionModule!.getPermissionsAsync();
         if (cancelled) return;
         if (!isSpeechPermissionGranted(perm)) {
-          setSupported(false);
-          return;
+          // The onboarding normally requests this already, but an OTA update
+          // or a stale native permission read can leave the decision flow
+          // without a confirmed grant. Ask once at the actual listening
+          // boundary instead of starting recognition blindly.
+          perm = await ExpoSpeechRecognitionModule!.requestPermissionsAsync();
+          if (cancelled) return;
+          if (!isSpeechPermissionGranted(perm)) {
+            setSupported(false);
+            return;
+          }
         }
         ExpoSpeechRecognitionModule!.start({
           lang: SPEECH_LOCALE[langRef.current],

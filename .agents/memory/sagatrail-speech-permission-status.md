@@ -7,4 +7,4 @@ Always treat `status == "granted"` as authoritative for `expo-speech-recognition
 
 **Why:** The iOS permission requester returns `status` and can omit the convenience `granted` boolean. Reading only `granted` makes an already-approved microphone/speech permission look lost after a bundle update and can surface a permission prompt when voice decisions start.
 
-**How to apply:** Use one shared normalization helper in onboarding and every automatic speech-recognition start gate. Only the explicit onboarding action may request permission; the decision listener must only read and fall back to buttons when access is not confirmed.
+**How to apply:** Use one shared normalization helper in onboarding and every automatic speech-recognition start gate. The decision listener may request permission once at the listening boundary when a confirmed non-granted status is returned; transient read failures must still fall back silently without opening a dialog.
