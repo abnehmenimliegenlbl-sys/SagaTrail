@@ -60,11 +60,6 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   override init() {
     super.init()
-    connection.setActionHandler { [weak self] envelope in
-      DispatchQueue.main.async {
-        self?.processWatchEnvelope(envelope)
-      }
-    }
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleWatchEvent(_:)),
@@ -133,6 +128,16 @@ final class SagaTrailCompanion: RCTEventEmitter {
   /// check-in received during that race is drained instead of waiting forever.
   @objc func markWatchActionListenersReady() {
     hasJavaScriptListeners = true
+    // Bind the singleton connection only to the React Native module instance
+    // that JS has explicitly marked ready. Binding from init allowed a
+    // short-lived duplicate module instance to overwrite this handler; after
+    // that instance deallocated, its weak capture silently discarded Watch
+    // actions even though the phone logged them as delivered.
+    connection.setActionHandler { [weak self] envelope in
+      DispatchQueue.main.async {
+        self?.processWatchEnvelope(envelope)
+      }
+    }
     NSLog("[SagaTrail Watch] JS action listeners explicitly marked ready")
     drainPendingWatchActions()
   }
