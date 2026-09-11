@@ -7688,6 +7688,7 @@ export default function LiveHike() {
       <SafetyCheckin
         ref={safetyCheckinRef}
         hideTrigger
+        routeId={routeId ?? id}
         routeName={route?.name ?? t.unknown}
         emergencyContact={emergencyContact}
         livePosition={livePos}

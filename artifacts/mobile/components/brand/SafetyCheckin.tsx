@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 import React, { useEffect, useImperativeHandle, useMemo, useState } from "react";
-import { Linking, Platform, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { AppState, Linking, Platform, Pressable, Share, StyleSheet, Text, View } from "react-native";
 
 import { AppModal } from "./AppModal";
 import { useColors } from "@/hooks/useColors";
@@ -15,6 +16,7 @@ import { makeLogger } from "@/lib/debugLog";
 const safetyCheckinLog = makeLogger("[SAFETY-CHECKIN]", "safety_checkin");
 
 export interface SafetyCheckinProps {
+  routeId: string;
   routeName: string;
   emergencyContact: { name: string; phone: string } | null;
   livePosition: LatLng | null;
@@ -59,6 +61,7 @@ export interface SafetyCheckinHandle {
 }
 
 export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckinProps>(function SafetyCheckin({
+  routeId,
   routeName,
   emergencyContact,
   livePosition,
@@ -75,49 +78,170 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
   const [now, setNow] = useState(() => Date.now());
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [sharePath, setSharePath] = useState<string | null>(null);
+  const [notificationId, setNotificationId] = useState<string | null>(null);
   const [shareBusy, setShareBusy] = useState(false);
   const [storageHydrated, setStorageHydrated] = useState(false);
+  const [hydrationRevision, setHydrationRevision] = useState(0);
   const lastLocationSentAt = React.useRef(0);
-  const storageKey = `sagatrail:safety-checkin:${routeName}`;
+  const operationGenerationRef = React.useRef(0);
+  const startBusyRef = React.useRef(false);
+  const hydrationRetryCountRef = React.useRef(0);
+  const storageKey = `sagatrail:safety-checkin:${routeId || routeName}`;
+
+  async function cancelTaggedSafetyNotifications() {
+    if (Platform.OS === "web") return;
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      scheduled
+        .filter((item) => item.content.data?.safetyCheckinStorageKey === storageKey)
+        .map((item) => Notifications.cancelScheduledNotificationAsync(item.identifier)),
+    );
+  }
 
   useEffect(() => {
-    void AsyncStorage.getItem(storageKey).then((raw) => {
+    let cancelled = false;
+    let hydrationSucceeded = false;
+    const hydrationGeneration = operationGenerationRef.current;
+    setStorageHydrated(false);
+    void AsyncStorage.getItem(storageKey).then(async (raw) => {
+      const hydrationIsStale = () =>
+        cancelled || hydrationGeneration !== operationGenerationRef.current;
+      if (hydrationIsStale()) return;
       if (!raw) {
+        await cancelTaggedSafetyNotifications();
+        if (hydrationIsStale()) return;
         safetyCheckinLog("storage hydration: no saved check-in");
+        hydrationSucceeded = true;
         return;
       }
+      let parsed: {
+        expiresAt: number;
+        token?: string;
+        path?: string;
+      };
       try {
-        const parsed = JSON.parse(raw) as { expiresAt?: number; token?: string; path?: string };
-        if (Number.isFinite(parsed.expiresAt) && (parsed.expiresAt ?? 0) > Date.now()) {
-          setExpiresAt(parsed.expiresAt!);
-          if (parsed.token) setShareToken(parsed.token);
-          if (parsed.path) setSharePath(parsed.path);
-          safetyCheckinLog("storage hydration: active check-in restored", {
-            hasToken: Boolean(parsed.token),
-            hasPath: Boolean(parsed.path),
-          });
-        } else {
-          safetyCheckinLog("storage hydration: saved check-in expired or invalid");
+        const objectValue = JSON.parse(raw) as {
+          status?: string;
+          expiresAt?: number;
+          token?: string;
+          path?: string;
+        };
+        if (objectValue.status === "cancelling") {
+          await cancelTaggedSafetyNotifications();
+          if (hydrationIsStale()) return;
+          await AsyncStorage.removeItem(storageKey);
+          hydrationSucceeded = true;
+          safetyCheckinLog("storage hydration: interrupted cancellation completed");
+          return;
         }
+        if (!Number.isFinite(objectValue.expiresAt)) throw new Error("invalid");
+        parsed = {
+          expiresAt: objectValue.expiresAt!,
+          ...(objectValue.token ? { token: objectValue.token } : {}),
+          ...(objectValue.path ? { path: objectValue.path } : {}),
+        };
       } catch {
         // Alte lokale Timer-Versionen enthielten nur die Ablaufzeit.
         const value = Number(raw);
-        if (Number.isFinite(value) && value > Date.now()) {
-          setExpiresAt(value);
-          safetyCheckinLog("storage hydration: legacy local timer restored");
-        } else {
-          safetyCheckinLog("storage hydration: legacy value invalid or expired");
+        if (!Number.isFinite(value)) throw new Error("invalid saved check-in");
+        parsed = { expiresAt: value };
+      }
+
+      const restoredExpiry = parsed.expiresAt;
+      let restoredNotificationId: string | null = null;
+      let hydrationCreatedNotificationId: string | null = null;
+
+      if (Platform.OS !== "web") {
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        if (hydrationIsStale()) return;
+        const tagged = scheduled.filter(
+          (item) => item.content.data?.safetyCheckinStorageKey === storageKey,
+        );
+        const exact = tagged.filter(
+          (item) => Number(item.content.data?.safetyCheckinExpiresAt) === restoredExpiry,
+        );
+        restoredNotificationId = exact[0]?.identifier ?? null;
+        const stale = tagged.filter((item) => item.identifier !== restoredNotificationId);
+        await Promise.all(
+          stale.map((item) => Notifications.cancelScheduledNotificationAsync(item.identifier)),
+        );
+        if (hydrationIsStale()) return;
+        if (!restoredNotificationId && restoredExpiry > Date.now()) {
+          hydrationCreatedNotificationId = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: labels.overdue,
+              body: `${routeName}: ${labels.confirm}`,
+              sound: "default",
+              data: {
+                type: "safety-checkin",
+                routeId,
+                safetyCheckinStorageKey: storageKey,
+                safetyCheckinExpiresAt: restoredExpiry,
+              },
+            },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: new Date(restoredExpiry),
+            },
+          });
+          restoredNotificationId = hydrationCreatedNotificationId;
         }
       }
+
+      if (hydrationIsStale()) {
+        if (hydrationCreatedNotificationId) {
+          await Notifications.cancelScheduledNotificationAsync(hydrationCreatedNotificationId).catch(() => {});
+        }
+        return;
+      }
+      setExpiresAt(restoredExpiry);
+      setShareToken(parsed.token ?? null);
+      setSharePath(parsed.path ?? null);
+      setNotificationId(restoredNotificationId);
+      if (restoredExpiry <= Date.now()) setOpen(true);
+      safetyCheckinLog("storage hydration: check-in restored", {
+        overdue: restoredExpiry <= Date.now(),
+        hasToken: Boolean(parsed.token),
+        hasPath: Boolean(parsed.path),
+      });
+      hydrationRetryCountRef.current = 0;
+      hydrationSucceeded = true;
     }).catch((error) => {
       safetyCheckinLog("storage hydration failed", {
         message: error instanceof Error ? error.message : String(error),
       });
+      hydrationRetryCountRef.current += 1;
+      if (hydrationRetryCountRef.current <= 2) {
+        setTimeout(() => {
+          if (!cancelled) setHydrationRevision((value) => value + 1);
+        }, 2_000);
+      } else {
+        alert(labels.title, "Der gespeicherte Sicherheits-Check-in konnte nicht geladen werden.");
+      }
     }).finally(() => {
-      setStorageHydrated(true);
+      if (
+        !cancelled &&
+        hydrationSucceeded &&
+        hydrationGeneration === operationGenerationRef.current
+      ) {
+        setStorageHydrated(true);
+      }
       safetyCheckinLog("storage hydration complete");
     });
-  }, [storageKey]);
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrationRevision, labels.confirm, labels.overdue, routeId, routeName, storageKey]);
+
+  useEffect(() => {
+    if (storageHydrated) return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state !== "active") return;
+      hydrationRetryCountRef.current = 0;
+      setHydrationRevision((value) => value + 1);
+    });
+    return () => subscription.remove();
+  }, [storageHydrated]);
 
   useEffect(() => {
     if (!storageHydrated) return;
@@ -128,14 +252,27 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
         expiresAt,
         ...(shareToken ? { token: shareToken } : {}),
         ...(sharePath ? { path: sharePath } : {}),
+        ...(notificationId ? { notificationId } : {}),
+        notificationScheduled: Platform.OS === "web" || expiresAt <= Date.now() || Boolean(notificationId),
       })).catch(() => {});
     }
-  }, [expiresAt, shareToken, sharePath, storageHydrated, storageKey]);
+  }, [expiresAt, notificationId, shareToken, sharePath, storageHydrated, storageKey]);
 
   useEffect(() => {
     if (expiresAt == null) return;
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
+  }, [expiresAt]);
+
+  useEffect(() => {
+    if (expiresAt == null) return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state !== "active") return;
+      const currentTime = Date.now();
+      setNow(currentTime);
+      if (currentTime >= expiresAt) setOpen(true);
+    });
+    return () => subscription.remove();
   }, [expiresAt]);
 
   // Nur der echte, frische Vordergrund-Fix wird an den Server gesendet. Die
@@ -232,16 +369,30 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
   };
 
   const close = () => setOpen(false);
-  const cancelTimer = () => {
+  const cancelTimer = async () => {
+    operationGenerationRef.current += 1;
+    startBusyRef.current = false;
+    setShareBusy(false);
     safetyCheckinLog("check-in cancel requested", { hadLiveLink: Boolean(shareToken) });
-    if (shareToken) {
+    const tokenToDelete = shareToken;
+    try {
+      await AsyncStorage.setItem(storageKey, JSON.stringify({ status: "cancelling" }));
+      await cancelTaggedSafetyNotifications();
+    } catch (error) {
+        safetyCheckinLog("scheduled notifications cancellation failed", {
+        message: error instanceof Error ? error.message : String(error),
+      });
+      alert(labels.title, "Der Sicherheits-Check-in konnte noch nicht beendet werden. Bitte versuche es erneut.");
+      return;
+    }
+    if (tokenToDelete) {
       const base = getApiBaseUrl() ?? "";
       void getAuthToken().then((authToken) => {
         if (!authToken) {
           safetyCheckinLog("live-link delete skipped: no auth token");
           return;
         }
-        void fetch(`${base}/api/safety-shares/${encodeURIComponent(shareToken)}`, {
+        void fetch(`${base}/api/safety-shares/${encodeURIComponent(tokenToDelete)}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${authToken}` },
         }).then((response) => {
@@ -255,72 +406,172 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
     }
     setShareToken(null);
     setSharePath(null);
+    setNotificationId(null);
     setExpiresAt(null);
     setOpen(false);
+    await AsyncStorage.removeItem(storageKey).catch(() => {});
   };
 
   const startShare = async (durationOverride?: SafetyCheckinDuration) => {
-    if (shareBusy) {
+    if (!storageHydrated) {
+      safetyCheckinLog("check-in start blocked: storage reconciliation pending");
+      alert(labels.title, "Der Check-in-Status wird noch geladen. Bitte versuche es gleich nochmals.");
+      return;
+    }
+    if (expiresAt != null) {
+      safetyCheckinLog("check-in start ignored: an existing check-in is active");
+      setOpen(true);
+      return;
+    }
+    if (startBusyRef.current) {
       safetyCheckinLog("check-in start ignored: request already busy");
       return;
     }
+    startBusyRef.current = true;
+    const operationGeneration = ++operationGenerationRef.current;
     const selectedDuration = durationOverride ?? duration;
     safetyCheckinLog("check-in start requested", {
       source: durationOverride == null ? "phone" : "watch",
       durationMinutes: selectedDuration,
     });
     setShareBusy(true);
-    try {
-      const authToken = await getAuthToken();
-      if (!authToken) {
-        safetyCheckinLog("check-in server start unavailable: no auth token");
-        throw new Error("auth");
-      }
+    let createdToken: string | null = null;
+    let createdPath: string | null = null;
+    let expiry = Date.now() + selectedDuration * 60_000;
+    let usedLocalFallback = false;
+
+    const deleteCreatedShare = async () => {
+      if (!createdToken) return;
+      const authToken = await getAuthToken().catch(() => null);
+      if (!authToken) return;
       const base = getApiBaseUrl() ?? "";
-      const response = await fetch(`${base}/api/safety-shares`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({ routeName, durationMinutes: selectedDuration }),
-      });
-      safetyCheckinLog("check-in server response received", {
-        ok: response.ok,
-        status: response.status,
-      });
-      if (!response.ok) throw new Error("create");
-      const data = await response.json() as { token: string; path: string; expiresAt: string };
-      const link = `${base}${data.path}`;
-      setShareToken(data.token);
-      setSharePath(link);
-      setExpiresAt(Date.parse(data.expiresAt));
-      setOpen(true);
-      safetyCheckinLog("check-in started with live link", {
-        hasToken: Boolean(data.token),
-        hasPath: Boolean(data.path),
-      });
-      await Share.share({
-        title: labels.externalShare ?? "SagaTrail Sicherheitslink",
-        message: `${labels.externalShare ?? "SagaTrail Sicherheitslink"}\n${link}`,
-        url: link,
+      await fetch(`${base}/api/safety-shares/${encodeURIComponent(createdToken)}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
       }).catch(() => {});
-    } catch (error) {
-      // Der lokale Check-in bleibt als Sicherheitsnetz verfügbar, auch wenn
-      // Authentifizierung oder Netz gerade nicht funktionieren. Er wird
-      // sichtbar als lokal markiert und erzeugt keinen falschen Live-Status.
-      setShareToken(null);
-      setSharePath(null);
-      setExpiresAt(Date.now() + selectedDuration * 60_000);
+    };
+
+    try {
+      try {
+        const authToken = await getAuthToken();
+        if (!authToken) throw new Error("auth");
+        const base = getApiBaseUrl() ?? "";
+        const response = await fetch(`${base}/api/safety-shares`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ routeName, durationMinutes: selectedDuration }),
+        });
+        if (!response.ok) throw new Error(`create-${response.status}`);
+        const data = await response.json() as { token: string; path: string; expiresAt: string };
+        const parsedExpiry = Date.parse(data.expiresAt);
+        if (!Number.isFinite(parsedExpiry)) throw new Error("invalid-expiry");
+        createdToken = data.token;
+        createdPath = `${base}${data.path}`;
+        expiry = parsedExpiry;
+      } catch (serverError) {
+        usedLocalFallback = true;
+        safetyCheckinLog("live-link creation failed; using local check-in", {
+          message: serverError instanceof Error ? serverError.message : String(serverError),
+        });
+      }
+
+      if (operationGeneration !== operationGenerationRef.current) {
+        await deleteCreatedShare();
+        return;
+      }
+
+      await AsyncStorage.setItem(storageKey, JSON.stringify({
+        expiresAt: expiry,
+        ...(createdToken ? { token: createdToken } : {}),
+        ...(createdPath ? { path: createdPath } : {}),
+        notificationScheduled: false,
+      }));
+      if (operationGeneration !== operationGenerationRef.current) {
+        await deleteCreatedShare();
+        return;
+      }
+      await cancelTaggedSafetyNotifications();
+
+      const nextNotificationId = Platform.OS === "web"
+        ? null
+        : await Notifications.scheduleNotificationAsync({
+            content: {
+              title: labels.overdue,
+              body: `${routeName}: ${labels.confirm}`,
+              sound: "default",
+              data: {
+                type: "safety-checkin",
+                routeId,
+                safetyCheckinStorageKey: storageKey,
+                safetyCheckinExpiresAt: expiry,
+              },
+            },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: new Date(expiry),
+            },
+          });
+
+      if (operationGeneration !== operationGenerationRef.current) {
+        if (nextNotificationId) {
+          await Notifications.cancelScheduledNotificationAsync(nextNotificationId).catch(() => {});
+        }
+        await deleteCreatedShare();
+        await AsyncStorage.removeItem(storageKey).catch(() => {});
+        return;
+      }
+
+      await AsyncStorage.setItem(storageKey, JSON.stringify({
+        expiresAt: expiry,
+        ...(createdToken ? { token: createdToken } : {}),
+        ...(createdPath ? { path: createdPath } : {}),
+        ...(nextNotificationId ? { notificationId: nextNotificationId } : {}),
+        notificationScheduled: true,
+      }));
+      if (operationGeneration !== operationGenerationRef.current) {
+        if (nextNotificationId) {
+          await Notifications.cancelScheduledNotificationAsync(nextNotificationId).catch(() => {});
+        }
+        await deleteCreatedShare();
+        await AsyncStorage.removeItem(storageKey).catch(() => {});
+        return;
+      }
+
+      setShareToken(createdToken);
+      setSharePath(createdPath);
+      setNotificationId(nextNotificationId);
+      setExpiresAt(expiry);
       setOpen(true);
-      safetyCheckinLog("check-in started with local fallback", {
+      safetyCheckinLog("check-in started", {
         source: durationOverride == null ? "phone" : "watch",
         durationMinutes: selectedDuration,
-        reason: error instanceof Error ? error.message : String(error),
+        localOnly: usedLocalFallback,
       });
-      alert(labels.title, labels.shareFailed ?? "Der Sicherheitslink konnte nicht gestartet werden.");
+
+      if (usedLocalFallback) {
+        alert(labels.title, labels.shareFailed ?? "Der Sicherheitslink konnte nicht gestartet werden.");
+      } else if (createdPath) {
+        await Share.share({
+          title: labels.externalShare ?? "SagaTrail Sicherheitslink",
+          message: `${labels.externalShare ?? "SagaTrail Sicherheitslink"}\n${createdPath}`,
+          url: createdPath,
+        }).catch(() => {});
+      }
+    } catch (error) {
+      await deleteCreatedShare();
+      await AsyncStorage.removeItem(storageKey).catch(() => {});
+      safetyCheckinLog("check-in start failed", {
+        message: error instanceof Error ? error.message : String(error),
+      });
+      alert(labels.title, "Der Sicherheits-Check-in konnte nicht gestartet werden.");
     } finally {
-      setShareBusy(false);
+      if (operationGeneration === operationGenerationRef.current) {
+        startBusyRef.current = false;
+        setShareBusy(false);
+      }
     }
   };
 
@@ -341,7 +592,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
     },
     confirmFromWatch: () => {
       safetyCheckinLog("watch check-in confirmation received by component");
-      cancelTimer();
+      void cancelTimer();
     },
   }), [cancelTimer, startShare]);
 
@@ -395,8 +646,8 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
                 { text: labels.start, onPress: () => void startShare() },
               ]
             : [
-                { text: labels.cancel, style: "cancel", onPress: cancelTimer },
-                { text: labels.confirm, onPress: cancelTimer },
+                { text: labels.cancel, style: "cancel", onPress: () => void cancelTimer() },
+                { text: labels.confirm, onPress: () => void cancelTimer() },
               ]
         }
       >

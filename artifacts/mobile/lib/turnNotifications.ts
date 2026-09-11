@@ -21,12 +21,12 @@ import { hapticHeavy, hapticWarning } from "./haptics";
 // Notification Center und werden von watchOS nicht gespiegelt.
 if (Platform.OS !== "web") {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
+    handleNotification: async (notification) => ({
       shouldShowBanner: true,
       // Muss true sein: Apple Watch spiegelt nur Mitteilungen,
       // die im Notification Center (Liste) landen.
       shouldShowList: true,
-      shouldPlaySound: false,
+      shouldPlaySound: notification.request.content.data?.type === "safety-checkin",
       shouldSetBadge: false,
     }),
   });

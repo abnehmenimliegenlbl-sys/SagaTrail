@@ -119,6 +119,7 @@
 - [Location permission reads](sagatrail-location-permission-cold-start.md) — distinguish transient native read errors from confirmed denial; update-specific root cause still needs bundle/status evidence.
 - [Group location consent](sagatrail-group-location-consent.md) — member location sharing must be explicit opt-in, foreground-only, and immediately clearable.
 - [Safety share links](sagatrail-safety-share-links.md) — public links expose only route/status/latest fresh GPS; token hashes are stored server-side and expiry/revocation are authoritative.
+- [Safety check-in durability](sagatrail-safety-checkin-durability.md) — expiry alerts must be native scheduled notifications with durable reconciliation; a JS timer alone is never sufficient.
 - [Watch companion](sagatrail-watch-companion.md) — phone remains authoritative; Watch now receives a simplified MapKit route/current point and fresh HealthKit heart rate, never simulated values.
 - [Watch active-state source](sagatrail-watch-active-state.md) — native bridge derives Watch isHiking from sessionStatus; route changes must not restart story preparation and push the Watch back to waiting.
 - [Catalog resume and Watch GPS](sagatrail-catalog-resume-watch-gps.md) — catalog resumes must carry resume=1 and force the first fresh GPS snapshot past the publish throttle.
