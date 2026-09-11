@@ -213,7 +213,11 @@ function liveStateDebugSummary(value: unknown): Record<string, unknown> {
     mapPointCount: state.map?.route?.length ?? 0,
     hasWeather: state.weather != null,
     hasPoiStory: state.poiStory != null,
+    poiStoryId: state.poiStory?.id ?? null,
+    poiStoryKind: state.poiStory?.kind ?? null,
+    poiStoryTextLength: state.poiStory?.text.length ?? 0,
     hasActiveAlert: state.activeAlert != null,
+    activeAlertAction: state.activeAlert?.action ?? null,
     sosAcknowledgement: state.sosAcknowledgement ?? null,
     numeric,
   };
@@ -548,6 +552,8 @@ export async function publishHikeLiveState(
         omittedFields: prepared.omittedFields,
         sessionStatus: publishState.sessionStatus,
         isHiking: publishState.isHiking,
+        poiStoryId: publishState.poiStory?.id ?? null,
+        activeAlertAction: publishState.activeAlert?.action ?? null,
       });
     }
     lastOmittedFieldsLogKey = omittedFieldsLogKey;
@@ -576,6 +582,10 @@ export async function publishHikeLiveState(
     force,
     safetyStatus: publishState.safetyCheckin?.status ?? null,
     sosAcknowledgement: publishState.sosAcknowledgement ?? null,
+    poiStoryId: publishState.poiStory?.id ?? null,
+    poiStoryKind: publishState.poiStory?.kind ?? null,
+    poiStoryTextLength: publishState.poiStory?.text.length ?? 0,
+    activeAlertAction: publishState.activeAlert?.action ?? null,
   });
   const module = companionModule();
   if (!module) {
@@ -594,6 +604,8 @@ export async function publishHikeLiveState(
       sessionStatus: publishState.sessionStatus,
       isHiking: publishState.isHiking,
       sequence: publishState.sequence,
+      poiStoryId: publishState.poiStory?.id ?? null,
+      activeAlertAction: publishState.activeAlert?.action ?? null,
     });
     return true;
   } catch (error) {

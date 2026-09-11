@@ -160,6 +160,7 @@ import { HikeSession, LatLng, StoryChapter } from "@/types";
 import { makeLogger } from "@/lib/debugLog";
 
 const watchLiveStateLog = makeLogger("[WATCH-STATE]", "watch_state");
+const watchPoiLog = makeLogger("[WATCH-POI]", "watch_poi");
 const locationPermissionLog = makeLogger("[LOCATION-PERM]", "location_permission");
 const locationDiagnosticContext = () => ({
   ...getRuntimeDiagnostics(),
@@ -1194,6 +1195,12 @@ export default function LiveHike() {
   const [watchDiscoveryAlert, setWatchDiscoveryAlert] = useState<WatchDiscoveryAlert | null>(null);
   const watchDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastWatchDiscoveryAlertRef = useRef<string | null>(null);
+  const watchPoiTraceRef = useRef<{
+    poiId: string;
+    traceId: string;
+    kind: "partner" | "poi";
+  } | null>(null);
+  const lastWatchPoiDebugKeyRef = useRef<string | null>(null);
   const raiseWatchDiscoveryAlert = useCallback((alert: WatchDiscoveryAlert) => {
     setWatchDiscoveryAlert(alert);
     if (watchDiscoveryTimerRef.current) clearTimeout(watchDiscoveryTimerRef.current);
@@ -3280,6 +3287,27 @@ export default function LiveHike() {
       safetyCheckinKey !== lastSafetyCheckinKeyRef.current ||
       watchPoiStoryId !== lastWatchPoiStoryIdRef.current ||
       sosAcknowledgement !== lastSosAcknowledgementRef.current;
+    if (watchPoiStory || activeAlert?.action === "openPoiStory") {
+      const trace = watchPoiTraceRef.current;
+      const debugKey = [
+        trace?.traceId ?? "no-trace",
+        watchPoiStory?.id ?? "no-story",
+        activeAlert?.action ?? "no-action",
+      ].join(":");
+      if (debugKey !== lastWatchPoiDebugKeyRef.current) {
+        lastWatchPoiDebugKeyRef.current = debugKey;
+        watchPoiLog("phone prepared partner POI watch snapshot", {
+          traceId: trace?.traceId ?? null,
+          poiId: watchPoiStory?.id ?? trace?.poiId ?? null,
+          kind: watchPoiStory?.kind ?? trace?.kind ?? null,
+          sequence: state.sequence,
+          storyPresent: watchPoiStory != null,
+          storyTextLength: watchPoiStory?.text.length ?? 0,
+          activeAlertAction: activeAlert?.action ?? null,
+          forcePublish: force,
+        });
+      }
+    }
     lastPublishedGpsFreshRef.current = hasFreshGps;
     lastCriticalWatchAlertRef.current = criticalKey;
     lastWatchDiscoveryAlertRef.current = discoveryKey;
@@ -3424,19 +3452,45 @@ export default function LiveHike() {
       if (haversineKm(livePos, { lat: wp.lat, lng: wp.lng }) <= 0.05) {
         waypointAnnouncedRef.current.add(wp.id);
         setReachedWaypointIds((prev) => new Set([...prev, wp.id]));
+        const isPartner = wp.type === "partner";
+        const traceId = `poi-${Date.now()}-${wp.id}`;
+        watchPoiTraceRef.current = {
+          poiId: wp.id,
+          traceId,
+          kind: isPartner ? "partner" : "poi",
+        };
         const partner = wp.type === "partner"
           ? partners.find((candidate) => `partner-${candidate.id}` === wp.id)
           : null;
+        watchPoiLog("waypoint reached on phone", {
+          traceId,
+          poiId: wp.id,
+          kind: wp.type,
+          partnerDataPresent: partner != null,
+          partnerImagePresent: Boolean(partner?.fotoUrl),
+        });
         if (partner) {
           const partnerText = [partner.beschreibung, partner.angebot]
             .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
             .join("\n\n");
+          const storyText = (partnerText || "Partner entlang deiner Route.").slice(0, 8_000);
           setWatchPoiStory({
             id: wp.id,
             name: partner.name,
             imageUrl: partner.fotoUrl ?? null,
-            text: partnerText || "Partner entlang deiner Route.",
+            text: storyText,
             kind: "partner",
+          });
+          watchPoiLog("partner story staged for watch state", {
+            traceId,
+            poiId: wp.id,
+            storyTextLength: storyText.length,
+            imageUrlValid: !partner.fotoUrl || /^https?:\/\//i.test(partner.fotoUrl),
+          });
+        } else if (isPartner) {
+          watchPoiLog("partner waypoint has no matching partner record", {
+            traceId,
+            poiId: wp.id,
           });
         }
         raiseWatchDiscoveryAlert({

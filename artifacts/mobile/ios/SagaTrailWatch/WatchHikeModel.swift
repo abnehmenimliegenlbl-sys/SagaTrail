@@ -5,7 +5,7 @@ import WatchKit
 import ClockKit
 import UserNotifications
 
-private enum SagaTrailWatchRemoteDiagnostics {
+enum SagaTrailWatchRemoteDiagnostics {
   static func log(_ message: String, data: [String: Any] = [:]) {
     guard
       let endpointString = Bundle.main.object(forInfoDictionaryKey: "SagaTrailRemoteDebugURL") as? String,
@@ -363,6 +363,15 @@ final class WatchHikeModel: NSObject, ObservableObject {
         )
         return
       }
+      if let poiStory = decoded.poiStory {
+        SagaTrailWatchRemoteDiagnostics.log("partner POI live state received by Watch", data: [
+          "poiStoryId": poiStory.id,
+          "poiStoryKind": poiStory.kind ?? "unknown",
+          "poiStoryTextLength": poiStory.text.count,
+          "updatedAt": decoded.updatedAt.timeIntervalSince1970 * 1_000,
+          "sceneActive": isSceneActive,
+        ])
+      }
       // The same snapshot may arrive through application context, direct
       // message, and transferred user info in a different order. Never let a
       // delayed delivery roll a live safety/SOS state back.
@@ -370,6 +379,13 @@ final class WatchHikeModel: NSObject, ObservableObject {
         NSLog("[SagaTrail Watch] Ignored stale live state (updatedAt: %@, last: %@)",
               String(decoded.updatedAt.timeIntervalSince1970),
               String(lastAppliedUpdatedAt.timeIntervalSince1970))
+        if let poiStory = decoded.poiStory {
+          SagaTrailWatchRemoteDiagnostics.log("partner POI live state ignored as stale", data: [
+            "poiStoryId": poiStory.id,
+            "updatedAt": decoded.updatedAt.timeIntervalSince1970 * 1_000,
+            "lastAppliedUpdatedAt": lastAppliedUpdatedAt.timeIntervalSince1970 * 1_000,
+          ])
+        }
         return
       }
       lastAppliedUpdatedAt = decoded.updatedAt
@@ -398,6 +414,14 @@ final class WatchHikeModel: NSObject, ObservableObject {
       lastSafetyStatus = safetyStatus
       state = decoded
       receivedAt = Date()
+      if let poiStory = decoded.poiStory {
+        SagaTrailWatchRemoteDiagnostics.log("partner POI live state committed on Watch", data: [
+          "poiStoryId": poiStory.id,
+          "poiStoryKind": poiStory.kind ?? "unknown",
+          "selectedContentAvailable": true,
+          "updatedAt": decoded.updatedAt.timeIntervalSince1970 * 1_000,
+        ])
+      }
       NSLog("[SagaTrail Watch] Live state committed (safety: %@, alert: %@, gpsFresh: %@)",
             decoded.safetyCheckin?.status ?? "none",
             decoded.nextInstruction.isEmpty ? "none" : "present",
@@ -414,11 +438,25 @@ final class WatchHikeModel: NSObject, ObservableObject {
       let alertKey = "\(title)|\(body)|\(haptic ?? "")|\(action ?? "")"
       if alertKey != lastAlertKey {
         lastAlertKey = alertKey
+        if action == "openPoiStory" {
+          SagaTrailWatchRemoteDiagnostics.log("partner POI alert received by Watch", data: [
+            "action": action ?? "none",
+            "sceneActive": isSceneActive,
+            "liveStatePoiStoryPresent": state?.poiStory != nil,
+            "liveStatePoiStoryId": state?.poiStory?.id ?? "none",
+          ])
+        }
         NSLog("[SagaTrail Watch] New alert accepted (haptic: %@, sceneActive: %@, hasAction: %@)",
               haptic ?? "none", String(isSceneActive), String(action != nil))
         playAlertHaptic(haptic)
         if isSceneActive {
           activeAlert = WatchAlert(title: title, body: body, action: action)
+          if action == "openPoiStory" {
+            SagaTrailWatchRemoteDiagnostics.log("partner POI alert shown in Watch UI", data: [
+              "liveStatePoiStoryPresent": state?.poiStory != nil,
+              "liveStatePoiStoryId": state?.poiStory?.id ?? "none",
+            ])
+          }
         } else {
           scheduleSystemNotification(title: title, body: body)
         }

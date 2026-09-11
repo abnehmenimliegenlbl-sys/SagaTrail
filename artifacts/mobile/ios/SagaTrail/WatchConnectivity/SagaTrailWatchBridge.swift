@@ -26,6 +26,23 @@ private enum SagaTrailPhoneRemoteDiagnostics {
   }
 }
 
+private func poiTransportDiagnostics(for message: [String: Any]) -> [String: Any]? {
+  let type = message["type"] as? String
+  let payload = message["payload"] as? [String: Any] ?? [:]
+  let story = payload["poiStory"] as? [String: Any]
+  let action = payload["action"] as? String
+  guard story != nil || action == "openPoiStory" else { return nil }
+  return [
+    "messageType": type ?? "unknown",
+    "poiStoryId": story?["id"] as? String ?? NSNull(),
+    "poiStoryKind": story?["kind"] as? String ?? NSNull(),
+    "poiStoryTextLength": (story?["text"] as? String)?.count ?? 0,
+    "poiStoryPresent": story != nil,
+    "alertAction": action ?? NSNull(),
+    "updatedAt": payload["updatedAt"] ?? NSNull(),
+  ]
+}
+
 /// React Native entry point for the iPhone half of the companion app.
 ///
 /// The phone owns hike state. This bridge only validates and forwards a
@@ -153,8 +170,10 @@ final class SagaTrailCompanion: RCTEventEmitter {
     let canonicalState = state as? [String: Any] ?? [:]
     let status = canonicalState["sessionStatus"] as? String ?? "missing"
     let isHiking = canonicalState["isHiking"] as? Bool ?? false
+    logPoiTransport("partner POI snapshot entered native bridge", state: canonicalState, phase: "received")
     do {
       try connection.publishCanonicalLiveState(canonicalState)
+      logPoiTransport("partner POI snapshot accepted by native bridge", state: canonicalState, phase: "accepted")
       logLiveStateDiagnosticIfChanged(
         outcome: "accepted",
         status: status,
@@ -163,6 +182,7 @@ final class SagaTrailCompanion: RCTEventEmitter {
       emitStatus()
     } catch {
       NSLog("[SagaTrail Watch] publishLiveState rejected: %@", error.localizedDescription)
+      logPoiTransport("partner POI snapshot rejected by native bridge", state: canonicalState, phase: "rejected")
       logLiveStateDiagnosticIfChanged(
         outcome: "rejected:\(String(describing: error))",
         status: status,
@@ -173,6 +193,28 @@ final class SagaTrailCompanion: RCTEventEmitter {
       ])
     }
     garminConnection.sendLiveState(canonicalState)
+  }
+
+  private func logPoiTransport(
+    _ message: String,
+    state: [String: Any],
+    phase: String
+  ) {
+    let story = state["poiStory"] as? [String: Any]
+    let alert = state["activeAlert"] as? [String: Any]
+    guard story != nil || alert?["action"] as? String == "openPoiStory" else { return }
+    var data: [String: Any] = [
+      "phase": phase,
+      "sequence": state["sequence"] ?? NSNull(),
+      "poiStoryId": story?["id"] as? String ?? NSNull(),
+      "poiStoryKind": story?["kind"] as? String ?? NSNull(),
+      "poiStoryTextLength": (story?["text"] as? String)?.count ?? 0,
+      "poiStoryPresent": story != nil,
+      "alertAction": alert?["action"] as? String ?? NSNull(),
+      "wcActivated": WCSession.default.activationState == .activated,
+      "wcReachable": WCSession.default.isReachable,
+    ]
+    SagaTrailPhoneRemoteDiagnostics.log(message, data: data)
   }
 
   private func logLiveStateDiagnosticIfChanged(
@@ -603,6 +645,13 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     NSLog("[SagaTrail Watch] Sending to Watch (type: %@, durable: %@, context: %@, state: %ld, reachable: %@)",
           type, String(durable), String(preferApplicationContext),
           session.activationState.rawValue, String(session.isReachable))
+    if var poiData = poiTransportDiagnostics(for: message) {
+      poiData["channel"] = preferApplicationContext ? "applicationContext" : "action"
+      poiData["durable"] = durable
+      poiData["wcActivated"] = session.activationState == .activated
+      poiData["wcReachable"] = session.isReachable
+      SagaTrailPhoneRemoteDiagnostics.log("partner POI transport send started", data: poiData)
+    }
     var contextUpdated = false
     if durable {
       // Application context is replaceable state, not an action queue. Safety
@@ -616,6 +665,11 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
           try session.updateApplicationContext(message)
           contextUpdated = true
           NSLog("[SagaTrail Watch] application context updated (type: %@)", type)
+           if var poiData = poiTransportDiagnostics(for: message) {
+             poiData["channel"] = "applicationContext"
+             poiData["outcome"] = "updated"
+             SagaTrailPhoneRemoteDiagnostics.log("partner POI application context updated", data: poiData)
+           }
         } catch {
           NSLog("[SagaTrail Watch] Could not update application context: %@", error.localizedDescription)
         }
@@ -628,6 +682,12 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if session.isReachable {
       session.sendMessage(message, replyHandler: nil) { error in
         NSLog("[SagaTrail Watch] Direct message failed (type: %@); error: %@", type, error.localizedDescription)
+        if var poiData = poiTransportDiagnostics(for: message) {
+          poiData["channel"] = "direct"
+          poiData["outcome"] = "failed"
+          poiData["errorCode"] = (error as NSError).code
+          SagaTrailPhoneRemoteDiagnostics.log("partner POI direct message failed", data: poiData)
+        }
         // Reachability is only a point-in-time hint. Retain critical state
         // when the direct channel fails.
         if durable || preferApplicationContext {
@@ -636,9 +696,19 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
         }
       }
       NSLog("[SagaTrail Watch] Direct message submitted (type: %@)", type)
+      if var poiData = poiTransportDiagnostics(for: message) {
+        poiData["channel"] = "direct"
+        poiData["outcome"] = "submitted"
+        SagaTrailPhoneRemoteDiagnostics.log("partner POI direct message submitted", data: poiData)
+      }
     } else if !contextUpdated && !durable {
       session.transferUserInfo(message)
       NSLog("[SagaTrail Watch] transferUserInfo fallback queued (not reachable, type: %@)", type)
+      if var poiData = poiTransportDiagnostics(for: message) {
+        poiData["channel"] = "transferUserInfo"
+        poiData["outcome"] = "queued"
+        SagaTrailPhoneRemoteDiagnostics.log("partner POI transfer fallback queued", data: poiData)
+      }
     }
   }
 

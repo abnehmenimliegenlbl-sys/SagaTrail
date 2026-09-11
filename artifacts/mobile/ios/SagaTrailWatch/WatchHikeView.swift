@@ -170,10 +170,21 @@ struct WatchHikeView: View {
           .tabViewStyle(.verticalPage)
           .frame(maxHeight: .infinity)
           .onChange(of: state.poiStory?.id) { _, id in
+            SagaTrailWatchRemoteDiagnostics.log("partner POI page state changed", data: [
+              "poiStoryPresent": id != nil,
+              "poiStoryId": id ?? "none",
+              "pendingOpen": pendingPoiStoryPage,
+              "selectedPageBefore": selectedPage,
+            ])
             if id != nil {
               if pendingPoiStoryPage || selectedPage != 4 {
                 selectedPage = 4
                 poiTextPage = 0
+                SagaTrailWatchRemoteDiagnostics.log("partner POI page selected", data: [
+                  "poiStoryId": id ?? "none",
+                  "reason": pendingPoiStoryPage ? "confirmed_pending" : "state_arrived",
+                  "selectedPage": 4,
+                ])
               }
               pendingPoiStoryPage = false
             } else if selectedPage == 4 {
@@ -342,6 +353,14 @@ struct WatchHikeView: View {
       SagaTrailAlertOverlay(title: alert.title, message: alert.body, isDestructive: false) {
         Button {
           let shouldOpenPoiStory = alert.action == "openPoiStory"
+          if shouldOpenPoiStory {
+            SagaTrailWatchRemoteDiagnostics.log("partner POI alert confirmed", data: [
+              "liveStatePoiStoryPresent": hike.state?.poiStory != nil,
+              "liveStatePoiStoryId": hike.state?.poiStory?.id ?? "none",
+              "selectedPageBefore": selectedPage,
+              "pendingOpenBefore": pendingPoiStoryPage,
+            ])
+          }
           hike.activeAlert = nil
           if shouldOpenPoiStory {
             pendingPoiStoryPage = true
@@ -353,6 +372,15 @@ struct WatchHikeView: View {
             if hike.state?.poiStory != nil {
               selectedPage = 4
               pendingPoiStoryPage = false
+              SagaTrailWatchRemoteDiagnostics.log("partner POI page selected immediately after confirmation", data: [
+                "poiStoryId": hike.state?.poiStory?.id ?? "none",
+                "selectedPage": 4,
+              ])
+            } else {
+              SagaTrailWatchRemoteDiagnostics.log("partner POI page selection queued after confirmation", data: [
+                "selectedPage": selectedPage,
+                "pendingOpen": true,
+              ])
             }
           }
         } label: {
