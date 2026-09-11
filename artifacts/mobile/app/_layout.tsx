@@ -127,6 +127,7 @@ function ClerkGuard({ children }: { children: React.ReactNode }) {
 function RootLayoutNav() {
   const { hydrated, profile } = useApp();
   const { isLoaded, isSignedIn } = useAuth();
+  const updatesState = Updates.useUpdates();
   usePushToken();
   const segments = useSegments();
   const router = useRouter();
@@ -134,6 +135,7 @@ function RootLayoutNav() {
   const [permissionGateState, setPermissionGateState] =
     useState<RequiredPermissionsGateState>("idle");
   const permissionCheckGenerationRef = useRef(0);
+  const updateReloadStartedRef = useRef(false);
   const shouldCheckPermissions = hydrated && isLoaded && isSignedIn && Boolean(profile);
 
   const refreshRequiredPermissions = useCallback(async (reason = "app-start") => {
@@ -209,6 +211,34 @@ function RootLayoutNav() {
       updateSubscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      __DEV__ ||
+      !Updates.isEnabled ||
+      !updatesState.isUpdatePending ||
+      updatesState.isRestarting ||
+      updateReloadStartedRef.current
+    ) {
+      return;
+    }
+    updateReloadStartedRef.current = true;
+    appRuntimeLog("activating downloaded update", {
+      ...getRuntimeDiagnostics(),
+      restartCount: updatesState.restartCount,
+    });
+    void Updates.reloadAsync().catch((error) => {
+      updateReloadStartedRef.current = false;
+      appRuntimeLog("downloaded update activation failed", {
+        ...getRuntimeDiagnostics(),
+        message: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }, [
+    updatesState.isRestarting,
+    updatesState.isUpdatePending,
+    updatesState.restartCount,
+  ]);
 
   // Globale Notification-Listener fuer Haptik-Feedback.
   // Deckt Remote-Push-Nachrichten (Wetter, Marketing) ab, die ankommen

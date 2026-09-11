@@ -1,4 +1,4 @@
-import { DeviceEventEmitter, NativeModules, Platform } from "react-native";
+import { DeviceEventEmitter, NativeEventEmitter, NativeModules, Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import {
   isMeaningfulWatchStatusUpdate,
@@ -641,6 +641,9 @@ export function subscribeToCompanionEvents(handlers: {
     platform: Platform.OS,
     nativeModuleAvailable: true,
   });
+  const eventEmitter = Platform.OS === "ios"
+    ? new NativeEventEmitter(NativeModules.SagaTrailCompanion)
+    : DeviceEventEmitter;
   let active = true;
   let lastForwardedHeartRateAt = 0;
   const forwardHeartRate = (event: HeartRateEvent | null | undefined) => {
@@ -664,16 +667,16 @@ export function subscribeToCompanionEvents(handlers: {
       });
     }
   };
-  const heartRate = DeviceEventEmitter.addListener(
+  const heartRate = eventEmitter.addListener(
     "SagaTrailCompanion.heartRate",
     forwardHeartRate,
   );
-  const sos = DeviceEventEmitter.addListener("SagaTrailCompanion.sosRequest", (event: SosRequestEvent) => {
+  const sos = eventEmitter.addListener("SagaTrailCompanion.sosRequest", (event: SosRequestEvent) => {
     const requestedAt = finiteOrNull(event?.requestedAt) ?? Date.now();
     watchCompanionLog("SOS event received by JS", { requestedAt });
     handlers.onSosRequest({ requestedAt });
   });
-  const command = DeviceEventEmitter.addListener("SagaTrailCompanion.hikeCommand", (event: HikeCommandEvent) => {
+  const command = eventEmitter.addListener("SagaTrailCompanion.hikeCommand", (event: HikeCommandEvent) => {
     if (event?.command === "start" || event?.command === "pause" || event?.command === "resume") {
       watchCompanionLog("hike command received by JS", { command: event.command });
       handlers.onHikeCommand({ command: event.command });
@@ -696,7 +699,7 @@ export function subscribeToCompanionEvents(handlers: {
       });
     }
   });
-  const nativeEvent = DeviceEventEmitter.addListener("SagaTrailWatchEvent", (event: {
+  const nativeEvent = eventEmitter.addListener("SagaTrailWatchEvent", (event: {
     type?: unknown;
     payload?: { message?: unknown };
   }) => {
@@ -706,7 +709,7 @@ export function subscribeToCompanionEvents(handlers: {
       });
     }
   });
-  const nativeStatus = DeviceEventEmitter.addListener("SagaTrailWatchStatus", (event: {
+  const nativeStatus = eventEmitter.addListener("SagaTrailWatchStatus", (event: {
     reachable?: unknown;
     paired?: unknown;
     watchAppInstalled?: unknown;
