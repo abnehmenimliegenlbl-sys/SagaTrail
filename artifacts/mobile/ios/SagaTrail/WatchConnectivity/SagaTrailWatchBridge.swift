@@ -979,7 +979,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
     NSLog("[SagaTrail Watch] Processing incoming phone action (type: %@)", type)
     if type == "watchReady" {
-      connection.resendLatestLiveState()
+      resendLatestLiveState()
       return true
     }
     if type == "heartRate" {

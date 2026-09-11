@@ -15,7 +15,6 @@
 - [DB schema dist rebuild](db-schema-dist-rebuild.md) — after adding columns to profiles.ts, run `cd lib/db && npx tsc -p tsconfig.json` to regenerate dist/*.d.ts; without this api-server typecheck sees stale types (property does not exist errors).
 - [Drizzle dev schema push](drizzle-dev-schema-push.md) — new tables and existing constraint conflicts can require a pseudo-TTY; choose create/no-truncate, then restart the API.
 - [SagaTrail content model](sagatrail-content-model.md) — curated public-domain sagas only (no AI gen), routes resolve to NEAREST saga; routes are ONLINE-ONLY (no route seed/offline fallback); missing per-lang summary silently falls back to German.
-- [SagaTrail map & live GPS](sagatrail-map-gps.md) — Carto Voyager + Waymarked Trails Leaflet map (not swisstopo) in WebView/iframe + real GPS narration; OSM overlays must be fetched server-side, not from the client.
 - [SagaTrail route fetching](sagatrail-route-fetching.md) — per-canton OSM routes use a bbox pre-scan (lower-bound length) to surface short routes; cap goes AFTER the distance filter, never before.
 - [OSM stitching lessons](sagatrail-stitching-ordered-traversal.md) — stitch in OSM member order (greedy fails on loops); kink-optimizers need a length budget; version-gate cleanups; never grep for literal version numbers left behind.
 - [SagaTrail route cache warm-up](sagatrail-route-cache-warmup.md) — cold Overpass search looked like "Server nicht erreichbar"; server now pre-warms all 26 canton caches at startup, background/staggered.
@@ -51,7 +50,6 @@
 - [Start choice GPS gate](sagatrail-start-choice-gps-gate.md) — story readiness must not set startReached; start-point/fastest-route choice depends on real GPS distance and off-route state.
 - [SagaTrail compass pointer](sagatrail-compass-pointer.md) — dedicated star-and-mountain needle rotates as one unit so the star always points outward; do not substitute SparkMountain.
 - [Compass permission retry](sagatrail-compass-permission-retry.md) — retry native heading after location permission resolves; the initial iOS watch can race the OS permission prompt.
-- [SagaTrail Kantonswappen-Assets](sagatrail-canton-wappen.md) — Wikimedia blockiert diese Sandbox komplett (429 überall); echte Wappen-SVGs kommen von GitHub `nzzdev/ch-canton-symbols`.
 - [SagaTrail step counter](sagatrail-step-counter.md) — expo-sensors Pedometer, per-hike only, silent no-op fallback when sensor unavailable (mirrors GPS-unavailable pattern).
 - [SagaTrail TTS OpenAI-Rueckfall](sagatrail-tts-openai-fallback.md) — wenn ALLE ElevenLabs-Stimmen scheitern (Kontingent/Key), springt OpenAI (gpt-audio, neutral, kein Akzent) automatisch ein.
 - [RN border-color precedence](rn-border-color-precedence.md) — per-side border*Color in a shared glass/3D mixin always beats a call site's borderColor; caused app-wide "black border" bug despite correct theme color.
@@ -64,7 +62,6 @@
 - [SagaTrail progress sync + Zod stripping](sagatrail-progress-sync.md) — hikeHistory preserves full objects; orval Zod strips to {id} despite additionalProperties:true; server uses req.body directly + no SyncMyProgressResponse.parse(); client merges local-first.
 - [Stripe Partner-Onboarding](sagatrail-stripe-partner.md) — Vollflow: WP-Formular → Stripe-Checkout → Webhook → DB-Insert + Magic-Link; Produkte by Name suchen, nie hardcoded Price-IDs.
 - [Partner-Öffnungszeiten Datenmodell](sagatrail-partner-oeffnungszeiten.md) — JSON in TEXT-Feld; Wochenplan+Saison+19 Feiertage; API gibt istOffen/schliesstUm/oeffnetAmTag/oeffnetUm zurück.
-- [SagaTrail partner admin](sagatrail-partner-admin.md) — restaurants/shops CRUD lives in `partners` table + `/api/admin/partner*`, reusing existing ADMIN_TOKEN pattern; no public read endpoint yet.
 - [SagaTrail Sagenpakete workflow](sagatrail-sagenpakete-workflow.md) — 10-Schritt-Prozess für neue Kantone: JSON analysieren, Duplikate entfernen, auf 8 auffüllen, bildmotiv motif-focused, Python-Script + write-Tool (kein Heredoc).
 - [Balanced brace JSON extraction](sagatrail-json-multiline-extraction.md) — never use `re.search(r'\{.+\}')` on curatedSagasPakete.ts summaries; some span multiple lines; use balanced-brace tracker or risk erasing all but 2 languages silently.
 - [RC Test key vs iOS key in dev builds](sagatrail-rc-key-devbuild.md) — `__DEV__` is true in TestFlight dev builds; using it to route to the web test key breaks native StoreKit receipt validation ("The receipt is not valid"); only route to test key on `Platform.OS==="web"` or `executionEnvironment==="storeClient"`.
@@ -75,9 +72,9 @@
 - [Start-route choice atomicity](sagatrail-start-route-choice-atomicity.md) — route recalculation must wait until the start mode is set; position and choice can arrive in separate React renders.
 - [Drizzle fire-and-forget needs .execute()](drizzle-execute-required.md) — fire-and-forget DB writes must call .execute().catch(...); plain .catch() on a query builder without .execute() silently does nothing in Drizzle.
 - [EAS build/submit from workspace](eas-build-from-workspace.md) — temp-workflow pattern (bash 120s limit), EXPO_APPLE_TEAM_ID pflicht (TTY-Prompt haengt sonst), ERRORED-Submission ohne Fehlertext = meist doppelte buildNumber in ASC; autoIncrement anlassen.
+- [EAS Xcode log compression](eas-xcode-log-compression.md) — signed EAS Xcode logs arrive Brotli-compressed despite text/plain; decode before grepping compiler diagnostics.
 - [WP lead booking action](sagatrail-wp-lead-book.md) — POST /admin/partner-leads/wp-book sendet einzelne PartnerLeads an WP via action=sagatrail_book_lead; WP-Plugin muss diesen Handler implementieren; sagatrail_book_all läuft im Hintergrund (202).
 - [SagaTrail free-hike gating](sagatrail-free-hike-gating.md) — non-premium gate is `!premium && freeHikeUsed`, NIE `isAnchorPlace`; Regel in kanton-, route- und saga-Screen synchron halten.
-- [CopyPodModuleMaps ist SCHÄDLICH](xcode16-archive-module-map-fix.md) — der frühere Workaround kopierte modulemaps ohne umbrella headers → "umbrella header not found"; entfernt, echte Ursache war UUID-Kollision (siehe clerk-ios-spm-cocoapods.md).
 - [Route canton = start point only](sagatrail-canton-startpoint-only.md) — user rejected multi-canton; one canton per route (start point); cantons TEXT[] column is inert, don't re-add backfill.
 - [Overpass chunked geometry fallback](overpass-chunked-fallback.md) — huge relations timing out on `out geom;`: load member list, expand Etappen, fetch ways in batches; node-only relations → geometry_version=-1.
 - [Server-side background jobs](background-jobs-server-side.md) — nohup/setsid shell jobs get killed & /tmp wiped on restart; long batch loops must run im API-Server (warm-all-Muster, z.B. /admin/routes/enrich-all).
@@ -103,7 +100,6 @@
 - [Official SchweizMobil geometry export](sagatrail-schweizmobil-official-gpkg.md) — missing local routes use the official LV95 Wanderland GeoPackage; ordered Etappen beat aggregate Route parts.
 - [Official Wanderland catalog imports](sagatrail-official-catalog-import.md) — order multipart geometry by shared endpoints; foreign-start stages use their first Swiss/LI point for catalog canton.
 - [Local regional route logos](sagatrail-local-route-logos.md) — Expo must bundle available regional/local SVGs locally; images.schweizmobil.ch returns 403 to runtime SvgUri requests.
-- [Route 28 geometry source](sagatrail-route28-geometry.md) — current dev track is the real Freiburg Tourismus Saane-Trails GPX fallback; replace when an authoritative SchweizMobil export is available.
 - [Premium partner proximity](sagatrail-premium-partner-proximity.md) — mark partner announcements completed only after a successful generated text; transient failures must remain retryable.
 - [POI approach categories](sagatrail-poi-approach-categories.md) — a POI can load and be tappable yet miss the 200/50 m flow when its OSM kind is absent from the mobile approach set.
 - [POI tile closing](sagatrail-poi-tile-closing.md) — auto-opened POI tiles close after three clear consecutive distance increases, with a 5 m GPS-noise tolerance.
