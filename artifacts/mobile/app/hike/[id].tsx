@@ -1566,6 +1566,31 @@ export default function LiveHike() {
           await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
           continue;
         }
+        if (
+          permission.status === Location.PermissionStatus.UNDETERMINED &&
+          permission.canAskAgain
+        ) {
+          locationPermissionLog("read requesting undetermined permission", {
+            ...locationDiagnosticContext(),
+            traceId,
+            reason,
+            elapsedMs: Date.now() - startedAt,
+          });
+          const requested = await Location.requestForegroundPermissionsAsync();
+          locationPermissionLog("read request finished", {
+            ...locationDiagnosticContext(),
+            traceId,
+            reason,
+            elapsedMs: Date.now() - startedAt,
+            status: requested.status,
+            granted: requested.granted,
+            canAskAgain: requested.canAskAgain,
+          });
+          if (requested.granted) {
+            setLocState("granted");
+            return true;
+          }
+        }
         // A confirmed non-granted response is different from a failed read:
         // only the former should show the action banner.
         setLocState("denied");
