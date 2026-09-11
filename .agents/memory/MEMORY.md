@@ -153,3 +153,4 @@
 - [Modern Watch app lifecycle](sagatrail-watch-frontmost-timeout.md) — never instantiate WKExtension in a single-target SwiftUI Watch app; use scenePhase for foreground state.
 - [Watch live-state finite values](sagatrail-watch-live-state-finite.md) — one NaN in an active derived field rejects the complete HikeLiveState before WatchConnectivity.
 - [Watch action remote diagnostics](sagatrail-watch-action-diagnostics.md) — safety actions need privacy-safe remote logs at every Watch→phone→JS boundary; JS-only logs cannot locate pre-JS failures.
+- [Watch alert/live-state ordering](sagatrail-watch-alert-live-state-order.md) — Watch alerts and live-state payloads can arrive separately; action confirmations must queue navigation until the state page exists.

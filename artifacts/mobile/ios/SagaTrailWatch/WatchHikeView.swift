@@ -120,6 +120,10 @@ struct WatchHikeView: View {
   @State private var selectedPage = 0
   @State private var pageCrownPosition = 0.0
   @State private var poiTextPage = 0.0
+  // The alert and the live-state payload travel over separate
+  // WatchConnectivity deliveries. Keep an explicit open request when the
+  // user confirms before the POI story has reached the Watch.
+  @State private var pendingPoiStoryPage = false
   @State private var isMapPresented = false
   private var copy: WatchCopy { WatchCopy(language: hike.state?.language ?? "de") }
   private var pageCount: Int { hike.state?.poiStory == nil ? 4 : 5 }
@@ -167,8 +171,11 @@ struct WatchHikeView: View {
           .frame(maxHeight: .infinity)
           .onChange(of: state.poiStory?.id) { _, id in
             if id != nil {
-              selectedPage = 4
-              poiTextPage = 0
+              if pendingPoiStoryPage || selectedPage != 4 {
+                selectedPage = 4
+                poiTextPage = 0
+              }
+              pendingPoiStoryPage = false
             } else if selectedPage == 4 {
               selectedPage = 0
             }
@@ -334,10 +341,19 @@ struct WatchHikeView: View {
     } else if let alert = hike.activeAlert {
       SagaTrailAlertOverlay(title: alert.title, message: alert.body, isDestructive: false) {
         Button {
+          let shouldOpenPoiStory = alert.action == "openPoiStory"
           hike.activeAlert = nil
-          if alert.action == "openPoiStory", hike.state?.poiStory != nil {
-            selectedPage = 4
+          if shouldOpenPoiStory {
+            pendingPoiStoryPage = true
             poiTextPage = 0
+            // The live state can already be present, or it can arrive just
+            // after this alert through a different WatchConnectivity channel.
+            // In the latter case the onChange handler above completes the
+            // navigation once the page becomes available.
+            if hike.state?.poiStory != nil {
+              selectedPage = 4
+              pendingPoiStoryPage = false
+            }
           }
         } label: {
           Text("OK")
