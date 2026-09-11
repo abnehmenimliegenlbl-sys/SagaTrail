@@ -177,9 +177,9 @@ struct WatchHikeView: View {
               "selectedPageBefore": selectedPage,
             ])
             if id != nil {
+              poiTextPage = 0
               if pendingPoiStoryPage || selectedPage != 4 {
                 selectedPage = 4
-                poiTextPage = 0
                 SagaTrailWatchRemoteDiagnostics.log("partner POI page selected", data: [
                   "poiStoryId": id ?? "none",
                   "reason": pendingPoiStoryPage ? "confirmed_pending" : "state_arrived",

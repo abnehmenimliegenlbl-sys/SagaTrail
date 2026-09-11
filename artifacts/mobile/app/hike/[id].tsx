@@ -1289,6 +1289,18 @@ export default function LiveHike() {
   const [nearbyPoiWiki, setNearbyPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
   const [nearbyPoiWikiPoiId, setNearbyPoiWikiPoiId] = useState<string | null>(null);
   const [watchPoiStory, setWatchPoiStory] = useState<WatchPoiStory | null>(null);
+  const previousNearbyPoiIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const nextPoiId = nearbyPoi?.id ?? null;
+    const previousPoiId = previousNearbyPoiIdRef.current;
+    if (previousPoiId !== null && previousPoiId !== nextPoiId) {
+      // The Watch mirrors the currently active automatic POI card. Clear the
+      // old story immediately when the phone moves to a different POI (or no
+      // longer has one), instead of waiting for the old narration callback.
+      setWatchPoiStory(null);
+    }
+    previousNearbyPoiIdRef.current = nextPoiId;
+  }, [nearbyPoi?.id]);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
