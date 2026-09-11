@@ -469,12 +469,19 @@ final class WatchHikeModel: NSObject, ObservableObject {
               haptic ?? "none", String(isSceneActive), String(action != nil))
         playAlertHaptic(haptic)
         if isSceneActive {
-          activeAlert = WatchAlert(title: title, body: body, action: action)
           if action == "openPoiStory" {
+            // Partner POIs are content navigation, not blocking alerts. The
+            // live state owns the actual story page and WatchHikeView selects
+            // it as soon as the story arrives. Showing an alert on top would
+            // make the iPhone card open directly while the Watch appears not
+            // to react until the user confirms a redundant prompt.
             SagaTrailWatchRemoteDiagnostics.log("partner POI alert shown in Watch UI", data: [
               "liveStatePoiStoryPresent": state?.poiStory != nil,
               "liveStatePoiStoryId": state?.poiStory?.id ?? "none",
             ])
+            activeAlert = nil
+          } else {
+            activeAlert = WatchAlert(title: title, body: body, action: action)
           }
         } else {
           scheduleSystemNotification(title: title, body: body)
