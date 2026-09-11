@@ -3159,7 +3159,7 @@ export default function LiveHike() {
               action: watchDiscoveryAlert.action,
               critical: false,
             }
-        : speaking
+        : speaking && !watchPoiStory
           ? {
               kind: "narration" as const,
               text: storyLanguage === "de" || storyLanguage === "gsw"
