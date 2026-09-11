@@ -3,7 +3,7 @@ import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { Pedometer } from "expo-sensors";
 import React, { useEffect, useState } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { AppState, Platform, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { GLAS_3D } from "@/constants/depth";
@@ -11,7 +11,10 @@ import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { NATIVE_MODULES_AVAILABLE } from "@/lib/nativeEnv";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
-import { isSpeechPermissionGranted } from "@/lib/speechPermission";
+import {
+  isSpeechPermissionGranted,
+  readSpeechPermissionWithRetry,
+} from "@/lib/speechPermission";
 import { PrimaryButton } from "./PrimaryButton";
 
 /**
@@ -60,8 +63,10 @@ export function PermissionsStep({
       try {
         const foregroundLocation = await Location.getForegroundPermissionsAsync();
         const microphone = NATIVE_MODULES_AVAILABLE
-          ? await (await import("expo-speech-recognition")).ExpoSpeechRecognitionModule.getPermissionsAsync()
-          : { granted: false };
+          ? await readSpeechPermissionWithRetry(async () =>
+              (await import("expo-speech-recognition")).ExpoSpeechRecognitionModule.getPermissionsAsync()
+            )
+          : "denied";
         const motion = await Pedometer.getPermissionsAsync();
         const notifications = await Notifications.getPermissionsAsync();
         if (cancelled) return;
@@ -70,7 +75,7 @@ export function PermissionsStep({
             foregroundLocation.status === Location.PermissionStatus.GRANTED
               ? "granted"
               : "pending",
-          microphone: isSpeechPermissionGranted(microphone) ? "granted" : "pending",
+          microphone: microphone === "granted" ? "granted" : "pending",
           motion: motion.granted ? "granted" : "pending",
           notifications: notifications.granted ? "granted" : "pending",
         });
@@ -80,8 +85,12 @@ export function PermissionsStep({
       }
     };
     void readStatuses();
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") void readStatuses();
+    });
     return () => {
       cancelled = true;
+      subscription.remove();
     };
   }, []);
 

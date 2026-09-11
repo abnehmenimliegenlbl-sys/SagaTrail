@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 
 import { matchDecisionOption, VoiceMatchOption } from "./decisionVoiceMatch";
 import { NATIVE_MODULES_AVAILABLE } from "./nativeEnv";
-import { isSpeechPermissionGranted } from "./speechPermission";
+import { readSpeechPermissionWithRetry, isSpeechPermissionGranted } from "./speechPermission";
 import { Lang, SPEECH_LOCALE } from "./storyContent";
 
 /**
@@ -72,14 +73,28 @@ export function useVoiceDecision(
   const [supported, setSupported] = useState(
     NATIVE_SPEECH_AVAILABLE && ExpoSpeechRecognitionModule != null
   );
+  const [permissionRevision, setPermissionRevision] = useState(0);
   const restartsRef = useRef(0);
   const matchedRef = useRef(false);
+  const permissionBlockedRef = useRef(false);
+  const listeningRef = useRef(false);
   const onMatchRef = useRef(onMatch);
   onMatchRef.current = onMatch;
   const optionsRef = useRef(options);
   optionsRef.current = options;
   const langRef = useRef(lang);
   langRef.current = lang;
+  listeningRef.current = listening;
+
+  useEffect(() => {
+    if (!active) return;
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active" && !listeningRef.current) {
+        setPermissionRevision((value) => value + 1);
+      }
+    });
+    return () => subscription.remove();
+  }, [active]);
 
   const stopListening = useCallback(async () => {
     try {
@@ -111,6 +126,7 @@ export function useVoiceDecision(
     let cancelled = false;
     restartsRef.current = 0;
     matchedRef.current = false;
+    permissionBlockedRef.current = false;
     setLastTranscript(null);
 
     (async () => {
@@ -121,17 +137,24 @@ export function useVoiceDecision(
         // ein verspäteter Reset das Mikrofon nach dem Start wieder deaktivieren.
         await new Promise<void>((r) => setTimeout(r, 250));
         if (cancelled) return;
-        let perm = await ExpoSpeechRecognitionModule!.getPermissionsAsync();
+        const permissionState = await readSpeechPermissionWithRetry(
+          () => ExpoSpeechRecognitionModule!.getPermissionsAsync(),
+        );
         if (cancelled) return;
-        if (!isSpeechPermissionGranted(perm)) {
+        if (permissionState === "unknown") {
+          setListening(false);
+          return;
+        }
+        if (permissionState === "denied") {
           // The onboarding normally requests this already, but an OTA update
           // or a stale native permission read can leave the decision flow
           // without a confirmed grant. Ask once at the actual listening
           // boundary instead of starting recognition blindly.
-          perm = await ExpoSpeechRecognitionModule!.requestPermissionsAsync();
+          const perm = await ExpoSpeechRecognitionModule!.requestPermissionsAsync();
           if (cancelled) return;
           if (!isSpeechPermissionGranted(perm)) {
-            setSupported(false);
+            permissionBlockedRef.current = true;
+            setListening(false);
             return;
           }
         }
@@ -146,7 +169,10 @@ export function useVoiceDecision(
         });
         setListening(true);
       } catch {
-        if (!cancelled) setSupported(false);
+        if (!cancelled) {
+          permissionBlockedRef.current = true;
+          setListening(false);
+        }
       }
     })();
 
@@ -154,7 +180,7 @@ export function useVoiceDecision(
       cancelled = true;
       void stopListening();
     };
-  }, [active, supported, stopListening]);
+  }, [active, permissionRevision, supported, stopListening]);
 
   useSpeechRecognitionEvent("result", (event) => {
     if (!active || matchedRef.current) return;
@@ -182,6 +208,10 @@ export function useVoiceDecision(
       setListening(false);
       return;
     }
+    if (permissionBlockedRef.current) {
+      setListening(false);
+      return;
+    }
     if (restartsRef.current >= MAX_LISTEN_RESTARTS) {
       setListening(false);
       return;
@@ -200,7 +230,7 @@ export function useVoiceDecision(
 
   useSpeechRecognitionEvent("error", (event) => {
     if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-      setSupported(false);
+      permissionBlockedRef.current = true;
       setListening(false);
       return;
     }
