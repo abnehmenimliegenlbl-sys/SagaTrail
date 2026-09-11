@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { matchDecisionOption, VoiceMatchOption } from "./decisionVoiceMatch";
 import { NATIVE_MODULES_AVAILABLE } from "./nativeEnv";
+import { isSpeechPermissionGranted } from "./speechPermission";
 import { Lang, SPEECH_LOCALE } from "./storyContent";
 
 /**
@@ -122,7 +123,7 @@ export function useVoiceDecision(
         if (cancelled) return;
         const perm = await ExpoSpeechRecognitionModule!.getPermissionsAsync();
         if (cancelled) return;
-        if (!perm.granted) {
+        if (!isSpeechPermissionGranted(perm)) {
           setSupported(false);
           return;
         }

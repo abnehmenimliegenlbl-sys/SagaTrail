@@ -11,6 +11,7 @@ import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { NATIVE_MODULES_AVAILABLE } from "@/lib/nativeEnv";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
+import { isSpeechPermissionGranted } from "@/lib/speechPermission";
 import { PrimaryButton } from "./PrimaryButton";
 
 /**
@@ -69,7 +70,7 @@ export function PermissionsStep({
             foregroundLocation.status === Location.PermissionStatus.GRANTED
               ? "granted"
               : "pending",
-          microphone: microphone.granted ? "granted" : "pending",
+          microphone: isSpeechPermissionGranted(microphone) ? "granted" : "pending",
           motion: motion.granted ? "granted" : "pending",
           notifications: notifications.granted ? "granted" : "pending",
         });
@@ -109,7 +110,7 @@ export function PermissionsStep({
         if (NATIVE_MODULES_AVAILABLE) {
           const mod = await import("expo-speech-recognition");
           const perm = await mod.ExpoSpeechRecognitionModule.requestPermissionsAsync();
-          granted = !!perm.granted;
+          granted = isSpeechPermissionGranted(perm);
         } else {
           granted = false;
         }
