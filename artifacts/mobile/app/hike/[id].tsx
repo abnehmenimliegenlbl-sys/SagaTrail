@@ -25,6 +25,7 @@ import {
 } from "@/lib/audioPlayer";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticRigid, hapticSuccess } from "@/lib/haptics";
 import * as Location from "expo-location";
+import * as Updates from "expo-updates";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { DeviceMotion, Magnetometer, Pedometer } from "expo-sensors";
 
@@ -160,6 +161,10 @@ import { makeLogger } from "@/lib/debugLog";
 
 const watchLiveStateLog = makeLogger("[WATCH-STATE]", "watch_state");
 const locationPermissionLog = makeLogger("[LOCATION-PERM]", "location_permission");
+const locationUpdateContext = () => ({
+  updateId: Updates.updateId ?? null,
+  isEmbeddedLaunch: Updates.isEmbeddedLaunch,
+});
 
 const WEB_TOP = 67;
 const COMPASS_GOLD = "#D8A84E";
@@ -1447,6 +1452,7 @@ export default function LiveHike() {
     try {
       const current = await Location.getForegroundPermissionsAsync();
       locationPermissionLog("request started", {
+        ...locationUpdateContext(),
         status: current.status,
         granted: current.granted,
         canAskAgain: current.canAskAgain,
@@ -1457,6 +1463,7 @@ export default function LiveHike() {
           : await Location.requestForegroundPermissionsAsync();
 
       locationPermissionLog("request finished", {
+        ...locationUpdateContext(),
         status: permission.status,
         granted: permission.granted,
         canAskAgain: permission.canAskAgain,
@@ -1485,6 +1492,7 @@ export default function LiveHike() {
       try {
         const permission = await Location.getForegroundPermissionsAsync();
         locationPermissionLog("read", {
+          ...locationUpdateContext(),
           reason,
           attempt: attempt + 1,
           status: permission.status,
@@ -1505,6 +1513,7 @@ export default function LiveHike() {
         return false;
       } catch (error) {
         locationPermissionLog("read failed", {
+          ...locationUpdateContext(),
           reason,
           attempt: attempt + 1,
           errorName: error instanceof Error ? error.name : "unknown",
