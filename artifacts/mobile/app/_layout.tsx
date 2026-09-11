@@ -22,6 +22,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import Constants from "expo-constants";
+import * as Updates from "expo-updates";
 import {
   clearKeychainOnFreshInstall,
   clerkTokenCache,
@@ -35,7 +36,7 @@ import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import React, { useEffect } from "react";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -52,9 +53,12 @@ import "@/lib/backgroundLocation";
 import { alert, AppAlertProvider } from "@/lib/appAlert";
 import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
 import { hapticMedium, hapticWarning } from "@/lib/haptics";
+import { makeLogger } from "@/lib/debugLog";
+import { getRuntimeDiagnostics } from "@/lib/runtimeDiagnostics";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 const CRASH_KEY = "__sagatrail_last_crash__";
+const appRuntimeLog = makeLogger("[APP-RUNTIME]", "app_runtime");
 
 async function checkPreviousCrash() {
   try {
@@ -117,6 +121,41 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
   const c = useColors();
+
+  useEffect(() => {
+    appRuntimeLog("runtime snapshot", {
+      ...getRuntimeDiagnostics(),
+      appState: AppState.currentState,
+    });
+
+    const appStateSubscription = AppState.addEventListener("change", (nextState) => {
+      appRuntimeLog("app state", {
+        state: nextState,
+        ...getRuntimeDiagnostics(),
+      });
+    });
+    const updateSubscription = Updates.addUpdatesStateChangeListener(({ context }) => {
+      appRuntimeLog("updates state", {
+        ...getRuntimeDiagnostics(),
+        isStartupProcedureRunning: context.isStartupProcedureRunning,
+        isUpdateAvailable: context.isUpdateAvailable,
+        isUpdatePending: context.isUpdatePending,
+        isChecking: context.isChecking,
+        isDownloading: context.isDownloading,
+        isRestarting: context.isRestarting,
+        restartCount: context.restartCount,
+        sequenceNumber: context.sequenceNumber,
+        downloadProgress: context.downloadProgress,
+        hasCheckError: Boolean(context.checkError),
+        hasDownloadError: Boolean(context.downloadError),
+      });
+    });
+
+    return () => {
+      appStateSubscription.remove();
+      updateSubscription.remove();
+    };
+  }, []);
 
   // Globale Notification-Listener fuer Haptik-Feedback.
   // Deckt Remote-Push-Nachrichten (Wetter, Marketing) ab, die ankommen

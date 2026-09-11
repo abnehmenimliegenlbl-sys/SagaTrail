@@ -25,7 +25,6 @@ import {
 } from "@/lib/audioPlayer";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticRigid, hapticSuccess } from "@/lib/haptics";
 import * as Location from "expo-location";
-import * as Updates from "expo-updates";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { DeviceMotion, Magnetometer, Pedometer } from "expo-sensors";
 
@@ -91,6 +90,7 @@ import {
 } from "@/lib/backgroundLocation";
 import { bboxAroundGeometry, bearingDeg, compassIndex, decodePolyline6, distanzZuSegmentKm, filterByRouteCorridor, fortschrittAufRoute, haversineKm } from "@/lib/geo";
 import { computeRouteWaypoints, type RouteWaypoint } from "@/lib/routeWaypoints";
+import { getRuntimeDiagnostics } from "@/lib/runtimeDiagnostics";
 import {
   effectiveStoryLanguage,
   formatSpokenDistance,
@@ -161,9 +161,9 @@ import { makeLogger } from "@/lib/debugLog";
 
 const watchLiveStateLog = makeLogger("[WATCH-STATE]", "watch_state");
 const locationPermissionLog = makeLogger("[LOCATION-PERM]", "location_permission");
-const locationUpdateContext = () => ({
-  updateId: Updates.updateId ?? null,
-  isEmbeddedLaunch: Updates.isEmbeddedLaunch,
+const locationDiagnosticContext = () => ({
+  ...getRuntimeDiagnostics(),
+  appState: AppState.currentState,
 });
 
 const WEB_TOP = 67;
@@ -1129,6 +1129,9 @@ export default function LiveHike() {
   }, []);
   const [locState, setLocState] = useState<LocState>("idle");
   const [locationPermissionRetry, setLocationPermissionRetry] = useState(0);
+  const locationTraceRef = useRef(0);
+  const locStateRef = useRef<LocState>("idle");
+  locStateRef.current = locState;
   const [sosOpen, setSosOpen] = useState(false);
   const [sosAcknowledgement, setSosAcknowledgement] = useState<"none" | "acknowledged" | "failed">("none");
   const [showConditionForm, setShowConditionForm] = useState(false);
@@ -1449,10 +1452,19 @@ export default function LiveHike() {
 
   const requestLocationAccess = useCallback(async () => {
     if (Platform.OS === "web") return;
+    const traceId = `request-${++locationTraceRef.current}`;
+    const startedAt = Date.now();
+    locationPermissionLog("request begin", {
+      ...locationDiagnosticContext(),
+      traceId,
+      locState: locStateRef.current,
+    });
     try {
       const current = await Location.getForegroundPermissionsAsync();
-      locationPermissionLog("request started", {
-        ...locationUpdateContext(),
+      locationPermissionLog("request preflight", {
+        ...locationDiagnosticContext(),
+        traceId,
+        elapsedMs: Date.now() - startedAt,
         status: current.status,
         granted: current.granted,
         canAskAgain: current.canAskAgain,
@@ -1463,7 +1475,9 @@ export default function LiveHike() {
           : await Location.requestForegroundPermissionsAsync();
 
       locationPermissionLog("request finished", {
-        ...locationUpdateContext(),
+        ...locationDiagnosticContext(),
+        traceId,
+        elapsedMs: Date.now() - startedAt,
         status: permission.status,
         granted: permission.granted,
         canAskAgain: permission.canAskAgain,
@@ -1478,23 +1492,39 @@ export default function LiveHike() {
       if (!permission.canAskAgain) {
         await Linking.openSettings();
       }
-    } catch {
-      setLocState("denied");
+    } catch (error) {
+      locationPermissionLog("request failed", {
+        ...locationDiagnosticContext(),
+        traceId,
+        elapsedMs: Date.now() - startedAt,
+        errorName: error instanceof Error ? error.name : "unknown",
+        errorMessage: error instanceof Error ? error.message.slice(0, 160) : "unknown",
+      });
+      // A failed native call is not proof of denial. Keep the permission
+      // banner out of the confirmed-denied state until iOS returns a result.
+      setLocState("idle");
     }
   }, []);
   const readForegroundLocationPermission = useCallback(async (reason: string) => {
     if (Platform.OS === "web") return true;
+    const traceId = `read-${++locationTraceRef.current}`;
+    const startedAt = Date.now();
+    locationPermissionLog("read begin", {
+      ...locationDiagnosticContext(),
+      traceId,
+      reason,
+      locState: locStateRef.current,
+    });
 
-    // iOS can briefly report an incomplete permission state while a freshly
-    // updated process is reconnecting to Core Location. Do not turn that
-    // transient state into the user-facing "denied" banner immediately.
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
         const permission = await Location.getForegroundPermissionsAsync();
         locationPermissionLog("read", {
-          ...locationUpdateContext(),
+          ...locationDiagnosticContext(),
+          traceId,
           reason,
           attempt: attempt + 1,
+          elapsedMs: Date.now() - startedAt,
           status: permission.status,
           granted: permission.granted,
           canAskAgain: permission.canAskAgain,
@@ -1504,41 +1534,82 @@ export default function LiveHike() {
           return true;
         }
         if (attempt < 2) {
+          locationPermissionLog("read retry scheduled", {
+            ...locationDiagnosticContext(),
+            traceId,
+            reason,
+            nextAttempt: attempt + 2,
+            elapsedMs: Date.now() - startedAt,
+          });
           await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
           continue;
         }
         // A confirmed non-granted response is different from a failed read:
         // only the former should show the action banner.
         setLocState("denied");
+        locationPermissionLog("read confirmed denied", {
+          ...locationDiagnosticContext(),
+          traceId,
+          reason,
+          elapsedMs: Date.now() - startedAt,
+          uiState: "denied",
+        });
         return false;
       } catch (error) {
         locationPermissionLog("read failed", {
-          ...locationUpdateContext(),
+          ...locationDiagnosticContext(),
+          traceId,
           reason,
           attempt: attempt + 1,
+          elapsedMs: Date.now() - startedAt,
           errorName: error instanceof Error ? error.name : "unknown",
+          errorMessage: error instanceof Error ? error.message.slice(0, 160) : "unknown",
         });
         if (attempt < 2) {
+          locationPermissionLog("read failure retry scheduled", {
+            ...locationDiagnosticContext(),
+            traceId,
+            reason,
+            nextAttempt: attempt + 2,
+            elapsedMs: Date.now() - startedAt,
+          });
           await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
           continue;
         }
         // Keep the UI neutral after a native read failure. AppState retry
         // below will check again when the app is active.
         setLocState("idle");
+        locationPermissionLog("read ended unknown", {
+          ...locationDiagnosticContext(),
+          traceId,
+          reason,
+          elapsedMs: Date.now() - startedAt,
+          uiState: "idle",
+        });
         return false;
       }
     }
     return false;
   }, []);
   useEffect(() => {
+    locationPermissionLog("screen AppState listener attached", {
+      ...locationDiagnosticContext(),
+    });
     const subscription = AppState.addEventListener("change", (nextState) => {
+      locationPermissionLog("screen AppState", {
+        ...locationDiagnosticContext(),
+        nextState,
+      });
       if (nextState === "active") {
-        // Re-read after returning from Settings or after a cold native
-        // restart, when Core Location may only become ready a moment later.
         setLocationPermissionRetry((value) => value + 1);
       }
     });
-    return () => subscription.remove();
+    return () => {
+      locationPermissionLog("screen AppState listener removed", {
+        ...locationDiagnosticContext(),
+      });
+      subscription.remove();
+    };
   }, []);
   const requestPhoneSideSos = useCallback(() => {
     // A request from a wrist device deliberately opens the established phone
@@ -3679,6 +3750,13 @@ export default function LiveHike() {
 
   // Standort verfolgen: nativ ueber expo-location, im Web ueber die Geolocation-API
   useEffect(() => {
+    const effectTraceId = `watch-${++locationTraceRef.current}`;
+    locationPermissionLog("watch effect begin", {
+      ...locationDiagnosticContext(),
+      effectTraceId,
+      retry: locationPermissionRetry,
+      locState: locStateRef.current,
+    });
     let sub: Location.LocationSubscription | null = null;
     let webId: number | null = null;
     let unsubscribeBackground: (() => void) | null = null;
@@ -3688,6 +3766,11 @@ export default function LiveHike() {
 
     (async () => {
       if (Platform.OS === "web") {
+        locationPermissionLog("web watcher branch", {
+          ...locationDiagnosticContext(),
+          effectTraceId,
+          hasNavigatorGeolocation: typeof navigator !== "undefined" && Boolean(navigator.geolocation),
+        });
         if (typeof navigator !== "undefined" && navigator.geolocation) {
           webId = navigator.geolocation.watchPosition(
             (p) => {
@@ -3713,6 +3796,12 @@ export default function LiveHike() {
       try {
         if (cancelled) return;
         const permissionGranted = await readForegroundLocationPermission("hike-start");
+        locationPermissionLog("watch permission gate", {
+          ...locationDiagnosticContext(),
+          effectTraceId,
+          permissionGranted,
+          locState: locStateRef.current,
+        });
         if (cancelled || !permissionGranted) return;
         // Energiesparmodus: groebere GPS-Genauigkeit und seltenere Fixes
         // schonen den Akku spuerbar auf langen Touren.
@@ -3747,6 +3836,11 @@ export default function LiveHike() {
         const startForegroundWatch = async (): Promise<void> => {
           if (cancelled || restartingForegroundWatch) return;
           restartingForegroundWatch = true;
+          const watcherStartedAt = Date.now();
+          locationPermissionLog("foreground watcher begin", {
+            ...locationDiagnosticContext(),
+            effectTraceId,
+          });
           try {
             sub?.remove();
             const nextSub = await Location.watchPositionAsync(
@@ -3764,11 +3858,29 @@ export default function LiveHike() {
             );
             if (cancelled) {
               nextSub.remove();
+              locationPermissionLog("foreground watcher cancelled", {
+                ...locationDiagnosticContext(),
+                effectTraceId,
+                elapsedMs: Date.now() - watcherStartedAt,
+              });
             } else {
               sub = nextSub;
+              locationPermissionLog("foreground watcher ready", {
+                ...locationDiagnosticContext(),
+                effectTraceId,
+                elapsedMs: Date.now() - watcherStartedAt,
+              });
             }
-          } catch {
-            // Der Watchdog versucht den Vordergrund-Watcher spaeter erneut.
+          } catch (error) {
+            locationPermissionLog("foreground watcher failed", {
+              ...locationDiagnosticContext(),
+              effectTraceId,
+              elapsedMs: Date.now() - watcherStartedAt,
+              errorName: error instanceof Error ? error.name : "unknown",
+              errorMessage: error instanceof Error ? error.message.slice(0, 160) : "unknown",
+            });
+            // A watcher failure is not a permission denial. The watchdog
+            // may retry it while the confirmed permission state stays intact.
           } finally {
             restartingForegroundWatch = false;
           }
@@ -3783,6 +3895,13 @@ export default function LiveHike() {
         let backgroundStarted = false;
         try {
           const bg = await Location.getBackgroundPermissionsAsync();
+          locationPermissionLog("background permission read", {
+            ...locationDiagnosticContext(),
+            effectTraceId,
+            status: bg.status,
+            granted: bg.granted,
+            canAskAgain: bg.canAskAgain,
+          });
           if (!cancelled && bg.status === "granted") {
             backgroundStarted = await startBackgroundLocationTracking(trackingOptions, {
               title: t.backgroundNotificationTitle,
@@ -3794,6 +3913,12 @@ export default function LiveHike() {
         }
 
         if (cancelled) return;
+        locationPermissionLog("watch setup complete", {
+          ...locationDiagnosticContext(),
+          effectTraceId,
+          backgroundStarted,
+          watcherReady: Boolean(sub),
+        });
 
         if (backgroundStarted) {
           // TaskManager liefert Fixes ueber ein modulweites Pub/Sub, auch
@@ -3816,13 +3941,27 @@ export default function LiveHike() {
           }
           void startForegroundWatch();
         }, 15_000);
-      } catch {
-        if (!cancelled) setLocState("denied");
+      } catch (error) {
+        locationPermissionLog("watch effect failed", {
+          ...locationDiagnosticContext(),
+          effectTraceId,
+          errorName: error instanceof Error ? error.name : "unknown",
+          errorMessage: error instanceof Error ? error.message.slice(0, 160) : "unknown",
+          locState: locStateRef.current,
+        });
+        // Only readForegroundLocationPermission can establish a confirmed
+        // denial. Unexpected watcher/setup failures must not masquerade as it.
+        if (!cancelled) setLocState("idle");
       }
     })();
 
     return () => {
       cancelled = true;
+      locationPermissionLog("watch effect cleanup", {
+        ...locationDiagnosticContext(),
+        effectTraceId,
+        hadForegroundWatcher: Boolean(sub),
+      });
       if (watchdog) clearInterval(watchdog);
       sub?.remove();
       unsubscribeBackground?.();
