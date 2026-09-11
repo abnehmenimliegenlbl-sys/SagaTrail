@@ -155,3 +155,5 @@
 - [Watch JS action readiness](watch-js-action-readiness.md) — mark the native action bridge ready explicitly after DeviceEventEmitter listeners attach; RCTEventEmitter startObserving can lag and strand safety commands.
 - [Speech permission status](sagatrail-speech-permission-status.md) — iOS speech-permission responses use status, not always granted; normalize before starting automatic decision listening.
 - [Required permission gate](sagatrail-required-permission-gate.md) — every authenticated foreground entry trusts live OS status; stored grants are diagnostic evidence only.
+- [Safety link personal messaging](sagatrail-safety-personal-messaging.md) — personal WhatsApp/SMS uses a prefilled contact message and requires the hiker’s final send tap.
+- [Native map WebView source identity](native-map-webview-source.md) — memoize `{html}` sources; a fresh object per GPS render makes WKWebView reload the whole map.

@@ -33,7 +33,7 @@ private struct AudioWaveform: View {
   private let barHeights: [CGFloat] = [0.42, 0.72, 1.0, 0.58, 0.86, 0.48, 0.78, 0.36, 0.62]
 
   var body: some View {
-    TimelineView(.animation(minimumInterval: 0.08, paused: !isActive)) { context in
+    TimelineView(.animation(minimumInterval: 0.25, paused: !isActive)) { context in
       let elapsed = context.date.timeIntervalSinceReferenceDate
 
       HStack(spacing: 3) {
@@ -348,6 +348,23 @@ struct WatchHikeView: View {
           }
           .buttonStyle(.plain)
         }
+      }
+    } else if hike.showSafetyCompletionHint {
+      SagaTrailAlertOverlay(
+        title: copy.t("safetyTitle"),
+        message: copy.t("safetyCompleteOnPhone"),
+        isDestructive: false
+      ) {
+        Button {
+          hike.showSafetyCompletionHint = false
+        } label: {
+          Text("OK")
+            .font(WatchType.title)
+            .foregroundStyle(WatchPalette.white)
+            .frame(maxWidth: .infinity, minHeight: 32)
+            .background(WatchPalette.red, in: Capsule())
+        }
+        .buttonStyle(.plain)
       }
     } else if let alert = hike.activeAlert {
       SagaTrailAlertOverlay(title: alert.title, message: alert.body, isDestructive: false) {
@@ -1403,6 +1420,7 @@ private struct WatchCopy {
       , "sosTitle": "SOS an iPhone senden?", "confirmSOS": "SOS bestätigen", "cancel": "Abbrechen",
       "sosMessage": "Dein iPhone startet den Notfallablauf.",
       "safetyTitle": "Sicherheits-Check-in", "safetyMessage": "Das iPhone startet den bestehenden Sicherheitslink.",
+      "safetyCompleteOnPhone": "Bitte schliesse den Versand des Live-Links auf deinem iPhone ab.",
       "overdue": "Check-in überfällig", "safetyActive": "Check-in aktiv", "liveLink": "Live-Link aktiv",
       "localTimer": "Nur lokaler Timer", "stopTimer": "Sicher — Timer stoppen", "startCheckin": "Check-in starten",
       "startMarker": "Start", "finishMarker": "Ziel", "offlineRoute": "Offline-Route",
@@ -1430,6 +1448,7 @@ private struct WatchCopy {
       , "sosTitle": "Send SOS to iPhone?", "confirmSOS": "Confirm SOS", "cancel": "Cancel",
       "sosMessage": "Your iPhone starts the emergency flow.",
       "safetyTitle": "Safety check-in", "safetyMessage": "The iPhone starts the existing safety link.",
+      "safetyCompleteOnPhone": "Please finish sending the live link on your iPhone.",
       "overdue": "Check-in overdue", "safetyActive": "Check-in active", "liveLink": "Live link active",
       "localTimer": "Local timer only", "stopTimer": "Safe — stop timer", "startCheckin": "Start check-in",
       "startMarker": "Start", "finishMarker": "Finish", "offlineRoute": "Offline route",

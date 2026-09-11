@@ -368,6 +368,39 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
     }
   };
 
+  const emergencyPhoneDigits = emergencyContact?.phone?.replace(/\D/g, "") ?? "";
+  const whatsappPhone = emergencyPhoneDigits.startsWith("00")
+    ? emergencyPhoneDigits.slice(2)
+    : emergencyPhoneDigits.startsWith("0")
+    ? `41${emergencyPhoneDigits.slice(1)}`
+    : emergencyPhoneDigits;
+
+  const openPrefilledMessage = async (channel: "sms" | "whatsapp", path = sharePath) => {
+    if (!path) return;
+    if (!emergencyContact?.phone?.trim() || !emergencyPhoneDigits) {
+      alert(labels.title, labels.noContact);
+      return;
+    }
+    const message = `${labels.externalShare ?? "SagaTrail Sicherheitslink"}\n${routeName}\n${path}`;
+    const url = channel === "whatsapp"
+      ? `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`
+      : `sms:${emergencyPhoneDigits}&body=${encodeURIComponent(message)}`;
+    try {
+      if (await Linking.canOpenURL(url)) {
+        await Linking.openURL(url);
+        return;
+      }
+      alert(
+        labels.title,
+        channel === "whatsapp"
+          ? "WhatsApp ist auf diesem Gerät nicht verfügbar. Bitte sende den Link per SMS."
+          : labels.shareUnavailable,
+      );
+    } catch {
+      alert(labels.title, labels.shareUnavailable);
+    }
+  };
+
   const close = () => setOpen(false);
   const cancelTimer = async () => {
     operationGenerationRef.current += 1;
@@ -553,12 +586,6 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
 
       if (usedLocalFallback) {
         alert(labels.title, labels.shareFailed ?? "Der Sicherheitslink konnte nicht gestartet werden.");
-      } else if (createdPath) {
-        await Share.share({
-          title: labels.externalShare ?? "SagaTrail Sicherheitslink",
-          message: `${labels.externalShare ?? "SagaTrail Sicherheitslink"}\n${createdPath}`,
-          url: createdPath,
-        }).catch(() => {});
       }
     } catch (error) {
       await deleteCreatedShare();
@@ -597,16 +624,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
   }), [cancelTimer, startShare]);
 
   const shareExternalLink = async () => {
-    if (!sharePath) return;
-    try {
-      await Share.share({
-        title: labels.externalShare ?? "SagaTrail Sicherheitslink",
-        message: `${labels.externalShare ?? "SagaTrail Sicherheitslink"}\n${sharePath}`,
-        url: sharePath,
-      });
-    } catch {
-      alert(labels.title, labels.shareUnavailable);
-    }
+    await openPrefilledMessage("whatsapp");
   };
 
   return (
@@ -689,10 +707,16 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
                 <Text selectable numberOfLines={2} style={[styles.linkText, { color: colors.foreground }]}>
                   {sharePath}
                 </Text>
-                <Pressable onPress={shareExternalLink} accessibilityRole="button" style={[styles.share, { borderColor: colors.glassBorder }]}>
-                  <Feather name="share-2" size={17} color={colors.foreground} />
-                  <Text style={[styles.shareText, { color: colors.foreground }]}>{labels.externalShare ?? "Live-Link teilen"}</Text>
-                </Pressable>
+                <View style={styles.sendChoices}>
+                  <Pressable onPress={shareExternalLink} accessibilityRole="button" style={[styles.share, styles.sendChoice, { borderColor: colors.glassBorder }]}>
+                    <Feather name="message-circle" size={17} color={colors.foreground} />
+                    <Text style={[styles.shareText, { color: colors.foreground }]}>Per WhatsApp senden</Text>
+                  </Pressable>
+                  <Pressable onPress={() => void openPrefilledMessage("sms")} accessibilityRole="button" style={[styles.share, styles.sendChoice, { borderColor: colors.glassBorder }]}>
+                    <Feather name="message-square" size={17} color={colors.foreground} />
+                    <Text style={[styles.shareText, { color: colors.foreground }]}>Per SMS senden</Text>
+                  </Pressable>
+                </View>
               </View>
             ) : null}
             <Pressable onPress={shareLocation} accessibilityRole="button" style={[styles.share, { borderColor: colors.glassBorder }]}>
@@ -719,6 +743,8 @@ const styles = StyleSheet.create({
   overdueText: { fontFamily: fonts.bodyBold, fontSize: 14, marginBottom: 8 },
   localOnlyText: { fontFamily: fonts.body, fontSize: 12, textAlign: "center", marginBottom: 4 },
   share: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 10, padding: 12, marginTop: 8 },
+  sendChoices: { width: "100%" },
+  sendChoice: { width: "100%" },
   shareText: { fontFamily: fonts.bodyMedium, fontSize: 14 },
   linkBox: { width: "100%", borderWidth: 1, borderRadius: 10, padding: 10, marginTop: 12 },
   linkLabel: { fontFamily: fonts.bodyBold, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5 },

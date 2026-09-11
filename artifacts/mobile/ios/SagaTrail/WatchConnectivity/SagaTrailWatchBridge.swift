@@ -435,6 +435,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   private var pendingActions: [[String: Any]] = []
   private var deliveredActionKeys: [String] = []
   private let pendingActionsKey = "sagatrail.pending.watch.actions.native"
+  private var lastPublishedSafetyStatus: String?
 
   private override init() {
     super.init()
@@ -634,7 +635,10 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       watchState["arrivalAtEpochMs"] = arrivalAt
     }
     if let heartRate { watchState["heartRateBpm"] = heartRate["bpm"] }
-    let durable = state["safetyCheckin"] is [String: Any]
+    let safetyStatus = (state["safetyCheckin"] as? [String: Any])?["status"] as? String
+    let safetyStatusChanged = safetyStatus != nil && safetyStatus != lastPublishedSafetyStatus
+    lastPublishedSafetyStatus = safetyStatus
+    let durable = safetyStatusChanged
       || status == "sos_requested"
       || (alert?["kind"] as? String) == "safety"
       || (alert?["kind"] as? String) == "sos"

@@ -41,6 +41,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   @Published private(set) var healthStatus = "Puls nicht gestartet"
   @Published var showSOSConfirmation = false
   @Published var showSafetyCheckinOptions = false
+  @Published var showSafetyCompletionHint = false
   @Published var activeAlert: WatchAlert?
 
   private let healthStore = HKHealthStore()
@@ -53,6 +54,8 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var turnHapticArmed = true
   private var lastAlertKey: String?
   private var lastSafetyStatus: String?
+  private var lastComplicationReloadAt: Date?
+  private var lastComplicationTransitionKey: String?
   private var lastAppliedUpdatedAt: Date?
   private var lastAppliedSequence: Int64?
   private var isSceneActive = false
@@ -110,6 +113,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
       "durationMinutes": durationMinutes,
     ])
     showSafetyCheckinOptions = false
+    showSafetyCompletionHint = true
     let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
       "command": "safetyStart",
       "durationMinutes": durationMinutes,
@@ -446,8 +450,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
             decoded.nextInstruction.isEmpty ? "none" : "present",
             String(decoded.map?.gpsFresh ?? false))
       syncWorkout(with: decoded.sessionStatus)
-      persistComplication(decoded)
-      ComplicationController.reload()
+      refreshComplicationIfNeeded(decoded)
     case "alert":
       // The protocol deliberately carries display text only, never coordinates.
       let title = payload["title"] as? String ?? "SagaTrail"
@@ -592,6 +595,28 @@ final class WatchHikeModel: NSObject, ObservableObject {
       return
     }
     UserDefaults.standard.set(snapshot, forKey: "sagatrail.complication.snapshot")
+  }
+
+  private func refreshComplicationIfNeeded(_ state: SagaTrailWatchProtocol.LiveState) {
+    let transitionKey = [
+      state.sessionStatus,
+      state.safetyCheckin?.status ?? "none",
+      state.offRoute == nil ? "on-route" : "off-route",
+      state.map?.gpsFresh == true ? "gps-fresh" : "gps-stale",
+      state.navigationDirection,
+      state.nextInstruction,
+    ].joined(separator: "|")
+    let now = Date()
+    let intervalElapsed = lastComplicationReloadAt.map {
+      now.timeIntervalSince($0) >= 60
+    } ?? true
+    guard transitionKey != lastComplicationTransitionKey || intervalElapsed else {
+      return
+    }
+    lastComplicationTransitionKey = transitionKey
+    lastComplicationReloadAt = now
+    persistComplication(state)
+    ComplicationController.reload()
   }
 }
 

@@ -99,6 +99,7 @@ export function SwisstopoMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [center.lat, center.lng, label, geometry, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, safeAreaInsetTop, t]
   );
+  const webViewSource = useMemo(() => ({ html }), [html]);
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen.
   useEffect(() => {
@@ -175,7 +176,7 @@ export function SwisstopoMap({
       <WebView
         ref={ref}
         originWhitelist={["*"]}
-        source={{ html }}
+        source={webViewSource}
         // Wenn das native Layout der WebView sich ändert (z.B. Vollbild-Übergang
         // oder erster Render), schicken wir ein explizites map.resize() rein —
         // Leaflet kennt sonst die tatsächliche Kartengrösse nicht zuverlässig.
