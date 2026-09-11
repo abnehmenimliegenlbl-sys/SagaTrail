@@ -626,10 +626,6 @@ extension WatchHikeModel: WCSessionDelegate {
       }
     }
   }
-  nonisolated func sessionDidDeactivate(_ session: WCSession) {
-    NSLog("[SagaTrail Watch] WC session deactivated; reactivating")
-    session.activate()
-  }
   nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
     NSLog("[SagaTrail Watch] Received application context (keys: %@)",
           Array(applicationContext.keys).sorted().joined(separator: ","))
