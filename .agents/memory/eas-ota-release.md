@@ -35,3 +35,9 @@ detected on the device after publication.
 **How to apply:** Never print the values. Set them in the shell for each
 platform-specific update, and verify the resulting production group before
 telling the user to restart the app.
+
+**Activation constraint:** A production binary with `fallbackToCacheTimeout: 0` can launch its embedded bundle while the current OTA downloads in the background. Publishing and manifest verification do not prove the device is executing that update.
+
+**Why:** Device logs showed the embedded update ID, `isUpdateAvailable: true`, and an incomplete download while new feature behavior was being tested.
+
+**How to apply:** Log the running update ID. Auto-reload when `useUpdates().isUpdatePending` becomes true, and give future production binaries a short nonzero fallback timeout. Do not call an OTA fix active until runtime logs show its update ID.
