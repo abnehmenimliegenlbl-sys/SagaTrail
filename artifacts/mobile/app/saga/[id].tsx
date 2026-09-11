@@ -54,7 +54,6 @@ export default function SagaDetail() {
     premium,
     freeHikeUsed,
     hikeHistory,
-    activeHike,
     registriereSagenEntdeckung,
   } =
     useApp();
@@ -192,20 +191,14 @@ export default function SagaDetail() {
     // Erste entdeckte Sage des Kantons registrieren (No-op, falls schon
     // eine registriert ist) — Grundlage der Inklusiv-Regel.
     registriereSagenEntdeckung(saga.canton, saga.id).catch(() => {});
-    // Der Einstieg aus Kantons- bzw. Routenkatalog muss dieselbe
-    // Fortsetzungsinformation wie die "Weiter wandern"-Karte auf dem
-    // Home-Tab weiterreichen. Ohne diesen Parameter beginnt die Story zwar
-    // scheinbar auf derselben Route, aber der gespeicherte Live-Zustand wird
-    // nicht als Fortsetzung behandelt.
-    const canResume =
-      activeHike?.sagaId === saga.id &&
-      (!routeId || activeHike.routeId === routeId);
-    const params = [
-      routeId ? `routeId=${encodeURIComponent(routeId)}` : null,
-      canResume ? "resume=1" : null,
-    ].filter(Boolean).join("&");
+    // Ein Katalogstart ist immer eine neue Wanderung. `resume=1` darf nur
+    // vom expliziten "Weiter wandern"-Einstieg auf dem Home-Tab kommen;
+    // ein alter activeHike darf eine neue Startentscheidung nicht überspringen.
+    const params = routeId
+      ? `?routeId=${encodeURIComponent(routeId)}`
+      : "";
     router.push(
-      params ? `/hike/${saga.id}?${params}` : `/hike/${saga.id}`,
+      `/hike/${saga.id}${params}`,
     );
   };
 
