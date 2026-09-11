@@ -54,6 +54,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var lastAlertKey: String?
   private var lastSafetyStatus: String?
   private var lastAppliedUpdatedAt: Date?
+  private var lastAppliedSequence: Int64?
   private var isSceneActive = false
   private var lastRemoteLiveStateDiagnosticKey: String?
 
@@ -222,6 +223,14 @@ final class WatchHikeModel: NSObject, ObservableObject {
     }
   }
 
+  private func requestCurrentState() {
+    let message = SagaTrailWatchProtocol.envelope(type: "watchReady", payload: [
+      "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
+    ])
+    NSLog("[SagaTrail Watch] Requesting current live state from phone")
+    sendToPhone(message)
+  }
+
   func startHeartRate() {
     automaticWorkoutStartBlocked = false
     requestWorkoutAuthorizationAndStart(automatic: false)
@@ -375,20 +384,30 @@ final class WatchHikeModel: NSObject, ObservableObject {
       // The same snapshot may arrive through application context, direct
       // message, and transferred user info in a different order. Never let a
       // delayed delivery roll a live safety/SOS state back.
-      if let lastAppliedUpdatedAt, decoded.updatedAt <= lastAppliedUpdatedAt {
-        NSLog("[SagaTrail Watch] Ignored stale live state (updatedAt: %@, last: %@)",
-              String(decoded.updatedAt.timeIntervalSince1970),
-              String(lastAppliedUpdatedAt.timeIntervalSince1970))
-        if let poiStory = decoded.poiStory {
-          SagaTrailWatchRemoteDiagnostics.log("partner POI live state ignored as stale", data: [
-            "poiStoryId": poiStory.id,
-            "updatedAt": decoded.updatedAt.timeIntervalSince1970 * 1_000,
-            "lastAppliedUpdatedAt": lastAppliedUpdatedAt.timeIntervalSince1970 * 1_000,
-          ])
+      if let lastAppliedUpdatedAt {
+        let isOlder = decoded.updatedAt < lastAppliedUpdatedAt
+        let isSameTimeAndNotNewer =
+          decoded.updatedAt == lastAppliedUpdatedAt &&
+          (decoded.sequence == 0 ||
+            (lastAppliedSequence ?? 0) >= decoded.sequence)
+        if isOlder || isSameTimeAndNotNewer {
+          NSLog("[SagaTrail Watch] Ignored stale live state (updatedAt: %@, sequence: %lld, lastUpdatedAt: %@, lastSequence: %@)",
+                String(decoded.updatedAt.timeIntervalSince1970),
+                decoded.sequence,
+                String(lastAppliedUpdatedAt.timeIntervalSince1970),
+                lastAppliedSequence.map(String.init) ?? "none")
+          if let poiStory = decoded.poiStory {
+            SagaTrailWatchRemoteDiagnostics.log("partner POI live state ignored as stale", data: [
+              "poiStoryId": poiStory.id,
+              "updatedAt": decoded.updatedAt.timeIntervalSince1970 * 1_000,
+              "lastAppliedUpdatedAt": lastAppliedUpdatedAt.timeIntervalSince1970 * 1_000,
+            ])
+          }
+          return
         }
-        return
       }
       lastAppliedUpdatedAt = decoded.updatedAt
+      lastAppliedSequence = decoded.sequence > 0 ? decoded.sequence : lastAppliedSequence
       NSLog("[SagaTrail Watch] Applied live state (status: %@, isHiking: %@, updatedAt: %@)",
             decoded.sessionStatus,
             String(decoded.isHiking),
@@ -588,11 +607,21 @@ extension WatchHikeModel: WCSessionDelegate {
     Task { @MainActor in
       self.apply(envelope: receivedContext)
       self.isReachable = reachable
+      self.requestCurrentState()
     }
   }
   nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
     NSLog("[SagaTrail Watch] WC reachability changed: %@", String(session.isReachable))
-    Task { @MainActor in self.isReachable = session.isReachable }
+    Task { @MainActor in
+      self.isReachable = session.isReachable
+      if session.isReachable {
+        self.requestCurrentState()
+      }
+    }
+  }
+  nonisolated func sessionDidDeactivate(_ session: WCSession) {
+    NSLog("[SagaTrail Watch] WC session deactivated; reactivating")
+    session.activate()
   }
   nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
     NSLog("[SagaTrail Watch] Received application context (keys: %@)",

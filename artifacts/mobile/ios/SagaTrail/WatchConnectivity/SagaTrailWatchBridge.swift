@@ -56,6 +56,7 @@ final class SagaTrailCompanion: RCTEventEmitter {
   private var pendingWatchActions: [(name: String, body: [String: Any])] = []
   private let pendingWatchActionsKey = "sagatrail.pending.watch.actions"
   private var lastRemoteLiveStateDiagnosticKey: String?
+  private var latestGarminHeartRate: [String: Any]?
 
   override init() {
     super.init()
@@ -265,7 +266,13 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   @objc func getLatestHeartRate(_ resolve: @escaping RCTPromiseResolveBlock,
                                 reject: @escaping RCTPromiseRejectBlock) {
-    resolve(connection.latestHeartRatePayload ?? NSNull())
+    let watchHeartRate = connection.latestHeartRatePayload
+    let candidates = [watchHeartRate, latestGarminHeartRate].compactMap { $0 }
+    let latest = candidates.max {
+      (($0["measuredAt"] as? NSNumber)?.int64Value ?? 0)
+        < (($1["measuredAt"] as? NSNumber)?.int64Value ?? 0)
+    }
+    resolve(latest ?? NSNull())
   }
 
   @objc private func handleWatchEvent(_ notification: Notification) {
@@ -349,24 +356,30 @@ final class SagaTrailCompanion: RCTEventEmitter {
           let type = envelope["type"] as? String else { return }
     let payload = envelope["payload"] as? [String: Any] ?? [:]
     if type == "sosRequest" {
-      sendEvent(withName: "SagaTrailCompanion.sosRequest", body: [
+      emitOrQueueWatchAction(name: "SagaTrailCompanion.sosRequest", body: [
         "requestedAt": payload["requestedAt"] ?? Int(Date().timeIntervalSince1970 * 1000),
         "requestId": payload["requestId"] ?? NSNull(),
         "source": "garmin_connect_iq"
       ])
     } else if type == "heartRate" {
-      sendEvent(withName: "SagaTrailCompanion.heartRate", body: [
+      let heartRate: [String: Any] = [
         "bpm": payload["bpm"] ?? 0,
         "measuredAt": payload["measuredAt"] ?? Int(Date().timeIntervalSince1970 * 1000),
         "source": "garmin"
-      ])
+      ]
+      latestGarminHeartRate = heartRate
+      if hasJavaScriptListeners {
+        sendEvent(withName: "SagaTrailCompanion.heartRate", body: heartRate)
+      } else {
+        NSLog("[SagaTrail Watch] Cached Garmin heart-rate event because JS listeners are absent")
+      }
     } else if type == "hikeCommand",
               let command = payload["command"] as? String {
       var event: [String: Any] = ["command": command, "source": "garmin_connect_iq"]
       if let durationMinutes = payload["durationMinutes"] {
         event["durationMinutes"] = durationMinutes
       }
-      sendEvent(withName: "SagaTrailCompanion.hikeCommand", body: event)
+      emitOrQueueWatchAction(name: "SagaTrailCompanion.hikeCommand", body: event)
     }
     sendEvent(withName: "SagaTrailWatchStatus", body: [
       "v": 1,
@@ -474,6 +487,17 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     send(message, preferApplicationContext: true, durable: durable)
   }
 
+  func resendLatestLiveState() {
+    guard WCSession.isSupported() else { return }
+    let context = WCSession.default.applicationContext
+    guard context["type"] as? String == "liveState" else {
+      NSLog("[SagaTrail Watch] No cached live state available for Watch refresh")
+      return
+    }
+    NSLog("[SagaTrail Watch] Re-sending cached live state after Watch-ready request")
+    send(context, preferApplicationContext: true)
+  }
+
   func publishCanonicalLiveState(_ state: [String: Any]) throws {
     NSLog("[SagaTrail Watch] Validating canonical live state (keys: %@)",
           state.keys.sorted().joined(separator: ","))
@@ -528,6 +552,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
     var watchState: [String: Any] = [
       "updatedAt": timestamp,
+      "sequence": state["sequence"] ?? 0,
       "isHiking": status == "active",
       "elapsedSeconds": state["elapsedSec"] ?? 0,
       "distanceMeters": state["walkedDistanceM"] ?? 0,
@@ -781,7 +806,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
     guard let updatedAt = input["updatedAt"] as? NSNumber else { throw ProtocolError.missingUpdatedAt }
     var result: [String: Any] = ["updatedAt": updatedAt]
-    let fields = ["routeName", "nextInstruction", "navigationDirection", "sessionStatus", "isHiking",
+    let fields = ["sequence", "routeName", "nextInstruction", "navigationDirection", "sessionStatus", "isHiking",
                   "elapsedSeconds", "distanceMeters", "ascentMeters", "steps",
                   "heartRateBpm", "bearingDegrees", "distanceToTurnMeters",
                   "remainingDistanceMeters", "remainingSeconds", "arrivalAtEpochMs",
@@ -946,13 +971,17 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       return false
     }
     guard let type = message["type"] as? String,
-          ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else {
+           ["watchReady", "sosConfirmed", "heartRate", "hikeCommand"].contains(type) else {
       NSLog("[SagaTrail Watch] Rejected incoming message: unsupported type (%@)",
             message["type"] as? String ?? "missing")
       logSafetyOutcome(message, message: "safety command rejected", outcome: "unsupported_type")
       return false
     }
     NSLog("[SagaTrail Watch] Processing incoming phone action (type: %@)", type)
+    if type == "watchReady" {
+      connection.resendLatestLiveState()
+      return true
+    }
     if type == "heartRate" {
       guard cacheHeartRate(from: message) else {
         NSLog("[SagaTrail Watch] Rejected incoming heart-rate payload")

@@ -1130,6 +1130,7 @@ export default function LiveHike() {
   }, []);
   const [locState, setLocState] = useState<LocState>("idle");
   const [locationPermissionRetry, setLocationPermissionRetry] = useState(0);
+  const [watchLifecycleRevision, setWatchLifecycleRevision] = useState(0);
   const locationTraceRef = useRef(0);
   const locStateRef = useRef<LocState>("idle");
   locStateRef.current = locState;
@@ -1381,6 +1382,7 @@ export default function LiveHike() {
   /** Zeitpunkt des letzten akzeptierten GPS-Fixes fuer die Watcher-Wiederherstellung. */
   const lastLocationAtRef = useRef<number>(0);
   const liveSnapshotSequenceRef = useRef(0);
+  const lastWatchLifecycleRevisionRef = useRef(0);
   const lastCriticalWatchAlertRef = useRef<string | null>(null);
   const lastSosAcknowledgementRef = useRef<"none" | "acknowledged" | "failed">("none");
   const lastSafetyCheckinKeyRef = useRef<string | null>(null);
@@ -1609,6 +1611,7 @@ export default function LiveHike() {
       });
       if (nextState === "active") {
         setLocationPermissionRetry((value) => value + 1);
+        setWatchLifecycleRevision((value) => value + 1);
       }
     });
     return () => {
@@ -3280,8 +3283,11 @@ export default function LiveHike() {
     const watchPoiStoryId = watchPoiStory?.id ?? null;
     const gpsFreshnessChanged =
       lastPublishedGpsFreshRef.current !== hasFreshGps;
+    const watchResumed =
+      watchLifecycleRevision !== lastWatchLifecycleRevisionRef.current;
     const force =
       gpsFreshnessChanged ||
+      watchResumed ||
       (criticalKey !== null && criticalKey !== lastCriticalWatchAlertRef.current) ||
       (discoveryKey !== null && discoveryKey !== lastWatchDiscoveryAlertRef.current) ||
       safetyCheckinKey !== lastSafetyCheckinKeyRef.current ||
@@ -3309,6 +3315,7 @@ export default function LiveHike() {
       }
     }
     lastPublishedGpsFreshRef.current = hasFreshGps;
+    lastWatchLifecycleRevisionRef.current = watchLifecycleRevision;
     lastCriticalWatchAlertRef.current = criticalKey;
     lastWatchDiscoveryAlertRef.current = discoveryKey;
     lastSafetyCheckinKeyRef.current = safetyCheckinKey;
@@ -3324,7 +3331,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, storyLanguage, totalKm, totalMin, watchDiscoveryAlert, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchStoryAudio, watchSunsetAtEpochMs, watchTerrainSection, watchUpcomingAttraction, watchUpcomingGradeChange, watchUpcomingSurfaceChange, watchWeather, startGateConfirmed]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, storyLanguage, totalKm, totalMin, watchDiscoveryAlert, watchLifecycleRevision, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchStoryAudio, watchSunsetAtEpochMs, watchTerrainSection, watchUpcomingAttraction, watchUpcomingGradeChange, watchUpcomingSurfaceChange, watchWeather, startGateConfirmed]);
 
   useEffect(() => {
     if (!startGateConfirmedRef.current) return;

@@ -3,6 +3,7 @@
 
 @interface RCT_EXTERN_MODULE(SagaTrailCompanion, RCTEventEmitter)
 RCT_EXTERN_METHOD(activate)
+RCT_EXTERN_METHOD(markWatchActionListenersReady)
 RCT_EXTERN_METHOD(drainPendingWatchActions)
 RCT_EXTERN_METHOD(selectGarminDevice)
 RCT_EXTERN_METHOD(publishLiveState:(NSDictionary *)state)

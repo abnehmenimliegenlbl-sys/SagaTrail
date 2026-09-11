@@ -575,7 +575,6 @@ export async function publishHikeLiveState(
     }
     return false;
   }
-  lastLiveStateSentAt = now;
   watchCompanionLog("publish attempt", {
     sequence: publishState.sequence,
     sessionStatus: publishState.sessionStatus,
@@ -601,6 +600,10 @@ export async function publishHikeLiveState(
   activateNativeCompanion(module);
   try {
     await module.publishLiveState!(publishState);
+    // Only throttle after the native bridge accepted the snapshot. If the
+    // module is unavailable or throws during startup, the next React state
+    // change must be allowed to retry instead of being suppressed for 7.5 s.
+    lastLiveStateSentAt = now;
     watchCompanionLog("publish accepted by native module", {
       sessionStatus: publishState.sessionStatus,
       isHiking: publishState.isHiking,

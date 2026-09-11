@@ -91,6 +91,7 @@ enum SagaTrailWatchProtocol {
   }
 
   struct LiveState {
+    let sequence: Int64
     let routeName: String
     let nextInstruction: String
     let navigationDirection: String
@@ -164,6 +165,7 @@ enum SagaTrailWatchProtocol {
             let distanceMeters = number("distanceMeters"),
             let ascentMeters = number("ascentMeters"),
             let stepsValue = number("steps", maximum: 1_000_000_000),
+             let sequenceValue = number("sequence", maximum: 9_000_000_000_000_000),
             stepsValue <= Double(Int.max) else {
         return nil
       }
@@ -451,6 +453,7 @@ enum SagaTrailWatchProtocol {
         ?? ((dictionary["isHiking"] as? Bool) == true ? "active" : "preparing")
       let isHiking = (dictionary["isHiking"] as? Bool) ?? (sessionStatus == "active")
       return LiveState(
+        sequence: Int64(sequenceValue.rounded(.towardZero)),
         routeName: dictionary["routeName"] as? String ?? "SagaTrail",
         nextInstruction: dictionary["nextInstruction"] as? String ?? "Warte auf Navigation",
         navigationDirection: dictionary["navigationDirection"] as? String ?? "straight",
