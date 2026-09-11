@@ -5,6 +5,7 @@ import vm from "node:vm";
 import {
   buildRouteGradeSegments,
   calculateProfileAscentM,
+  getSmoothedGradePctAtDistance,
   limitTerrainSectionsForSpeech,
   type RouteGradeBand,
   type TerrainProfilePoint,
@@ -91,6 +92,17 @@ test("does not count an isolated short DTM spike as ascent", () => {
 
 test("uses the absolute grade for descents as well as climbs", () => {
   assertEveryBand(ROUTE_GEOMETRY, linearProfile(-30), "red");
+});
+
+test("reports the signed smoothed grade for the active virtual route position", () => {
+  const uphill = getSmoothedGradePctAtDistance(linearProfile(12), routeDistanceKm() / 2);
+  const downhill = getSmoothedGradePctAtDistance(linearProfile(-12), routeDistanceKm() / 2);
+
+  assert.ok(uphill != null);
+  assert.ok(downhill != null);
+  assert.ok(Math.abs(uphill - 12) < 0.01);
+  assert.ok(Math.abs(downhill + 12) < 0.01);
+  assert.equal(getSmoothedGradePctAtDistance(null, 0), null);
 });
 
 test("keeps a flat feeder green before a steep route section", () => {

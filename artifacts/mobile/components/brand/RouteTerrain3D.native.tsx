@@ -34,6 +34,7 @@ import { BackButton } from "@/components/brand/BackButton";
 import { useColors } from "@/hooks/useColors";
 import {
   buildRouteGradeSegments,
+  getSmoothedGradePctAtDistance,
   type TerrainProfilePoint,
 } from "@/lib/terrainCues";
 import { hapticRigid } from "@/lib/haptics";
@@ -87,6 +88,28 @@ const flightSpeedKmPerSecond = 0.32;
 const flightTileSpacingKm = 1.2;
 const flightSkyColor = "#8EA6AA";
 const maxTerrainAreaGeometryPoints = 500;
+
+function gradeInstrumentColor(gradePct: number | null): string {
+  const absoluteGrade = Math.abs(gradePct ?? 0);
+  if (absoluteGrade >= 30) return gradeColors.red;
+  if (absoluteGrade >= 20) return gradeColors.orange;
+  if (absoluteGrade >= 10) return gradeColors.yellow;
+  return gradeColors.green;
+}
+
+function gradeInstrumentLabel(gradePct: number | null): string {
+  if (gradePct == null || !Number.isFinite(gradePct)) return "—";
+  const rounded = Math.round(gradePct);
+  return `${rounded > 0 ? "+" : ""}${rounded}%`;
+}
+
+function gradeInstrumentAccessibilityLabel(gradePct: number | null): string {
+  if (gradePct == null || !Number.isFinite(gradePct)) return "Neigung wird berechnet";
+  const rounded = Math.round(gradePct);
+  if (rounded > 0) return `Steigung ${rounded} Prozent`;
+  if (rounded < 0) return `Gefälle ${Math.abs(rounded)} Prozent`;
+  return "Ebene Route, 0 Prozent";
+}
 const flightSkyVertexShader = `
   varying vec3 vWorldDirection;
 
@@ -1937,6 +1960,45 @@ function WalkMetric({
   );
 }
 
+function GradeAttitudeInstrument({ gradePct }: { gradePct: number | null }) {
+  const color = gradeInstrumentColor(gradePct);
+  const label = gradeInstrumentLabel(gradePct);
+  // A positive route grade means the virtual hiker pitches upward. In a
+  // conventional artificial horizon the ground/horizon shifts down behind
+  // the fixed aircraft symbol for positive pitch.
+  const horizonTop = 21 + Math.max(-11, Math.min(11, (gradePct ?? 0) * 0.52));
+
+  return (
+    <View
+      style={[styles.walkMetric, styles.attitudeMetric]}
+      accessible
+      accessibilityLabel={gradeInstrumentAccessibilityLabel(gradePct)}
+    >
+      <Text style={styles.walkMetricLabel}>Neigung</Text>
+      <View style={styles.attitudeInstrument}>
+        <View
+          style={[
+            styles.attitudeSky,
+            { bottom: Math.max(0, 42 - horizonTop) },
+          ]}
+        />
+        <View
+          style={[
+            styles.attitudeHorizon,
+            { top: horizonTop, backgroundColor: color },
+          ]}
+        />
+        <View pointerEvents="none" style={styles.attitudeAircraft}>
+          <View style={styles.attitudeWing} />
+          <View style={styles.attitudeNose} />
+          <View style={styles.attitudeWing} />
+        </View>
+        <Text style={[styles.attitudeValue, { color }]}>{label}</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function RouteTerrain3D({
   visible,
   onClose,
@@ -1953,6 +2015,16 @@ export default function RouteTerrain3D({
   const [runId, setRunId] = useState(0);
   const [loadProgress, setLoadProgress] = useState(0);
   const [walkProgress, setWalkProgress] = useState<WalkProgress | null>(null);
+  const currentGradePct = useMemo(
+    () =>
+      model && walkProgress
+        ? getSmoothedGradePctAtDistance(
+            model.profile,
+            walkProgress.distanceM / 1000,
+          )
+        : null,
+    [model, walkProgress?.distanceM],
+  );
   const updateWalkProgress = useMemo(
     () => (progress: WalkProgress) => setWalkProgress(progress),
     [],
@@ -2151,18 +2223,7 @@ export default function RouteTerrain3D({
               <WalkMetric label="Gegangene Distanz" value={`${walkProgress.distanceM} m`} icon="map" />
               <WalkMetric label="Höhenmeter" value={`${walkProgress.ascentM} m`} icon="trending-up" />
               <WalkMetric label="Gehzeit" value={`${walkProgress.minutes} min`} icon="clock" />
-              <View style={styles.walkMetric}>
-                <Feather
-                  name="navigation"
-                  size={18}
-                  color="#15231D"
-                  style={{ transform: [{ rotate: `${walkProgress.bearingDeg}deg` }] }}
-                />
-                <Text style={styles.walkMetricLabel}>Richtung</Text>
-                <Text style={styles.walkMetricValue}>
-                  {Math.round(walkProgress.bearingDeg)}°
-                </Text>
-              </View>
+              <GradeAttitudeInstrument gradePct={currentGradePct} />
             </View>
           </View>
         )}
@@ -2303,6 +2364,66 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "800",
     fontVariant: ["tabular-nums"],
+  },
+  attitudeMetric: {
+    paddingTop: 4,
+    paddingBottom: 4,
+  },
+  attitudeInstrument: {
+    width: 58,
+    height: 42,
+    overflow: "hidden",
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: "#15231D",
+    backgroundColor: "#4A5A45",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  attitudeSky: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#73BFE9",
+  },
+  attitudeHorizon: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 2,
+  },
+  attitudeAircraft: {
+    position: "absolute",
+    flexDirection: "row",
+    alignItems: "center",
+    top: 18,
+  },
+  attitudeWing: {
+    width: 15,
+    height: 2,
+    backgroundColor: "#FFFFFF",
+  },
+  attitudeNose: {
+    width: 6,
+    height: 6,
+    marginHorizontal: 1,
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: "#15231D",
+    backgroundColor: "#FFFFFF",
+  },
+  attitudeValue: {
+    position: "absolute",
+    bottom: 2,
+    alignSelf: "center",
+    fontSize: 10,
+    fontWeight: "900",
+    lineHeight: 12,
+    fontVariant: ["tabular-nums"],
+    textShadowColor: "#15231D",
+    textShadowRadius: 2,
+    textShadowOffset: { width: 0, height: 1 },
   },
   controls: {
     position: "absolute",

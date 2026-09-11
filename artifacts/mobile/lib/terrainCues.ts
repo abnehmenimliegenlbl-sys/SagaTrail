@@ -158,6 +158,35 @@ function gradeAtDistance(
 }
 
 /**
+ * Returns the signed local gradient from the same smoothed 50 m window used
+ * for route colouring. Positive values are climbs; negative values descents.
+ */
+export function getSmoothedGradePctAtDistance(
+  inputProfile: TerrainProfilePoint[] | null | undefined,
+  distanceKmValue: number,
+): number | null {
+  if (!Number.isFinite(distanceKmValue)) return null;
+  const profile = (inputProfile ?? [])
+    .filter((point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM))
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+  if (profile.length < 2) return null;
+
+  const firstProfileDistance = profile[0].distanceKm;
+  const normalizedProfile = profile.map((point) => ({
+    distanceKm: point.distanceKm - firstProfileDistance,
+    altM: point.altM,
+  }));
+  const profileLengthKm = normalizedProfile[normalizedProfile.length - 1].distanceKm;
+  if (profileLengthKm <= 0) return null;
+
+  return gradeAtDistance(
+    smoothIsolatedProfileSpikes(normalizedProfile),
+    Math.max(0, Math.min(profileLengthKm, distanceKmValue)),
+    profileLengthKm,
+  );
+}
+
+/**
  * Splits a route into smoothed, approximately 50 m LineStrings so MapLibre
  * can color every section independently. The absolute grade is used, therefore
  * steep descents are visible as well as steep climbs. A fixed analysis window
