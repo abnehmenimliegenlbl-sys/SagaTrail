@@ -50,6 +50,7 @@ import {
   deletePoiCaches,
 } from "@/lib/offlinePois";
 import { Profile, Saga, StoryChapter } from "@/types";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
 
 /**
  * Download-Verwaltung fuer einzelne Wanderungen (Offline-Nutzung).
@@ -408,7 +409,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         sagaId: saga.id,
         routeId: route.id,
         routeName: route.name,
-        sagaTitle: saga.title,
+        sagaTitle: getLocalizedSagaTitle(saga, lang),
         archetype: profile.archetype,
         ageTier: profile.ageTier,
         language: lang,

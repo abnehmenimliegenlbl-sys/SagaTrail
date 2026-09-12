@@ -41,6 +41,7 @@ import { useClaimKantonspack, getGetMyProfileQueryKey } from "@workspace/api-cli
 import { useQueryClient } from "@tanstack/react-query";
 import { resolveLang } from "@/lib/storyContent";
 import { useSagaFoto, clearSagaFotoCache } from "@/lib/useSagaFoto";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
 
 export default function SagaDetail() {
   const t = useSagaStrings();
@@ -207,7 +208,7 @@ export default function SagaDetail() {
   // Zusammenfassung in der gewaehlten Sprache; Deutsch als Fallback.
   const lang = resolveLang(profile?.language);
   const summaryText = saga.summaries[lang]?.text ?? saga.summary;
-  const sagaTitle = saga.summaries[lang]?.title ?? saga.title;
+  const sagaTitle = getLocalizedSagaTitle(saga, lang);
   const reviewPending = saga.summaries[lang]?.reviewEmpfohlen ?? false;
 
   // Ehrliche Kennzeichnung der Ortsgenauigkeit der ueberlieferten Sage.

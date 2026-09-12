@@ -38,7 +38,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   @Published private(set) var workoutAverageHeartRate: Double?
   @Published private(set) var workoutMaxHeartRate: Double?
   @Published private(set) var activeEnergyKcal: Double?
-  @Published private(set) var healthStatus = "Puls nicht gestartet"
+  @Published private(set) var healthStatus = "healthNotStarted"
   @Published var showSOSConfirmation = false
   @Published var showSafetyCheckinOptions = false
   @Published var showSafetyCompletionHint = false
@@ -245,12 +245,12 @@ final class WatchHikeModel: NSObject, ObservableObject {
           !workoutAuthorizationInFlight,
           !(automatic && automaticWorkoutStartBlocked) else { return }
     guard HKHealthStore.isHealthDataAvailable() else {
-      healthStatus = "HealthKit nicht verfügbar"
+      healthStatus = "healthUnavailable"
       return
     }
     guard let heartRate = HKObjectType.quantityType(forIdentifier: .heartRate),
           let activeEnergy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else {
-      healthStatus = "HealthKit-Datentypen nicht verfügbar"
+      healthStatus = "healthTypesUnavailable"
       return
     }
     workoutAuthorizationInFlight = true
@@ -260,11 +260,14 @@ final class WatchHikeModel: NSObject, ObservableObject {
         self.workoutAuthorizationInFlight = false
         guard success else {
           if automatic { self.automaticWorkoutStartBlocked = true }
-          self.healthStatus = error?.localizedDescription ?? "HealthKit-Zugriff erforderlich"
+          if let error {
+            NSLog("[SagaTrail Watch] HealthKit authorization failed: %@", error.localizedDescription)
+          }
+          self.healthStatus = "healthAccessRequired"
           return
         }
         guard self.state?.sessionStatus == "active" || !automatic else {
-          self.healthStatus = "Workout bereit"
+          self.healthStatus = "workoutReady"
           return
         }
         self.beginWorkout()
@@ -293,11 +296,15 @@ final class WatchHikeModel: NSObject, ObservableObject {
       session.startActivity(with: now)
       builder.beginCollection(withStart: now) { [weak self] success, error in
         Task { @MainActor in
-          self?.healthStatus = success ? "Live-Puls" : (error?.localizedDescription ?? "Puls konnte nicht starten")
+          if let error {
+            NSLog("[SagaTrail Watch] Workout collection failed to start: %@", error.localizedDescription)
+          }
+          self?.healthStatus = success ? "liveHeartRate" : "heartRateStartFailed"
         }
       }
     } catch {
-      healthStatus = error.localizedDescription
+      NSLog("[SagaTrail Watch] Workout failed to start: %@", error.localizedDescription)
+      healthStatus = "workoutFailed"
     }
   }
 
@@ -340,9 +347,10 @@ final class WatchHikeModel: NSObject, ObservableObject {
       guard let builder else { return }
       builder.finishWorkout { [weak self] _, finishError in
         Task { @MainActor in
-          self?.healthStatus = finishError?.localizedDescription
-            ?? error?.localizedDescription
-            ?? (success ? "Workout gespeichert" : "Workout konnte nicht gespeichert werden")
+          if let failure = finishError ?? error {
+            NSLog("[SagaTrail Watch] Workout save failed: %@", failure.localizedDescription)
+          }
+          self?.healthStatus = success && finishError == nil ? "workoutSaved" : "workoutSaveFailed"
           self?.workoutSession = nil
           self?.workoutBuilder = nil
           self?.workoutFinishInProgress = false
@@ -570,10 +578,11 @@ final class WatchHikeModel: NSObject, ObservableObject {
   }
 
   private func persistComplication(_ state: SagaTrailWatchProtocol.LiveState) {
+    let copy = WatchCopy(language: state.language)
     let turnDistance = state.distanceToTurnMeters.map { "\(Int($0)) m" } ?? "—"
     let remaining = state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—"
-    let status = state.offRoute.map { "ABWEG \(Int($0.distanceMeters)) m" }
-      ?? (state.isHiking ? state.navigationDirection : "Pause")
+    let status = state.offRoute.map { "\(copy.t("complicationOffRoute")) \(Int($0.distanceMeters)) m" }
+      ?? (state.isHiking ? localizedDirection(state.navigationDirection, copy: copy) : copy.t("complicationPause"))
     var snapshot: [String: Any] = [
       "direction": status,
       "turnDistance": turnDistance,
@@ -582,6 +591,13 @@ final class WatchHikeModel: NSObject, ObservableObject {
       "gpsFresh": state.map?.gpsFresh == true && !isStale,
       "offRoute": state.offRoute != nil,
       "arrivalAfterSunset": state.daylight?.arrivalAfterSunset ?? false,
+      "language": state.language,
+      "noGPS": copy.t("complicationNoGPS"),
+      "pause": copy.t("complicationPause"),
+      "wait": copy.t("complicationWait"),
+      "back": copy.t("complicationBack"),
+      "waitSignal": copy.t("complicationWaitSignal"),
+      "afterSunset": copy.t("afterSunset"),
       "updatedAt": state.updatedAt.timeIntervalSince1970
     ]
     if let temperature = state.weather?.temperatureCelsius {
@@ -595,6 +611,20 @@ final class WatchHikeModel: NSObject, ObservableObject {
       return
     }
     UserDefaults.standard.set(snapshot, forKey: "sagatrail.complication.snapshot")
+  }
+
+  private func localizedDirection(_ direction: String, copy: WatchCopy) -> String {
+    let normalized = direction.lowercased()
+    if normalized.contains("uturn") || normalized.contains("u-turn") || normalized.contains("wenden") {
+      return copy.t("turnAround")
+    }
+    if normalized.contains("left") || normalized.contains("links") {
+      return copy.t("turnLeft")
+    }
+    if normalized.contains("right") || normalized.contains("rechts") {
+      return copy.t("turnRight")
+    }
+    return copy.t("goStraight")
   }
 
   private func refreshComplicationIfNeeded(_ state: SagaTrailWatchProtocol.LiveState) {
@@ -672,7 +702,8 @@ extension WatchHikeModel: HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate
   nonisolated func workoutSession(_ workoutSession: HKWorkoutSession, didChangeTo toState: HKWorkoutSessionState,
                                   from fromState: HKWorkoutSessionState, date: Date) {}
   nonisolated func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
-    Task { @MainActor in self.healthStatus = error.localizedDescription }
+    NSLog("[SagaTrail Watch] Workout session failed: %@", error.localizedDescription)
+    Task { @MainActor in self.healthStatus = "workoutFailed" }
   }
   nonisolated func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {}
   nonisolated func workoutBuilder(_ workoutBuilder: HKLiveWorkoutBuilder,

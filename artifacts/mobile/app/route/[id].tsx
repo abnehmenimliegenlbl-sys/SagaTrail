@@ -74,6 +74,7 @@ import { bboxAroundGeometry, distanzZuSegmentKm, filterByRouteCorridor, haversin
 import { sagaLokalisierung, allCantonSagasSorted, SagaWithMeta, SagaProximityCategory } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
 import { hapticMedium, hapticSelection } from "@/lib/haptics";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
 
 const WEB_TOP = 67;
 
@@ -1062,7 +1063,7 @@ export default function Routenplanung() {
                   safetyPois={safetyPois.length > 0 ? safetyPois : null}
                   safetyPoisReady={safetyPoisReady}
                   safeAreaInsetTop={safeAreaTop}
-                  sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: saga.title } : null}
+                  sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: getLocalizedSagaTitle(saga, profile?.language) } : null}
                   onPoiPress={(id) => {
                     const poi = poisVollRef.current.get(id);
                     if (!poi) return;
@@ -1884,7 +1885,7 @@ export default function Routenplanung() {
                           {s.coreMotif.toUpperCase()}
                         </Text>
                         <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
-                          {s.summaries?.[(profile?.language ?? "de") as string]?.title ?? s.title}
+                          {getLocalizedSagaTitle(s, profile?.language)}
                         </Text>
                         <Text style={[styles.sagaMood, { color: colors.mutedForeground }]} numberOfLines={1}>
                           {s.mood}
@@ -1979,7 +1980,7 @@ export default function Routenplanung() {
                     {saga.coreMotif.toUpperCase()}
                   </Text>
                   <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
-                    {saga.summaries?.[(profile?.language ?? 'de') as string]?.title ?? saga.title}
+                    {getLocalizedSagaTitle(saga, profile?.language)}
                   </Text>
                   <Text
                     style={[styles.sagaMood, { color: colors.mutedForeground }]}
@@ -2072,7 +2073,7 @@ export default function Routenplanung() {
           >
             <ShareCard
               ref={shareCardRef}
-              sagaTitle={saga.title}
+              sagaTitle={getLocalizedSagaTitle(saga, profile?.language)}
               routeName={route.name}
               distanceKm={meta.distanceKm}
               ascentM={meta.ascentM}

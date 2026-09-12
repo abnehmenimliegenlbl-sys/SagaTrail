@@ -37,3 +37,14 @@ export function normalizeSagaTitle(saga: Saga): Saga {
 export function normalizeSagaTitles(sagas: Saga[]): Saga[] {
   return sagas.map(normalizeSagaTitle);
 }
+
+export function getLocalizedSagaTitle(
+  saga: Saga,
+  languageCode?: string,
+): string {
+  const normalized = languageCode?.trim().toLowerCase().split("-")[0] || "de";
+  const language = normalized === "gsw" ? "de" : normalized;
+  return ohneKlammerzusatz(
+    saga.summaries?.[language]?.title ?? saga.title,
+  );
+}

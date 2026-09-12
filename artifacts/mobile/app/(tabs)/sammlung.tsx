@@ -31,6 +31,7 @@ import {
 import { computeRankStatus, computeSparkPoints } from "@/lib/rank";
 import { HikeSession } from "@/types";
 import { hapticSelection } from "@/lib/haptics";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
 
 const WEB_TOP = 67;
 
@@ -533,7 +534,7 @@ export default function Sammlung() {
                         ]}
                         numberOfLines={2}
                       >
-                        {saga.summaries?.[language as LanguageCode]?.title ?? saga.title}
+                        {getLocalizedSagaTitle(saga, language)}
                       </Text>
                     </View>
                   );

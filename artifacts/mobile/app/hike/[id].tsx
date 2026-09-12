@@ -100,6 +100,7 @@ import {
   type Lang,
   type WetterKlasse,
 } from "@/lib/storyContent";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
 import type { OfflinePanoramaDatenbank } from "@/lib/panorama";
 import { isLocalTerrainModel, type LocalTerrainModel } from "@/lib/terrainModel";
 import { blobToTempFileUri, getOfflineAudioUri } from "@/lib/narrationAudio";
@@ -1885,6 +1886,9 @@ export default function LiveHike() {
   // verwendet: die Story wird in diesem Fall in Hochdeutsch angefordert, die
   // Schweizer Faerbung kommt allein ueber die Stimmwahl (server-seitig).
   const storyLanguage = effectiveStoryLanguage(profile?.language ?? "de", true);
+  const localizedSagaTitle = saga
+    ? getLocalizedSagaTitle(saga, storyLanguage)
+    : route?.name ?? "";
   // cueLanguage: fuer alle OpenAI-gesprochenen Texte (Vorspann, Nav-Cues,
   // Meilensteine, POI-Ansagen). OpenAI kann kein Schweizerdeutsch — gsw→de.
   const cueLanguage = storyLanguage === "gsw" ? "de" : storyLanguage;
@@ -2186,7 +2190,7 @@ export default function LiveHike() {
     if (!startGateConfirmedRef.current || !groupSession || !saga || preparing) return;
     setGroupActivity({
       type: "wandert",
-      sagaTitle: saga.title,
+      sagaTitle: localizedSagaTitle,
       startedAt: Date.now(),
       sagaId: saga.id,
       ...(route ? { routeId: route.id } : {}),
@@ -2204,7 +2208,7 @@ export default function LiveHike() {
     return () => {
       setGroupActivity({ type: "idle" });
     };
-  }, [groupSession?.code, groupSession?.isLeader, saga, route, preparing, setGroupActivity, sendGroupHikeEvent, startGateConfirmed]);
+  }, [groupSession?.code, groupSession?.isLeader, saga, route, preparing, localizedSagaTitle, setGroupActivity, sendGroupHikeEvent, startGateConfirmed]);
 
   // Leitung: Kapitelwechsel an die Gruppe senden, damit Mitglieder synchron
   // dieselbe Stelle der Sage hoeren. Aendert sich die Mitgliederliste
@@ -2392,11 +2396,11 @@ export default function LiveHike() {
       // "ungefaehr"-Koordinaten liegen nur grob im Gemeindegebiet und
       // würden den POI an der falschen Stelle auslösen.
       const sagaHeartPoi: Poi | null =
-        saga?.coordinates && saga?.title && saga?.id &&
+        saga?.coordinates && localizedSagaTitle && saga?.id &&
         saga?.koordinatenSicherheit === "exakt"
           ? {
               id: `saga-heart-${saga.id}`,
-              name: saga.title,
+              name: localizedSagaTitle,
               kind: "saga=heart",
               lat: saga.coordinates.lat,
               lng: saga.coordinates.lng,
@@ -3693,7 +3697,7 @@ export default function LiveHike() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sagaTitle: saga.title,
+          sagaTitle: localizedSagaTitle,
           coreMotif: saga.coreMotif ?? "",
           partnerName: partner.name,
           angebot: partner.angebot ?? null,
@@ -3736,7 +3740,7 @@ export default function LiveHike() {
           announcingPremiumPartnerIdsRef.current.delete(partnerId);
         });
     }
-  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, preparing, awaitingDecision, locState, hasFreshGps, karteVollbild, startGateConfirmed]);
+  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, cueLanguage, localizedSagaTitle, preparing, awaitingDecision, locState, hasFreshGps, karteVollbild, startGateConfirmed]);
 
   // GPS-Foto-Challenge: sobald der Wanderer den Herzort der Sage betritt
   // (150-m-Radius um die Sagen-Koordinate), erscheint einmalig eine
@@ -3854,7 +3858,7 @@ export default function LiveHike() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               sagaId: saga.id,
-              sagaTitle: saga.title,
+              sagaTitle: localizedSagaTitle,
               coreMotif: saga.coreMotif ?? "",
               pct,
               lang: cueLanguage,
@@ -3906,7 +3910,7 @@ export default function LiveHike() {
         }
       }
     }
-  }, [distance, totalKm, storyLanguage, saga, profile?.name, profile?.navAnnouncementsEnabled, preparing, t, hasFreshGps, startGateConfirmed]);
+  }, [distance, totalKm, storyLanguage, cueLanguage, localizedSagaTitle, saga, profile?.name, profile?.navAnnouncementsEnabled, preparing, t, hasFreshGps, startGateConfirmed]);
 
   const takePhoto = async () => {
     setShowPhotoChallenge(false);
@@ -4873,14 +4877,14 @@ export default function LiveHike() {
       if (currentIndex > 0 && turnNotifsReady && profile?.navAnnouncementsEnabled !== false) {
         sendeAbbiegeMitteilung(
           t.chapterNotif(currentIndex + 1),
-          route?.name ?? saga?.title ?? ""
+          route?.name ?? localizedSagaTitle
         );
       }
     }
     if (ch.isDecisionPoint && ch.chosenOptionIndex == null) {
       triggerDecision(currentIndex, "chapter_effect");
     }
-  }, [advanceStoryChapter, currentIndex, preparing, startAudioReleased, startGateConfirmed, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage, logDecisionFlow, triggerDecision]);
+  }, [advanceStoryChapter, currentIndex, preparing, startAudioReleased, startGateConfirmed, chapters, speak, turnNotifsReady, t, route?.name, localizedSagaTitle, greetingPrefix, storyLanguage, logDecisionFlow, triggerDecision]);
 
   // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
   // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
@@ -4890,7 +4894,7 @@ export default function LiveHike() {
     saveActiveHike({
       routeId: route?.id ?? "",
       sagaId: saga.id,
-      routeName: route?.name ?? saga.title,
+      routeName: route?.name ?? localizedSagaTitle,
       chapterIndex: currentIndex,
       chapterCount: chapters.length,
       updatedAt: Date.now(),
@@ -4899,7 +4903,7 @@ export default function LiveHike() {
       route: route ?? undefined,
       activeGeometry: acceptedRouteGeometry ?? undefined,
     });
-  }, [currentIndex, preparing, finished, chapters.length, saga, route, acceptedRouteGeometry, saveActiveHike, startGateConfirmed]);
+  }, [currentIndex, preparing, finished, chapters.length, saga, route, localizedSagaTitle, acceptedRouteGeometry, saveActiveHike, startGateConfirmed]);
 
   // Refs spiegeln den aktuellen Erzaehlzustand, damit der POI-Effekt unten
   // NICHT bei jeder Kapitel-/Sprechzustandsaenderung neu laeuft (und dabei
@@ -6166,7 +6170,7 @@ export default function LiveHike() {
       id: `h_${Date.now()}`,
       sagaId: saga.id,
       routeId: route?.id,
-      routeName: route?.name ?? saga.title,
+      routeName: route?.name ?? localizedSagaTitle,
       distanceKm: Number(distance.toFixed(1)),
       ascentM,
       sacScale: sac,
@@ -6193,7 +6197,7 @@ export default function LiveHike() {
     };
     await Promise.all([
       saveHike(session),
-      addAchievement(saga.title, saga.id),
+      addAchievement(localizedSagaTitle, saga.id),
       clearActiveHike(),
     ]);
     router.replace("/summary");
@@ -6210,7 +6214,7 @@ export default function LiveHike() {
         }
       }, 1500);
     }
-  }, [saga, route, navigationGeometry, distance, ascentM, sac, steps, hikePhotos, recognitionEntries, hikeHistory, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
+  }, [saga, route, localizedSagaTitle, navigationGeometry, distance, ascentM, sac, steps, hikePhotos, recognitionEntries, hikeHistory, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
 
   // Erlaubt den Abschluss, auch wenn die Route noch nicht ganz zurueckgelegt
   // wurde — damit Nutzer trotzdem zum Album und zum Social-Media-Posting
@@ -6437,7 +6441,7 @@ export default function LiveHike() {
               {saga.canton.toUpperCase()} · {t.live}
             </Text>
             <Text style={[styles.title, { color: colors.foreground }]}>
-              {saga.summaries?.[(profile?.language ?? 'de') as string]?.title ?? saga.title}
+              {localizedSagaTitle}
             </Text>
           </View>
         </View>
@@ -6452,7 +6456,7 @@ export default function LiveHike() {
                 <SwisstopoMap
                   center={mapCenter}
                   position={shownPos}
-                  label={saga.title}
+                  label={localizedSagaTitle}
                   height={hoehe}
                   geometry={followingRecalc ? (acceptedRouteGeometry ?? recalcGeom ?? navigationGeometry) : navigationGeometry}
                   elevationProfile={!followingRecalc ? terrainProfile : null}
@@ -6464,7 +6468,7 @@ export default function LiveHike() {
                   parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
                   safetyPois={visibleSafetyPois.length > 0 ? visibleSafetyPois : null}
                   safeAreaInsetTop={safeAreaTop}
-                  sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: saga.title } : null}
+                  sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: localizedSagaTitle } : null}
                   onPoiPress={(id) => {
                     const poi = displayedPois.find((p) => p.id === id);
                     if (!poi) return;
@@ -6576,7 +6580,7 @@ export default function LiveHike() {
                       ? bearingDeg(livePos, saga.coordinates)
                       : null
                   }
-                  sagaName={saga?.title ?? ""}
+                  sagaName={localizedSagaTitle}
                   available={compassAvailable}
                   direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
                   coordinates={livePos ? `${livePos.lat.toFixed(5)}, ${livePos.lng.toFixed(5)}` : null}

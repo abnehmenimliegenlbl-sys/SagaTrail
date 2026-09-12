@@ -327,7 +327,7 @@ struct WatchHikeView: View {
             Button {
               hike.sendSafetyCheckin(durationMinutes: minutes)
             } label: {
-              Text("\(minutes) Minuten")
+              Text("\(minutes) \(copy.t("minutes"))")
                 .font(WatchType.title)
                 .foregroundStyle(WatchPalette.white)
                 .frame(maxWidth: .infinity, minHeight: 32)
@@ -552,7 +552,7 @@ struct WatchHikeView: View {
           if let energy = hike.activeEnergyKcal {
             metric(copy.t("activeEnergy"), "\(Int(energy.rounded())) kcal")
           }
-          Text(hike.healthStatus)
+          Text(copy.healthStatus(hike.healthStatus))
             .font(WatchType.body)
             .foregroundStyle(WatchPalette.mutedWhite)
           Text(copy.t("summaryPhone"))
@@ -575,13 +575,13 @@ struct WatchHikeView: View {
   }
   private func weatherLabel(_ code: Int) -> String {
     switch code {
-    case 0: return "Klar"
-    case 1...3: return "Bewölkt"
-    case 45...48: return "Nebel"
-    case 51...67, 80...82: return "Regen"
-    case 71...77, 85...86: return "Schnee"
-    case 95...99: return "Gewitter"
-    default: return "Wetter"
+    case 0: return copy.t("weatherClear")
+    case 1...3: return copy.t("weatherCloudy")
+    case 45...48: return copy.t("weatherFog")
+    case 51...67, 80...82: return copy.t("weatherRain")
+    case 71...77, 85...86: return copy.t("weatherSnow")
+    case 95...99: return copy.t("weatherStorm")
+    default: return copy.t("weather")
     }
   }
   private func compassPoint(_ degrees: Double) -> String {
@@ -987,7 +987,7 @@ struct WatchHikeView: View {
 
   private func storyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     return VStack(spacing: 6) {
-      pageHeader("Story / Audio", systemImage: "waveform")
+      pageHeader(copy.t("storyAudio"), systemImage: "waveform")
       card {
         VStack(spacing: 5) {
           Image(systemName: "speaker.wave.3.fill")
@@ -1181,7 +1181,7 @@ private struct WatchRouteMap: View {
               }
             }
             if let current = map.current {
-              Annotation("Du", coordinate: CLLocationCoordinate2D(
+              Annotation(copy.t("mapYou"), coordinate: CLLocationCoordinate2D(
                 latitude: current.latitude,
                 longitude: current.longitude
               )) {
@@ -1318,7 +1318,7 @@ private struct TrianglePennant: Shape {
   }
 }
 
-private struct WatchCopy {
+struct WatchCopy {
   private let language: String
 
   init(language: String) {
@@ -1328,10 +1328,35 @@ private struct WatchCopy {
 
   func t(_ key: String) -> String {
     Self.words[language]?[key]
-      ?? Self.words["de"]?[key]
+      ?? Self.localizedAdditions[language]?[key]
       ?? Self.commonWords[language]?[key]
+      ?? Self.words["de"]?[key]
+      ?? Self.localizedAdditions["de"]?[key]
       ?? Self.commonWords["de"]?[key]
       ?? key
+  }
+
+  func healthStatus(_ status: String) -> String {
+    let translatedKeys = [
+      "healthNotStarted", "healthUnavailable", "healthTypesUnavailable",
+      "healthAccessRequired", "workoutReady", "liveHeartRate",
+      "heartRateStartFailed", "workoutSaved", "workoutSaveFailed", "workoutFailed",
+    ]
+    if translatedKeys.contains(status) {
+      return t(status)
+    }
+    let keys = [
+      "Puls nicht gestartet": "healthNotStarted",
+      "HealthKit nicht verfügbar": "healthUnavailable",
+      "HealthKit-Datentypen nicht verfügbar": "healthTypesUnavailable",
+      "HealthKit-Zugriff erforderlich": "healthAccessRequired",
+      "Workout bereit": "workoutReady",
+      "Live-Puls": "liveHeartRate",
+      "Puls konnte nicht starten": "heartRateStartFailed",
+      "Workout gespeichert": "workoutSaved",
+      "Workout konnte nicht gespeichert werden": "workoutSaveFailed",
+    ]
+    return keys[status].map(t) ?? status
   }
 
   private static let commonWords: [String: [String: String]] = [
@@ -1397,6 +1422,133 @@ private struct WatchCopy {
       "turnAround": "INVERTER", "goStraight": "EM FRENTE",
       "safeNow": "Estou bem", "summaryPhone": "Detalhes no iPhone",
       "gpsPaused": "Sem sinal GPS",
+    ],
+  ]
+
+  private static let localizedAdditions: [String: [String: String]] = [
+    "de": [
+      "minutes": "Minuten", "storyAudio": "Geschichte / Audio", "mapYou": "Du",
+      "weatherClear": "Klar", "weatherCloudy": "Bewölkt", "weatherFog": "Nebel",
+      "weatherRain": "Regen", "weatherSnow": "Schnee", "weatherStorm": "Gewitter", "weather": "Wetter",
+      "healthNotStarted": "Puls nicht gestartet", "healthUnavailable": "HealthKit nicht verfügbar",
+      "healthTypesUnavailable": "HealthKit-Datentypen nicht verfügbar", "healthAccessRequired": "HealthKit-Zugriff erforderlich",
+      "workoutReady": "Workout bereit", "liveHeartRate": "Live-Puls", "heartRateStartFailed": "Puls konnte nicht starten",
+      "workoutSaved": "Workout gespeichert", "workoutSaveFailed": "Workout konnte nicht gespeichert werden",
+      "workoutFailed": "Workout wurde unterbrochen",
+      "complicationNoGPS": "KEIN GPS", "complicationOffRoute": "ABWEG", "complicationPause": "Pause",
+      "complicationWait": "Warten", "complicationBack": "Zurück", "complicationWaitSignal": "Neues Signal abwarten",
+    ],
+    "en": [
+      "minutes": "minutes", "storyAudio": "Story / Audio", "mapYou": "You",
+      "weatherClear": "Clear", "weatherCloudy": "Cloudy", "weatherFog": "Fog",
+      "weatherRain": "Rain", "weatherSnow": "Snow", "weatherStorm": "Storm", "weather": "Weather",
+      "healthNotStarted": "Heart rate not started", "healthUnavailable": "HealthKit unavailable",
+      "healthTypesUnavailable": "HealthKit data types unavailable", "healthAccessRequired": "HealthKit access required",
+      "workoutReady": "Workout ready", "liveHeartRate": "Live heart rate", "heartRateStartFailed": "Could not start heart rate",
+      "workoutSaved": "Workout saved", "workoutSaveFailed": "Could not save workout",
+      "workoutFailed": "Workout was interrupted",
+      "complicationNoGPS": "NO GPS", "complicationOffRoute": "OFF ROUTE", "complicationPause": "Pause",
+      "complicationWait": "Wait", "complicationBack": "Back", "complicationWaitSignal": "Waiting for signal",
+    ],
+    "fr": [
+      "sosTitle": "Envoyer un SOS à l’iPhone ?", "confirmSOS": "Confirmer le SOS", "cancel": "Annuler",
+      "sosMessage": "Votre iPhone lance la procédure d’urgence.",
+      "safetyTitle": "Contrôle de sécurité", "safetyMessage": "L’iPhone lance le lien de sécurité existant.",
+      "safetyCompleteOnPhone": "Terminez l’envoi du lien en direct sur votre iPhone.",
+      "overdue": "Contrôle en retard", "safetyActive": "Contrôle actif", "liveLink": "Lien en direct actif",
+      "localTimer": "Minuteur local uniquement", "stopTimer": "En sécurité — arrêter", "startCheckin": "Démarrer le contrôle",
+      "startMarker": "Départ", "finishMarker": "Arrivée", "offlineRoute": "Itinéraire hors ligne",
+      "lastRoute": "Dernier itinéraire", "north": "Nord", "route": "Itinéraire",
+      "minutes": "minutes", "storyAudio": "Histoire / Audio", "mapYou": "Vous",
+      "weatherClear": "Dégagé", "weatherCloudy": "Nuageux", "weatherFog": "Brouillard",
+      "weatherRain": "Pluie", "weatherSnow": "Neige", "weatherStorm": "Orage", "weather": "Météo",
+      "healthNotStarted": "Pouls non démarré", "healthUnavailable": "HealthKit indisponible",
+      "healthTypesUnavailable": "Types de données HealthKit indisponibles", "healthAccessRequired": "Accès à HealthKit requis",
+      "workoutReady": "Entraînement prêt", "liveHeartRate": "Pouls en direct", "heartRateStartFailed": "Impossible de démarrer le pouls",
+      "workoutSaved": "Entraînement enregistré", "workoutSaveFailed": "Impossible d’enregistrer l’entraînement",
+      "workoutFailed": "L’entraînement a été interrompu",
+      "complicationNoGPS": "PAS DE GPS", "complicationOffRoute": "HORS ROUTE", "complicationPause": "Pause",
+      "complicationWait": "Attendre", "complicationBack": "Retour", "complicationWaitSignal": "En attente du signal",
+    ],
+    "it": [
+      "sosTitle": "Inviare SOS all’iPhone?", "confirmSOS": "Conferma SOS", "cancel": "Annulla",
+      "sosMessage": "Il tuo iPhone avvia la procedura di emergenza.",
+      "safetyTitle": "Check-in di sicurezza", "safetyMessage": "L’iPhone avvia il link di sicurezza esistente.",
+      "safetyCompleteOnPhone": "Completa l’invio del link live sul tuo iPhone.",
+      "overdue": "Check-in scaduto", "safetyActive": "Check-in attivo", "liveLink": "Link live attivo",
+      "localTimer": "Solo timer locale", "stopTimer": "Al sicuro — arresta", "startCheckin": "Avvia check-in",
+      "startMarker": "Partenza", "finishMarker": "Arrivo", "offlineRoute": "Percorso offline",
+      "lastRoute": "Ultimo percorso", "north": "Nord", "route": "Percorso",
+      "minutes": "minuti", "storyAudio": "Storia / Audio", "mapYou": "Tu",
+      "weatherClear": "Sereno", "weatherCloudy": "Nuvoloso", "weatherFog": "Nebbia",
+      "weatherRain": "Pioggia", "weatherSnow": "Neve", "weatherStorm": "Temporale", "weather": "Meteo",
+      "healthNotStarted": "Battito non avviato", "healthUnavailable": "HealthKit non disponibile",
+      "healthTypesUnavailable": "Tipi di dati HealthKit non disponibili", "healthAccessRequired": "Accesso a HealthKit necessario",
+      "workoutReady": "Allenamento pronto", "liveHeartRate": "Battito live", "heartRateStartFailed": "Impossibile avviare il battito",
+      "workoutSaved": "Allenamento salvato", "workoutSaveFailed": "Impossibile salvare l’allenamento",
+      "workoutFailed": "L’allenamento è stato interrotto",
+      "complicationNoGPS": "NIENTE GPS", "complicationOffRoute": "FUORI ROTTA", "complicationPause": "Pausa",
+      "complicationWait": "Attendi", "complicationBack": "Indietro", "complicationWaitSignal": "In attesa del segnale",
+    ],
+    "es": [
+      "sosTitle": "¿Enviar SOS al iPhone?", "confirmSOS": "Confirmar SOS", "cancel": "Cancelar",
+      "sosMessage": "Tu iPhone inicia el proceso de emergencia.",
+      "safetyTitle": "Control de seguridad", "safetyMessage": "El iPhone inicia el enlace de seguridad existente.",
+      "safetyCompleteOnPhone": "Termina de enviar el enlace en vivo en tu iPhone.",
+      "overdue": "Control atrasado", "safetyActive": "Control activo", "liveLink": "Enlace en vivo activo",
+      "localTimer": "Solo temporizador local", "stopTimer": "A salvo — detener", "startCheckin": "Iniciar control",
+      "startMarker": "Inicio", "finishMarker": "Meta", "offlineRoute": "Ruta sin conexión",
+      "lastRoute": "Última ruta", "north": "Norte", "route": "Ruta",
+      "minutes": "minutos", "storyAudio": "Historia / Audio", "mapYou": "Tú",
+      "weatherClear": "Despejado", "weatherCloudy": "Nublado", "weatherFog": "Niebla",
+      "weatherRain": "Lluvia", "weatherSnow": "Nieve", "weatherStorm": "Tormenta", "weather": "Tiempo",
+      "healthNotStarted": "Pulso no iniciado", "healthUnavailable": "HealthKit no disponible",
+      "healthTypesUnavailable": "Tipos de datos HealthKit no disponibles", "healthAccessRequired": "Se requiere acceso a HealthKit",
+      "workoutReady": "Entrenamiento listo", "liveHeartRate": "Pulso en vivo", "heartRateStartFailed": "No se pudo iniciar el pulso",
+      "workoutSaved": "Entrenamiento guardado", "workoutSaveFailed": "No se pudo guardar el entrenamiento",
+      "workoutFailed": "El entrenamiento se interrumpió",
+      "complicationNoGPS": "SIN GPS", "complicationOffRoute": "FUERA RUTA", "complicationPause": "Pausa",
+      "complicationWait": "Espera", "complicationBack": "Volver", "complicationWaitSignal": "Esperando señal",
+    ],
+    "nl": [
+      "sosTitle": "SOS naar iPhone sturen?", "confirmSOS": "SOS bevestigen", "cancel": "Annuleren",
+      "sosMessage": "Je iPhone start de noodprocedure.",
+      "safetyTitle": "Veiligheidscheck", "safetyMessage": "De iPhone start de bestaande veiligheidslink.",
+      "safetyCompleteOnPhone": "Rond het versturen van de live-link af op je iPhone.",
+      "overdue": "Check-in te laat", "safetyActive": "Check-in actief", "liveLink": "Live-link actief",
+      "localTimer": "Alleen lokale timer", "stopTimer": "Veilig — timer stoppen", "startCheckin": "Check-in starten",
+      "startMarker": "Start", "finishMarker": "Finish", "offlineRoute": "Offline route",
+      "lastRoute": "Laatste route", "north": "Noord", "route": "Route",
+      "minutes": "minuten", "storyAudio": "Verhaal / Audio", "mapYou": "Jij",
+      "weatherClear": "Helder", "weatherCloudy": "Bewolkt", "weatherFog": "Mist",
+      "weatherRain": "Regen", "weatherSnow": "Sneeuw", "weatherStorm": "Onweer", "weather": "Weer",
+      "healthNotStarted": "Hartslag niet gestart", "healthUnavailable": "HealthKit niet beschikbaar",
+      "healthTypesUnavailable": "HealthKit-gegevenstypen niet beschikbaar", "healthAccessRequired": "HealthKit-toegang vereist",
+      "workoutReady": "Workout gereed", "liveHeartRate": "Live hartslag", "heartRateStartFailed": "Hartslag kon niet starten",
+      "workoutSaved": "Workout opgeslagen", "workoutSaveFailed": "Workout kon niet worden opgeslagen",
+      "workoutFailed": "Workout werd onderbroken",
+      "complicationNoGPS": "GEEN GPS", "complicationOffRoute": "VAN ROUTE", "complicationPause": "Pauze",
+      "complicationWait": "Wachten", "complicationBack": "Terug", "complicationWaitSignal": "Wachten op signaal",
+    ],
+    "pt": [
+      "sosTitle": "Enviar SOS para o iPhone?", "confirmSOS": "Confirmar SOS", "cancel": "Cancelar",
+      "sosMessage": "O iPhone inicia o procedimento de emergência.",
+      "safetyTitle": "Check-in de segurança", "safetyMessage": "O iPhone inicia a ligação de segurança existente.",
+      "safetyCompleteOnPhone": "Conclua o envio da ligação em direto no iPhone.",
+      "overdue": "Check-in atrasado", "safetyActive": "Check-in ativo", "liveLink": "Ligação em direto ativa",
+      "localTimer": "Apenas temporizador local", "stopTimer": "Em segurança — parar", "startCheckin": "Iniciar check-in",
+      "startMarker": "Início", "finishMarker": "Chegada", "offlineRoute": "Percurso offline",
+      "lastRoute": "Último percurso", "north": "Norte", "route": "Percurso",
+      "minutes": "minutos", "storyAudio": "História / Áudio", "mapYou": "Você",
+      "weatherClear": "Céu limpo", "weatherCloudy": "Nublado", "weatherFog": "Nevoeiro",
+      "weatherRain": "Chuva", "weatherSnow": "Neve", "weatherStorm": "Trovoada", "weather": "Tempo",
+      "healthNotStarted": "Pulso não iniciado", "healthUnavailable": "HealthKit indisponível",
+      "healthTypesUnavailable": "Tipos de dados HealthKit indisponíveis", "healthAccessRequired": "É necessário acesso ao HealthKit",
+      "workoutReady": "Treino pronto", "liveHeartRate": "Pulso em direto", "heartRateStartFailed": "Não foi possível iniciar o pulso",
+      "workoutSaved": "Treino guardado", "workoutSaveFailed": "Não foi possível guardar o treino",
+      "workoutFailed": "O treino foi interrompido",
+      "complicationNoGPS": "SEM GPS", "complicationOffRoute": "FORA ROTA", "complicationPause": "Pausa",
+      "complicationWait": "Aguardar", "complicationBack": "Voltar", "complicationWaitSignal": "A aguardar sinal",
     ],
   ]
 

@@ -68,20 +68,27 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     let gpsFresh = snapshot["gpsFresh"] as? Bool ?? false
     let offRoute = snapshot["offRoute"] as? Bool ?? false
     let arrivalAfterSunset = snapshot["arrivalAfterSunset"] as? Bool ?? false
+    let copy = WatchCopy(language: snapshot["language"] as? String ?? Locale.current.identifier)
+    let noGPS = snapshot["noGPS"] as? String ?? copy.t("complicationNoGPS")
+    let pause = snapshot["pause"] as? String ?? copy.t("complicationPause")
+    let wait = snapshot["wait"] as? String ?? copy.t("complicationWait")
+    let back = snapshot["back"] as? String ?? copy.t("complicationBack")
+    let waitSignal = snapshot["waitSignal"] as? String ?? copy.t("complicationWaitSignal")
+    let afterSunset = snapshot["afterSunset"] as? String ?? copy.t("afterSunset")
     let temperature = snapshot["weatherTemperature"] as? Double
-    let status = active && !gpsFresh ? "KEIN GPS" : (offRoute ? "ABWEG" : (active ? direction : "Pause"))
+    let status = active && !gpsFresh ? noGPS : (offRoute ? direction : (active ? direction : pause))
 
     let line1 = brandText(status)
-    let line2 = brandText(active && !gpsFresh ? "Warten" : (offRoute ? "Zurück" : turnDistance))
+    let line2 = brandText(active && !gpsFresh ? wait : (offRoute ? back : turnDistance))
     let temperatureText = temperature.flatMap { value -> String? in
       guard value.isFinite, value >= -150, value <= 150 else { return nil }
       return "\(Int(value.rounded()))° · \(remaining)"
     }
     let body = brandText(
       active && !gpsFresh
-        ? "Neues Signal abwarten"
+        ? waitSignal
         : arrivalAfterSunset
-        ? "Nach Sonnenuntergang"
+        ? afterSunset
         : temperatureText ?? remaining
     )
 

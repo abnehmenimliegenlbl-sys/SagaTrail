@@ -1,5 +1,6 @@
 import { AgeTier, Archetype, Saga, StoryChapter } from "../types";
 import { Lang, resolveLang, STORY_PACKS } from "./storyContent";
+import { getLocalizedSagaTitle } from "./sagaTitle";
 
 const FALLBACK_INTERLUDES: Record<
   Lang,
@@ -108,7 +109,11 @@ export function generateStory(
   // Kapitel 1 — Ankunft
   chapters.push({
     id: "ch1",
-    text: pack.ch1(saga.canton, saga.title, pack.archetypeLens[archetype]),
+    text: pack.ch1(
+      saga.canton,
+      getLocalizedSagaTitle(saga, lang),
+      pack.archetypeLens[archetype],
+    ),
     isDecisionPoint: false,
   });
 
