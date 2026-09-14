@@ -79,6 +79,7 @@
 - [SagaTrail R2 Object Storage](sagatrail-r2-storage.md) — Narrations-Cache auf Cloudflare R2 migriert; GCS-Sidecar in Prod war 401; R2 via @aws-sdk/client-s3, Bucket "sagatrail", Account ae2d32c2f9bc47f08cca887f689853b5.
 - [SagaTrail Route Naming & Sorting](sagatrail-route-naming-sorting.md) — nwn+1-9/rwn+10-99/lwn+100-999 bestimmt Nummer; K-Routen: "K4 AG Name" sequentiell pro Kanton; Sort 4-stellig; Etappen-Labels VOR Sort anwenden.
 - [Anthropic image url-source](anthropic-image-url-source.md) — Vision mit source type "url" scheitert an Wikimedia-Bildern (400); serverseitig laden und als base64 schicken, fail-open.
+- [Localized saga titles](sagatrail-localized-saga-titles.md) — sichtbare Sagentitel kommen aus einer versionierten lokalen Zuordnung, damit Übersetzungen per OTA ohne nativen Build ausgerollt werden können.
 - [Nominatim jsonv2 category](nominatim-jsonv2-category.md) — format=jsonv2 liefert "category" statt "class"; Filter auf r.class verwirft lautlos alle Treffer.
 - [Prod-Routen und -Sagen verboten](prod-routes-sagas-forbidden.md) — external_routes + sagas in Prod NIEMALS schreiben; kein push-script, kein warm-all, kein import ohne explizite Freigabe.
 - [Reverse-loop overlap guard](reverse-loop-overlap.md) — symmetric matching must stop at the shared turning point or palindromic out-and-back routes self-overlap in the report.
