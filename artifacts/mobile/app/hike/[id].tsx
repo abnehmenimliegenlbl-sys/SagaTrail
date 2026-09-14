@@ -181,8 +181,7 @@ const COMPASS_ANTIQUE_FONT = Platform.select({
 
 type SpeakOptions = {
   interrupt?: boolean;
-  partnerInterrupt?: boolean;
-  sagaInterrupt?: boolean;
+  allowDuringStartup?: boolean;
   chapterIndex?: number;
   useOpenAI?: boolean;
   preFetchedUri?: string;
@@ -943,7 +942,6 @@ export default function LiveHike() {
   );
   /** Route-Fortschritt beim ersten verlässlichen Fix — verhindert einen
    * Kapitelvorsprung, wenn die Wanderung schon vor dem ersten Fix begonnen hat. */
-  const [storyProgressBaseline, setStoryProgressBaseline] = useState<number | null>(null);
   const [awaitingDecision, setAwaitingDecision] = useState(false);
   const [decisionFeedbackPending, setDecisionFeedbackPending] = useState(false);
   const decisionFeedbackPendingRef = useRef(false);
@@ -1894,6 +1892,9 @@ export default function LiveHike() {
   // Meilenstein etc. unterbrechen keine laufende Erzaehlung, sondern reihen
   // sich ein und spielen ab, sobald das aktuelle Audio zu Ende ist.
   const narrationQueueRef = useRef<NarrationQueueItem[]>([]);
+  // Solange die Einleitung noch nicht gestartet/abgeschlossen ist, werden
+  // alle nicht-navigierenden Ansagen bereits vorgemerkt.
+  const startupSequenceActiveRef = useRef(false);
   // Vorgeladene OpenAI-URI fuer den Entscheidungs-Ack ("Ich verstehe.").
   // Wird beim Hike-Start im Hintergrund erzeugt, damit bei der Wahl zero
   // Netzwerk-Latenz anfaellt und das OpenAI-Audio sofort ertönt.
@@ -2214,13 +2215,13 @@ export default function LiveHike() {
       routeCompletedRef.current = false;
       storyProgressMaxRef.current = 0;
       storyEligibleChapterRef.current = 0;
+      startupSequenceActiveRef.current = false;
       chapterAudioRetryCountRef.current.clear();
       if (chapterAudioRetryTimerRef.current !== null) {
         clearTimeout(chapterAudioRetryTimerRef.current);
         chapterAudioRetryTimerRef.current = null;
       }
       narratedThroughRef.current = resumeAt != null && resumeAt > 0 ? resumeAt - 1 : -1;
-      setStoryProgressBaseline(null);
       setFinished(false);
       setPreparing(false);
       logDecisionFlow("story_loaded", resumeAt ?? 0, {
@@ -2300,16 +2301,10 @@ export default function LiveHike() {
         if (routeCompletedRef.current) setFinished(true);
         return;
       }
-      // Die Strecke gibt nur das naechste Kapitel frei; sie darf keine
-      // Kapitel ueberspringen und kein Audio vorzeitig starten. Sobald die
-      // Route aber beendet ist, muessen auch die verbleibenden Kapitel
-      // nacheinander abgespielt werden — sonst kann die Sage z. B. bei 6/10
-      // dauerhaft stehen bleiben, wenn der letzte GPS-Fortschritt nicht mehr
-      // als neues Render-Ereignis ankommt.
-      if (
-        storyEligibleChapterRef.current <= chapterIndex &&
-        !routeCompletedRef.current
-      ) {
+      // Die gelaufene Distanz gibt nur das nächste Kapitel frei; die
+      // Routenprojektion oder ein Routenabschluss darf keine fehlenden
+      // Kapitel vorzeitig freigeben.
+      if (storyEligibleChapterRef.current <= chapterIndex) {
         return;
       }
       awaitingDecisionRef.current = false;
@@ -3833,7 +3828,6 @@ export default function LiveHike() {
             });
             speakRef.current?.(text, undefined, {
               useOpenAI: true,
-              partnerInterrupt: true,
               kind: "partner",
               displayTitle: partner.name,
             });
@@ -3894,7 +3888,6 @@ export default function LiveHike() {
       sagaArrivalSpokenRef.current = true;
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
       speakRef.current?.(pack.sagaHeartArrival, undefined, {
-        sagaInterrupt: true,
         kind: "poi",
         displayTitle: t.poiNearby,
       });
@@ -4499,6 +4492,7 @@ export default function LiveHike() {
   // nach dem Stopp nicht doch noch zu sprechen beginnen.
   const cancelNarration = useCallback(async () => {
     narrationQueueRef.current = [];
+    startupSequenceActiveRef.current = false;
     chapterAudioRetryCountRef.current.clear();
     if (chapterAudioRetryTimerRef.current !== null) {
       clearTimeout(chapterAudioRetryTimerRef.current);
@@ -4589,6 +4583,7 @@ export default function LiveHike() {
         const entry: NarrationQueueItem = {
           text,
           onFinished,
+          allowDuringStartup: opts?.allowDuringStartup,
           useOpenAI: opts?.useOpenAI,
           preFetchedUri: opts?.preFetchedUri,
           replaceQueuedCategory: opts?.replaceQueuedCategory,
@@ -4599,7 +4594,10 @@ export default function LiveHike() {
         enqueueNarrationItem(narrationQueueRef.current, entry);
       };
       const hasActiveAudio =
-        speakingRef.current || narrationSoundRef.current !== null;
+        speakingRef.current ||
+        narrationSoundRef.current !== null ||
+        turnSoundRef.current !== null ||
+        navInterruptingRef.current;
       // NAV-INTERRUPT: Navigationsanweisung unterbricht sofort und setzt die
       // laufende Erzaehlung danach an derselben Stelle fort.
       if (opts?.navInterrupt) {
@@ -4626,19 +4624,11 @@ export default function LiveHike() {
           text,
         });
 
-        // Vorab gerenderten Clip abspielen (kein Netzwerk, kein Geraete-TTS).
-        if (opts.turnAudio) {
-          const lang = resolveLang((profile?.language ?? "de") as Lang);
-          const source = getTurnAudio(lang, opts.turnAudio);
+        const playTurnSource = async (
+          source: Parameters<typeof createAudioSound>[0],
+        ) => {
           let turnSound: AudioSound | null = null;
           try {
-            // Audio-Session auf DuckOthers schalten, damit Clip hörbar ist.
-            await setAudioModeAsync({
-              allowsRecording: false,
-              playsInSilentMode: true,
-              shouldPlayInBackground: true,
-              interruptionMode: "duckOthers",
-            }).catch(() => {});
             const { sound } = await createAudioSound(source);
             turnSound = sound;
             if (
@@ -4663,23 +4653,6 @@ export default function LiveHike() {
             });
             await sound.playAsync();
             await completion;
-          } catch {
-            // Wenn der vorbereitete Abbiegeclip fehlt, denselben Hinweis als
-            // OpenAI-Audio erzeugen. Es gibt bewusst keinen Gerätestimmen-
-            // Fallback mehr.
-            if (
-              turnGen === turnGenRef.current &&
-              narrationGen === narrationGenRef.current
-            ) {
-              navInterruptingRef.current = false;
-              await speakRef.current?.(text, undefined, {
-                interrupt: true,
-                useOpenAI: true,
-                kind: "navigation",
-                displayTitle: opts.displayTitle ?? text,
-              });
-            }
-            return;
           } finally {
             if (turnSoundRef.current === turnSound) {
               turnSoundRef.current = null;
@@ -4687,14 +4660,65 @@ export default function LiveHike() {
             }
             try { await turnSound?.unloadAsync(); } catch {}
           }
-          // Audio-Session nach dem kurzen Abbiegeclip zurücksetzen.
-          await setAudioModeAsync({
-            allowsRecording: false,
-            playsInSilentMode: true,
-            shouldPlayInBackground: true,
-            interruptionMode: "mixWithOthers",
-          }).catch(() => {});
+        };
+
+        // Audio-Session auf DuckOthers schalten, damit der Navigationsclip
+        // hörbar ist, ohne die pausierte Erzählung zu verlieren.
+        await setAudioModeAsync({
+          allowsRecording: false,
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: "duckOthers",
+        }).catch(() => {});
+
+        try {
+          const source = opts.turnAudio
+            ? getTurnAudio(
+                resolveLang((profile?.language ?? "de") as Lang),
+                opts.turnAudio,
+              )
+            : {
+                uri: await blobToTempFileUri(
+                  await createNarration({
+                    text,
+                    language: profile?.language,
+                    provider: "openai",
+                  }),
+                ),
+              };
+          await playTurnSource(source);
+        } catch {
+          // Wenn der vorbereitete Abbiegeclip fehlt, denselben Hinweis als
+          // OpenAI-Audio erzeugen. Der Player bleibt dabei im separaten
+          // Navigationskanal, damit die Erzählung danach fortgesetzt wird.
+          if (
+            opts.turnAudio &&
+            turnGen === turnGenRef.current &&
+            narrationGen === narrationGenRef.current
+          ) {
+            try {
+              const fallbackUri = await blobToTempFileUri(
+                await createNarration({
+                  text,
+                  language: profile?.language,
+                  provider: "openai",
+                }),
+              );
+              await playTurnSource({ uri: fallbackUri });
+            } catch {
+              // Der Navigationshinweis ist best-effort; die Erzählung wird
+              // trotzdem an ihrer pausierten Position fortgesetzt.
+            }
+          }
         }
+
+        // Audio-Session nach dem kurzen Abbiegeclip zurücksetzen.
+        await setAudioModeAsync({
+          allowsRecording: false,
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: "mixWithOthers",
+        }).catch(() => {});
 
         // Nav-Ansage fertig: Narration fortsetzen, falls noch derselbe Sound aktiv.
         if (turnGen !== turnGenRef.current) return;
@@ -4708,35 +4732,28 @@ export default function LiveHike() {
           updateNowPlaying(previousNowPlaying);
         } else {
           updateNowPlaying(null);
+          const next = narrationQueueRef.current.shift();
+          if (next) {
+            speakRef.current?.(next.text, next.onFinished, {
+              useOpenAI: next.useOpenAI,
+              allowDuringStartup: next.allowDuringStartup,
+              preFetchedUri: next.preFetchedUri,
+              replaceQueuedCategory: next.replaceQueuedCategory,
+              kind: next.kind,
+              chapterIndex: next.chapterIndex,
+              displayTitle: next.displayTitle,
+            });
+          }
         }
         return;
       }
 
-      // Partneransagen dürfen laufendes Audio nicht abschneiden. Sie warten
-      // hinter einer laufenden Kapitel-, POI- oder Terrainansage.
-      if (opts?.partnerInterrupt) {
-        if (
-          navInterruptingRef.current ||
-          decisionFeedbackPendingRef.current ||
-          hasActiveAudio
-        ) {
-          enqueueNarration();
-          return;
-        }
-      }
-
-      // SAGA-INTERRUPT ist nur noch ein Queue-Hinweis. Auch eine sehr steile
-      // Terrainwarnung oder die Sagenankunft darf kein laufendes Audio
-      // abschneiden.
-      if (opts?.sagaInterrupt) {
-        if (
-          poiNarrationPendingRef.current.size > 0 ||
-          decisionFeedbackPendingRef.current ||
-          hasActiveAudio
-        ) {
-          enqueueNarration();
-          return;
-        }
+      // Die Startsequenz reserviert den ersten Platz für die Einleitung.
+      // Navigation bleibt davon ausgenommen und darf auch in diesem Fenster
+      // sofort abspielen.
+      if (startupSequenceActiveRef.current && !opts?.allowDuringStartup) {
+        enqueueNarration();
+        return;
       }
 
       // Einzige automatische Ausnahme: navInterrupt darf die aktive
@@ -4885,6 +4902,7 @@ export default function LiveHike() {
             if (next) {
               speakRef.current?.(next.text, next.onFinished, {
                 useOpenAI: next.useOpenAI,
+                allowDuringStartup: next.allowDuringStartup,
                 preFetchedUri: next.preFetchedUri,
                 replaceQueuedCategory: next.replaceQueuedCategory,
                 kind: next.kind,
@@ -4996,6 +5014,7 @@ export default function LiveHike() {
           if (next) {
             speakRef.current?.(next.text, next.onFinished, {
               useOpenAI: next.useOpenAI,
+              allowDuringStartup: next.allowDuringStartup,
               preFetchedUri: next.preFetchedUri,
               replaceQueuedCategory: next.replaceQueuedCategory,
               kind: next.kind,
@@ -5070,6 +5089,12 @@ export default function LiveHike() {
       // Offline-Audio bevorzugen wenn vorhanden — kein Netzwerk noetig.
       // capturedIndex sichert den Index zum Zeitpunkt des Effect-Aufrufens.
       const capturedIndex = currentIndex;
+      const isInitialChapter = capturedIndex === 0;
+      if (isInitialChapter) {
+        startupSequenceActiveRef.current = true;
+      } else {
+        startupSequenceActiveRef.current = false;
+      }
       const startupSequenceGen = ++startupSequenceGenRef.current;
       let completionHandled = false;
       const finishChapter = () => {
@@ -5122,7 +5147,8 @@ export default function LiveHike() {
                   startupSequenceGen !== startupSequenceGenRef.current ||
                   currentIndexRef.current !== capturedIndex
                 ) return;
-                 speak(ch.text, finishChapter, {
+                startupSequenceActiveRef.current = false;
+                speak(ch.text, finishChapter, {
                    preFetchedUri: offlineUri ?? undefined,
                    kind: "chapter",
                    chapterIndex: capturedIndex,
@@ -5133,6 +5159,7 @@ export default function LiveHike() {
             {
               useOpenAI: true,
               kind: "introduction",
+              allowDuringStartup: true,
               displayTitle: t.preparingText,
             }
           );
@@ -5573,20 +5600,9 @@ export default function LiveHike() {
       : current);
   }, [nearbyPoi, nearbyPoiWiki?.image, watchPoiStory]);
 
-  // Echte Position auf der Routen-Geometrie (0..1), statt nur die seit dem
-  // Start zurueckgelegte Luftlinie zu betrachten. Das ist die primaere
-  // Grundlage fuer die raeumliche Kapitelverteilung.
-  // Ein ungenauer erster Fix (z. B. Balanced-Genauigkeit direkt beim Start,
-  // oder ein grober Hintergrund-Fix) kann faelschlich auf einen weit
-  // entfernten Punkt der Route projiziert werden und so Kapitel ueber-
-  // springen. Deshalb wird die Routen-Projektion erst ab einer
-  // Mindestgenauigkeit vertraut; ohne verlaessliche Genauigkeit faellt der
-  // Fortschritt auf die reine zurueckgelegte Distanz zurueck (startet bei 0).
-  // Zusaetzlich: Ist man weit von der Route entfernt (z. B. Anreise ueber
-  // 100 km), liefert die naechstgelegene Stelle auf der gesamten Route
-  // faktisch einen Zufallswert entlang der Strecke — auch das wuerde
-  // Kapitel ueberspringen. Deshalb nur vertrauen, wenn man tatsaechlich
-  // in der Naehe der Route ist.
+  // Echte Position auf der Routen-Geometrie (0..1) fuer Navigation,
+  // Terrainhinweise und die kontinuierliche Restzeit-Anzeige. Die
+  // Kapitelverteilung verwendet bewusst nur die gelaufene Distanz darunter.
   const ROUTE_PROGRESS_MAX_ACCURACY_M = 30;
   const ROUTE_PROGRESS_MAX_DIST_KM = 1;
   const routeProgress = useMemo(() => {
@@ -5601,44 +5617,15 @@ export default function LiveHike() {
     return match.fraction;
   }, [livePos, livePosAccuracy, navigationGeometry, locState, locationNow]);
 
-  // Kapitel werden räumlich über die verbleibende Wanderung verteilt. Der
-  // erste verlässliche Routen-Fix ist der persönliche Startanker; dadurch
-  // zählen die 53 m zwischen offiziellem Start und verspätetem Fix nicht als
-  // bereits erzählter Abschnitt.
-  useEffect(() => {
-    if (
-      preparing ||
-      !startGateConfirmedRef.current ||
-      !hasFreshGps ||
-      routeProgress == null ||
-      storyProgressBaseline != null
-    ) {
-      return;
-    }
-    setStoryProgressBaseline(routeProgress);
-  }, [hasFreshGps, preparing, routeProgress, storyProgressBaseline, startGateConfirmed]);
-
+  // Kapitel werden ausschließlich anhand der tatsächlich zurückgelegten
+  // Distanz freigegeben. Die Position auf der geplanten Route spielt dafür
+  // keine Rolle — Off-Route-Bewegung zählt weiterhin als Wanderfortschritt.
   const storyProgress = useMemo(() => {
-    const baseline = storyProgressBaseline ?? 0;
-    const remainingRouteFraction = Math.max(0.05, 1 - baseline);
-    const routeBasedProgress =
-      routeProgress == null
-        ? 0
-        : Math.max(
-            0,
-            Math.min(1, (routeProgress - baseline) / remainingRouteFraction),
-          );
-    const walkedDistanceProgress =
-      totalKm > 0
-        ? Math.max(
-            0,
-            Math.min(1, distance / Math.max(0.05, totalKm * remainingRouteFraction)),
-          )
-        : 0;
-    const candidate = Math.max(routeBasedProgress, walkedDistanceProgress);
+    const candidate =
+      totalKm > 0 ? Math.max(0, Math.min(1, distance / totalKm)) : 0;
     storyProgressMaxRef.current = Math.max(storyProgressMaxRef.current, candidate);
     return storyProgressMaxRef.current;
-  }, [distance, routeProgress, storyProgressBaseline, totalKm]);
+  }, [distance, totalKm]);
 
   const storyEligibleChapter = useMemo(() => {
     const lastChapterIndex = Math.max(0, chapters.length - 1);
@@ -5909,10 +5896,7 @@ export default function LiveHike() {
              sectionDistance,
              averageGrade,
            ),
-          ...(section.isVerySteep ? { sagaInterrupt: true } : {}),
-          ...(!section.isVerySteep
-            ? { replaceQueuedCategory: "terrain" as const }
-            : {}),
+           replaceQueuedCategory: "terrain",
         });
       }
 
@@ -5937,7 +5921,7 @@ export default function LiveHike() {
              useOpenAI: true,
              kind: "terrain",
              displayTitle: t.terrainWarningTitle,
-             replaceQueuedCategory: "terrain",
+              replaceQueuedCategory: "terrain",
            },
         );
       }
@@ -5953,7 +5937,7 @@ export default function LiveHike() {
           useOpenAI: true,
            kind: "terrain",
            displayTitle: t.terrainWarningTitle,
-          replaceQueuedCategory: "terrain",
+           replaceQueuedCategory: "terrain",
         });
       }
     }
@@ -6457,14 +6441,9 @@ export default function LiveHike() {
       combinedGeometry.push(...(tailStartsAtDetourEnd ? originalTail.slice(1) : originalTail));
     }
     if (combinedGeometry.length < 2) return;
-    const preservedChapterIndex = currentIndexRef.current;
-    const currentChapterWasNarrated =
-      narratedThroughRef.current >= preservedChapterIndex;
-
     detourPoiSearchKeyRef.current = null;
     if (!isOffline) searchDetourPois(combinedGeometry);
 
-    await cancelNarration();
     setPreparing(true);
     setAcceptedRouteGeometry(combinedGeometry);
     setRecalcGeom(combinedGeometry);
@@ -6483,16 +6462,7 @@ export default function LiveHike() {
     pendingGroupDecisionAdvanceRef.current = null;
     setFinished(false);
     setOffRoutePos(null);
-    setStoryProgressBaseline(null);
-    storyProgressMaxRef.current = 0;
-    storyEligibleChapterRef.current = preservedChapterIndex;
     if (!storyCompleteRef.current) {
-      if (!currentChapterWasNarrated) {
-        // Der laufende Clip wurde oben abgebrochen. Das aktuelle Kapitel wird
-        // nach dem Geometrie-Update einmal sauber neu gestartet.
-        lastNarratedRef.current = preservedChapterIndex - 1;
-        lastDecisionTriggeredRef.current = preservedChapterIndex - 1;
-      }
       setAwaitingDecision(false);
       awaitingDecisionRef.current = false;
     }
@@ -6504,7 +6474,6 @@ export default function LiveHike() {
     // Die Story bleibt unveraendert; nur die aktive Geometrie wird ersetzt.
     setPreparing(false);
   }, [
-    cancelNarration,
     navigationGeometry,
     releaseStartAudio,
     recalcGeom,

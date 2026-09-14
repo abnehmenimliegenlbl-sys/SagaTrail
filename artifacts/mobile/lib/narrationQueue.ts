@@ -15,6 +15,7 @@ export type NarrationKind =
 export type NarrationQueueItem = {
   text: string;
   onFinished?: () => void;
+  allowDuringStartup?: boolean;
   useOpenAI?: boolean;
   preFetchedUri?: string;
   replaceQueuedCategory?: ReplaceableNarrationCategory;

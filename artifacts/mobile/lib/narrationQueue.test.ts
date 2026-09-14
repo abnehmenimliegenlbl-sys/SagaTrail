@@ -33,7 +33,7 @@ test("preserves non-replaceable narration around the latest status", () => {
   enqueueNarrationItem(queue, { text: "POI" });
   enqueueNarrationItem(queue, {
     text: "Aktueller Untergrund",
-    replaceQueuedCategory: "surface",
+    replaceQueuedCategory: "terrainSurface",
   });
 
   assert.deepEqual(
