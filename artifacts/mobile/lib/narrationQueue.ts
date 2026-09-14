@@ -18,6 +18,7 @@ export type NarrationQueueItem = {
   preFetchedUri?: string;
   replaceQueuedCategory?: ReplaceableNarrationCategory;
   kind?: NarrationKind;
+  chapterIndex?: number;
   displayTitle?: string;
 };
 

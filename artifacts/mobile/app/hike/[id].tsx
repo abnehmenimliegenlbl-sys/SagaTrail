@@ -164,6 +164,7 @@ const watchLiveStateLog = makeLogger("[WATCH-STATE]", "watch_state");
 const watchPoiLog = makeLogger("[WATCH-POI]", "watch_poi");
 const locationPermissionLog = makeLogger("[LOCATION-PERM]", "location_permission");
 const decisionFlowLog = makeLogger("[DECISION-FLOW]", "decision_flow");
+const storyAudioLog = makeLogger("[STORY-AUDIO]", "story_audio");
 const locationDiagnosticContext = () => ({
   ...getRuntimeDiagnostics(),
   appState: AppState.currentState,
@@ -182,6 +183,7 @@ type SpeakOptions = {
   interrupt?: boolean;
   partnerInterrupt?: boolean;
   sagaInterrupt?: boolean;
+  chapterIndex?: number;
   useOpenAI?: boolean;
   preFetchedUri?: string;
   navInterrupt?: boolean;
@@ -196,6 +198,7 @@ type NowPlayingNarration = {
   label: string;
   title?: string;
   text: string;
+  chapterIndex?: number;
 };
 
 type WatchDiscoveryAlert = {
@@ -1123,6 +1126,7 @@ export default function LiveHike() {
 
   const [speaking, setSpeaking] = useState(false);
   const [nowPlaying, setNowPlaying] = useState<NowPlayingNarration | null>(null);
+  const [chapterNarrationRetry, setChapterNarrationRetry] = useState(0);
   const nowPlayingRef = useRef<NowPlayingNarration | null>(null);
   const nowPlayingVisible =
     nowPlaying !== null && (speaking || nowPlaying.kind === "navigation");
@@ -1710,6 +1714,8 @@ export default function LiveHike() {
   const storyEligibleChapterRef = useRef(0);
   /** Hoechstes Kapitel, dessen Audio vollstaendig beendet wurde. */
   const narratedThroughRef = useRef(-1);
+  /** Kapitel, das von einer hoeher priorisierten Ansage unterbrochen wurde. */
+  const chapterResumeAfterInterruptRef = useRef<number | null>(null);
   /** Gruppenmitglieder warten nach einer fremden Entscheidung bis ihr Audio endet. */
   const pendingGroupDecisionAdvanceRef = useRef<number | null>(null);
   /** Verhindert, dass setAwaitingDecision(true) mehrfach fuer denselben
@@ -2190,6 +2196,7 @@ export default function LiveHike() {
       routeCompletedRef.current = false;
       storyProgressMaxRef.current = 0;
       storyEligibleChapterRef.current = 0;
+      chapterResumeAfterInterruptRef.current = null;
       narratedThroughRef.current = resumeAt != null && resumeAt > 0 ? resumeAt - 1 : -1;
       setStoryProgressBaseline(null);
       setFinished(false);
@@ -4453,6 +4460,7 @@ export default function LiveHike() {
   // nach dem Stopp nicht doch noch zu sprechen beginnen.
   const cancelNarration = useCallback(async () => {
     narrationQueueRef.current = [];
+    chapterResumeAfterInterruptRef.current = null;
     startupSequenceGenRef.current++;
     if (startupSequenceTimerRef.current !== null) {
       clearTimeout(startupSequenceTimerRef.current);
@@ -4485,6 +4493,45 @@ export default function LiveHike() {
   // z. B. nach einem POI-Einschub die unterbrochene Kapitel-Erzaehlung
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
+  const rememberInterruptedChapter = useCallback((interruptedBy: "partner" | "terrain") => {
+    const active = nowPlayingRef.current;
+    const chapterIndex = active?.chapterIndex;
+    if (
+      !active ||
+      chapterIndex == null ||
+      storyCompleteRef.current ||
+      narratedThroughRef.current >= chapterIndex
+    ) {
+      return;
+    }
+    chapterResumeAfterInterruptRef.current = chapterIndex;
+    storyAudioLog("chapter interrupted by priority narration", {
+      chapterIndex,
+      interruptedBy,
+      activeKind: active.kind,
+      title: active.title ?? null,
+    });
+  }, []);
+
+  const resumeInterruptedChapter = useCallback(() => {
+    const chapterIndex = chapterResumeAfterInterruptRef.current;
+    if (chapterIndex == null) return;
+    chapterResumeAfterInterruptRef.current = null;
+    if (
+      storyCompleteRef.current ||
+      currentIndexRef.current !== chapterIndex ||
+      narratedThroughRef.current >= chapterIndex
+    ) {
+      return;
+    }
+    lastNarratedRef.current = chapterIndex - 1;
+    storyAudioLog("chapter resume scheduled", {
+      chapterIndex,
+      currentIndex: currentIndexRef.current,
+    });
+    setChapterNarrationRetry((retry) => retry + 1);
+  }, []);
+
   const speak = useCallback(
     async (text: string, onFinished?: () => void, opts?: SpeakOptions) => {
        // Vor der Startbestätigung darf kein aktiver Trigger sprechen. Das
@@ -4498,6 +4545,7 @@ export default function LiveHike() {
           preFetchedUri: opts?.preFetchedUri,
           replaceQueuedCategory: opts?.replaceQueuedCategory,
           kind: opts?.kind,
+          chapterIndex: opts?.chapterIndex,
           displayTitle: opts?.displayTitle,
         };
         enqueueNarrationItem(narrationQueueRef.current, entry);
@@ -4622,6 +4670,7 @@ export default function LiveHike() {
           enqueueNarration();
           return;
         }
+        rememberInterruptedChapter("partner");
         narrationQueueRef.current = [];
         const prev = narrationSoundRef.current;
         narrationSoundRef.current = null;
@@ -4646,6 +4695,7 @@ export default function LiveHike() {
           enqueueNarration();
           return;
         }
+        rememberInterruptedChapter("terrain");
         // Alles andere (Kapitel, POI, Meilenstein): Queue leeren, sofort starten.
         narrationQueueRef.current = [];
         // Laufenden Sound stoppen — wird im normalen Pfad neu gestartet.
@@ -4679,6 +4729,7 @@ export default function LiveHike() {
         label: narrationLabel(activeKind),
         title: opts?.displayTitle,
         text,
+          chapterIndex: opts?.chapterIndex,
       });
       // Sofortige Synchronisation des Refs — setSpeaking ist asynchron (React
       // State), der Ref wird sonst erst beim naechsten Render gesetzt. Ohne
@@ -4739,6 +4790,7 @@ export default function LiveHike() {
           speakingRef.current = false;
            updateNowPlaying(null);
           onFinished?.();
+           resumeInterruptedChapter();
           // Queue nur verarbeiten, wenn onFinished keinen neuen speak()-Aufruf
           // ausgeloest hat — sonst wuerde der Queue-Eintrag via Gen-Bump die
           // soeben gestartete Ausgabe abwuergen (Race-Condition: Meilenstein-
@@ -4753,6 +4805,7 @@ export default function LiveHike() {
                 preFetchedUri: next.preFetchedUri,
                 replaceQueuedCategory: next.replaceQueuedCategory,
                 kind: next.kind,
+                chapterIndex: next.chapterIndex,
                 displayTitle: next.displayTitle,
               });
             } else if (!awaitingDecisionRef.current) {
@@ -4816,6 +4869,7 @@ export default function LiveHike() {
         speakingRef.current = false;
         updateNowPlaying(null);
         onFinished?.();
+        resumeInterruptedChapter();
         if (!speakingRef.current) {
           const next = narrationQueueRef.current.shift();
           if (next) {
@@ -4824,6 +4878,7 @@ export default function LiveHike() {
               preFetchedUri: next.preFetchedUri,
               replaceQueuedCategory: next.replaceQueuedCategory,
               kind: next.kind,
+              chapterIndex: next.chapterIndex,
               displayTitle: next.displayTitle,
             });
           } else if (!awaitingDecisionRef.current) {
@@ -4837,7 +4892,7 @@ export default function LiveHike() {
         }
       }
     },
-    [narrationLabel, profile?.language, stopTurnAudio, updateNowPlaying]
+    [narrationLabel, profile?.language, resumeInterruptedChapter, stopTurnAudio, updateNowPlaying]
   );
   speakRef.current = speak;
 
@@ -4885,6 +4940,11 @@ export default function LiveHike() {
     if (!ch) return;
     if (lastNarratedRef.current !== currentIndex) {
       lastNarratedRef.current = currentIndex;
+      storyAudioLog("chapter audio scheduled", {
+        chapterIndex: currentIndex,
+        chapterCount: chapters.length,
+        retry: chapterNarrationRetry,
+      });
       // Erstes Kapitel: Begruessung voranstellen, dann kurze Pause vor Kapitel 1.
       // Offline-Audio bevorzugen wenn vorhanden — kein Netzwerk noetig.
       // capturedIndex sichert den Index zum Zeitpunkt des Effect-Aufrufens.
@@ -4897,6 +4957,11 @@ export default function LiveHike() {
         if (startupSequenceGen !== startupSequenceGenRef.current) return;
         if (currentIndexRef.current !== capturedIndex) return;
         narratedThroughRef.current = Math.max(narratedThroughRef.current, capturedIndex);
+        chapterResumeAfterInterruptRef.current = null;
+        storyAudioLog("chapter audio finished", {
+          chapterIndex: capturedIndex,
+          chapterCount: chapters.length,
+        });
         const latestChapter = decisionsRef.current[capturedIndex];
         if (latestChapter?.isDecisionPoint && latestChapter.chosenOptionIndex == null) {
           triggerDecision(capturedIndex, "chapter_audio_finished");
@@ -4940,6 +5005,7 @@ export default function LiveHike() {
                  speak(ch.text, finishChapter, {
                    preFetchedUri: offlineUri ?? undefined,
                    kind: "chapter",
+                   chapterIndex: capturedIndex,
                    displayTitle: t.chapterMark(capturedIndex + 1, chapters.length),
                  });
               }, 1500);
@@ -4954,6 +5020,7 @@ export default function LiveHike() {
           speak(ch.text, finishChapter, {
             preFetchedUri: offlineUri ?? undefined,
             kind: "chapter",
+            chapterIndex: capturedIndex,
             displayTitle: t.chapterMark(capturedIndex + 1, chapters.length),
           });
         }
@@ -4970,7 +5037,7 @@ export default function LiveHike() {
     if (ch.isDecisionPoint && ch.chosenOptionIndex == null) {
       triggerDecision(currentIndex, "chapter_effect");
     }
-  }, [advanceStoryChapter, currentIndex, preparing, startAudioReleased, startGateConfirmed, chapters, speak, turnNotifsReady, t, route?.name, localizedSagaTitle, greetingPrefix, storyLanguage, logDecisionFlow, triggerDecision]);
+  }, [advanceStoryChapter, chapterNarrationRetry, currentIndex, preparing, startAudioReleased, startGateConfirmed, chapters, speak, turnNotifsReady, t, route?.name, localizedSagaTitle, greetingPrefix, storyLanguage, logDecisionFlow, triggerDecision]);
 
   // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
   // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
