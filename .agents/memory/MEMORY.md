@@ -147,3 +147,4 @@
 - [Native map WebView source identity](native-map-webview-source.md) — memoize `{html}` sources; a fresh object per GPS render makes WKWebView reload the whole map.
 - [Watch localization fallback](sagatrail-watch-localization-fallback.md) — exhaust the selected language across all Watch copy tables before falling back to German.
 - [Watch turn-distance rounding](sagatrail-watch-turn-distance-rounding.md) — show turn distances as km/100 m, 10 m, or 5 m based on range, including the complication.
+- [Watch battery strategy](sagatrail-watch-battery-strategy.md) — iPhone owns GPS; Watch HR workout must not request outdoor location, and routine live snapshots stay at 15 s.

@@ -284,7 +284,9 @@ final class WatchHikeModel: NSObject, ObservableObject {
     do {
       let configuration = HKWorkoutConfiguration()
       configuration.activityType = .hiking
-      configuration.locationType = .outdoor
+      // The iPhone owns GPS and route progress. Do not start a second
+      // outdoor-location workout on the Watch just to collect heart rate.
+      configuration.locationType = .unknown
       let session = try HKWorkoutSession(healthStore: healthStore, configuration: configuration)
       let builder = session.associatedWorkoutBuilder()
       builder.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: configuration)

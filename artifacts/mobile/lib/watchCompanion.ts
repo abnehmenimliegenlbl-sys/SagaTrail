@@ -28,7 +28,12 @@ function logStableConnectivity(status: NativeConnectivityStatus) {
 
 /** Wire format shared with the optional SagaTrailCompanion native module. */
 export const HIKE_LIVE_STATE_VERSION = 1 as const;
-export const LIVE_SNAPSHOT_MIN_INTERVAL_MS = 7_500;
+// Routine Watch snapshots do not need sub-10-second precision: the iPhone
+// remains authoritative for GPS and local turn notifications. Urgent states
+// use the shorter interval below so turn approach, SOS, and safety changes
+// remain responsive.
+export const LIVE_SNAPSHOT_MIN_INTERVAL_MS = 15_000;
+const LIVE_SNAPSHOT_URGENT_INTERVAL_MS = 7_500;
 
 export type DataFreshness = "fresh" | "stale" | "unavailable";
 export type HikeSessionStatus = "preparing" | "active" | "paused" | "finished" | "sos_requested";
@@ -582,7 +587,21 @@ export async function publishHikeLiveState(
   const now = options?.now ?? Date.now();
   const force = options?.force === true;
   const age = now - lastLiveStateSentAt;
-  if (!force && age < LIVE_SNAPSHOT_MIN_INTERVAL_MS) {
+  const turnIsNear =
+    publishState.nextNavigation?.distanceM != null &&
+    publishState.nextNavigation.distanceM <= 150;
+  const safetyIsActive =
+    publishState.safetyCheckin?.status === "active" ||
+    publishState.safetyCheckin?.status === "overdue";
+  const urgent =
+    turnIsNear ||
+    safetyIsActive ||
+    publishState.sessionStatus === "sos_requested" ||
+    publishState.activeAlert != null;
+  const minimumInterval = urgent
+    ? LIVE_SNAPSHOT_URGENT_INTERVAL_MS
+    : LIVE_SNAPSHOT_MIN_INTERVAL_MS;
+  if (!force && age < minimumInterval) {
     if (publishState.safetyCheckin?.status === "active" || publishState.sessionStatus === "sos_requested") {
       watchCompanionLog("publish throttled for critical state", {
         sequence: publishState.sequence,

@@ -804,7 +804,7 @@ struct WatchHikeView: View {
       pageHeader(copy.t("status"), systemImage: nil)
       card {
         VStack(spacing: 6) {
-          if let map = state.map {
+          if selectedPage == 1, let map = state.map {
             Button {
               isMapPresented = true
             } label: {
