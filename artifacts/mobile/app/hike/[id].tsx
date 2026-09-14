@@ -374,6 +374,8 @@ const OFF_ROUTE_THRESHOLD_KM = 0.08;
 const OFF_ROUTE_RECOVER_KM = 0.04;
 /** Abstand zum offiziellen Wegstart, ab dem beim Wanderungsbeginn eine Auswahl erscheint. */
 const START_NEARBY_KM = 0.1;
+/** Das letzte Kapitel soll kurz vor dem Routenende beginnen, nicht erst ganz am Schluss. */
+const STORY_FINAL_CHAPTER_PROGRESS = 0.95;
 /** Anzahl aufeinanderfolgender GPS-Fixes, die ueberschritten sein muessen, bevor gewarnt wird. */
 const OFF_ROUTE_CONFIRM_FIXES = 3;
 /** Eigene Statusfarbe fuer ein gueltiges Live-GPS-Signal — nicht mit dem roten Markenakzent vermischen. */
@@ -918,6 +920,8 @@ export default function LiveHike() {
           return t.preparingText;
         case "poi":
           return t.poiNearby;
+        case "decisionPrompt":
+          return t.perception;
         case "feedback":
           return t.perception;
         case "navigation":
@@ -3299,6 +3303,9 @@ export default function LiveHike() {
         case "chapter":
           text = t.chapterMark(currentIndex + 1, Math.max(1, chapters.length));
           break;
+        case "decisionPrompt":
+          text = `${labels.decision}${question ? ` · ${question}` : ""}`;
+          break;
         case "feedback":
           text = awaitingDecision
             ? `${labels.decision}${question ? ` · ${question}` : ""}`
@@ -5638,9 +5645,9 @@ export default function LiveHike() {
     if (lastChapterIndex === 0) return 0;
     // Das letzte Kapitel wird am Ende der Route auch bei kleinen GPS-
     // Abweichungen freigegeben; alle anderen Kapitel folgen gleichmässigen
-    // Streckenintervallen.
+    // Streckenintervallen. Das letzte Kapitel startet ab 95 %.
     const eligible =
-      storyProgress >= 0.98
+      storyProgress >= STORY_FINAL_CHAPTER_PROGRESS
         ? lastChapterIndex
         : Math.floor(storyProgress * lastChapterIndex);
     return Math.max(0, Math.min(lastChapterIndex, eligible));
@@ -6114,8 +6121,16 @@ export default function LiveHike() {
       optionIndex,
       source,
     });
-    // Ein verspäteter Prompt darf nicht hinter dem Antwort-Ack weiterlaufen.
-    narrationQueueRef.current = [];
+    // Nur ein bereits vorgemerkter Prompt für diese Entscheidung ist nach der
+    // Antwort veraltet. Andere Erzählungen bleiben FIFO und dürfen nicht
+    // durch die Entscheidungsbestätigung verloren gehen.
+    narrationQueueRef.current = narrationQueueRef.current.filter(
+      (item) =>
+        !(
+          item.kind === "decisionPrompt" &&
+          item.chapterIndex === decisionIndex
+        ),
+    );
     // Sofort synchronisieren: Die Sprach-Erkennung kann den Treffer melden,
     // bevor der React-State neu gerendert wurde. Ohne diesen Ref-Abschluss
     // kann der Entscheidungs-Prompt in diesem Zwischenfenster nochmals
@@ -6262,7 +6277,8 @@ export default function LiveHike() {
     decisionPromptCountRef.current.set(currentIndex, promptCount);
     logDecisionFlow("prompt_started", currentIndex, { promptCount });
     speakRef.current?.(pack.buildDecisionPrompt(opts, question), undefined, {
-      kind: "feedback",
+      kind: "decisionPrompt",
+      chapterIndex: currentIndex,
       displayTitle: t.perception,
     });
   }, [awaitingDecision, speaking, currentIndex, storyLanguage, logDecisionFlow]);
