@@ -1108,10 +1108,43 @@ window.switchTab = function(name, btn) {
           <h2 style="margin:0">&#128240; Medienkontakte</h2>
           <p class="hint" style="margin:5px 0 0">Eigener E-Mail-Verteiler aus der Medienkontaktliste – ohne Filter.</p>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="mmLoadContacts()">&#8635; Aktualisieren</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="mmOpenEditor()">&#43; Kontakt</button>
+          <button class="btn btn-ghost btn-sm" onclick="mmLoadContacts()">&#8635; Aktualisieren</button>
+        </div>
       </div>
       <div id="mm-count" class="hint" style="margin-bottom:10px">Wird geladen…</div>
       <div id="mm-table"><p class="loading">Wird geladen…</p></div>
+    </div>
+
+    <div id="mm-editor-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;overflow:auto;padding:32px 16px">
+      <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:14px;padding:22px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 id="mm-editor-title" style="margin:0">Medienkontakt hinzufügen</h2>
+          <button class="btn btn-ghost btn-sm" onclick="mmCloseEditor()">&#10005;</button>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Medium *</label>
+          <input id="mm-contact-name" type="text" maxlength="200" placeholder="z. B. Radio 32"/>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>E-Mail *</label>
+          <input id="mm-contact-email" type="email" maxlength="320" placeholder="redaktion@medium.ch"/>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Art</label>
+          <input id="mm-contact-typ" type="text" maxlength="100" placeholder="Radio, Print, Online…"/>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Kanton / Region</label>
+          <input id="mm-contact-kanton" type="text" maxlength="200" placeholder="Bern"/>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <button class="btn btn-ghost" onclick="mmCloseEditor()">Abbrechen</button>
+          <button class="btn btn-primary" id="mm-contact-save-btn" onclick="mmSaveContact()">Speichern</button>
+        </div>
+        <p id="mm-editor-status" class="hint" style="margin:10px 0 0"></p>
+      </div>
     </div>
 
     <div class="card">
@@ -1598,25 +1631,34 @@ function switchTab(name, btn) {
    ═══════════════════════════════════════════════════ */
 var _mmContacts = [];
 var _mmPolling = null;
+var _mmEditingId = null;
 
 function mmRenderContacts() {
   var count = document.getElementById('mm-count');
   var table = document.getElementById('mm-table');
   var contacts = _mmContacts;
-  count.textContent = contacts.length + ' Empfänger (einmalige E-Mail-Adressen)';
+  var active = contacts.filter(function(c){ return c.active; });
+  count.textContent = active.length + ' aktiv / ' + contacts.length + ' Kontakte (nur aktive werden angeschrieben)';
   if (!contacts.length) {
     table.innerHTML = '<p class="hint">Keine Medienkontakte vorhanden.</p>';
     document.getElementById('mm-send-btn').disabled = true;
     return;
   }
-  var html = '<table class="tbl"><thead><tr><th>Medium</th><th>E-Mail</th><th>Art</th><th>Kanton</th></tr></thead><tbody>';
+  var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Medium</th><th>E-Mail</th><th>Art</th><th>Kanton</th><th>Status</th><th></th></tr></thead><tbody>';
   contacts.forEach(function(c) {
+    var status = c.active
+      ? '<span class="badge badge-green">Aktiv</span>'
+      : '<span class="badge">Inaktiv</span>';
+    var action = '<button class="btn btn-ghost btn-sm" onclick="mmOpenEditor(\'' + esc(c.id) + '\')">Bearbeiten</button> ' +
+      '<button class="btn btn-ghost btn-sm" onclick="mmToggleContact(\'' + esc(c.id) + '\',' + (c.active ? 'false' : 'true') + ')">' +
+      (c.active ? 'Deaktivieren' : 'Aktivieren') + '</button>';
     html += '<tr><td>' + esc(c.name) + '</td><td class="mono">' + esc(c.email) +
-      '</td><td>' + esc(c.typ) + '</td><td>' + esc(c.kanton) + '</td></tr>';
+      '</td><td>' + esc(c.typ || '–') + '</td><td>' + esc(c.kanton || '–') +
+      '</td><td>' + status + '</td><td style="white-space:nowrap">' + action + '</td></tr>';
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   table.innerHTML = html;
-  document.getElementById('mm-send-btn').disabled = false;
+  document.getElementById('mm-send-btn').disabled = !active.length;
 }
 
 async function mmLoadContacts() {
@@ -1624,13 +1666,7 @@ async function mmLoadContacts() {
   count.textContent = 'Wird geladen…';
   try {
     var data = await api('/api/admin/media-contacts/list');
-    var seen = {};
-    _mmContacts = (data.contacts || []).filter(function(c) {
-      var email = String(c.email || '').trim().toLowerCase();
-      if (!email || seen[email]) return false;
-      seen[email] = true;
-      return true;
-    });
+    _mmContacts = data.contacts || [];
     mmRenderContacts();
   } catch(e) {
     count.textContent = '⚠ ' + e.message;
@@ -1638,14 +1674,77 @@ async function mmLoadContacts() {
   }
 }
 
+function mmOpenEditor(id) {
+  _mmEditingId = id || null;
+  var contact = id ? _mmContacts.find(function(c){ return c.id === id; }) : null;
+  document.getElementById('mm-editor-title').textContent = contact ? 'Medienkontakt bearbeiten' : 'Medienkontakt hinzufügen';
+  document.getElementById('mm-contact-name').value = contact ? (contact.name || '') : '';
+  document.getElementById('mm-contact-email').value = contact ? (contact.email || '') : '';
+  document.getElementById('mm-contact-typ').value = contact ? (contact.typ || '') : '';
+  document.getElementById('mm-contact-kanton').value = contact ? (contact.kanton || '') : '';
+  document.getElementById('mm-editor-status').textContent = '';
+  document.getElementById('mm-contact-save-btn').disabled = false;
+  document.getElementById('mm-editor-modal').style.display = 'block';
+}
+
+function mmCloseEditor() {
+  document.getElementById('mm-editor-modal').style.display = 'none';
+  _mmEditingId = null;
+}
+
+async function mmSaveContact() {
+  var payload = {
+    name: v('mm-contact-name').trim(),
+    email: v('mm-contact-email').trim(),
+    typ: v('mm-contact-typ').trim(),
+    kanton: v('mm-contact-kanton').trim()
+  };
+  if (!payload.name || !payload.email) {
+    document.getElementById('mm-editor-status').textContent = 'Medium und E-Mail sind erforderlich.';
+    return;
+  }
+  var btn = document.getElementById('mm-contact-save-btn');
+  btn.disabled = true;
+  document.getElementById('mm-editor-status').textContent = 'Speichert…';
+  try {
+    await api(_mmEditingId
+      ? '/api/admin/media-contacts/' + encodeURIComponent(_mmEditingId)
+      : '/api/admin/media-contacts', {
+        method: _mmEditingId ? 'PATCH' : 'POST',
+        body: JSON.stringify(payload)
+      });
+    mmCloseEditor();
+    await mmLoadContacts();
+  } catch(e) {
+    btn.disabled = false;
+    document.getElementById('mm-editor-status').textContent = '⚠ ' + e.message;
+  }
+}
+
+async function mmToggleContact(id, active) {
+  var contact = _mmContacts.find(function(c){ return c.id === id; });
+  if (!contact) return;
+  if (!confirm((active ? 'Kontakt "' : 'Kontakt "') + contact.name + '" wirklich ' + (active ? 'aktivieren' : 'deaktivieren') + '?')) return;
+  try {
+    await api('/api/admin/media-contacts/' + encodeURIComponent(id), {
+      method: 'PATCH',
+      body: JSON.stringify({ active: active })
+    });
+    await mmLoadContacts();
+  } catch(e) {
+    alert('Kontakt konnte nicht geändert werden: ' + e.message);
+  }
+}
+
 async function mmPreview() {
   var bodyText = v('mm-body');
   if (!bodyText) { alert('Bitte zuerst einen Text eingeben.'); return; }
+  var sample = _mmContacts.find(function(c){ return c.active; }) || _mmContacts[0] || {};
   try {
     var res = await fetch('/api/admin/media-contacts/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
-      body: JSON.stringify({ bodyText: bodyText, sampleContact: _mmContacts[0] || {} })
+      body: JSON.stringify({ bodyText: bodyText, sampleContact: sample })
     });
     if (!res.ok) throw new Error((await res.text()) || 'Vorschau fehlgeschlagen');
     document.getElementById('mm-preview-iframe').srcdoc = await res.text();
@@ -1659,8 +1758,9 @@ async function mmSend() {
   var subject = v('mm-subject');
   var bodyText = v('mm-body');
   if (!subject || !bodyText) { alert('Betreff und Text sind erforderlich.'); return; }
-  if (!_mmContacts.length) { alert('Keine Medienkontakte geladen.'); return; }
-  if (!confirm('Medienkampagne an ' + _mmContacts.length + ' Empfänger senden? Betreff: ' + subject)) return;
+  var activeContacts = _mmContacts.filter(function(c){ return c.active; });
+  if (!activeContacts.length) { alert('Keine aktiven Medienkontakte geladen.'); return; }
+  if (!confirm('Medienkampagne an ' + activeContacts.length + ' aktive Empfänger senden? Betreff: ' + subject)) return;
   var btn = document.getElementById('mm-send-btn');
   btn.disabled = true;
   btn.textContent = '⏳ Sendet…';

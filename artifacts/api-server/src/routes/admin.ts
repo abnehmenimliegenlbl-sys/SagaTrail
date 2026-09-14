@@ -40,10 +40,36 @@ import {
   makeUnsubToken, verifyUnsubToken,
   type LeadRow,
 } from "../lib/leadMailer";
-import { partnerEmailLogTable, partnerEmailBlocklistTable, partnerLeadsTable } from "@workspace/db";
-import { MEDIA_CONTACTS } from "../lib/mediaContacts";
+import { mediaContactsTable, partnerEmailLogTable, partnerEmailBlocklistTable, partnerLeadsTable } from "@workspace/db";
 
 const router: IRouter = Router();
+
+const MediaContactCreateBody = z.object({
+  name: z.string().trim().min(1).max(200),
+  email: z.string().trim().toLowerCase().email().max(320),
+  typ: z.string().trim().max(100).default(""),
+  kanton: z.string().trim().max(200).default(""),
+});
+
+const MediaContactUpdateBody = z.object({
+  name: z.string().trim().min(1).max(200).optional(),
+  email: z.string().trim().toLowerCase().email().max(320).optional(),
+  typ: z.string().trim().max(100).optional(),
+  kanton: z.string().trim().max(200).optional(),
+  active: z.boolean().optional(),
+});
+
+function mediaContactToLead(contact: typeof mediaContactsTable.$inferSelect) {
+  return {
+    name: contact.name,
+    email: contact.email,
+    kanton: contact.kanton,
+    sprache: "DE",
+    route: "",
+    typ: contact.typ,
+    satz: "",
+  };
+}
 
 const PremiumFreischaltenBody = z.object({
   email: z.string().email(),
@@ -2536,7 +2562,67 @@ router.post("/admin/leads/send", async (req, res): Promise<void> => {
 
 router.get("/admin/media-contacts/list", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
-  res.json({ contacts: MEDIA_CONTACTS, total: MEDIA_CONTACTS.length });
+  const contacts = await db
+    .select()
+    .from(mediaContactsTable)
+    .orderBy(desc(mediaContactsTable.active), mediaContactsTable.name);
+  res.json({
+    contacts,
+    total: contacts.length,
+    activeTotal: contacts.filter((contact) => contact.active).length,
+  });
+});
+
+router.post("/admin/media-contacts", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const parsed = MediaContactCreateBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  try {
+    const [contact] = await db.insert(mediaContactsTable).values(parsed.data).returning();
+    res.status(201).json(contact);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Kontakt konnte nicht angelegt werden";
+    if (/duplicate key|unique/i.test(message)) {
+      res.status(409).json({ error: "Diese E-Mail-Adresse ist bereits vorhanden" });
+      return;
+    }
+    res.status(500).json({ error: message });
+  }
+});
+
+router.patch("/admin/media-contacts/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const parsed = MediaContactUpdateBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  if (!Object.keys(parsed.data).length) {
+    res.status(400).json({ error: "Keine Änderungen übergeben" });
+    return;
+  }
+  try {
+    const [contact] = await db
+      .update(mediaContactsTable)
+      .set({ ...parsed.data, updatedAt: new Date() })
+      .where(eq(mediaContactsTable.id, req.params.id))
+      .returning();
+    if (!contact) {
+      res.status(404).json({ error: "Medienkontakt nicht gefunden" });
+      return;
+    }
+    res.json(contact);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Kontakt konnte nicht aktualisiert werden";
+    if (/duplicate key|unique/i.test(message)) {
+      res.status(409).json({ error: "Diese E-Mail-Adresse ist bereits vorhanden" });
+      return;
+    }
+    res.status(500).json({ error: message });
+  }
 });
 
 router.post("/admin/media-contacts/preview", async (req, res): Promise<void> => {
@@ -2546,7 +2632,13 @@ router.post("/admin/media-contacts/preview", async (req, res): Promise<void> => 
     res.status(400).send("bodyText erforderlich");
     return;
   }
-  const sample = sampleContact ?? MEDIA_CONTACTS[0];
+  const [storedSample] = await db
+    .select()
+    .from(mediaContactsTable)
+    .where(eq(mediaContactsTable.active, true))
+    .orderBy(mediaContactsTable.name)
+    .limit(1);
+  const sample = sampleContact ?? (storedSample ? mediaContactToLead(storedSample) : {});
   res.type("html").send(buildPreviewHtml(bodyText, sample, "https://sagatrail.ch"));
 });
 
@@ -2564,16 +2656,35 @@ router.post("/admin/media-contacts/send", async (req, res): Promise<void> => {
     return;
   }
 
+  const activeContacts = await db
+    .select()
+    .from(mediaContactsTable)
+    .where(eq(mediaContactsTable.active, true))
+    .orderBy(mediaContactsTable.name);
+  const seenEmails = new Set<string>();
+  const leads = activeContacts
+    .map(mediaContactToLead)
+    .filter((contact) => {
+      const email = contact.email.toLowerCase();
+      if (seenEmails.has(email)) return false;
+      seenEmails.add(email);
+      return true;
+    });
+  if (!leads.length) {
+    res.status(400).json({ error: "Keine aktiven Medienkontakte vorhanden" });
+    return;
+  }
+
   const proto = req.headers["x-forwarded-proto"] as string ?? req.protocol;
   const host = req.get("host")!;
   await startCampaign({
     subject,
     bodyText,
-    leads: MEDIA_CONTACTS,
+    leads,
     apiBase: `${proto}://${host}`,
     infoUrl: "https://sagatrail.ch",
   });
-  res.json({ ok: true, total: MEDIA_CONTACTS.length, campaignId: campaignState.campaignId });
+  res.json({ ok: true, total: leads.length, campaignId: campaignState.campaignId });
 });
 
 router.get("/admin/media-contacts/log", async (req, res): Promise<void> => {
@@ -2581,19 +2692,16 @@ router.get("/admin/media-contacts/log", async (req, res): Promise<void> => {
   const page = Math.max(1, parseInt(String(req.query["page"] ?? "1"), 10));
   const perPage = Math.min(200, Math.max(10, parseInt(String(req.query["perPage"] ?? "100"), 10)));
   const offset = (page - 1) * perPage;
-  const emails = MEDIA_CONTACTS.map((contact) => contact.email.toLowerCase());
-  const emailList = sql.join(emails.map((email) => sql`${email}`), sql`, `);
-
   const rows = await db.execute(sql`
     SELECT id, campaign_id, subject, email, recipient_name, status, error, sent_at
     FROM partner_email_log
-    WHERE lower(email) IN (${emailList})
+    WHERE lower(email) IN (SELECT lower(email) FROM media_contacts)
     ORDER BY sent_at DESC
     LIMIT ${perPage} OFFSET ${offset}
   `);
   const count = await db.execute(sql`
     SELECT COUNT(*) FROM partner_email_log
-    WHERE lower(email) IN (${emailList})
+    WHERE lower(email) IN (SELECT lower(email) FROM media_contacts)
   `);
   res.json({
     rows: rows.rows,

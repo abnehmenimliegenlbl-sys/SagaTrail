@@ -7,7 +7,8 @@ import { warmAllCantonCaches, startDailyCantonSync, startDailySchweizMobilHandic
 import { startEnrichAllIfNeeded, scheduleNightlyRestitch } from "./routes/admin";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
-import { db, externalRoutesTable } from "@workspace/db";
+import { db, externalRoutesTable, mediaContactsTable } from "@workspace/db";
+import { MEDIA_CONTACT_SEED } from "./lib/mediaContacts";
 import { eq, gte, isNotNull } from "drizzle-orm";
 import { vorbelegeVergebeneUrls } from "./lib/commonsPhoto";
 import { sql } from "drizzle-orm";
@@ -113,6 +114,33 @@ const server = app.listen(port, async (err) => {
     logger.info("Schema-Migration: partner_email_log + blocklist sichergestellt");
   } catch (migErr) {
     logger.warn({ err: migErr }, "Schema-Migration partner_email_log fehlgeschlagen (nicht kritisch)");
+  }
+
+  // Medienkontakte: persistenter, im Admin-Dashboard pflegbarer Verteiler.
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS media_contacts (
+        id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name       TEXT NOT NULL,
+        email      TEXT NOT NULL UNIQUE,
+        typ        TEXT NOT NULL DEFAULT '',
+        kanton     TEXT NOT NULL DEFAULT '',
+        active     BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    const existing = await db.select({ id: mediaContactsTable.id }).from(mediaContactsTable);
+    if (!existing.length) {
+      await db.insert(mediaContactsTable)
+        .values(MEDIA_CONTACT_SEED)
+        .onConflictDoNothing()
+        .execute();
+      logger.info({ count: MEDIA_CONTACT_SEED.length }, "Medienkontakte initial befüllt");
+    }
+    logger.info("Schema-Migration: media_contacts sichergestellt");
+  } catch (migErr) {
+    logger.warn({ err: migErr }, "Schema-Migration media_contacts fehlgeschlagen (nicht kritisch)");
   }
 
   // Partner-Leads-Tabelle: zentrale Lead-Datenbank (ersetzt WP-MySQL).
