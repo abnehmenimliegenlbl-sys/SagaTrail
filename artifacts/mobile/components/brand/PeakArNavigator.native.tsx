@@ -22,7 +22,10 @@ import { Dimensions, StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { LatLng } from "@/types";
-import type { TerrainProfilePoint } from "@/lib/terrainCues";
+import type {
+  RouteGradeBand,
+  TerrainProfilePoint,
+} from "@/lib/terrainCues";
 import {
   buildGeographicTerrainRouteSegments,
   buildGeographicTerrainRouteDestination,
@@ -47,7 +50,12 @@ const FINISH_FLAG_BLACK_MATERIAL = "sagatrailFinishFlagBlack";
 const FINISH_FLAG_POLE_MATERIAL = "sagatrailFinishFlagPole";
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
 const TERRAIN_MAP_ROUTE_MATERIAL = "sagatrailTerrainMapRoute";
-const TERRAIN_ROUTE_CHEVRON_MATERIAL = "sagatrailTerrainRouteChevron";
+const TERRAIN_ROUTE_MATERIALS: Record<RouteGradeBand, string> = {
+  green: "sagatrailTerrainRouteGreen",
+  yellow: "sagatrailTerrainRouteYellow",
+  orange: "sagatrailTerrainRouteOrange",
+  red: "sagatrailTerrainRouteRed",
+};
 const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
 const PEAK_RED = "#CC0000";
 const PEAK_WHITE = "#FFFFFF";
@@ -64,8 +72,9 @@ const AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M = 300;
 const AR_ROUTE_GROUND_OFFSET = -1.25;
 const MAX_AR_PEAK_SLOTS = 40;
 const MAX_AR_ROUTE_SEGMENT_SLOTS = 96;
-const MAX_AR_ROUTE_CHEVRONS = 24;
-const AR_ROUTE_CHEVRON_SPACING = 0.24;
+const MAX_AR_ROUTE_DIRECTION_ARROWS = 24;
+const AR_ROUTE_TURN_THRESHOLD_DEGREES = 25;
+const AR_ROUTE_ARROW_MIN_SPACING = 0.45;
 // The flag is scaled against projected screen distance so its apparent width
 // stays readable even when the route endpoint is far away.
 const FINISH_FLAG_POLE_HEIGHT = 1.25;
@@ -111,9 +120,33 @@ ViroMaterials.createMaterials({
     writesToDepthBuffer: false,
     readsFromDepthBuffer: false,
   },
-  [TERRAIN_ROUTE_CHEVRON_MATERIAL]: {
+  [TERRAIN_ROUTE_MATERIALS.green]: {
     lightingModel: "Constant",
-    diffuseColor: "#B8FF3B",
+    diffuseColor: "#20D466",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
+  [TERRAIN_ROUTE_MATERIALS.yellow]: {
+    lightingModel: "Constant",
+    diffuseColor: "#FFD000",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
+  [TERRAIN_ROUTE_MATERIALS.orange]: {
+    lightingModel: "Constant",
+    diffuseColor: "#FF8500",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
+  [TERRAIN_ROUTE_MATERIALS.red]: {
+    lightingModel: "Constant",
+    diffuseColor: "#FF3030",
     blendMode: "Alpha",
     cullMode: "None",
     writesToDepthBuffer: false,
@@ -295,38 +328,75 @@ function headingChangeDegrees(previous: number, next: number): number {
   return Math.abs(((next - previous + 540) % 360) - 180);
 }
 
-function buildRouteDirectionIndicator(
-  points: TerrainRouteLine,
-): { position: TerrainVertex; rotationY: number } | null {
-  if (points.length < 2) return null;
+interface RouteDirectionArrow {
+  position: TerrainVertex;
+  rotationY: number;
+  band: RouteGradeBand;
+}
 
-  const first = points[0];
-  const second = points[1];
-  const firstHeading = routeHeading(first, second);
-  let previousHeading = firstHeading;
+function distanceBetweenRoutePoints(
+  first: TerrainVertex,
+  second: TerrainVertex,
+): number {
+  return Math.hypot(second[0] - first[0], second[2] - first[2]);
+}
 
-  for (let index = 2; index < points.length; index += 1) {
-    const from = points[index - 1];
-    const to = points[index];
-    if (Math.hypot(to[0] - from[0], to[2] - from[2]) < 0.02) continue;
-    const nextHeading = routeHeading(from, to);
-    if (headingChangeDegrees(previousHeading, nextHeading) >= 22) {
-      return { position: from, rotationY: nextHeading };
+function buildRouteDirectionArrows(
+  segments: readonly TerrainRouteSegment[],
+): RouteDirectionArrow[] {
+  const arrows: RouteDirectionArrow[] = [];
+  let previousHeading: number | null = null;
+  let lastArrowPosition: TerrainVertex | null = null;
+  const finalSegment =
+    [...segments].reverse().find((segment) => segment.points.length >= 2) ?? null;
+
+  for (const segment of segments) {
+    if (segment.points.length < 2) continue;
+
+    for (let index = 1; index < segment.points.length; index += 1) {
+      const from = segment.points[index - 1];
+      const to = segment.points[index];
+      const length = distanceBetweenRoutePoints(from, to);
+      if (length < 0.02) continue;
+
+      const heading = routeHeading(from, to);
+      if (
+        previousHeading != null &&
+        headingChangeDegrees(previousHeading, heading) >=
+          AR_ROUTE_TURN_THRESHOLD_DEGREES &&
+        (lastArrowPosition == null ||
+          distanceBetweenRoutePoints(lastArrowPosition, from) >=
+            AR_ROUTE_ARROW_MIN_SPACING)
+      ) {
+        arrows.push({ position: from, rotationY: heading, band: segment.band });
+        lastArrowPosition = from;
+      }
+      previousHeading = heading;
+
+      if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS - 1) break;
     }
-    previousHeading = nextHeading;
+    if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS - 1) break;
   }
 
-  const firstLength = Math.hypot(second[0] - first[0], second[2] - first[2]);
-  if (firstLength < 0.02) return null;
-  const lookAhead = 0.22;
-  return {
+  if (finalSegment == null || finalSegment.points.length < 2) return arrows;
+  const last = finalSegment.points[finalSegment.points.length - 1];
+  const beforeLast = finalSegment.points[finalSegment.points.length - 2];
+  const finalLength = distanceBetweenRoutePoints(beforeLast, last);
+  if (finalLength < 0.02) return arrows;
+
+  const finalHeading = routeHeading(beforeLast, last);
+  const finalHeadingRad = (finalHeading * Math.PI) / 180;
+  const arrowOffset = 0.09;
+  arrows.push({
     position: [
-      first[0] + ((second[0] - first[0]) / firstLength) * lookAhead,
-      first[1],
-      first[2] + ((second[2] - first[2]) / firstLength) * lookAhead,
+      last[0] - Math.cos(finalHeadingRad) * arrowOffset,
+      last[1],
+      last[2] + Math.sin(finalHeadingRad) * arrowOffset,
     ],
-    rotationY: firstHeading,
-  };
+    rotationY: finalHeading,
+    band: finalSegment.band,
+  });
+  return arrows;
 }
 
 function TerrainHologram({
@@ -402,72 +472,10 @@ function TerrainHologram({
       ),
     [model, routeGeometry, routeCenter, maxRouteDistanceM, worldOffset],
   );
-  const routePoints = useMemo<TerrainRouteLine>(() => {
-    const points: TerrainRouteLine = [];
-    for (const segment of routeSegments) {
-      for (const point of segment.points) {
-        const previous = points[points.length - 1];
-        if (
-          !previous ||
-          previous[0] !== point[0] ||
-          previous[1] !== point[1] ||
-          previous[2] !== point[2]
-        ) {
-          points.push(point);
-        }
-      }
-    }
-    return points;
-  }, [routeSegments]);
-  const directionIndicator = useMemo(
-    () => buildRouteDirectionIndicator(routePoints),
-    [routePoints],
+  const routeDirectionArrows = useMemo(
+    () => buildRouteDirectionArrows(routeSegments),
+    [routeSegments],
   );
-  const routeChevrons = useMemo(() => {
-    const placements: Array<{
-      position: TerrainVertex;
-      rotationY: number;
-    }> = [];
-    let distanceSinceLastChevron = AR_ROUTE_CHEVRON_SPACING * 0.45;
-
-    for (const segment of routeSegments) {
-      for (let index = 1; index < segment.points.length; index += 1) {
-        if (placements.length >= MAX_AR_ROUTE_CHEVRONS) break;
-        const from = segment.points[index - 1];
-        const to = segment.points[index];
-        let current: TerrainVertex = [...from];
-        let remaining = Math.hypot(to[0] - current[0], to[2] - current[2]);
-        if (remaining < 0.001) continue;
-
-        while (
-          remaining + distanceSinceLastChevron >= AR_ROUTE_CHEVRON_SPACING &&
-          placements.length < MAX_AR_ROUTE_CHEVRONS
-        ) {
-          const travel =
-            AR_ROUTE_CHEVRON_SPACING - distanceSinceLastChevron;
-          const fraction = Math.max(
-            0,
-            Math.min(1, travel / Math.max(remaining, 0.001)),
-          );
-          const position: TerrainVertex = [
-            current[0] + (to[0] - current[0]) * fraction,
-            current[1] + (to[1] - current[1]) * fraction,
-            current[2] + (to[2] - current[2]) * fraction,
-          ];
-          const rotationY =
-            (Math.atan2(-(to[2] - current[2]), to[0] - current[0]) * 180) /
-            Math.PI;
-          placements.push({ position, rotationY });
-          current = position;
-          remaining = Math.hypot(to[0] - current[0], to[2] - current[2]);
-          distanceSinceLastChevron = 0;
-        }
-        distanceSinceLastChevron += remaining;
-      }
-      if (placements.length >= MAX_AR_ROUTE_CHEVRONS) break;
-    }
-    return placements;
-  }, [routeSegments]);
 
   useEffect(() => {
     console.log("[PeakAR] route overlay", {
@@ -476,6 +484,7 @@ function TerrainHologram({
       routePointCount: routeGeometry?.length ?? 0,
       visibleRoutePointCount: visibleRouteGeometry?.length ?? 0,
       lineCount: routeSegments.length,
+      directionArrowCount: routeDirectionArrows.length,
       terrainRadiusM: AR_ROUTE_TERRAIN_RADIUS_M,
       nearRouteRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
       destinationVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
@@ -486,6 +495,7 @@ function TerrainHologram({
     routeGeometry,
     visibleRouteGeometry,
     routeSegments.length,
+    routeDirectionArrows.length,
     destinationPosition,
   ]);
 
@@ -499,75 +509,54 @@ function TerrainHologram({
       opacity={0.96}
       viroTag="terrain-route-ar"
     >
-      <ViroNode
-        renderingOrder={25}
-        opacity={0.9}
-        viroTag="terrain-route-chevrons"
-      >
-        {routeChevrons.map(({ position, rotationY }, index) => (
-          <ViroNode
-            key={`terrain-route-chevron-${index}`}
-            position={[
-              position[0],
-              AR_ROUTE_GROUND_OFFSET + position[1] + 0.06,
-              position[2],
-            ]}
-            rotation={[0, rotationY, 0]}
-            renderingOrder={26}
-            viroTag={`terrain-route-chevron-${index}`}
-          >
-            <ViroBox
-              position={[0.02, 0, -0.04]}
-              rotation={[0, -28, 0]}
-              width={0.18}
-              height={0.018}
-              length={0.04}
-              materials={TERRAIN_ROUTE_CHEVRON_MATERIAL}
-              shadowCastingBitMask={0}
-            />
-            <ViroBox
-              position={[0.02, 0, 0.04]}
-              rotation={[0, 28, 0]}
-              width={0.18}
-              height={0.018}
-              length={0.04}
-              materials={TERRAIN_ROUTE_CHEVRON_MATERIAL}
-              shadowCastingBitMask={0}
-            />
-          </ViroNode>
-        ))}
-      </ViroNode>
-      {directionIndicator && (
+      {routeSegments.map((segment, index) => (
+        <ViroPolyline
+          key={`terrain-route-line-${index}-${segment.band}`}
+          points={segment.points.map(([x, y, z]) => [
+            x,
+            AR_ROUTE_GROUND_OFFSET + y + 0.045,
+            z,
+          ])}
+          thickness={segment.thickness}
+          materials={TERRAIN_ROUTE_MATERIALS[segment.band]}
+          opacity={0.62}
+          renderingOrder={24}
+          viroTag={`terrain-route-line-${index}`}
+        />
+      ))}
+      {routeDirectionArrows.map(({ position, rotationY, band }, index) => (
         <ViroNode
+          key={`terrain-route-direction-arrow-${index}`}
           position={[
-            directionIndicator.position[0],
-            AR_ROUTE_GROUND_OFFSET + directionIndicator.position[1] + 0.09,
-            directionIndicator.position[2],
+            position[0],
+            AR_ROUTE_GROUND_OFFSET + position[1] + 0.09,
+            position[2],
           ]}
-          rotation={[0, directionIndicator.rotationY, 0]}
+          rotation={[0, rotationY, 0]}
           renderingOrder={28}
-          viroTag="terrain-route-direction-indicator"
+          opacity={0.94}
+          viroTag={`terrain-route-direction-arrow-${index}`}
         >
           <ViroBox
             position={[0.035, 0, -0.065]}
             rotation={[0, -28, 0]}
-            width={0.24}
-            height={0.024}
+            width={0.22}
+            height={0.026}
             length={0.045}
-            materials={TERRAIN_ROUTE_CHEVRON_MATERIAL}
+            materials={TERRAIN_ROUTE_MATERIALS[band]}
             shadowCastingBitMask={0}
           />
           <ViroBox
             position={[0.035, 0, 0.065]}
             rotation={[0, 28, 0]}
-            width={0.24}
-            height={0.024}
+            width={0.22}
+            height={0.026}
             length={0.045}
-            materials={TERRAIN_ROUTE_CHEVRON_MATERIAL}
+            materials={TERRAIN_ROUTE_MATERIALS[band]}
             shadowCastingBitMask={0}
           />
         </ViroNode>
-      )}
+      ))}
       <ViroNode
         position={
           destinationPosition

@@ -47,6 +47,12 @@ Live AR renders the first 50 m around the current observer at geographic 1:1 sca
 
 **How to apply:** Keep the complete `navigationGeometry`, cap only the number of stable native polyline slots by merging adjacent grade sections, and use the same projection options for route segments and the destination flag. Never use compression as evidence for terrain outside the DTM radius; those sections stay level.
 
+The live AR route should use one semi-transparent colored polyline per smoothed grade band, with a colored arrowhead at the visible line end and additional arrowheads only at meaningful direction changes. Do not fill the route with regularly spaced chevrons; preserve the map's green/yellow/orange/red grade colors for both lines and arrows.
+
+**Why:** Regularly repeated chevrons made the AR route look noisy and obscured the actual path. A continuous line makes the route legible while turn/end arrowheads communicate direction without losing slope information.
+
+**How to apply:** Render each `TerrainRouteSegment` separately so grade colors and gaps remain intact. Detect turns from projected segment headings with a meaningful angle threshold and spacing guard; always place the final arrow on the last visible segment.
+
 Destination flags need a screen-space minimum, not only a fixed AR-world size: scale the billboard with camera distance so its projected width stays approximately 30 px.
 
 **Why:** A physically sized flag becomes unreadably small at the bounded virtual depth used for distant destinations.
