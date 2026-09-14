@@ -896,6 +896,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/custom-drawn:
+    post:
+      operationId: planDrawnRoute
+      tags: [routes]
+      summary: Mappt eine frei gezeichnete Linie auf begehbare Wege
+      description: >
+        Nimmt eine vereinfachte, geordnete Freihandlinie entgegen und mappt sie
+        mit Valhalla pedestrian auf reale Wanderwege. Die Route wird nicht persistiert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomDrawnRouteBody"
+      responses:
+        "200":
+          description: Gemappte Route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Ungueltige Linie oder kein begehbarer Weg gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/gpx:
     post:
       operationId: importGpxRoute
@@ -1869,6 +1902,17 @@ components:
           type: array
           minItems: 2
           maxItems: 12
+          items:
+            $ref: "#/components/schemas/CustomRouteWaypoint"
+      required:
+        - points
+    CustomDrawnRouteBody:
+      type: object
+      properties:
+        points:
+          type: array
+          minItems: 2
+          maxItems: 100
           items:
             $ref: "#/components/schemas/CustomRouteWaypoint"
       required:

@@ -22,6 +22,7 @@ import { downsample, estimateMinutes, pathDistanceKm, type LatLng } from "./geo"
  */
 
 const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
+const VALHALLA_TRACE_URL = "https://valhalla1.openstreetmap.de/trace_route";
 const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion)";
 const STORED_GEOMETRY_POINTS = 80;
 const MIN_KM = 0.3;
@@ -206,6 +207,62 @@ export async function buildCustomRouteThroughWaypoints(
   log: Logger,
 ): Promise<CustomRoute> {
   return buildPedestrianRoute(points, undefined, undefined, "Eigene Wegpunkt-Route", log);
+}
+
+/**
+ * Mappt eine vom Benutzer gezeichnete Linie auf das Fusswegnetz. Anders als
+ * bei Wegpunkten wird die Linie nicht nur als Folge von Zielen behandelt:
+ * Valhallas trace_route folgt der gezeichneten Spur und liefert die reale
+ * Weggeometrie zurück.
+ */
+export async function buildCustomRouteFromDrawnPoints(
+  points: LatLng[],
+  log: Logger,
+): Promise<CustomRoute> {
+  if (points.length < 2 || points.length > 100) {
+    throw new CustomRouteError("Bitte eine Linie mit mindestens zwei Punkten zeichnen.");
+  }
+
+  const res = await fetch(VALHALLA_TRACE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "User-Agent": USER_AGENT },
+    body: JSON.stringify({
+      shape: points.map((point) => ({ lat: point.lat, lon: point.lng })),
+      costing: "pedestrian",
+      shape_match: "map_snap",
+      units: "kilometers",
+    }),
+  });
+  if (!res.ok && res.status !== 400) {
+    throw new Error(`Valhalla-Map-Matching: HTTP-Fehler ${res.status}`);
+  }
+  const data = (await res.json()) as ValhallaResponse;
+  const shapes = (data.trip?.legs ?? [])
+    .map((leg) => leg.shape)
+    .filter((shape): shape is string => Boolean(shape));
+  if (!data.trip || shapes.length === 0) {
+    throw new CustomRouteError(
+      "Die gezeichnete Linie konnte keinem begehbaren Weg zugeordnet werden.",
+    );
+  }
+
+  const routedPoints: LatLng[] = [];
+  for (const shape of shapes) {
+    for (const point of decodePolyline6(shape)) {
+      const previous = routedPoints[routedPoints.length - 1];
+      if (!previous || previous.lat !== point.lat || previous.lng !== point.lng) {
+        routedPoints.push(point);
+      }
+    }
+  }
+  return buildRouteFromPoints(
+    routedPoints,
+    {
+      id: customRouteId(points),
+      terrain: "Freihand-Route",
+    },
+    log,
+  );
 }
 
 async function buildPedestrianRoute(

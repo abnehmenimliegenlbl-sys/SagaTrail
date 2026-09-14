@@ -222,6 +222,14 @@ export interface CustomWaypointsBody {
   points: CustomRouteWaypoint[];
 }
 
+export interface CustomDrawnRouteBody {
+  /**
+     * @minItems 2
+     * @maxItems 100
+     */
+  points: CustomRouteWaypoint[];
+}
+
 export interface ClaimKantonspackBody {
   /** Kanton-Slug (z. B. "zuerich", wie kantonSlug(name)) */
   kanton: string;

@@ -3,10 +3,12 @@ import {
   GetCustomRouteQueryParams,
   GetCustomRouteResponse,
   PlanCustomRouteBody,
+  PlanDrawnRouteBody,
 } from "@workspace/api-zod";
 import {
   buildCustomRoute,
   buildCustomRouteThroughWaypoints,
+  buildCustomRouteFromDrawnPoints,
   CustomRouteError,
 } from "../lib/customRoute";
 
@@ -57,6 +59,25 @@ router.post("/routes/custom-waypoints", async (req, res): Promise<void> => {
       return;
     }
     req.log.error({ err }, "Wegpunkt-Route konnte nicht berechnet werden");
+    res.status(502).json({ error: "Externe Datenquelle nicht erreichbar" });
+  }
+});
+
+router.post("/routes/custom-drawn", async (req, res): Promise<void> => {
+  const parsed = PlanDrawnRouteBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Bitte eine gezeichnete Linie mit mindestens zwei Punkten senden." });
+    return;
+  }
+  try {
+    const route = await buildCustomRouteFromDrawnPoints(parsed.data.points, req.log);
+    res.json(GetCustomRouteResponse.parse(route));
+  } catch (err) {
+    if (err instanceof CustomRouteError) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    req.log.error({ err }, "Freihand-Route konnte nicht gemappt werden");
     res.status(502).json({ error: "Externe Datenquelle nicht erreichbar" });
   }
 });

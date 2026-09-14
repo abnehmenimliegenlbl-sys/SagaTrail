@@ -33,6 +33,7 @@ import type {
   ClaimReferralCode200,
   ClaimReferralCodeBody,
   CreateSafetyShareRequest,
+  CustomDrawnRouteBody,
   CustomWaypointsBody,
   ErrorResponse,
   GeocodePlace,
@@ -1756,6 +1757,77 @@ export const usePlanCustomRoute = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getPlanCustomRouteMutationOptions(options));
+    }
+
+export const getPlanDrawnRouteUrl = () => {
+
+
+
+
+  return `/api/routes/custom-drawn`
+}
+
+/**
+ * Nimmt eine vereinfachte, geordnete Freihandlinie entgegen und mappt sie mit Valhalla pedestrian auf reale Wanderwege. Die Route wird nicht persistiert.
+ * @summary Mappt eine frei gezeichnete Linie auf begehbare Wege
+ */
+export const planDrawnRoute = async (customDrawnRouteBody: CustomDrawnRouteBody, options?: RequestInit): Promise<CatalogRoute> => {
+
+  return customFetch<CatalogRoute>(getPlanDrawnRouteUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customDrawnRouteBody)
+  }
+);}
+
+
+
+
+export const getPlanDrawnRouteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof planDrawnRoute>>, TError,{data: BodyType<CustomDrawnRouteBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof planDrawnRoute>>, TError,{data: BodyType<CustomDrawnRouteBody>}, TContext> => {
+
+const mutationKey = ['planDrawnRoute'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof planDrawnRoute>>, {data: BodyType<CustomDrawnRouteBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  planDrawnRoute(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PlanDrawnRouteMutationResult = NonNullable<Awaited<ReturnType<typeof planDrawnRoute>>>
+    export type PlanDrawnRouteMutationBody = BodyType<CustomDrawnRouteBody>
+    export type PlanDrawnRouteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Mappt eine frei gezeichnete Linie auf begehbare Wege
+ */
+export const usePlanDrawnRoute = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof planDrawnRoute>>, TError,{data: BodyType<CustomDrawnRouteBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof planDrawnRoute>>,
+        TError,
+        {data: BodyType<CustomDrawnRouteBody>},
+        TContext
+      > => {
+      return useMutation(getPlanDrawnRouteMutationOptions(options));
     }
 
 export const getImportGpxRouteUrl = () => {
