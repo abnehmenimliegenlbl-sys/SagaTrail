@@ -4,6 +4,7 @@ export type NarrationKind =
   | "chapter"
   | "introduction"
   | "poi"
+  | "decisionPrompt"
   | "feedback"
   | "navigation"
   | "partner"
