@@ -170,7 +170,7 @@ struct WatchHikeView: View {
           .tabViewStyle(.verticalPage)
           .frame(maxHeight: .infinity)
           .onChange(of: state.poiStory?.id) { _, id in
-            SagaTrailWatchRemoteDiagnostics.log("partner POI page state changed", data: [
+            SagaTrailWatchRemoteDiagnostics.log("POI page state changed", data: [
               "poiStoryPresent": id != nil,
               "poiStoryId": id ?? "none",
               "pendingOpen": pendingPoiStoryPage,
@@ -180,7 +180,7 @@ struct WatchHikeView: View {
               poiTextPage = 0
               if pendingPoiStoryPage || selectedPage != 4 {
                 selectedPage = 4
-                SagaTrailWatchRemoteDiagnostics.log("partner POI page selected", data: [
+                SagaTrailWatchRemoteDiagnostics.log("POI page selected", data: [
                   "poiStoryId": id ?? "none",
                   "reason": pendingPoiStoryPage ? "confirmed_pending" : "state_arrived",
                   "selectedPage": 4,
@@ -371,7 +371,7 @@ struct WatchHikeView: View {
         Button {
           let shouldOpenPoiStory = alert.action == "openPoiStory"
           if shouldOpenPoiStory {
-            SagaTrailWatchRemoteDiagnostics.log("partner POI alert confirmed", data: [
+            SagaTrailWatchRemoteDiagnostics.log("POI alert confirmed", data: [
               "liveStatePoiStoryPresent": hike.state?.poiStory != nil,
               "liveStatePoiStoryId": hike.state?.poiStory?.id ?? "none",
               "selectedPageBefore": selectedPage,
@@ -389,12 +389,12 @@ struct WatchHikeView: View {
             if hike.state?.poiStory != nil {
               selectedPage = 4
               pendingPoiStoryPage = false
-              SagaTrailWatchRemoteDiagnostics.log("partner POI page selected immediately after confirmation", data: [
+              SagaTrailWatchRemoteDiagnostics.log("POI page selected immediately after confirmation", data: [
                 "poiStoryId": hike.state?.poiStory?.id ?? "none",
                 "selectedPage": 4,
               ])
             } else {
-              SagaTrailWatchRemoteDiagnostics.log("partner POI page selection queued after confirmation", data: [
+              SagaTrailWatchRemoteDiagnostics.log("POI page selection queued after confirmation", data: [
                 "selectedPage": selectedPage,
                 "pendingOpen": true,
               ])
@@ -974,6 +974,22 @@ struct WatchHikeView: View {
             .foregroundStyle(WatchPalette.red)
         }
       }
+    }
+    .onAppear {
+      SagaTrailWatchRemoteDiagnostics.log("POI story page became visible", data: [
+        "poiStoryId": story.id,
+        "poiStoryKind": story.kind ?? "unknown",
+        "textLength": story.text.count,
+        "page": page,
+        "pageCount": chunks.count,
+      ])
+    }
+    .onDisappear {
+      SagaTrailWatchRemoteDiagnostics.log("POI story page became hidden", data: [
+        "poiStoryId": story.id,
+        "poiStoryKind": story.kind ?? "unknown",
+        "selectedPage": selectedPage,
+      ])
     }
     .digitalCrownRotation(
       $poiTextPage,

@@ -385,7 +385,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
         return
       }
       if let poiStory = decoded.poiStory {
-        SagaTrailWatchRemoteDiagnostics.log("partner POI live state received by Watch", data: [
+        SagaTrailWatchRemoteDiagnostics.log("POI live state received by Watch", data: [
           "poiStoryId": poiStory.id,
           "poiStoryKind": poiStory.kind ?? "unknown",
           "poiStoryTextLength": poiStory.text.count,
@@ -409,7 +409,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
                 String(lastAppliedUpdatedAt.timeIntervalSince1970),
                 lastAppliedSequence.map(String.init) ?? "none")
           if let poiStory = decoded.poiStory {
-            SagaTrailWatchRemoteDiagnostics.log("partner POI live state ignored as stale", data: [
+            SagaTrailWatchRemoteDiagnostics.log("POI live state ignored as stale", data: [
               "poiStoryId": poiStory.id,
               "updatedAt": decoded.updatedAt.timeIntervalSince1970 * 1_000,
               "lastAppliedUpdatedAt": lastAppliedUpdatedAt.timeIntervalSince1970 * 1_000,
@@ -446,7 +446,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
       state = decoded
       receivedAt = Date()
       if let poiStory = decoded.poiStory {
-        SagaTrailWatchRemoteDiagnostics.log("partner POI live state committed on Watch", data: [
+        SagaTrailWatchRemoteDiagnostics.log("POI live state committed on Watch", data: [
           "poiStoryId": poiStory.id,
           "poiStoryKind": poiStory.kind ?? "unknown",
           "selectedContentAvailable": true,
@@ -469,7 +469,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
       if alertKey != lastAlertKey {
         lastAlertKey = alertKey
         if action == "openPoiStory" {
-          SagaTrailWatchRemoteDiagnostics.log("partner POI alert received by Watch", data: [
+          SagaTrailWatchRemoteDiagnostics.log("POI alert received by Watch", data: [
             "action": action ?? "none",
             "sceneActive": isSceneActive,
             "liveStatePoiStoryPresent": state?.poiStory != nil,
@@ -486,7 +486,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
             // it as soon as the story arrives. Showing an alert on top would
             // make the iPhone card open directly while the Watch appears not
             // to react until the user confirms a redundant prompt.
-            SagaTrailWatchRemoteDiagnostics.log("partner POI alert shown in Watch UI", data: [
+            SagaTrailWatchRemoteDiagnostics.log("POI alert shown in Watch UI", data: [
               "liveStatePoiStoryPresent": state?.poiStory != nil,
               "liveStatePoiStoryId": state?.poiStory?.id ?? "none",
             ])

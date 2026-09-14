@@ -1204,6 +1204,16 @@ export default function LiveHike() {
     kind: "partner" | "poi";
   } | null>(null);
   const lastWatchPoiDebugKeyRef = useRef<string | null>(null);
+  const poiDebugSequenceRef = useRef(0);
+  const createPoiTrace = useCallback((
+    poiId: string,
+    kind: "partner" | "poi",
+    source: "nearby" | "approach-200m" | "approach-50m" | "partner-500m" | "waypoint",
+  ) => {
+    const traceId = `poi-${Date.now()}-${++poiDebugSequenceRef.current}`;
+    watchPoiLog("POI event created", { traceId, poiId, kind, source });
+    return traceId;
+  }, []);
   const raiseWatchDiscoveryAlert = useCallback((alert: WatchDiscoveryAlert) => {
     setWatchDiscoveryAlert(alert);
     if (watchDiscoveryTimerRef.current) clearTimeout(watchDiscoveryTimerRef.current);
@@ -1801,24 +1811,46 @@ export default function LiveHike() {
   const poiStoryToldRef = useRef<string | null>(null);
   /** Gemeinsame Sperre fuer alle vollstaendigen POI-Erzaehlpfade. */
   const poiStoryClaimsRef = useRef<Array<{ id: string; lat: number; lng: number }>>([]);
-  const claimPoiStory = useCallback((poi: Poi) => {
+  const claimPoiStory = useCallback((
+    poi: Poi,
+    source: "nearby" | "approach-50m",
+    traceId: string,
+  ) => {
     const alreadyClaimed = poiStoryClaimsRef.current.some(
       (claim) =>
         claim.id === poi.id ||
         haversineKm({ lat: claim.lat, lng: claim.lng }, { lat: poi.lat, lng: poi.lng }) <= 0.1,
     );
-    if (alreadyClaimed) return false;
+    if (alreadyClaimed) {
+      watchPoiLog("POI narration claim rejected as duplicate", {
+        traceId,
+        poiId: poi.id,
+        kind: "poi",
+        source,
+        claimCount: poiStoryClaimsRef.current.length,
+      });
+      return false;
+    }
     poiStoryClaimsRef.current.push({ id: poi.id, lat: poi.lat, lng: poi.lng });
+    watchPoiLog("POI narration claim reserved", {
+      traceId,
+      poiId: poi.id,
+      kind: "poi",
+      source,
+      claimCount: poiStoryClaimsRef.current.length,
+    });
     return true;
   }, []);
   /** POI-Erzaehlungen, die geladen werden oder bereits in der Audio-Queue stehen. */
   const poiNarrationPendingRef = useRef<Set<number>>(new Set());
   const poiNarrationTokenRef = useRef(0);
-  const beginPoiNarration = useCallback(() => {
+  const beginPoiNarration = useCallback((traceId: string, source: string) => {
     const token = ++poiNarrationTokenRef.current;
     poiNarrationPendingRef.current.add(token);
-    return () => {
-      poiNarrationPendingRef.current.delete(token);
+    watchPoiLog("POI narration started", { traceId, source, token });
+    return (reason = "released") => {
+      const wasPending = poiNarrationPendingRef.current.delete(token);
+      watchPoiLog("POI narration ended", { traceId, source, token, reason, wasPending });
     };
   }, []);
   /** Terrain-Abschnitte werden pro Wanderung jeweils nur einmal angesagt. */
@@ -3449,7 +3481,7 @@ export default function LiveHike() {
       ].join(":");
       if (debugKey !== lastWatchPoiDebugKeyRef.current) {
         lastWatchPoiDebugKeyRef.current = debugKey;
-        watchPoiLog("phone prepared partner POI watch snapshot", {
+        watchPoiLog("phone prepared POI watch snapshot", {
           traceId: trace?.traceId ?? null,
           poiId: watchPoiStory?.id ?? trace?.poiId ?? null,
           kind: watchPoiStory?.kind ?? trace?.kind ?? null,
@@ -3607,7 +3639,7 @@ export default function LiveHike() {
         waypointAnnouncedRef.current.add(wp.id);
         setReachedWaypointIds((prev) => new Set([...prev, wp.id]));
         const isPartner = wp.type === "partner";
-        const traceId = `poi-${Date.now()}-${wp.id}`;
+        const traceId = createPoiTrace(wp.id, isPartner ? "partner" : "poi", "waypoint");
         watchPoiTraceRef.current = {
           poiId: wp.id,
           traceId,
@@ -3652,13 +3684,21 @@ export default function LiveHike() {
           haptic: "notification",
           action: wp.type === "partner" ? "openPoiStory" : undefined,
         });
+        watchPoiLog("Watch discovery alert staged", {
+          traceId,
+          poiId: wp.id,
+          kind: isPartner ? "partner" : "poi",
+          source: "waypoint",
+          action: isPartner ? "openPoiStory" : null,
+          storyPresent: Boolean(partner),
+        });
         sendeAbbiegeMitteilung(
           wp.type === "partner" ? t.partnerNearby : t.poiNearby,
           wp.name,
         );
       }
     }
-  }, [livePos, partners, raiseWatchDiscoveryAlert, routeWaypoints, t, startGateConfirmed]);
+  }, [createPoiTrace, livePos, partners, raiseWatchDiscoveryAlert, routeWaypoints, t, startGateConfirmed]);
 
   // Premium-Partner-Anpreisung: sobald der Wanderer auf 500 m an einen
   // Premium-Partner herankommt, wird einmalig ein KI-generierter Text
@@ -3687,9 +3727,25 @@ export default function LiveHike() {
       if (
         announcedPremiumPartnerIdsRef.current.has(partnerId) ||
         announcingPremiumPartnerIdsRef.current.has(partnerId)
-      ) continue;
+      ) {
+        watchPoiLog("premium partner narration trigger ignored by duplicate guard", {
+          poiId: `partner-${partnerId}`,
+          kind: "partner",
+          source: "partner-500m",
+          announced: announcedPremiumPartnerIdsRef.current.has(partnerId),
+          requestInFlight: announcingPremiumPartnerIdsRef.current.has(partnerId),
+        });
+        continue;
+      }
       if (haversineKm(current, { lat: partner.lat, lng: partner.lng }) > PARTNER_NEARBY_KM) continue;
+      const traceId = createPoiTrace(`partner-${partnerId}`, "partner", "partner-500m");
       announcingPremiumPartnerIdsRef.current.add(partnerId);
+      watchPoiLog("premium partner narration request started", {
+        traceId,
+        poiId: `partner-${partnerId}`,
+        kind: "partner",
+        source: "partner-500m",
+      });
       const base = getApiBaseUrl() ?? "";
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 8000);
@@ -3717,6 +3773,14 @@ export default function LiveHike() {
           // durch den alten "skip while awaiting" verloren.
           if (text && !awaitingDecisionRef.current) {
             announcedPremiumPartnerIdsRef.current.add(partnerId);
+            watchPoiLog("premium partner narration accepted and staged on phone", {
+              traceId,
+              poiId: `partner-${partnerId}`,
+              kind: "partner",
+              source: "partner-500m",
+              storyTextLength: text.length,
+              watchStoryCreated: false,
+            });
             setPartnerAnnouncementText({ partnerId, text });
             if (karteVollbild) {
               pendingKarteActionRef.current = () => setSelectedPartner(partner);
@@ -3725,22 +3789,44 @@ export default function LiveHike() {
             } else {
               setSelectedPartner(partner);
             }
+            watchPoiLog("premium partner narration playback started", {
+              traceId,
+              poiId: `partner-${partnerId}`,
+              kind: "partner",
+              source: "partner-500m",
+            });
             speakRef.current?.(text, undefined, {
               useOpenAI: true,
               partnerInterrupt: true,
               kind: "partner",
               displayTitle: partner.name,
             });
+          } else {
+            watchPoiLog("premium partner narration result not played", {
+              traceId,
+              poiId: `partner-${partnerId}`,
+              kind: "partner",
+              source: "partner-500m",
+              hasText: Boolean(text),
+              awaitingDecision: awaitingDecisionRef.current,
+            });
           }
         })
-        .catch(() => {
+        .catch((error) => {
           clearTimeout(timeout);
           // Fehler/Timeouts sind nicht endgültig: der nächste GPS-Fix im
           // Radius darf die Anfrage erneut auslösen.
           announcingPremiumPartnerIdsRef.current.delete(partnerId);
+          watchPoiLog("premium partner narration request failed", {
+            traceId,
+            poiId: `partner-${partnerId}`,
+            kind: "partner",
+            source: "partner-500m",
+            error: error instanceof Error ? error.message : String(error),
+          });
         });
     }
-  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, cueLanguage, localizedSagaTitle, preparing, awaitingDecision, locState, hasFreshGps, karteVollbild, startGateConfirmed]);
+  }, [createPoiTrace, livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, cueLanguage, localizedSagaTitle, preparing, awaitingDecision, locState, hasFreshGps, karteVollbild, startGateConfirmed]);
 
   // GPS-Foto-Challenge: sobald der Wanderer den Herzort der Sage betritt
   // (150-m-Radius um die Sagen-Koordinate), erscheint einmalig eine
@@ -5010,11 +5096,19 @@ export default function LiveHike() {
     // Kulturelle/historische POIs mit spezifischem Namen werden durch den
     // progressiven Annaeherungs-Effekt erzaehlt (200 m Hinweis + 50 m Geschichte).
     if (POI_APPROACH_KINDS.has(nearbyPoi.kind ?? "") && isPoiNameSpecific(nearbyPoi.name, nearbyPoi.kind)) return;
-    if (!claimPoiStory(nearbyPoi)) {
+    const traceId = createPoiTrace(nearbyPoi.id, "poi", "nearby");
+    if (!claimPoiStory(nearbyPoi, "nearby", traceId)) {
       narratedPoiIdRef.current = nearbyPoi.id;
+      watchPoiLog("POI narration skipped after duplicate claim", {
+        traceId,
+        poiId: nearbyPoi.id,
+        kind: "poi",
+        source: "nearby",
+      });
       return;
     }
     narratedPoiIdRef.current = nearbyPoi.id;
+    watchPoiTraceRef.current = { poiId: nearbyPoi.id, traceId, kind: "poi" };
     // Kontext des vorherigen POI darf nicht an der neuen Karte kleben.
     setNearbyPoiKontext(null);
     // Spuerbarer Hinweis, dass gleich ein Ort erzaehlt wird — wer aufs
@@ -5022,11 +5116,17 @@ export default function LiveHike() {
     hapticHeavy();
     const isSagaHeart = nearbyPoi.kind === "saga=heart";
     const poiName = nearbyPoi.name;
-    const releasePoiNarration = beginPoiNarration();
+    const releasePoiNarration = beginPoiNarration(traceId, "nearby");
     let poiAudioStarted = false;
     const finishPoiNarration = () => {
+      watchPoiLog("POI narration audio finished", {
+        traceId,
+        poiId: nearbyPoi.id,
+        kind: "poi",
+        source: "nearby",
+      });
       setWatchPoiStory(null);
-      releasePoiNarration();
+      releasePoiNarration("audio_finished");
     };
     if (!isSagaHeart) {
       raiseWatchDiscoveryAlert({
@@ -5034,16 +5134,38 @@ export default function LiveHike() {
         haptic: "notification",
         action: "openPoiStory",
       });
+      watchPoiLog("Watch discovery alert staged", {
+        traceId,
+        poiId: nearbyPoi.id,
+        kind: "poi",
+        source: "nearby",
+        action: "openPoiStory",
+        storyPresent: false,
+      });
     }
     const pack = STORY_PACKS[resolveLang(cueLanguage)];
     const rawExtract = nearbyPoiWiki?.extract ?? null;
     let cancelled = false;
     const erzaehle = (text: string) => {
       if (cancelled) {
-        releasePoiNarration();
+        watchPoiLog("POI narration result ignored after cancellation", {
+          traceId,
+          poiId: nearbyPoi.id,
+          kind: "poi",
+          source: "nearby",
+        });
+        releasePoiNarration("cancelled_before_audio");
         return;
       }
       poiAudioStarted = true;
+      watchPoiLog("POI story staged for phone and Watch state", {
+        traceId,
+        poiId: nearbyPoi.id,
+        kind: "poi",
+        source: "nearby",
+        storyTextLength: text.length,
+        imagePresent: Boolean(nearbyPoiWiki?.image),
+      });
       setWatchPoiStory({
         id: nearbyPoi.id,
         name: nearbyPoi.name,
@@ -5091,9 +5213,9 @@ export default function LiveHike() {
     })();
     return () => {
       cancelled = true;
-      if (!poiAudioStarted) releasePoiNarration();
+      if (!poiAudioStarted) releasePoiNarration("effect_cleanup_before_audio");
     };
-  }, [beginPoiNarration, claimPoiStory, nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t, startGateConfirmed]);
+  }, [beginPoiNarration, claimPoiStory, createPoiTrace, nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t, startGateConfirmed]);
 
   // Stufenweise Annaeherung an kulturelle/historische POIs mit spezifischem Namen:
   // 200 m → einmaliger OpenAI-Richtungshinweis
@@ -5120,7 +5242,8 @@ export default function LiveHike() {
     if (distKm <= 0.2 && hintedPoiIdRef.current !== nearbyPoi.id) {
       hintedPoiIdRef.current = nearbyPoi.id;
       const pack = STORY_PACKS[resolveLang(cueLanguage)];
-      const releasePoiHint = beginPoiNarration();
+      const hintTraceId = createPoiTrace(nearbyPoi.id, "poi", "approach-200m");
+      const releasePoiHint = beginPoiNarration(hintTraceId, "approach-200m");
       // Bewegungsrichtung aus zwei aufeinanderfolgenden GPS-Fixes ableiten
       let dir: "links" | "rechts" | "geradeaus" = "geradeaus";
       if (prevLivePosRef.current) {
@@ -5139,19 +5262,43 @@ export default function LiveHike() {
     // 50 m: volle Geschichte (einmalig pro POI)
     if (distKm <= 0.05 && poiStoryToldRef.current !== nearbyPoi.id) {
       poiStoryToldRef.current = nearbyPoi.id;
-      if (!claimPoiStory(nearbyPoi)) return;
+      const traceId = createPoiTrace(nearbyPoi.id, "poi", "approach-50m");
+      if (!claimPoiStory(nearbyPoi, "approach-50m", traceId)) {
+        watchPoiLog("POI approach story skipped after duplicate claim", {
+          traceId,
+          poiId: nearbyPoi.id,
+          kind: "poi",
+          source: "approach-50m",
+        });
+        return;
+      }
+      watchPoiTraceRef.current = { poiId: nearbyPoi.id, traceId, kind: "poi" };
       const pack = STORY_PACKS[resolveLang(cueLanguage)];
       const rawExtract = nearbyPoiWiki?.extract ?? null;
       hapticHeavy();
       const capturedPoi = nearbyPoi;
-      const releasePoiNarration = beginPoiNarration();
+      const releasePoiNarration = beginPoiNarration(traceId, "approach-50m");
       let poiAudioStarted = false;
       const finishPoiNarration = () => {
+        watchPoiLog("POI narration audio finished", {
+          traceId,
+          poiId: capturedPoi.id,
+          kind: "poi",
+          source: "approach-50m",
+        });
         setWatchPoiStory(null);
-        releasePoiNarration();
+        releasePoiNarration("audio_finished");
       };
       const erzaehle = (text: string) => {
         poiAudioStarted = true;
+        watchPoiLog("POI story staged for phone and Watch state", {
+          traceId,
+          poiId: capturedPoi.id,
+          kind: "poi",
+          source: "approach-50m",
+          storyTextLength: text.length,
+          imagePresent: Boolean(nearbyPoiWiki?.image),
+        });
         setWatchPoiStory({
           id: capturedPoi.id,
           name: capturedPoi.name,
@@ -5187,10 +5334,10 @@ export default function LiveHike() {
           });
       })();
       return () => {
-        if (!poiAudioStarted) releasePoiNarration();
+        if (!poiAudioStarted) releasePoiNarration("effect_cleanup_before_audio");
       };
     }
-  }, [beginPoiNarration, claimPoiStory, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps, startGateConfirmed]);
+  }, [beginPoiNarration, claimPoiStory, createPoiTrace, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps, startGateConfirmed]);
 
   useEffect(() => {
     if (

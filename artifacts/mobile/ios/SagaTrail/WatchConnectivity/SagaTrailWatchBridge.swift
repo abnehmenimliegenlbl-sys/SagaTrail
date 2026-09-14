@@ -186,10 +186,10 @@ final class SagaTrailCompanion: RCTEventEmitter {
     let canonicalState = state as? [String: Any] ?? [:]
     let status = canonicalState["sessionStatus"] as? String ?? "missing"
     let isHiking = canonicalState["isHiking"] as? Bool ?? false
-    logPoiTransport("partner POI snapshot entered native bridge", state: canonicalState, phase: "received")
+    logPoiTransport("POI snapshot entered native bridge", state: canonicalState, phase: "received")
     do {
       try connection.publishCanonicalLiveState(canonicalState)
-      logPoiTransport("partner POI snapshot accepted by native bridge", state: canonicalState, phase: "accepted")
+      logPoiTransport("POI snapshot accepted by native bridge", state: canonicalState, phase: "accepted")
       logLiveStateDiagnosticIfChanged(
         outcome: "accepted",
         status: status,
@@ -198,7 +198,7 @@ final class SagaTrailCompanion: RCTEventEmitter {
       emitStatus()
     } catch {
       NSLog("[SagaTrail Watch] publishLiveState rejected: %@", error.localizedDescription)
-      logPoiTransport("partner POI snapshot rejected by native bridge", state: canonicalState, phase: "rejected")
+      logPoiTransport("POI snapshot rejected by native bridge", state: canonicalState, phase: "rejected")
       logLiveStateDiagnosticIfChanged(
         outcome: "rejected:\(String(describing: error))",
         status: status,
@@ -222,6 +222,7 @@ final class SagaTrailCompanion: RCTEventEmitter {
     var data: [String: Any] = [
       "phase": phase,
       "sequence": state["sequence"] ?? NSNull(),
+      "deliveryKey": "\(story?["id"] as? String ?? "none"):\(state["sequence"] ?? 0)",
       "poiStoryId": story?["id"] as? String ?? NSNull(),
       "poiStoryKind": story?["kind"] as? String ?? NSNull(),
       "poiStoryTextLength": (story?["text"] as? String)?.count ?? 0,
@@ -694,7 +695,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       poiData["durable"] = durable
       poiData["wcActivated"] = session.activationState == .activated
       poiData["wcReachable"] = session.isReachable
-      SagaTrailPhoneRemoteDiagnostics.log("partner POI transport send started", data: poiData)
+      SagaTrailPhoneRemoteDiagnostics.log("POI transport send started", data: poiData)
     }
     var contextUpdated = false
     if durable {
@@ -712,7 +713,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
            if var poiData = poiTransportDiagnostics(for: message) {
              poiData["channel"] = "applicationContext"
              poiData["outcome"] = "updated"
-             SagaTrailPhoneRemoteDiagnostics.log("partner POI application context updated", data: poiData)
+             SagaTrailPhoneRemoteDiagnostics.log("POI application context updated", data: poiData)
            }
         } catch {
           NSLog("[SagaTrail Watch] Could not update application context: %@", error.localizedDescription)
@@ -730,7 +731,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
           poiData["channel"] = "direct"
           poiData["outcome"] = "failed"
           poiData["errorCode"] = (error as NSError).code
-          SagaTrailPhoneRemoteDiagnostics.log("partner POI direct message failed", data: poiData)
+          SagaTrailPhoneRemoteDiagnostics.log("POI direct message failed", data: poiData)
         }
         // Reachability is only a point-in-time hint. Retain critical state
         // when the direct channel fails.
@@ -743,7 +744,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       if var poiData = poiTransportDiagnostics(for: message) {
         poiData["channel"] = "direct"
         poiData["outcome"] = "submitted"
-        SagaTrailPhoneRemoteDiagnostics.log("partner POI direct message submitted", data: poiData)
+        SagaTrailPhoneRemoteDiagnostics.log("POI direct message submitted", data: poiData)
       }
     } else if !contextUpdated && !durable {
       session.transferUserInfo(message)
@@ -751,7 +752,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       if var poiData = poiTransportDiagnostics(for: message) {
         poiData["channel"] = "transferUserInfo"
         poiData["outcome"] = "queued"
-        SagaTrailPhoneRemoteDiagnostics.log("partner POI transfer fallback queued", data: poiData)
+        SagaTrailPhoneRemoteDiagnostics.log("POI transfer fallback queued", data: poiData)
       }
     }
   }
