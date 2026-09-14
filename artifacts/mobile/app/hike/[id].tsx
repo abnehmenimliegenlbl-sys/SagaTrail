@@ -6681,13 +6681,13 @@ export default function LiveHike() {
             ...(Platform.OS !== "web"
               ? [{
                   id: "watch",
-                  title: "PULS",
+                   title: t.watchPulseTitle,
                   highlightSubtitle: true,
                   icon: "watch" as const,
                   modalSize: "large" as const,
                   preview: (
                       <Text style={[styles.watchTilePulse, { color: colors.destructive }]}>
-                         {heartRate ? `${Math.round(heartRate.bpm)} BPM` : "Warte auf Live-Puls"}
+                          {heartRate ? `${Math.round(heartRate.bpm)} BPM` : t.watchPulseWaiting}
                     </Text>
                   ),
                   content: (
@@ -6734,14 +6734,14 @@ export default function LiveHike() {
             },
             {
               id: "safety-checkin",
-              title: "SICHERHEIT",
+               title: t.safetyCheckinTitle,
               subtitle: safetyCheckinState
                 ? safetyCheckinState.status === "active"
                   ? formatCountdown(safetyCheckinState.remainingSec)
                   : safetyCheckinState.status === "overdue"
-                    ? "Überfällig"
-                    : "Starten"
-                : "Check-in",
+                   ? t.safetyCheckinOverdue
+                   : t.safetyCheckinStart
+                 : t.safetyCheckinButton,
               highlightSubtitle: true,
               icon: "clock",
               action: true,
@@ -6749,8 +6749,8 @@ export default function LiveHike() {
             },
             {
               id: "condition-report",
-              title: "ZUSTAND",
-              subtitle: "Melden",
+               title: t.communityConditions,
+               subtitle: t.reportCondition,
               icon: "alert-circle",
               content: (
                 <View style={styles.conditionTileContent}>
@@ -7700,24 +7700,31 @@ export default function LiveHike() {
         getAuthToken={getSafetyAuthToken}
         onStatusChange={handleSafetyCheckinStatus}
         labels={{
-          button: t.safetyCheckinButton ?? "Safety check-in",
-          title: t.safetyCheckinTitle ?? "Safety check-in",
-          explanation: t.safetyCheckinExplanation ?? "Set a local timer. This does not provide monitoring or live tracking.",
-          chooseDuration: t.safetyCheckinChooseDuration ?? "Check in again after",
-          minutes: t.safetyCheckinMinutes ?? "min",
-          start: t.safetyCheckinStart ?? "Start timer",
+          button: t.safetyCheckinButton,
+          title: t.safetyCheckinTitle,
+          explanation: t.safetyCheckinExplanation,
+          chooseDuration: t.safetyCheckinChooseDuration,
+          minutes: t.safetyCheckinMinutes,
+          start: t.safetyCheckinStart,
           cancel: t.close,
-          confirm: t.safetyCheckinConfirm ?? "I'm safe — stop timer",
-          active: t.safetyCheckinActive ?? "Check-in timer",
-          overdue: t.safetyCheckinOverdue ?? "Timer overdue",
+          confirm: t.safetyCheckinConfirm,
+          active: t.safetyCheckinActive,
+          overdue: t.safetyCheckinOverdue,
           share: t.sendLocationToContact,
-          noGps: t.safetyCheckinNoGps ?? "A fresh GPS position is required before sharing your location.",
-          noContact: t.safetyCheckinNoContact ?? "Set an emergency contact before sharing your location.",
+          noGps: t.safetyCheckinNoGps,
+          noContact: t.safetyCheckinNoContact,
           shareUnavailable: t.smsNotAvailable,
-          safeMessage: t.safetyCheckinMessage ?? "Safety check-in location",
-          externalShare: "Live-Link teilen",
-          externalShareActive: "Live-Link aktiv",
-          shareFailed: "Der Live-Sicherheitslink konnte nicht gestartet werden.",
+          safeMessage: t.safetyCheckinMessage,
+          externalShare: t.safetyCheckinExternalShare,
+          externalShareActive: t.safetyCheckinExternalShareActive,
+          shareFailed: t.safetyCheckinShareFailed,
+          loadFailed: t.safetyCheckinLoadFailed,
+          endFailed: t.safetyCheckinEndFailed,
+          startFailed: t.safetyCheckinStartFailed,
+          localOnly: t.safetyCheckinLocalOnly,
+          shareWhatsApp: t.safetyCheckinShareWhatsApp,
+          shareSms: t.safetyCheckinShareSms,
+          whatsappUnavailable: t.safetyCheckinWhatsappUnavailable,
         }}
       />
     </Background>

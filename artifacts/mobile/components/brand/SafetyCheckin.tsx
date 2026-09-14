@@ -38,10 +38,17 @@ export interface SafetyCheckinProps {
     noContact: string;
     shareUnavailable: string;
     safeMessage: string;
-    externalShare?: string;
-    externalShareActive?: string;
+    externalShare: string;
+    externalShareActive: string;
     linkCopied?: string;
-    shareFailed?: string;
+    shareFailed: string;
+    loadFailed: string;
+    endFailed: string;
+    startFailed: string;
+    localOnly: string;
+    shareWhatsApp: string;
+    shareSms: string;
+    whatsappUnavailable: string;
   };
   onStatusChange?: (status: {
     status: "idle" | "active" | "overdue";
@@ -216,7 +223,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
           if (!cancelled) setHydrationRevision((value) => value + 1);
         }, 2_000);
       } else {
-        alert(labels.title, "Der gespeicherte Sicherheits-Check-in konnte nicht geladen werden.");
+        alert(labels.title, labels.loadFailed);
       }
     }).finally(() => {
       if (
@@ -381,7 +388,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
       alert(labels.title, labels.noContact);
       return;
     }
-    const message = `${labels.externalShare ?? "SagaTrail Sicherheitslink"}\n${routeName}\n${path}`;
+    const message = `${labels.externalShare}\n${routeName}\n${path}`;
     const url = channel === "whatsapp"
       ? `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`
       : `sms:${emergencyPhoneDigits}&body=${encodeURIComponent(message)}`;
@@ -393,7 +400,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
       alert(
         labels.title,
         channel === "whatsapp"
-          ? "WhatsApp ist auf diesem Gerät nicht verfügbar. Bitte sende den Link per SMS."
+          ? labels.whatsappUnavailable
           : labels.shareUnavailable,
       );
     } catch {
@@ -415,7 +422,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
         safetyCheckinLog("scheduled notifications cancellation failed", {
         message: error instanceof Error ? error.message : String(error),
       });
-      alert(labels.title, "Der Sicherheits-Check-in konnte noch nicht beendet werden. Bitte versuche es erneut.");
+      alert(labels.title, labels.endFailed);
       return;
     }
     if (tokenToDelete) {
@@ -448,7 +455,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
   const startShare = async (durationOverride?: SafetyCheckinDuration) => {
     if (!storageHydrated) {
       safetyCheckinLog("check-in start blocked: storage reconciliation pending");
-      alert(labels.title, "Der Check-in-Status wird noch geladen. Bitte versuche es gleich nochmals.");
+      alert(labels.title, labels.loadFailed);
       return;
     }
     if (expiresAt != null) {
@@ -585,7 +592,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
       });
 
       if (usedLocalFallback) {
-        alert(labels.title, labels.shareFailed ?? "Der Sicherheitslink konnte nicht gestartet werden.");
+        alert(labels.title, labels.shareFailed);
       }
     } catch (error) {
       await deleteCreatedShare();
@@ -593,7 +600,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
       safetyCheckinLog("check-in start failed", {
         message: error instanceof Error ? error.message : String(error),
       });
-      alert(labels.title, "Der Sicherheits-Check-in konnte nicht gestartet werden.");
+      alert(labels.title, labels.startFailed);
     } finally {
       if (operationGeneration === operationGenerationRef.current) {
         startBusyRef.current = false;
@@ -696,13 +703,13 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
             {overdue && <Text style={[styles.overdueText, { color: colors.destructive }]}>{labels.overdue}</Text>}
             {!shareToken ? (
               <Text style={[styles.localOnlyText, { color: colors.mutedForeground }]}>
-                Nur lokaler Timer — kein Live-Monitoring
+                {labels.localOnly}
               </Text>
             ) : null}
             {sharePath ? (
               <View style={[styles.linkBox, { borderColor: colors.glassBorder }]}>
                 <Text style={[styles.linkLabel, { color: colors.mutedForeground }]}>
-                  {labels.externalShareActive ?? "Live-Link aktiv"}
+                  {labels.externalShareActive}
                 </Text>
                 <Text selectable numberOfLines={2} style={[styles.linkText, { color: colors.foreground }]}>
                   {sharePath}
@@ -710,11 +717,11 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
                 <View style={styles.sendChoices}>
                   <Pressable onPress={shareExternalLink} accessibilityRole="button" style={[styles.share, styles.sendChoice, { borderColor: colors.glassBorder }]}>
                     <Feather name="message-circle" size={17} color={colors.foreground} />
-                    <Text style={[styles.shareText, { color: colors.foreground }]}>Per WhatsApp senden</Text>
+                    <Text style={[styles.shareText, { color: colors.foreground }]}>{labels.shareWhatsApp}</Text>
                   </Pressable>
                   <Pressable onPress={() => void openPrefilledMessage("sms")} accessibilityRole="button" style={[styles.share, styles.sendChoice, { borderColor: colors.glassBorder }]}>
                     <Feather name="message-square" size={17} color={colors.foreground} />
-                    <Text style={[styles.shareText, { color: colors.foreground }]}>Per SMS senden</Text>
+                    <Text style={[styles.shareText, { color: colors.foreground }]}>{labels.shareSms}</Text>
                   </Pressable>
                 </View>
               </View>
