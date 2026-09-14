@@ -634,11 +634,12 @@ function buildOsmContext(tags: Record<string, string>): string | null {
  * Abgedeckte Kategorien:
  *  • historic=*          — Burgen, Ruinen, Denkmäler, Wegkreuze, …
  *  • tourism=attraction|viewpoint|artwork|information — Sehenswürdigkeiten, Infotafeln
- *  • natural=saddle|waterfall|cave_entrance|glacier|rock|arch|gorge
- *                        — Pässe, Wasserfälle, Höhlen, Gletscher, Schluchten
+ *  • natural=water|saddle|waterfall|cave_entrance|glacier|rock|arch|gorge
+ *                        — Seen, Pässe, Wasserfälle, Höhlen, Gletscher, Schluchten
  *  • man_made=cross|obelisk — Gipfel-/Wegkreuze (auch ohne Namen → «Wegkreuz»)
  *  • amenity=place_of_worship + chapel/shrine — Kapellen
  *  • amenity=shelter      — Alpine Unterstände / Biwakschachteln
+ *  • Hütten, Landwirtschaft, Verkehr und Industrie — zusätzliche Themen-POIs
  *  • geological=erratic|moraine|* — Findlinge, Moränen (auch ohne Namen)
  *
  * Warum ohne Namen für cross/ruins/shelter/geological:
@@ -663,6 +664,12 @@ export async function fetchHistoricPois(
     // Tourismus: Sehenswürdigkeiten, Aussichtspunkte, Kunstwerke, Infotafeln
     `node["tourism"~"^(attraction|viewpoint|artwork|information)$"]["name"](${b});`,
     `way["tourism"~"^(attraction|viewpoint)$"]["name"](${b});`,
+    // Wasserflächen: nur benannte Gewässer, damit grosse Flächenabfragen
+    // nicht jede namenlose Pfütze oder jeden kleinen Teich liefern.
+    `node["natural"="water"]["name"](${b});`,
+    `way["natural"="water"]["name"](${b});`,
+    `node["waterway"~"^(river|stream|waterfall)$"]["name"](${b});`,
+    `way["waterway"~"^(river|stream|waterfall)$"]["name"](${b});`,
     // Alpine Naturmerkmale (Gipfel werden separat ueber /routes/peaks geladen)
     `node["natural"~"^(saddle|waterfall|cave_entrance|glacier|rock|arch|spring|gorge)$"]["name"](${b});`,
     `way["natural"~"^(waterfall|glacier|cave_entrance|gorge)$"]["name"](${b});`,
@@ -673,6 +680,18 @@ export async function fetchHistoricPois(
     `node["amenity"="place_of_worship"]["historic"~"^(chapel|wayside_shrine)$"]["name"](${b});`,
     // Alpine Unterstände / Biwakschachteln — Fallback «Unterstand»
     `node["amenity"="shelter"](${b});`,
+    `node["tourism"~"^(alpine_hut|wildlife_hide|observatory)$"]["name"](${b});`,
+    `way["tourism"~"^(alpine_hut|wildlife_hide|observatory)$"]["name"](${b});`,
+    `node["amenity"~"^(observatory|playground|picnic_site|toilets|ferry_terminal)$"]["name"](${b});`,
+    `node["railway"~"^(station|halt|tram_stop)$"]["name"](${b});`,
+    `node["highway"="bus_stop"]["name"](${b});`,
+    `node["aerialway"="station"]["name"](${b});`,
+    `node["man_made"~"^(watermill|windmill|works|quarry)$"]["name"](${b});`,
+    `way["man_made"~"^(watermill|windmill|works|quarry)$"]["name"](${b});`,
+    `node["landuse"~"^(orchard|vineyard|meadow|pasture)$"]["name"](${b});`,
+    `way["landuse"~"^(orchard|vineyard|meadow|pasture)$"]["name"](${b});`,
+    `node["natural"~"^(wood|wetland|heath|tree)$"]["name"](${b});`,
+    `way["natural"~"^(wood|wetland|heath)$"]["name"](${b});`,
     // Geologische Merkmale: Findlinge, Moränen — Fallback-Name aus Tag-Wert
     `node["geological"](${b});`,
     ");",
@@ -726,6 +745,11 @@ export async function fetchHistoricPois(
     else if (tags.tourism)     kind = `tourism=${tags.tourism}`;
     else if (tags["man_made"]) kind = `man_made=${tags["man_made"]}`;
     else if (tags.amenity)     kind = `amenity=${tags.amenity}`;
+    else if (tags.railway)     kind = `railway=${tags.railway}`;
+    else if (tags.highway)     kind = `highway=${tags.highway}`;
+    else if (tags.aerialway)   kind = `aerialway=${tags.aerialway}`;
+    else if (tags.landuse)     kind = `landuse=${tags.landuse}`;
+    else if (tags.waterway)    kind = `waterway=${tags.waterway}`;
     else                       kind = "unknown";
 
     result.push({

@@ -75,6 +75,7 @@ import { sagaLokalisierung, allCantonSagasSorted, SagaWithMeta, SagaProximityCat
 import { Saga } from "@/types";
 import { hapticMedium, hapticSelection } from "@/lib/haptics";
 import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
+import { deriveRouteThemes, routeThemeLabel } from "@/lib/routeThemes";
 
 const WEB_TOP = 67;
 
@@ -350,9 +351,14 @@ export default function Routenplanung() {
   const poisReady = poisRequestKey !== null && loadedPoisKey === poisRequestKey;
   // Vollständige POI-Objekte (id → Poi) für die Detail-Ansicht beim Antippen
   const poisVollRef = useRef<Map<string, Poi>>(new Map());
+  const [poisDetails, setPoisDetails] = useState<Poi[]>([]);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   // undefined = lädt, null = nichts gefunden, WikiSummary = fertig
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
+  const routeThemes = useMemo(
+    () => deriveRouteThemes(poisDetails, route ?? { familyFriendly: null }),
+    [poisDetails, route?.familyFriendly],
+  );
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   // Vollbild-Karte: Zustand + Signal zum Schliessen von aussen (POI-Tap im
   // Vollbild → erst Karte schliessen, dann Detail öffnen — sonst Doppel-Modal).
@@ -524,6 +530,7 @@ export default function Routenplanung() {
     let cancelled = false;
     const requestKey = poisRequestKey;
     if (requestKey === null) return;
+    setPoisDetails([]);
     // 0.5 km Rand um die Geometrie (wie im Hike-Screen) — verhindert
     // Overpass-Timeouts in dichten Staedten wie Basel.
     // 2 km Rand damit alpine Gipfel (natural=peak) und Pässe (natural=saddle)
@@ -571,6 +578,7 @@ export default function Routenplanung() {
           : [];
       if (!cancelled) {
         poisVollRef.current = new Map(gefiltert.map((p) => [p.id, p]));
+        setPoisDetails(gefiltert);
         setPois(gefiltert.map((p) => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng })));
       }
     };
@@ -1102,6 +1110,25 @@ export default function Routenplanung() {
           <StatTile icon="clock"       label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`}         unit="h"  />
           <StatTile icon="shield"      label={t.sacScale} value={meta.sac}                                     unit=""   />
         </Animated.View>
+
+        {routeThemes.length > 0 && (
+          <View style={styles.routeThemes} accessibilityLabel="Themen dieser Route">
+            {routeThemes.map((theme) => (
+              <View
+                key={theme}
+                style={[
+                  styles.routeThemeChip,
+                  { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                ]}
+              >
+                <Feather name="tag" size={12} color={colors.accent} />
+                <Text style={[styles.routeThemeText, { color: colors.foreground }]}>
+                  {routeThemeLabel(theme, language)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         <Pressable
           onPress={() => setRouteTerrain3dOpen(true)}
@@ -2339,6 +2366,22 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: 14,
   },
+  routeThemes: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 12,
+  },
+  routeThemeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  routeThemeText: { fontFamily: fonts.bodyBold, fontSize: 11 },
   statTile: {
     ...GLAS_3D,
     flex: 1,

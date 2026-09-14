@@ -1,0 +1,256 @@
+import type { Poi } from "@workspace/api-client-react";
+import type { HikingRoute } from "@/constants/routes";
+
+export const ROUTE_THEME_KEYS = [
+  "wasserwege",
+  "burgen_ruinen_alte_wege",
+  "gipfel_panorama",
+  "geologie_eiszeit",
+  "wald_wildtiere",
+  "alpen_landwirtschaft",
+  "pilger_handelswege",
+  "industriekultur",
+  "familien_entdecker",
+  "nacht_sterne",
+  "flora_jahreszeiten",
+  "bahn_seilbahn",
+] as const;
+
+export type RouteThemeKey = (typeof ROUTE_THEME_KEYS)[number];
+
+const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
+  de: {
+    wasserwege: "Wasserwege",
+    burgen_ruinen_alte_wege: "Burgen, Ruinen & alte Wege",
+    gipfel_panorama: "Gipfel & Panorama",
+    geologie_eiszeit: "Geologie & Eiszeit",
+    wald_wildtiere: "Wald, Wildtiere & Spuren",
+    alpen_landwirtschaft: "Alpen & Landwirtschaft",
+    pilger_handelswege: "Pilger- & Handelswege",
+    industriekultur: "Industriekultur",
+    familien_entdecker: "Familien-Entdecker",
+    nacht_sterne: "Nacht & Sterne",
+    flora_jahreszeiten: "Flora & Jahreszeiten",
+    bahn_seilbahn: "Bahn, Tram & Seilbahn",
+  },
+  gsw: {
+    wasserwege: "Wasserwäg",
+    burgen_ruinen_alte_wege: "Burgä, Ruine & alti Wäg",
+    gipfel_panorama: "Gipfel & Panorama",
+    geologie_eiszeit: "Geologie & Iisziit",
+    wald_wildtiere: "Wald, Wildtier & Spure",
+    alpen_landwirtschaft: "Alpe & Landwirtschaft",
+    pilger_handelswege: "Pilger- & Handelswäg",
+    industriekultur: "Industriekultur",
+    familien_entdecker: "Familie-Entdecker",
+    nacht_sterne: "Nacht & Stärne",
+    flora_jahreszeiten: "Flora & Jahresziite",
+    bahn_seilbahn: "Bahn, Tram & Seilbahn",
+  },
+  en: {
+    wasserwege: "Waterways",
+    burgen_ruinen_alte_wege: "Castles, ruins & old trails",
+    gipfel_panorama: "Summits & panoramas",
+    geologie_eiszeit: "Geology & Ice Age",
+    wald_wildtiere: "Forest, wildlife & tracks",
+    alpen_landwirtschaft: "Alps & farming",
+    pilger_handelswege: "Pilgrimage & trade routes",
+    industriekultur: "Industrial heritage",
+    familien_entdecker: "Family discovery",
+    nacht_sterne: "Night & stars",
+    flora_jahreszeiten: "Flora & seasons",
+    bahn_seilbahn: "Rail, tram & cable car",
+  },
+  fr: {
+    wasserwege: "Chemins de l’eau",
+    burgen_ruinen_alte_wege: "Châteaux, ruines & anciens chemins",
+    gipfel_panorama: "Sommets & panoramas",
+    geologie_eiszeit: "Géologie & période glaciaire",
+    wald_wildtiere: "Forêt, faune & traces",
+    alpen_landwirtschaft: "Alpes & agriculture",
+    pilger_handelswege: "Chemins de pèlerinage & de commerce",
+    industriekultur: "Patrimoine industriel",
+    familien_entdecker: "Découverte en famille",
+    nacht_sterne: "Nuit & étoiles",
+    flora_jahreszeiten: "Flore & saisons",
+    bahn_seilbahn: "Train, tram & remontées",
+  },
+  it: {
+    wasserwege: "Vie dell’acqua",
+    burgen_ruinen_alte_wege: "Castelli, rovine & antichi sentieri",
+    gipfel_panorama: "Vette & panorami",
+    geologie_eiszeit: "Geologia & era glaciale",
+    wald_wildtiere: "Boschi, fauna & tracce",
+    alpen_landwirtschaft: "Alpi & agricoltura",
+    pilger_handelswege: "Vie di pellegrinaggio & commercio",
+    industriekultur: "Patrimonio industriale",
+    familien_entdecker: "Scoperta in famiglia",
+    nacht_sterne: "Notte & stelle",
+    flora_jahreszeiten: "Flora & stagioni",
+    bahn_seilbahn: "Treno, tram & funivia",
+  },
+  es: {
+    wasserwege: "Rutas del agua",
+    burgen_ruinen_alte_wege: "Castillos, ruinas y caminos antiguos",
+    gipfel_panorama: "Cumbres y panoramas",
+    geologie_eiszeit: "Geología y era glacial",
+    wald_wildtiere: "Bosque, fauna y huellas",
+    alpen_landwirtschaft: "Alpes y agricultura",
+    pilger_handelswege: "Rutas de peregrinación y comercio",
+    industriekultur: "Patrimonio industrial",
+    familien_entdecker: "Descubrimiento en familia",
+    nacht_sterne: "Noche y estrellas",
+    flora_jahreszeiten: "Flora y estaciones",
+    bahn_seilbahn: "Tren, tranvía y teleférico",
+  },
+  pt: {
+    wasserwege: "Caminhos da água",
+    burgen_ruinen_alte_wege: "Castelos, ruínas e caminhos antigos",
+    gipfel_panorama: "Cumes e panoramas",
+    geologie_eiszeit: "Geologia e era glacial",
+    wald_wildtiere: "Floresta, fauna e pegadas",
+    alpen_landwirtschaft: "Alpes e agricultura",
+    pilger_handelswege: "Rotas de peregrinação e comércio",
+    industriekultur: "Património industrial",
+    familien_entdecker: "Descoberta em família",
+    nacht_sterne: "Noite e estrelas",
+    flora_jahreszeiten: "Flora e estações",
+    bahn_seilbahn: "Comboio, elétrico e teleférico",
+  },
+  zh: {
+    wasserwege: "水之旅",
+    burgen_ruinen_alte_wege: "城堡、遗迹与古道",
+    gipfel_panorama: "山峰与全景",
+    geologie_eiszeit: "地质与冰河时代",
+    wald_wildtiere: "森林、野生动物与踪迹",
+    alpen_landwirtschaft: "阿尔卑斯与农业",
+    pilger_handelswege: "朝圣与商贸路线",
+    industriekultur: "工业遗产",
+    familien_entdecker: "家庭探索",
+    nacht_sterne: "夜空与星辰",
+    flora_jahreszeiten: "植物与四季",
+    bahn_seilbahn: "铁路、有轨电车与缆车",
+  },
+  ru: {
+    wasserwege: "Водные маршруты",
+    burgen_ruinen_alte_wege: "Замки, руины и старые тропы",
+    gipfel_panorama: "Вершины и панорамы",
+    geologie_eiszeit: "Геология и ледниковый период",
+    wald_wildtiere: "Лес, животные и следы",
+    alpen_landwirtschaft: "Альпы и сельское хозяйство",
+    pilger_handelswege: "Паломнические и торговые пути",
+    industriekultur: "Промышленное наследие",
+    familien_entdecker: "Семейные открытия",
+    nacht_sterne: "Ночь и звёзды",
+    flora_jahreszeiten: "Флора и времена года",
+    bahn_seilbahn: "Поезд, трамвай и канатная дорога",
+  },
+};
+
+export function routeThemeLabel(key: RouteThemeKey, language?: string): string {
+  return (THEME_LABELS[language ?? "de"] ?? THEME_LABELS.de)[key];
+}
+
+function hasKind(poi: Poi, ...kinds: string[]): boolean {
+  return kinds.some((kind) => poi.kind === kind);
+}
+
+/**
+ * Erzeugt sichtbare Themen aus den tatsächlich gefundenen Routen-POIs.
+ * Kategorien ohne belastbaren POI-Beleg werden absichtlich nicht geraten.
+ */
+export function deriveRouteThemes(
+  pois: readonly Poi[],
+  route: Pick<HikingRoute, "familyFriendly">,
+): RouteThemeKey[] {
+  const tags = new Set<RouteThemeKey>();
+  for (const poi of pois) {
+    const kind = poi.kind ?? "";
+    if (
+      kind === "natural=water" ||
+      kind === "natural=waterfall" ||
+      kind === "natural=spring" ||
+      kind === "natural=gorge" ||
+      kind === "waterway=waterfall" ||
+      kind === "waterway=river" ||
+      kind === "waterway=stream"
+    ) tags.add("wasserwege");
+    if (
+      kind.startsWith("historic=") &&
+      [
+        "historic=castle",
+        "historic=ruins",
+        "historic=fort",
+        "historic=archaeological_site",
+        "historic=roman_road",
+        "historic=roman_villa",
+        "historic=roman_building",
+        "historic=battlefield",
+        "historic=bridge",
+      ].includes(kind)
+    ) tags.add("burgen_ruinen_alte_wege");
+    if (hasKind(poi, "natural=peak", "natural=saddle", "tourism=viewpoint")) {
+      tags.add("gipfel_panorama");
+    }
+    if (
+      kind.startsWith("geological=") ||
+      hasKind(poi, "natural=rock", "natural=arch", "natural=cave_entrance", "natural=glacier")
+    ) tags.add("geologie_eiszeit");
+    if (hasKind(poi, "natural=wood", "natural=wetland", "tourism=wildlife_hide")) {
+      tags.add("wald_wildtiere");
+    }
+    if (
+      hasKind(
+        poi,
+        "tourism=alpine_hut",
+        "amenity=shelter",
+        "shop=cheese",
+        "farm=Alp",
+        "landuse=meadow",
+        "landuse=pasture",
+      )
+    ) tags.add("alpen_landwirtschaft");
+    if (
+      hasKind(
+        poi,
+        "route=pilgrimage",
+        "historic=church",
+        "historic=wayside_cross",
+        "historic=wayside_shrine",
+        "historic=milestone",
+        "historic=boundary_stone",
+      )
+    ) tags.add("pilger_handelswege");
+    if (
+      kind.startsWith("man_made=") &&
+      ["man_made=watermill", "man_made=windmill", "man_made=works", "man_made=quarry"].includes(kind)
+    ) tags.add("industriekultur");
+    if (
+      route.familyFriendly === true ||
+      hasKind(poi, "amenity=playground", "amenity=picnic_site", "amenity=toilets")
+    ) tags.add("familien_entdecker");
+    if (hasKind(poi, "amenity=observatory", "tourism=observatory")) tags.add("nacht_sterne");
+    if (
+      hasKind(
+        poi,
+        "natural=tree",
+        "natural=wetland",
+        "landuse=orchard",
+        "landuse=vineyard",
+        "natural=heath",
+      )
+    ) tags.add("flora_jahreszeiten");
+    if (
+      hasKind(
+        poi,
+        "railway=station",
+        "railway=halt",
+        "railway=tram_stop",
+        "highway=bus_stop",
+        "aerialway=station",
+        "amenity=ferry_terminal",
+      )
+    ) tags.add("bahn_seilbahn");
+  }
+  return ROUTE_THEME_KEYS.filter((key) => tags.has(key));
+}
