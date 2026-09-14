@@ -37,6 +37,7 @@ import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
 import { iapLog, useSubscription } from "@/lib/revenuecat";
 import * as Notifications from "expo-notifications";
 import * as Location from "expo-location";
+import * as FileSystem from "expo-file-system/legacy";
 import { getApiBaseUrl } from "@/lib/apiConfig";
 
 // Persistente Schluessel im AsyncStorage — dienen als Offline-Cache,
@@ -150,6 +151,7 @@ interface AppContextValue {
 
   saveProfile: (profile: Omit<Profile, "id">) => Promise<void>;
   updateProfile: (patch: Partial<Omit<Profile, "id">>) => Promise<void>;
+  uploadProfileAvatar: (localUri: string) => Promise<void>;
   /**
    * Setzt die Sprache VOR Abschluss des Onboardings (kein Profil
    * vorhanden). Wird von der Sprachauswahl im Onboarding aufgerufen, damit
@@ -545,6 +547,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const next: Profile = {
         id: serverProfile.id,
         name: serverProfile.name,
+        avatarUrl: serverProfile.avatarUrl ?? null,
+        dateOfBirth: serverProfile.dateOfBirth ?? null,
         archetype: serverProfile.archetype,
         ...(serverProfile.homeCanton ? { homeCanton: serverProfile.homeCanton } : {}),
         language: serverProfile.language,
@@ -826,6 +830,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const result = await saveMyProfileMutation({
         data: {
           name: next.name,
+          ...(next.dateOfBirth ? { dateOfBirth: next.dateOfBirth } : {}),
           archetype: next.archetype,
           ...(next.homeCanton ? { homeCanton: next.homeCanton } : {}),
           language: next.language,
@@ -847,6 +852,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const result = await saveMyProfileMutation({
         data: {
           name: merged.name,
+          ...(merged.dateOfBirth ? { dateOfBirth: merged.dateOfBirth } : {}),
           archetype: merged.archetype,
           ...(merged.homeCanton ? { homeCanton: merged.homeCanton } : {}),
           language: merged.language,
@@ -860,6 +866,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
     [profile, saveMyProfileMutation, applyServerProfile]
   );
+
+  const uploadProfileAvatar = useCallback(async (localUri: string) => {
+    const token = await getTokenRef.current();
+    if (!token) throw new Error("Nicht authentifiziert");
+    const base = getApiBaseUrl();
+    const result = await FileSystem.uploadAsync(`${base}api/me/avatar`, localUri, {
+      httpMethod: "POST",
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "image/jpeg",
+      },
+    });
+    if (result.status < 200 || result.status >= 300) {
+      throw new Error(`Profilbild-Upload fehlgeschlagen: ${result.status}`);
+    }
+    await applyServerProfile(JSON.parse(result.body));
+  }, [applyServerProfile]);
 
   // Verifizierter Upgrade-Pfad: Der Server prueft selbst bei RevenueCat,
   // ob ein aktives "premium"-Entitlement vorliegt (der Client darf sich
@@ -1286,6 +1310,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       istSageInklusive,
       saveProfile,
       updateProfile,
+      uploadProfileAvatar,
       setPendingLanguage,
       unlockPremium,
       lockPremium,
