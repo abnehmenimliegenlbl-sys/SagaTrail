@@ -66,6 +66,17 @@ const VOICE_SAMPLES: Record<string, string> = {
   ru: "Так звучит голос, который расскажет тебе легенды в пути.",
 };
 
+function normalizeBirthDateForProfile(value: string): string | null {
+  const input = value.trim();
+  if (!input) return null;
+  const match = input.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  if (match) {
+    const [, day, month, year] = match;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+  return /^\d{4}-\d{2}-\d{2}$/.test(input) ? input : null;
+}
+
 export default function Einstellungen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
