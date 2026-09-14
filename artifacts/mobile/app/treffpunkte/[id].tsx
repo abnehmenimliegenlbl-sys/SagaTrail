@@ -336,6 +336,7 @@ const styles = StyleSheet.create({
   avatar: { alignItems: "center", borderRadius: 18, height: 36, justifyContent: "center", width: 36 },
   avatarText: { fontFamily: fonts.bodyBold, fontSize: 15 },
   personName: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 14 },
+  age: { fontFamily: fonts.mono, fontSize: 11 },
   organizer: { fontFamily: fonts.mono, fontSize: 10 },
   privacy: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 14, textAlign: "center" },
   routeLink: { alignItems: "center", borderWidth: 1, borderRadius: 10, flexDirection: "row", gap: 7, justifyContent: "center", marginTop: 10, paddingVertical: 11 },

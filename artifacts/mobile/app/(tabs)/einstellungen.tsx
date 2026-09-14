@@ -5,6 +5,7 @@ import Constants from "expo-constants";
 import * as Application from "expo-application";
 import * as StoreReview from "expo-store-review";
 import { hapticRigid } from "@/lib/haptics";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -80,6 +81,7 @@ export default function Einstellungen() {
     setThemeMode,
     emergencyContact,
     updateProfile,
+    uploadProfileAvatar,
     setEnergiesparmodus,
     saveEmergencyContact,
     exportData,
@@ -154,6 +156,24 @@ export default function Einstellungen() {
   const [previewUnavailable, setPreviewUnavailable] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(profile?.name ?? "");
+  const [birthInput, setBirthInput] = useState(profile?.dateOfBirth ?? "");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
+  const pickProfileAvatar = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.82,
+    });
+    if (result.canceled || !result.assets[0]?.uri) return;
+    setAvatarUploading(true);
+    try {
+      await uploadProfileAvatar(result.assets[0].uri);
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   // Vorschau-Sound (KI-Stimme via expo-audio); Generation-Zaehler verhindert,
   // dass eine langsame alte Anfrage eine neuere Vorschau ueberschreibt.
@@ -305,9 +325,16 @@ export default function Einstellungen() {
             icon="edit-2"
             onPress={() => {
               setNameInput(profile?.name ?? "");
+              setBirthInput(profile?.dateOfBirth ?? "");
               setEditingName(true);
             }}
           />
+          <RowButton label="Profilbild" value={avatarUploading ? "Wird hochgeladen …" : "Auswählen"} icon="camera" onPress={() => void pickProfileAvatar()} />
+          <RowButton label="Geburtsdatum" value={profile?.dateOfBirth ?? "Nicht angegeben"} icon="gift" onPress={() => {
+            setNameInput(profile?.name ?? "");
+            setBirthInput(profile?.dateOfBirth ?? "");
+            setEditingName(true);
+          }} />
           <RowButton label={t.archetypeLabel} value={archLabel ?? "-"} onPress={cycleArchetype} />
           <RowButton label={t.ageTierLabel} value={ageLabel ?? "-"} onPress={cycleAge} />
           <View style={[styles.langBlock, { borderColor: colors.glassBorder }]}>

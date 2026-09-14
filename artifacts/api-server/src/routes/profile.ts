@@ -115,7 +115,7 @@ router.put("/me", async (req, res): Promise<void> => {
     .values({
       id: userId,
       name,
-      dateOfBirth: dateOfBirth ?? null,
+      dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().slice(0, 10) : null,
       archetype,
       homeCanton: homeCanton ?? "",
       language,
@@ -126,7 +126,7 @@ router.put("/me", async (req, res): Promise<void> => {
       target: profilesTable.id,
       set: {
         name,
-        dateOfBirth: dateOfBirth ?? null,
+        dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().slice(0, 10) : null,
         archetype,
         homeCanton: homeCanton ?? "",
         language,
