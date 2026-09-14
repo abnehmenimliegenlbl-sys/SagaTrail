@@ -1174,6 +1174,8 @@ export default function LiveHike() {
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [livePosAccuracy, setLivePosAccuracy] = useState<number | null>(null);
   const [liveAltitude, setLiveAltitude] = useState<number | null>(null);
+  const livePosRef = useRef<LatLng | null>(null);
+  const hasFreshGpsRef = useRef(false);
   const [livePlace, setLivePlace] = useState<string | null>(null);
   // Tickt regelmässig weiter, damit ein ausbleibendes GPS-Signal auch ohne
   // neuen Fix sichtbar wird und Fortschritt/Navigationslogik pausieren können.
@@ -1290,6 +1292,7 @@ export default function LiveHike() {
   const [reachedWaypointIds, setReachedWaypointIds] = useState<ReadonlySet<string>>(new Set());
   const waypointAnnouncedRef = useRef<Set<string>>(new Set());
   const announcedPremiumPartnerIdsRef = useRef<Set<string>>(new Set());
+  const premiumPartnerDuplicateLogRef = useRef<Set<string>>(new Set());
   /** Partner mit laufender Anpreisungs-Anfrage — verhindert Doppelrequests,
    * ohne einen fehlgeschlagenen Aufruf dauerhaft als erledigt zu markieren. */
   const announcingPremiumPartnerIdsRef = useRef<Set<string>>(new Set());
@@ -1439,6 +1442,8 @@ export default function LiveHike() {
     locState === "granted" &&
     livePos !== null &&
     locationNow - lastLocationAtRef.current <= GPS_FRESHNESS_WINDOW_MS;
+  livePosRef.current = livePos;
+  hasFreshGpsRef.current = hasFreshGps;
 
   // Neue Wanderung: erst nach dem ersten frischen GPS-Fix entscheiden, ob der
   // Nutzer bereits am offiziellen Start steht oder einen Zubringer braucht.
@@ -1850,6 +1855,14 @@ export default function LiveHike() {
   /** POI-Erzaehlungen, die geladen werden oder bereits in der Audio-Queue stehen. */
   const poiNarrationPendingRef = useRef<Set<number>>(new Set());
   const poiNarrationTokenRef = useRef(0);
+  const isPoiStillRelevant = useCallback((poi: Poi, radiusKm: number) => {
+    const current = livePosRef.current;
+    return (
+      hasFreshGpsRef.current &&
+      current != null &&
+      haversineKm(current, { lat: poi.lat, lng: poi.lng }) <= radiusKm
+    );
+  }, []);
   const beginPoiNarration = useCallback((traceId: string, source: string) => {
     const token = ++poiNarrationTokenRef.current;
     poiNarrationPendingRef.current.add(token);
@@ -1884,6 +1897,8 @@ export default function LiveHike() {
   const ackAudioUriRef = useRef<string | null>(null);
   const startupSequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startupSequenceGenRef = useRef(0);
+  const chapterAudioRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chapterAudioRetryCountRef = useRef<Map<number, number>>(new Map());
   const terrainModelRequestRef = useRef<{
     lat: number;
     lng: number;
@@ -2197,6 +2212,11 @@ export default function LiveHike() {
       storyProgressMaxRef.current = 0;
       storyEligibleChapterRef.current = 0;
       chapterResumeAfterInterruptRef.current = null;
+      chapterAudioRetryCountRef.current.clear();
+      if (chapterAudioRetryTimerRef.current !== null) {
+        clearTimeout(chapterAudioRetryTimerRef.current);
+        chapterAudioRetryTimerRef.current = null;
+      }
       narratedThroughRef.current = resumeAt != null && resumeAt > 0 ? resumeAt - 1 : -1;
       setStoryProgressBaseline(null);
       setFinished(false);
@@ -2696,6 +2716,7 @@ export default function LiveHike() {
     waypointAnnouncedRef.current = new Set();
     announcedPremiumPartnerIdsRef.current = new Set();
     announcingPremiumPartnerIdsRef.current = new Set();
+      premiumPartnerDuplicateLogRef.current = new Set();
     setReachedWaypointIds(new Set());
   }, [navigationGeometry, partners, displayedPois]);
 
@@ -3689,14 +3710,14 @@ export default function LiveHike() {
         raiseWatchDiscoveryAlert({
           text: `${wp.type === "partner" ? "Partner" : "Sehenswürdigkeit"} in der Nähe: ${wp.name}`,
           haptic: "notification",
-          action: wp.type === "partner" ? "openPoiStory" : undefined,
+          action: isPartner && partner ? "openPoiStory" : undefined,
         });
         watchPoiLog("Watch discovery alert staged", {
           traceId,
           poiId: wp.id,
           kind: isPartner ? "partner" : "poi",
           source: "waypoint",
-          action: isPartner ? "openPoiStory" : null,
+           action: isPartner && partner ? "openPoiStory" : null,
           storyPresent: Boolean(partner),
         });
         sendeAbbiegeMitteilung(
@@ -3735,13 +3756,16 @@ export default function LiveHike() {
         announcedPremiumPartnerIdsRef.current.has(partnerId) ||
         announcingPremiumPartnerIdsRef.current.has(partnerId)
       ) {
-        watchPoiLog("premium partner narration trigger ignored by duplicate guard", {
-          poiId: `partner-${partnerId}`,
-          kind: "partner",
-          source: "partner-500m",
-          announced: announcedPremiumPartnerIdsRef.current.has(partnerId),
-          requestInFlight: announcingPremiumPartnerIdsRef.current.has(partnerId),
-        });
+        if (!premiumPartnerDuplicateLogRef.current.has(partnerId)) {
+          premiumPartnerDuplicateLogRef.current.add(partnerId);
+          watchPoiLog("premium partner narration trigger ignored by duplicate guard", {
+            poiId: `partner-${partnerId}`,
+            kind: "partner",
+            source: "partner-500m",
+            announced: announcedPremiumPartnerIdsRef.current.has(partnerId),
+            requestInFlight: announcingPremiumPartnerIdsRef.current.has(partnerId),
+          });
+        }
         continue;
       }
       if (haversineKm(current, { lat: partner.lat, lng: partner.lng }) > PARTNER_NEARBY_KM) continue;
@@ -4461,6 +4485,11 @@ export default function LiveHike() {
   const cancelNarration = useCallback(async () => {
     narrationQueueRef.current = [];
     chapterResumeAfterInterruptRef.current = null;
+    chapterAudioRetryCountRef.current.clear();
+    if (chapterAudioRetryTimerRef.current !== null) {
+      clearTimeout(chapterAudioRetryTimerRef.current);
+      chapterAudioRetryTimerRef.current = null;
+    }
     startupSequenceGenRef.current++;
     if (startupSequenceTimerRef.current !== null) {
       clearTimeout(startupSequenceTimerRef.current);
@@ -4530,6 +4559,50 @@ export default function LiveHike() {
       currentIndex: currentIndexRef.current,
     });
     setChapterNarrationRetry((retry) => retry + 1);
+  }, []);
+
+  const retryChapterAfterPlaybackFailure = useCallback((
+    chapterIndex: number,
+    reason: string,
+  ) => {
+    if (
+      storyCompleteRef.current ||
+      currentIndexRef.current !== chapterIndex ||
+      narratedThroughRef.current >= chapterIndex
+    ) {
+      return;
+    }
+    const retryCount = chapterAudioRetryCountRef.current.get(chapterIndex) ?? 0;
+    if (retryCount >= 2) {
+      storyAudioLog("chapter audio retry exhausted", {
+        chapterIndex,
+        reason,
+        retryCount,
+      });
+      return;
+    }
+    const nextRetryCount = retryCount + 1;
+    chapterAudioRetryCountRef.current.set(chapterIndex, nextRetryCount);
+    lastNarratedRef.current = chapterIndex - 1;
+    if (chapterAudioRetryTimerRef.current !== null) {
+      clearTimeout(chapterAudioRetryTimerRef.current);
+    }
+    storyAudioLog("chapter audio retry scheduled", {
+      chapterIndex,
+      reason,
+      retryCount: nextRetryCount,
+    });
+    chapterAudioRetryTimerRef.current = setTimeout(() => {
+      chapterAudioRetryTimerRef.current = null;
+      if (
+        storyCompleteRef.current ||
+        currentIndexRef.current !== chapterIndex ||
+        narratedThroughRef.current >= chapterIndex
+      ) {
+        return;
+      }
+      setChapterNarrationRetry((retry) => retry + 1);
+    }, 750);
   }, []);
 
   const speak = useCallback(
@@ -4724,6 +4797,7 @@ export default function LiveHike() {
       setNarrationUnavailable(false);
       setSpeaking(true);
       const activeKind = opts?.kind ?? "chapter";
+      const activeChapterIndex = opts?.chapterIndex;
       updateNowPlaying({
         kind: activeKind,
         label: narrationLabel(activeKind),
@@ -4783,14 +4857,43 @@ export default function LiveHike() {
         }
         narrationSoundRef.current = sound;
         let playbackFinished = false;
-        const finishPlayback = () => {
+        let playbackResumeInFlight = false;
+        let playbackResumeAttempts = 0;
+        const finishPlayback = (
+          outcome: "finished" | "error",
+          reason?: string,
+        ) => {
           if (playbackFinished) return;
           playbackFinished = true;
           setSpeaking(false);
           speakingRef.current = false;
-           updateNowPlaying(null);
-          onFinished?.();
-           resumeInterruptedChapter();
+          if (narrationSoundRef.current === sound) {
+            narrationSoundRef.current = null;
+            void sound.unloadAsync().catch(() => {});
+          }
+          updateNowPlaying(null);
+          if (outcome === "finished") {
+            if (activeKind === "chapter" && activeChapterIndex != null) {
+              chapterAudioRetryCountRef.current.delete(activeChapterIndex);
+            }
+            onFinished?.();
+          } else if (activeKind === "chapter" && activeChapterIndex != null) {
+            retryChapterAfterPlaybackFailure(
+              activeChapterIndex,
+              reason ?? "playback_error",
+            );
+          } else {
+            // POI, partner, introduction and decision feedback use their
+            // completion callback to release pending state or continue the
+            // flow even when the native player reports an error.
+            onFinished?.();
+          }
+          if (
+            !speakingRef.current &&
+            narrationQueueRef.current.length === 0
+          ) {
+            resumeInterruptedChapter();
+          }
           // Queue nur verarbeiten, wenn onFinished keinen neuen speak()-Aufruf
           // ausgeloest hat — sonst wuerde der Queue-Eintrag via Gen-Bump die
           // soeben gestartete Ausgabe abwuergen (Race-Condition: Meilenstein-
@@ -4831,14 +4934,16 @@ export default function LiveHike() {
           // otherwise one broken clip blocks all later narration forever.
           if (status.error) {
             setNarrationUnavailable(true);
-            finishPlayback();
+            finishPlayback("error", status.error);
             return;
           }
           if (!status.isLoaded) {
+            setNarrationUnavailable(true);
+            finishPlayback("error", "playback_unloaded");
             return;
           }
           if (isAudioPlaybackFinished(status)) {
-            finishPlayback();
+            finishPlayback("finished");
           } else if (!status.isPlaying && !status.isBuffering && status.positionMillis > 0) {
             // Unerwarteter Stopp (z. B. Bluetooth-Verbindung unterbricht die
             // Audio-Session): iOS pausiert das Audio automatisch bei einer
@@ -4847,7 +4952,22 @@ export default function LiveHike() {
             // AUSNAHME: absichtliche Pause wegen Nav-Interrupt — nicht sofort
             // neu starten, sondern auf das Ende der Nav-Ansage warten.
             if (navInterruptingRef.current) return;
-            sound.playAsync().catch(() => {});
+            if (playbackResumeInFlight) return;
+            if (playbackResumeAttempts >= 2) {
+              setNarrationUnavailable(true);
+              finishPlayback("error", "resume_attempts_exhausted");
+              return;
+            }
+            playbackResumeAttempts += 1;
+            playbackResumeInFlight = true;
+            sound.playAsync()
+              .catch(() => {
+                setNarrationUnavailable(true);
+                finishPlayback("error", "resume_failed");
+              })
+              .finally(() => {
+                playbackResumeInFlight = false;
+              });
           }
         });
         if (
@@ -4867,9 +4987,26 @@ export default function LiveHike() {
         setNarrationUnavailable(true);
         setSpeaking(false);
         speakingRef.current = false;
+        const failedSound = narrationSoundRef.current;
+        narrationSoundRef.current = null;
+        if (failedSound) {
+          void failedSound.unloadAsync().catch(() => {});
+        }
         updateNowPlaying(null);
-        onFinished?.();
-        resumeInterruptedChapter();
+        if (activeKind === "chapter" && activeChapterIndex != null) {
+          retryChapterAfterPlaybackFailure(
+            activeChapterIndex,
+            err instanceof Error ? err.message : String(err),
+          );
+        } else {
+          onFinished?.();
+        }
+        if (
+          !speakingRef.current &&
+          narrationQueueRef.current.length === 0
+        ) {
+          resumeInterruptedChapter();
+        }
         if (!speakingRef.current) {
           const next = narrationQueueRef.current.shift();
           if (next) {
@@ -4892,7 +5029,7 @@ export default function LiveHike() {
         }
       }
     },
-    [narrationLabel, profile?.language, resumeInterruptedChapter, stopTurnAudio, updateNowPlaying]
+    [narrationLabel, profile?.language, resumeInterruptedChapter, retryChapterAfterPlaybackFailure, stopTurnAudio, updateNowPlaying]
   );
   speakRef.current = speak;
 
@@ -5130,6 +5267,16 @@ export default function LiveHike() {
     let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
     const send = (wiki: WikiSummary | null) => {
       if (notifiedPoiIdsRef.current.has(nearbyPoi.id)) return;
+      const radiusKm = nearbyPoi.kind === "saga=heart" ? 0.5 : 0.3;
+      if (!isPoiStillRelevant(nearbyPoi, radiusKm)) {
+        watchPoiLog("POI notification skipped after leaving radius", {
+          poiId: nearbyPoi.id,
+          kind: "poi",
+          source: "nearby",
+          radiusKm,
+        });
+        return;
+      }
       notifiedPoiIdsRef.current.add(nearbyPoi.id);
       void sendePoiMitteilung(
         nearbyPoi.name,
@@ -5150,7 +5297,7 @@ export default function LiveHike() {
     return () => {
       if (fallbackTimer) clearTimeout(fallbackTimer);
     };
-  }, [nearbyPoi, nearbyPoiWiki, nearbyPoiWikiPoiId, t.poiNotifBody, turnNotifsReady]);
+  }, [isPoiStillRelevant, nearbyPoi, nearbyPoiWiki, nearbyPoiWikiPoiId, t.poiNotifBody, turnNotifsReady]);
 
   // geladenen Wikipedia-Auszug, in derselben Sprache/Stimme wie die Sage.
   // Das unterbricht kurz eine laufende Kapitel-Erzaehlung; sobald der
@@ -5195,21 +5342,6 @@ export default function LiveHike() {
       setWatchPoiStory(null);
       releasePoiNarration("audio_finished");
     };
-    if (!isSagaHeart) {
-      raiseWatchDiscoveryAlert({
-        text: `Sehenswürdigkeit in der Nähe: ${poiName}`,
-        haptic: "notification",
-        action: "openPoiStory",
-      });
-      watchPoiLog("Watch discovery alert staged", {
-        traceId,
-        poiId: nearbyPoi.id,
-        kind: "poi",
-        source: "nearby",
-        action: "openPoiStory",
-        storyPresent: false,
-      });
-    }
     const pack = STORY_PACKS[resolveLang(cueLanguage)];
     const rawExtract = nearbyPoiWiki?.extract ?? null;
     let cancelled = false;
@@ -5220,8 +5352,21 @@ export default function LiveHike() {
           poiId: nearbyPoi.id,
           kind: "poi",
           source: "nearby",
+          reason: "effect_cancelled",
         });
         releasePoiNarration("cancelled_before_audio");
+        return;
+      }
+      const radiusKm = isSagaHeart ? 0.5 : 0.3;
+      if (!isPoiStillRelevant(nearbyPoi, radiusKm)) {
+        watchPoiLog("POI narration expired before audio", {
+          traceId,
+          poiId: nearbyPoi.id,
+          kind: "poi",
+          source: "nearby",
+          radiusKm,
+        });
+        releasePoiNarration("left_radius_before_audio");
         return;
       }
       poiAudioStarted = true;
@@ -5240,6 +5385,21 @@ export default function LiveHike() {
         text: text.slice(0, 8_000),
         kind: "poi",
       });
+      if (!isSagaHeart) {
+        raiseWatchDiscoveryAlert({
+          text: `Sehenswürdigkeit in der Nähe: ${poiName}`,
+          haptic: "notification",
+          action: "openPoiStory",
+        });
+        watchPoiLog("Watch discovery alert staged", {
+          traceId,
+          poiId: nearbyPoi.id,
+          kind: "poi",
+          source: "nearby",
+          action: "openPoiStory",
+          storyPresent: true,
+        });
+      }
       speak(text, finishPoiNarration, {
         useOpenAI: true,
         kind: "poi",
@@ -5282,7 +5442,7 @@ export default function LiveHike() {
       cancelled = true;
       if (!poiAudioStarted) releasePoiNarration("effect_cleanup_before_audio");
     };
-  }, [beginPoiNarration, claimPoiStory, createPoiTrace, nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t, startGateConfirmed]);
+  }, [beginPoiNarration, claimPoiStory, createPoiTrace, isPoiStillRelevant, nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t, startGateConfirmed]);
 
   // Stufenweise Annaeherung an kulturelle/historische POIs mit spezifischem Namen:
   // 200 m → einmaliger OpenAI-Richtungshinweis
@@ -5357,6 +5517,17 @@ export default function LiveHike() {
         releasePoiNarration("audio_finished");
       };
       const erzaehle = (text: string) => {
+        if (!isPoiStillRelevant(capturedPoi, 0.1)) {
+          watchPoiLog("POI narration expired before audio", {
+            traceId,
+            poiId: capturedPoi.id,
+            kind: "poi",
+            source: "approach-50m",
+            radiusKm: 0.1,
+          });
+          releasePoiNarration("left_radius_before_audio");
+          return;
+        }
         poiAudioStarted = true;
         watchPoiLog("POI story staged for phone and Watch state", {
           traceId,
@@ -5404,7 +5575,7 @@ export default function LiveHike() {
         if (!poiAudioStarted) releasePoiNarration("effect_cleanup_before_audio");
       };
     }
-  }, [beginPoiNarration, claimPoiStory, createPoiTrace, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps, startGateConfirmed]);
+  }, [beginPoiNarration, claimPoiStory, createPoiTrace, isPoiStillRelevant, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps, startGateConfirmed]);
 
   useEffect(() => {
     if (

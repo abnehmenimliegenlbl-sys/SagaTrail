@@ -8,6 +8,24 @@ import { makeLogger } from "./debugLog";
 
 const watchCompanionLog = makeLogger("[WATCH-COMPANION]", "watch_companion");
 
+type NativeConnectivityStatus = {
+  reachable: boolean;
+  paired: boolean;
+  watchAppInstalled: boolean;
+};
+
+const CONNECTIVITY_STABILITY_MS = 1_500;
+let lastStableConnectivityKey: string | null = null;
+let pendingConnectivity: NativeConnectivityStatus | null = null;
+let connectivityTimer: ReturnType<typeof setTimeout> | null = null;
+
+function logStableConnectivity(status: NativeConnectivityStatus) {
+  const key = `${status.reachable}:${status.paired}:${status.watchAppInstalled}`;
+  if (key === lastStableConnectivityKey) return;
+  lastStableConnectivityKey = key;
+  watchCompanionLog("native connectivity status stable", status);
+}
+
 /** Wire format shared with the optional SagaTrailCompanion native module. */
 export const HIKE_LIVE_STATE_VERSION = 1 as const;
 export const LIVE_SNAPSHOT_MIN_INTERVAL_MS = 7_500;
@@ -714,11 +732,34 @@ export function subscribeToCompanionEvents(handlers: {
     paired?: unknown;
     watchAppInstalled?: unknown;
   }) => {
-    watchCompanionLog("native connectivity status", {
+    const status: NativeConnectivityStatus = {
       reachable: event?.reachable === true,
       paired: event?.paired === true,
       watchAppInstalled: event?.watchAppInstalled === true,
-    });
+    };
+    const key = `${status.reachable}:${status.paired}:${status.watchAppInstalled}`;
+    if (key === lastStableConnectivityKey) return;
+    if (
+      status.reachable &&
+      status.paired &&
+      status.watchAppInstalled
+    ) {
+      if (connectivityTimer !== null) {
+        clearTimeout(connectivityTimer);
+        connectivityTimer = null;
+      }
+      pendingConnectivity = null;
+      logStableConnectivity(status);
+      return;
+    }
+    pendingConnectivity = status;
+    if (connectivityTimer !== null) return;
+    connectivityTimer = setTimeout(() => {
+      connectivityTimer = null;
+      const next = pendingConnectivity;
+      pendingConnectivity = null;
+      if (next) logStableConnectivity(next);
+    }, CONNECTIVITY_STABILITY_MS);
   });
   // RCTEventEmitter starts observing after the first listener is registered.
   // Register every event-specific listener before activation or draining the
