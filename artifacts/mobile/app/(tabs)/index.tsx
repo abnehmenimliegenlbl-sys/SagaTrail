@@ -35,6 +35,7 @@ import {
   packEntitlementFuerKanton,
 } from "@/lib/kantonSlug";
 import { hapticSelection } from "@/lib/haptics";
+import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 
 const WEB_TOP = 67;
 
@@ -55,6 +56,7 @@ export default function Entdecken() {
   } = useApp();
   const { isElite } = useSubscription();
   const t = useHomeStrings();
+  const meetupT = useMeetupStrings();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const onboardingStrings = useOnboardingStrings();
@@ -227,6 +229,33 @@ export default function Entdecken() {
             </Pressable>
           </Animated.View>
         )}
+
+        <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
+          <Pressable
+            onPress={() => router.push("/treffpunkte")}
+            style={[
+              styles.meetupCard,
+              {
+                backgroundColor: colors.glassBg,
+                borderColor: colors.glassBorder,
+                borderRadius: colors.radius,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={meetupT.title}
+          >
+            <View style={[styles.meetupIcon, { backgroundColor: colors.accent + "1F" }]}>
+              <Feather name="users" size={19} color={colors.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.meetupTitle, { color: colors.foreground }]}>{meetupT.title}</Text>
+              <Text style={[styles.meetupText, { color: colors.mutedForeground }]} numberOfLines={2}>
+                {meetupT.intro}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={19} color={colors.mutedForeground} />
+          </Pressable>
+        </Animated.View>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
@@ -456,6 +485,10 @@ const styles = StyleSheet.create({
   heroEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   heroTitle: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 6 },
   heroBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
+  meetupCard: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, padding: 14 },
+  meetupIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  meetupTitle: { fontFamily: fonts.titleBold, fontSize: 18 },
+  meetupText: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
   section: { paddingHorizontal: 20, marginTop: 28, marginBottom: 14 },
   sectionTitle: { fontFamily: fonts.titleBold, fontSize: 22 },
   sectionHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 2 },

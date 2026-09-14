@@ -5,6 +5,61 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export type CreateMeetupRequestPace = typeof CreateMeetupRequestPace[keyof typeof CreateMeetupRequestPace];
+
+
+export const CreateMeetupRequestPace = {
+  gemuetlich: 'gemuetlich',
+  normal: 'normal',
+  sportlich: 'sportlich',
+} as const;
+
+export interface CreateMeetupRequest {
+  routeId: string;
+  routeName: string;
+  canton: string;
+  startsAt: string;
+  /**
+     * @minimum 2
+     * @maximum 30
+     */
+  maxParticipants?: number;
+  pace?: CreateMeetupRequestPace;
+  /** @maxLength 500 */
+  note?: string | null;
+}
+
+export interface Meetup {
+  id: string;
+  routeId: string;
+  routeName: string;
+  canton: string;
+  startsAt: string;
+  maxParticipants: number;
+  participantCount: number;
+  pace: string;
+  note?: string | null;
+  organizerName: string;
+  joined: boolean;
+}
+
+export interface MeetupParticipant {
+  name: string;
+  joinedAt: string;
+}
+
+export type MeetupDetail = Meetup & {
+  participants: MeetupParticipant[];
+};
+
+export interface MeetupListResponse {
+  meetups: Meetup[];
+}
+
+export interface MeetupJoinResponse {
+  joined: boolean;
+}
+
 export type TerrainCorridorRequestOptions = {
   /**
      * @minimum 12
@@ -1074,5 +1129,10 @@ export type ClaimReferralCode200 = {
 export type ClaimPackRewardBody = {
   /** @minLength 1 */
   packSlug: string;
+};
+
+export type GetMeetupsParams = {
+from?: string;
+routeId?: string;
 };
 

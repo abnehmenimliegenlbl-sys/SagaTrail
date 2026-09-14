@@ -76,6 +76,7 @@ import { Saga } from "@/types";
 import { hapticMedium, hapticSelection } from "@/lib/haptics";
 import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
 import { deriveRouteThemes, routeThemeLabel } from "@/lib/routeThemes";
+import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 
 const WEB_TOP = 67;
 
@@ -127,6 +128,7 @@ const AVALANCHE_COLORS: Record<number, string> = {
 
 export default function Routenplanung() {
   const t = useRouteStrings();
+  const meetupT = useMeetupStrings();
   const ts = useSharedStrings();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -1129,6 +1131,34 @@ export default function Routenplanung() {
             ))}
           </View>
         )}
+
+        <Pressable
+          onPress={() =>
+            router.push(
+              `/treffpunkte/neu?routeId=${encodeURIComponent(route.id)}&routeName=${encodeURIComponent(route.name)}&canton=${encodeURIComponent(route.canton ?? route.region)}`,
+            )
+          }
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            styles.meetupCta,
+            {
+              borderColor: colors.accent,
+              backgroundColor: colors.accent + "14",
+              opacity: pressed ? 0.78 : 1,
+            },
+          ]}
+        >
+          <Feather name="users" size={18} color={colors.accent} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.meetupCtaTitle, { color: colors.foreground }]}>
+              {meetupT.create}
+            </Text>
+            <Text style={[styles.meetupCtaText, { color: colors.mutedForeground }]}>
+              {meetupT.intro}
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color={colors.accent} />
+        </Pressable>
 
         <Pressable
           onPress={() => setRouteTerrain3dOpen(true)}
@@ -2382,6 +2412,17 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   routeThemeText: { fontFamily: fonts.bodyBold, fontSize: 11 },
+  meetupCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 14,
+  },
+  meetupCtaTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
+  meetupCtaText: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
   statTile: {
     ...GLAS_3D,
     flex: 1,

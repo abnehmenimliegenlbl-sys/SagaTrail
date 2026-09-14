@@ -1320,3 +1320,126 @@ export const CreateTerrainAreaResponse = zod.object({
 })
 
 
+/**
+ * @summary Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
+ */
+export const GetMeetupsQueryParams = zod.object({
+  "from": zod.date().optional(),
+  "routeId": zod.coerce.string().optional()
+})
+
+export const GetMeetupsResponse = zod.object({
+  "meetups": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "maxParticipants": zod.number(),
+  "participantCount": zod.number(),
+  "pace": zod.string(),
+  "note": zod.string().nullish(),
+  "organizerName": zod.string(),
+  "joined": zod.boolean()
+}))
+})
+
+
+/**
+ * @summary Treffpunkt fuer eine Route erstellen
+ */
+export const createMeetupBodyMaxParticipantsDefault = 8;
+export const createMeetupBodyMaxParticipantsMin = 2;
+export const createMeetupBodyMaxParticipantsMax = 30;
+
+export const createMeetupBodyPaceDefault = `gemuetlich`;
+export const createMeetupBodyNoteMax = 500;
+
+
+
+export const CreateMeetupBody = zod.object({
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "maxParticipants": zod.number().min(createMeetupBodyMaxParticipantsMin).max(createMeetupBodyMaxParticipantsMax).default(createMeetupBodyMaxParticipantsDefault),
+  "pace": zod.enum(['gemuetlich', 'normal', 'sportlich']).default(createMeetupBodyPaceDefault),
+  "note": zod.string().max(createMeetupBodyNoteMax).nullish()
+})
+
+export const CreateMeetupResponse = zod.object({
+  "id": zod.string().uuid(),
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "maxParticipants": zod.number(),
+  "participantCount": zod.number(),
+  "pace": zod.string(),
+  "note": zod.string().nullish(),
+  "organizerName": zod.string(),
+  "joined": zod.boolean()
+})
+
+
+/**
+ * @summary Treffpunkt mit Teilnehmern laden
+ */
+export const GetMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetMeetupResponse = zod.object({
+  "id": zod.string().uuid(),
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "maxParticipants": zod.number(),
+  "participantCount": zod.number(),
+  "pace": zod.string(),
+  "note": zod.string().nullish(),
+  "organizerName": zod.string(),
+  "joined": zod.boolean()
+}).and(zod.object({
+  "participants": zod.array(zod.object({
+  "name": zod.string(),
+  "joinedAt": zod.coerce.date()
+}))
+}))
+
+
+/**
+ * @summary Eigenen Treffpunkt loeschen
+ */
+export const DeleteMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const DeleteMeetupResponse = zod.void()
+
+
+/**
+ * @summary Bei einem Treffpunkt mitwandern
+ */
+export const JoinMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const JoinMeetupResponse = zod.object({
+  "joined": zod.boolean()
+})
+
+
+/**
+ * @summary Teilnahme an einem Treffpunkt aufheben
+ */
+export const LeaveMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const LeaveMeetupResponse = zod.object({
+  "joined": zod.boolean()
+})
+
+

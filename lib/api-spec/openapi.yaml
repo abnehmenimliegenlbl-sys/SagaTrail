@@ -1631,12 +1631,235 @@ paths:
           description: Ungültige Routengeometrie
         "502":
           description: Zu wenige verfügbare SwissTopo-Höhenwerte
+  /meetups:
+    get:
+      operationId: getMeetups
+      tags: [meetups]
+      summary: Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: routeId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Kommende Treffpunkte
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupListResponse"
+    post:
+      operationId: createMeetup
+      tags: [meetups]
+      summary: Treffpunkt fuer eine Route erstellen
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMeetupRequest"
+      responses:
+        "201":
+          description: Treffpunkt erstellt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meetup"
+        "400":
+          description: Ungueltige Treffpunkt-Daten
+        "401":
+          description: Anmeldung erforderlich
+  /meetups/{id}:
+    get:
+      operationId: getMeetup
+      tags: [meetups]
+      summary: Treffpunkt mit Teilnehmern laden
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Treffpunkt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupDetail"
+        "404":
+          description: Treffpunkt nicht gefunden
+    delete:
+      operationId: deleteMeetup
+      tags: [meetups]
+      summary: Eigenen Treffpunkt loeschen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Treffpunkt geloescht
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt nicht gefunden oder nicht berechtigt
+  /meetups/{id}/join:
+    post:
+      operationId: joinMeetup
+      tags: [meetups]
+      summary: Bei einem Treffpunkt mitwandern
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Teilnahme bestaetigt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupJoinResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "409":
+          description: Treffpunkt voll oder bereits gestartet
+    delete:
+      operationId: leaveMeetup
+      tags: [meetups]
+      summary: Teilnahme an einem Treffpunkt aufheben
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Teilnahme aufgehoben
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupJoinResponse"
+        "401":
+          description: Anmeldung erforderlich
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
   schemas:
+    CreateMeetupRequest:
+      type: object
+      required: [routeId, routeName, canton, startsAt]
+      properties:
+        routeId:
+          type: string
+        routeName:
+          type: string
+        canton:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        maxParticipants:
+          type: integer
+          minimum: 2
+          maximum: 30
+          default: 8
+        pace:
+          type: string
+          enum: [gemuetlich, normal, sportlich]
+          default: gemuetlich
+        note:
+          type: string
+          nullable: true
+          maxLength: 500
+    Meetup:
+      type: object
+      required: [id, routeId, routeName, canton, startsAt, maxParticipants, participantCount, pace, organizerName, joined]
+      properties:
+        id:
+          type: string
+          format: uuid
+        routeId:
+          type: string
+        routeName:
+          type: string
+        canton:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        maxParticipants:
+          type: integer
+        participantCount:
+          type: integer
+        pace:
+          type: string
+        note:
+          type: string
+          nullable: true
+        organizerName:
+          type: string
+        joined:
+          type: boolean
+    MeetupParticipant:
+      type: object
+      required: [name, joinedAt]
+      properties:
+        name:
+          type: string
+        joinedAt:
+          type: string
+          format: date-time
+    MeetupDetail:
+      allOf:
+        - $ref: "#/components/schemas/Meetup"
+        - type: object
+          required: [participants]
+          properties:
+            participants:
+              type: array
+              items:
+                $ref: "#/components/schemas/MeetupParticipant"
+    MeetupListResponse:
+      type: object
+      required: [meetups]
+      properties:
+        meetups:
+          type: array
+          items:
+            $ref: "#/components/schemas/Meetup"
+    MeetupJoinResponse:
+      type: object
+      required: [joined]
+      properties:
+        joined:
+          type: boolean
     TerrainCorridorRequest:
       type: object
       required: [geometry]

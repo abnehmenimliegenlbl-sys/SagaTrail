@@ -45,6 +45,7 @@ import androidBetaRouter from "./androidBeta";
 import objectRecognitionRouter from "./objectRecognition";
 import safetySharesRouter from "./safetyShares";
 import safetyPoisRouter from "./safetyPois";
+import meetupsRouter from "./meetups";
 
 const router: IRouter = Router();
 
@@ -94,5 +95,6 @@ router.use(androidBetaRouter);
 router.use(objectRecognitionRouter);
 router.use(safetySharesRouter);
 router.use(safetyPoisRouter);
+router.use(meetupsRouter);
 
 export default router;

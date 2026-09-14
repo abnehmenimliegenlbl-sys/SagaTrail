@@ -32,6 +32,7 @@ import type {
   ClaimPackRewardBody,
   ClaimReferralCode200,
   ClaimReferralCodeBody,
+  CreateMeetupRequest,
   CreateSafetyShareRequest,
   CustomDrawnRouteBody,
   CustomWaypointsBody,
@@ -41,6 +42,7 @@ import type {
   GetAvalancheBulletinParams,
   GetCantonRoutesParams,
   GetCustomRouteParams,
+  GetMeetupsParams,
   GetMyReferralCode200,
   GetPartnersParams,
   GetPeakPoisParams,
@@ -55,6 +57,10 @@ import type {
   GetWeatherParams,
   GpxImportBody,
   HealthStatus,
+  Meetup,
+  MeetupDetail,
+  MeetupJoinResponse,
+  MeetupListResponse,
   NarrationInput,
   ObjectRecognitionLimitError,
   Partner,
@@ -3434,5 +3440,446 @@ export const useCreateTerrainArea = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCreateTerrainAreaMutationOptions(options));
+    }
+
+export const getGetMeetupsUrl = (params?: GetMeetupsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/meetups?${stringifiedParams}` : `/api/meetups`
+}
+
+/**
+ * @summary Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
+ */
+export const getMeetups = async (params?: GetMeetupsParams, options?: RequestInit): Promise<MeetupListResponse> => {
+
+  return customFetch<MeetupListResponse>(getGetMeetupsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMeetupsQueryKey = (params?: GetMeetupsParams,) => {
+    return [
+    `/api/meetups`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMeetupsQueryOptions = <TData = Awaited<ReturnType<typeof getMeetups>>, TError = ErrorType<unknown>>(params?: GetMeetupsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMeetups>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMeetupsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMeetups>>> = ({ signal }) => getMeetups(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMeetups>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMeetupsQueryResult = NonNullable<Awaited<ReturnType<typeof getMeetups>>>
+export type GetMeetupsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
+ */
+
+export function useGetMeetups<TData = Awaited<ReturnType<typeof getMeetups>>, TError = ErrorType<unknown>>(
+ params?: GetMeetupsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMeetups>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMeetupsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateMeetupUrl = () => {
+
+
+
+
+  return `/api/meetups`
+}
+
+/**
+ * @summary Treffpunkt fuer eine Route erstellen
+ */
+export const createMeetup = async (createMeetupRequest: CreateMeetupRequest, options?: RequestInit): Promise<Meetup> => {
+
+  return customFetch<Meetup>(getCreateMeetupUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createMeetupRequest)
+  }
+);}
+
+
+
+
+export const getCreateMeetupMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMeetup>>, TError,{data: BodyType<CreateMeetupRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMeetup>>, TError,{data: BodyType<CreateMeetupRequest>}, TContext> => {
+
+const mutationKey = ['createMeetup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMeetup>>, {data: BodyType<CreateMeetupRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMeetup(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMeetupMutationResult = NonNullable<Awaited<ReturnType<typeof createMeetup>>>
+    export type CreateMeetupMutationBody = BodyType<CreateMeetupRequest>
+    export type CreateMeetupMutationError = ErrorType<void>
+
+    /**
+ * @summary Treffpunkt fuer eine Route erstellen
+ */
+export const useCreateMeetup = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMeetup>>, TError,{data: BodyType<CreateMeetupRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createMeetup>>,
+        TError,
+        {data: BodyType<CreateMeetupRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateMeetupMutationOptions(options));
+    }
+
+export const getGetMeetupUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}`
+}
+
+/**
+ * @summary Treffpunkt mit Teilnehmern laden
+ */
+export const getMeetup = async (id: string, options?: RequestInit): Promise<MeetupDetail> => {
+
+  return customFetch<MeetupDetail>(getGetMeetupUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMeetupQueryKey = (id: string,) => {
+    return [
+    `/api/meetups/${id}`
+    ] as const;
+    }
+
+
+export const getGetMeetupQueryOptions = <TData = Awaited<ReturnType<typeof getMeetup>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMeetup>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMeetupQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMeetup>>> = ({ signal }) => getMeetup(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMeetup>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMeetupQueryResult = NonNullable<Awaited<ReturnType<typeof getMeetup>>>
+export type GetMeetupQueryError = ErrorType<void>
+
+
+/**
+ * @summary Treffpunkt mit Teilnehmern laden
+ */
+
+export function useGetMeetup<TData = Awaited<ReturnType<typeof getMeetup>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMeetup>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMeetupQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDeleteMeetupUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}`
+}
+
+/**
+ * @summary Eigenen Treffpunkt loeschen
+ */
+export const deleteMeetup = async (id: string, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteMeetupUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteMeetupMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMeetup>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMeetup>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteMeetup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMeetup>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteMeetup(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMeetupMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMeetup>>>
+
+    export type DeleteMeetupMutationError = ErrorType<void>
+
+    /**
+ * @summary Eigenen Treffpunkt loeschen
+ */
+export const useDeleteMeetup = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMeetup>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMeetup>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteMeetupMutationOptions(options));
+    }
+
+export const getJoinMeetupUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/join`
+}
+
+/**
+ * @summary Bei einem Treffpunkt mitwandern
+ */
+export const joinMeetup = async (id: string, options?: RequestInit): Promise<MeetupJoinResponse> => {
+
+  return customFetch<MeetupJoinResponse>(getJoinMeetupUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getJoinMeetupMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof joinMeetup>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof joinMeetup>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['joinMeetup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof joinMeetup>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  joinMeetup(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type JoinMeetupMutationResult = NonNullable<Awaited<ReturnType<typeof joinMeetup>>>
+
+    export type JoinMeetupMutationError = ErrorType<void>
+
+    /**
+ * @summary Bei einem Treffpunkt mitwandern
+ */
+export const useJoinMeetup = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof joinMeetup>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof joinMeetup>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getJoinMeetupMutationOptions(options));
+    }
+
+export const getLeaveMeetupUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/join`
+}
+
+/**
+ * @summary Teilnahme an einem Treffpunkt aufheben
+ */
+export const leaveMeetup = async (id: string, options?: RequestInit): Promise<MeetupJoinResponse> => {
+
+  return customFetch<MeetupJoinResponse>(getLeaveMeetupUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getLeaveMeetupMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof leaveMeetup>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof leaveMeetup>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['leaveMeetup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof leaveMeetup>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  leaveMeetup(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LeaveMeetupMutationResult = NonNullable<Awaited<ReturnType<typeof leaveMeetup>>>
+
+    export type LeaveMeetupMutationError = ErrorType<void>
+
+    /**
+ * @summary Teilnahme an einem Treffpunkt aufheben
+ */
+export const useLeaveMeetup = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof leaveMeetup>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof leaveMeetup>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getLeaveMeetupMutationOptions(options));
     }
 
