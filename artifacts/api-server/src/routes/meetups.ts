@@ -45,6 +45,17 @@ function parseFrom(value: unknown): Date {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
+function calculateAge(dateOfBirth: string | null | undefined): number | null {
+  if (!dateOfBirth) return null;
+  const birth = new Date(`${dateOfBirth}T00:00:00Z`);
+  if (Number.isNaN(birth.getTime())) return null;
+  const now = new Date();
+  let age = now.getUTCFullYear() - birth.getUTCFullYear();
+  const month = now.getUTCMonth() - birth.getUTCMonth();
+  if (month < 0 || (month === 0 && now.getUTCDate() < birth.getUTCDate())) age--;
+  return age >= 13 && age <= 120 ? age : null;
+}
+
 async function profileNames(ids: string[]): Promise<Map<string, string>> {
   if (!ids.length) return new Map();
   const rows = await db
@@ -156,6 +167,8 @@ router.get("/meetups/:id", async (req, res): Promise<void> => {
       userId: meetupParticipantsTable.userId,
       joinedAt: meetupParticipantsTable.joinedAt,
       name: profilesTable.name,
+      avatarUrl: profilesTable.avatarUrl,
+      dateOfBirth: profilesTable.dateOfBirth,
     })
     .from(meetupParticipantsTable)
     .leftJoin(profilesTable, eq(profilesTable.id, meetupParticipantsTable.userId))
@@ -189,6 +202,8 @@ router.get("/meetups/:id", async (req, res): Promise<void> => {
     ),
     participants: participants.map((participant) => ({
       ...(currentUserId === row.organizerId ? { userId: participant.userId } : {}),
+      avatarUrl: participant.avatarUrl ?? null,
+      age: calculateAge(participant.dateOfBirth),
       name: participant.name ?? "SagaTrail-Wanderer",
       joinedAt: participant.joinedAt.toISOString(),
     })),

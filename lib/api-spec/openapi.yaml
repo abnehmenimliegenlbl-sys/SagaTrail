@@ -2036,6 +2036,14 @@ components:
       properties:
         userId:
           type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        age:
+          type: integer
+          minimum: 13
+          maximum: 120
+          nullable: true
         name:
           type: string
         avatarUrl:
