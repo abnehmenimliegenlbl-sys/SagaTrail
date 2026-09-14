@@ -10,6 +10,8 @@ import { z } from "zod/v4";
 export const profilesTable = pgTable("profiles", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  avatarUrl: text("avatar_url"),
+  dateOfBirth: text("date_of_birth"),
   archetype: text("archetype").notNull(),
   homeCanton: text("home_canton").notNull(),
   language: text("language").notNull(),

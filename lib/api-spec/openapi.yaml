@@ -2016,6 +2016,15 @@ components:
           type: string
         name:
           type: string
+        avatarUrl:
+          type: string
+          nullable: true
+          description: Privater Objektpfad des Profilbilds
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben
         joinedAt:
           type: string
           format: date-time
@@ -2488,6 +2497,10 @@ components:
         name:
           type: string
           minLength: 2
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
         archetype:
           type: string
           enum: [reisende, hueterin, gewitzte, senn]
@@ -2509,6 +2522,27 @@ components:
         - archetype
         - language
         - ageTier
+  /me/avatar:
+    post:
+      operationId: uploadMyAvatar
+      tags: [profile]
+      summary: Eigenes Profilbild hochladen
+      requestBody:
+        required: true
+        content:
+          image/jpeg: {}
+          image/png: {}
+      responses:
+        "200":
+          description: Aktualisiertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Ungültiges Bild
+        "401":
+          description: Nicht authentifiziert
     PremiumUpdate:
       type: object
       properties:

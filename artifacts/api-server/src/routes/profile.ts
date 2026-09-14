@@ -1,6 +1,7 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import express, { Router, type IRouter, type Request, type Response } from "express";
 import { getAuth, clerkClient } from "@clerk/express";
 import { and, eq, sql } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { db, profilesTable, referralsTable } from "@workspace/db";
 import {
@@ -12,6 +13,7 @@ import {
   SyncMyProgressBody,
   SyncMyProgressResponse,
 } from "@workspace/api-zod";
+import { ObjectStorageService } from "../lib/objectStorage";
 
 import { purgeUserData } from "./accountDeletion";
 import { istPremiumAktiv } from "../lib/premiumStatus";
@@ -25,6 +27,7 @@ const WelcomeSagenpaketResponse = z.object({
 });
 
 const router: IRouter = Router();
+const storage = new ObjectStorageService();
 
 function requireUserId(req: Request, res: Response): string | null {
   const auth = getAuth(req);
@@ -65,6 +68,8 @@ function toProfile(row: typeof profilesTable.$inferSelect) {
   return GetMyProfileResponse.parse({
     id: row.id,
     name: row.name,
+    avatarUrl: row.avatarUrl ?? null,
+    dateOfBirth: row.dateOfBirth ?? null,
     archetype: row.archetype,
     homeCanton: row.homeCanton,
     language: row.language,
@@ -103,13 +108,14 @@ router.put("/me", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { name, archetype, homeCanton, language, ageTier, navAnnouncementsEnabled } = parsed.data;
+  const { name, archetype, homeCanton, language, ageTier, dateOfBirth, navAnnouncementsEnabled } = parsed.data;
 
   const [row] = await db
     .insert(profilesTable)
     .values({
       id: userId,
       name,
+      dateOfBirth: dateOfBirth ?? null,
       archetype,
       homeCanton: homeCanton ?? "",
       language,
@@ -120,6 +126,7 @@ router.put("/me", async (req, res): Promise<void> => {
       target: profilesTable.id,
       set: {
         name,
+        dateOfBirth: dateOfBirth ?? null,
         archetype,
         homeCanton: homeCanton ?? "",
         language,
@@ -132,6 +139,42 @@ router.put("/me", async (req, res): Promise<void> => {
 
   res.json(toProfile(row));
 });
+
+router.post(
+  "/me/avatar",
+  express.raw({ type: ["image/jpeg", "image/png", "image/webp", "application/octet-stream"], limit: "5mb" }),
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const contentType = String(req.headers["content-type"] ?? "").split(";")[0];
+    if (!["image/jpeg", "image/png", "image/webp"].includes(contentType)) {
+      res.status(400).json({ error: "Nur JPEG-, PNG- oder WebP-Bilder sind erlaubt" });
+      return;
+    }
+    const buffer = req.body as Buffer;
+    if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+      res.status(400).json({ error: "Kein Bild empfangen" });
+      return;
+    }
+    const extension = contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg";
+    try {
+      const objectPath = await storage.uploadBuffer(buffer, contentType, `profile-avatars/${userId}-${randomUUID()}.${extension}`);
+      const [row] = await db
+        .update(profilesTable)
+        .set({ avatarUrl: objectPath, updatedAt: new Date() })
+        .where(eq(profilesTable.id, userId))
+        .returning();
+      if (!row) {
+        res.status(404).json({ error: "Kein Profil vorhanden" });
+        return;
+      }
+      res.json(toProfile(row));
+    } catch (err) {
+      req.log.error({ err }, "Profilbild-Upload fehlgeschlagen");
+      res.status(500).json({ error: "Profilbild konnte nicht gespeichert werden" });
+    }
+  },
+);
 
 router.patch("/me/premium", async (req, res): Promise<void> => {
   const userId = requireUserId(req, res);
