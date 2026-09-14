@@ -1085,6 +1085,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /me/avatar:
+    post:
+      operationId: uploadMyAvatar
+      tags: [profile]
+      summary: Eigenes Profilbild hochladen
+      requestBody:
+        required: true
+        content:
+          image/jpeg: {}
+          image/png: {}
+          image/webp: {}
+      responses:
+        "200":
+          description: Aktualisiertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Ungültiges Bild
+        "401":
+          description: Nicht authentifiziert
   /me/premium:
     patch:
       operationId: updateMyPremium
@@ -2522,27 +2544,6 @@ components:
         - archetype
         - language
         - ageTier
-  /me/avatar:
-    post:
-      operationId: uploadMyAvatar
-      tags: [profile]
-      summary: Eigenes Profilbild hochladen
-      requestBody:
-        required: true
-        content:
-          image/jpeg: {}
-          image/png: {}
-      responses:
-        "200":
-          description: Aktualisiertes Profil
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Profile"
-        "400":
-          description: Ungültiges Bild
-        "401":
-          description: Nicht authentifiziert
     PremiumUpdate:
       type: object
       properties:
