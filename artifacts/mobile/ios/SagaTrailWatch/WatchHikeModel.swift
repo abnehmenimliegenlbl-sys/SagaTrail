@@ -59,6 +59,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var lastAppliedUpdatedAt: Date?
   private var lastAppliedSequence: Int64?
   private var isSceneActive = false
+  private var lastSentSceneActive: Bool?
   private var lastRemoteLiveStateDiagnosticKey: String?
 
   var isStale: Bool {
@@ -76,6 +77,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
     NSLog("[SagaTrail Watch] Watch activation requested (state: %ld, reachable: %@)",
           session.activationState.rawValue, String(session.isReachable))
     session.activate()
+    sendSceneVisibilityIfNeeded()
     apply(envelope: session.receivedApplicationContext)
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, error in
       if let error {
@@ -85,8 +87,35 @@ final class WatchHikeModel: NSObject, ObservableObject {
   }
 
   func setSceneActive(_ active: Bool) {
+    guard isSceneActive != active else { return }
     isSceneActive = active
     NSLog("[SagaTrail Watch] Scene activity changed: %@", String(active))
+    sendSceneVisibilityIfNeeded()
+  }
+
+  private func sendSceneVisibilityIfNeeded() {
+    guard WCSession.isSupported() else {
+      return
+    }
+    let session = WCSession.default
+    guard session.activationState == .activated,
+          lastSentSceneActive != isSceneActive else {
+      return
+    }
+    lastSentSceneActive = isSceneActive
+    let message = SagaTrailWatchProtocol.envelope(type: "watchVisibility", payload: [
+      "active": isSceneActive,
+      "updatedAt": SagaTrailWatchProtocol.unixMilliseconds(),
+    ])
+    if session.isReachable {
+      session.sendMessage(message, replyHandler: nil) { error in
+        NSLog("[SagaTrail Watch] Visibility message failed; queueing fallback: %@",
+              error.localizedDescription)
+        session.transferUserInfo(message)
+      }
+    } else {
+      session.transferUserInfo(message)
+    }
   }
 
   func requestSOSConfirmation() {
@@ -673,6 +702,7 @@ extension WatchHikeModel: WCSessionDelegate {
     Task { @MainActor in
       self.apply(envelope: receivedContext)
       self.isReachable = reachable
+        self.sendSceneVisibilityIfNeeded()
       self.requestCurrentState()
     }
   }

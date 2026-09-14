@@ -34,6 +34,8 @@ export const HIKE_LIVE_STATE_VERSION = 1 as const;
 // remain responsive.
 export const LIVE_SNAPSHOT_MIN_INTERVAL_MS = 15_000;
 const LIVE_SNAPSHOT_URGENT_INTERVAL_MS = 7_500;
+const WATCH_INACTIVE_SNAPSHOT_INTERVAL_MS = 30_000;
+let watchDisplayActive: boolean | null = null;
 
 export type DataFreshness = "fresh" | "stale" | "unavailable";
 export type HikeSessionStatus = "preparing" | "active" | "paused" | "finished" | "sos_requested";
@@ -600,7 +602,9 @@ export async function publishHikeLiveState(
     publishState.activeAlert != null;
   const minimumInterval = urgent
     ? LIVE_SNAPSHOT_URGENT_INTERVAL_MS
-    : LIVE_SNAPSHOT_MIN_INTERVAL_MS;
+    : watchDisplayActive === false
+      ? WATCH_INACTIVE_SNAPSHOT_INTERVAL_MS
+      : LIVE_SNAPSHOT_MIN_INTERVAL_MS;
   if (!force && age < minimumInterval) {
     if (publishState.safetyCheckin?.status === "active" || publishState.sessionStatus === "sos_requested") {
       watchCompanionLog("publish throttled for critical state", {
@@ -665,6 +669,7 @@ export function subscribeToCompanionEvents(handlers: {
     command: "start" | "pause" | "resume" | "safetyStart" | "safetyConfirm";
     durationMinutes?: 30 | 60 | 120;
   }) => void;
+  onWatchVisibility?: (active: boolean) => void;
 }): () => void {
   const module = companionModule();
   if (Platform.OS === "web" || !module) {
@@ -780,6 +785,17 @@ export function subscribeToCompanionEvents(handlers: {
       if (next) logStableConnectivity(next);
     }, CONNECTIVITY_STABILITY_MS);
   });
+  const watchVisibility = eventEmitter.addListener(
+    "SagaTrailCompanion.watchVisibility",
+    (event: { active?: unknown }) => {
+      if (typeof event?.active !== "boolean") return;
+      watchDisplayActive = event.active;
+      handlers.onWatchVisibility?.(event.active);
+      watchCompanionLog("watch display visibility received", {
+        active: event.active,
+      });
+    },
+  );
   // RCTEventEmitter starts observing after the first listener is registered.
   // Register every event-specific listener before activation or draining the
   // native queue so a cold-start safety command cannot be replayed too early.
@@ -803,6 +819,7 @@ export function subscribeToCompanionEvents(handlers: {
     command.remove();
     nativeEvent.remove();
     nativeStatus.remove();
+    watchVisibility.remove();
   };
 }
 

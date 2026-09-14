@@ -83,7 +83,7 @@ final class SagaTrailCompanion: RCTEventEmitter {
   @objc override static func requiresMainQueueSetup() -> Bool { true }
 
   override func supportedEvents() -> [String] {
-    ["SagaTrailWatchEvent", "SagaTrailWatchStatus", "SagaTrailCompanion.heartRate", "SagaTrailCompanion.sosRequest", "SagaTrailCompanion.hikeCommand"]
+    ["SagaTrailWatchEvent", "SagaTrailWatchStatus", "SagaTrailCompanion.heartRate", "SagaTrailCompanion.sosRequest", "SagaTrailCompanion.hikeCommand", "SagaTrailCompanion.watchVisibility"]
   }
 
   override func startObserving() {
@@ -343,6 +343,16 @@ final class SagaTrailCompanion: RCTEventEmitter {
         }
         emitOrQueueWatchAction(name: "SagaTrailCompanion.hikeCommand", body: event)
       }
+    case "watchVisibility":
+      guard let active = payload["active"] as? Bool else {
+        NSLog("[SagaTrail Watch] Ignoring malformed watch visibility payload")
+        break
+      }
+      connection.setWatchDisplayActive(active)
+      sendEvent(withName: "SagaTrailCompanion.watchVisibility", body: [
+        "active": active,
+        "updatedAt": payload["updatedAt"] ?? NSNull(),
+      ])
     default:
       NSLog("[SagaTrail Watch] Ignoring unknown incoming envelope type: %@", type)
       break
@@ -437,6 +447,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   private var deliveredActionKeys: [String] = []
   private let pendingActionsKey = "sagatrail.pending.watch.actions.native"
   private var lastPublishedSafetyStatus: String?
+  private var watchDisplayActive: Bool?
 
   private override init() {
     super.init()
@@ -491,7 +502,12 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
           state.keys.sorted().joined(separator: ","), String(durable))
     let payload = try validatedLiveState(state)
     let message = try propertyListSafeEnvelope(envelope(type: "liveState", payload: payload))
-    send(message, preferApplicationContext: true, durable: durable)
+    send(
+      message,
+      preferApplicationContext: true,
+      durable: durable,
+      allowDirect: watchDisplayActive != false
+    )
   }
 
   func resendLatestLiveState() {
@@ -502,7 +518,11 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       return
     }
     NSLog("[SagaTrail Watch] Re-sending cached live state after Watch-ready request")
-    send(context, preferApplicationContext: true)
+    send(
+      context,
+      preferApplicationContext: true,
+      allowDirect: watchDisplayActive != false
+    )
   }
 
   func publishCanonicalLiveState(_ state: [String: Any]) throws {
@@ -661,6 +681,11 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
   }
 
+  func setWatchDisplayActive(_ active: Bool) {
+    watchDisplayActive = active
+    NSLog("[SagaTrail Watch] Watch display state received: %@", String(active))
+  }
+
   func sendAlert(_ alert: [String: Any]) throws {
     let title = alert["title"] as? String ?? ""
     let body = alert["body"] as? String ?? ""
@@ -680,7 +705,12 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     )
   }
 
-  private func send(_ message: [String: Any], preferApplicationContext: Bool, durable: Bool = false) {
+  private func send(
+    _ message: [String: Any],
+    preferApplicationContext: Bool,
+    durable: Bool = false,
+    allowDirect: Bool = true
+  ) {
     guard WCSession.isSupported() else {
       NSLog("[SagaTrail Watch] Send skipped: WatchConnectivity unsupported")
       return
@@ -724,7 +754,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       // must receive "active" immediately instead of waiting for a later
       // application-context delivery.
     }
-    if session.isReachable {
+    if session.isReachable && allowDirect {
       session.sendMessage(message, replyHandler: nil) { error in
         NSLog("[SagaTrail Watch] Direct message failed (type: %@); error: %@", type, error.localizedDescription)
         if var poiData = poiTransportDiagnostics(for: message) {

@@ -3067,6 +3067,7 @@ export default function LiveHike() {
   useEffect(() => subscribeToCompanionEvents({
     onHeartRate: (event) => setHeartRate(event),
     onSosRequest: () => requestPhoneSideSos(),
+    onWatchVisibility: (active) => watchLiveStateLog("watch display visibility", { active }),
     onHikeCommand: ({ command, durationMinutes }) => {
       if (command === "pause") {
         setHikePause(true);
