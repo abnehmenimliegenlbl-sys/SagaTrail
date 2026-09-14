@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -36,11 +37,13 @@ const WEB_TOP = 67;
 export default function Onboarding() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { saveProfile, language: activeLanguage, setPendingLanguage } = useApp();
+  const { saveProfile, uploadProfileAvatar, language: activeLanguage, setPendingLanguage } = useApp();
   const t = useOnboardingStrings();
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [archetype, setArchetype] = useState<Archetype | null>(null);
   const [language, setLanguage] = useState<LanguageCode>(activeLanguage);
   const [homeCanton, setHomeCanton] = useState("");
@@ -86,11 +89,13 @@ export default function Onboarding() {
       try {
         await saveProfile({
           name: name.trim(),
+          dateOfBirth: normalizeBirthDate(dateOfBirth),
           archetype,
           language,
           homeCanton,
           ageTier,
         });
+        if (avatarUri) await uploadProfileAvatar(avatarUri);
       } catch {
         setSaveError(t.saveError);
       } finally {
@@ -154,6 +159,32 @@ export default function Onboarding() {
                   borderRadius: colors.radius,
                 },
               ]}
+            />
+            <Pressable
+              onPress={async () => {
+                const result = await ImagePicker.launchImageLibraryAsync({
+                  mediaTypes: ["images"],
+                  allowsEditing: true,
+                  aspect: [1, 1],
+                  quality: 0.82,
+                });
+                if (!result.canceled) setAvatarUri(result.assets[0]?.uri ?? null);
+              }}
+              style={[styles.photoButton, { borderColor: colors.glassBorder }]}
+            >
+              <Feather name={avatarUri ? "check" : "camera"} size={18} color={colors.accent} />
+              <Text style={[styles.photoButtonText, { color: colors.accent }]}>
+                {avatarUri ? "Profilbild ausgewählt" : "Profilbild auswählen (optional)"}
+              </Text>
+            </Pressable>
+            <Text style={[styles.label, { color: colors.foreground }]}>Geburtsdatum</Text>
+            <TextInput
+              value={dateOfBirth}
+              onChangeText={setDateOfBirth}
+              placeholder="TT.MM.JJJJ"
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="numbers-and-punctuation"
+              style={[styles.input, { color: colors.foreground, borderColor: colors.glassBorder, borderRadius: colors.radius }]}
             />
           </Animated.View>
         )}
