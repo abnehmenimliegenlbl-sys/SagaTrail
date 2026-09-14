@@ -39,7 +39,9 @@ export function SwisstopoMap({
   safetyPois,
   safetyPoisReady = true,
   pickerMode,
+  drawMode,
   onMapClick,
+  onMapDraw,
   safeAreaInsetTop = 0,
   sagaPin,
 }: SwisstopoMapProps) {
@@ -61,6 +63,7 @@ export function SwisstopoMap({
           pois,
           partners,
           pickerMode,
+          drawMode,
           altGeometry,
           waterSources,
           parkingSpots,
@@ -99,7 +102,7 @@ export function SwisstopoMap({
       ),
     // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [center.lat, center.lng, label, geometry, waypoints, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, safeAreaInsetTop, t]
+    [center.lat, center.lng, label, geometry, waypoints, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, drawMode, safeAreaInsetTop, t]
   );
   const webViewSource = useMemo(() => ({ html }), [html]);
 
@@ -211,6 +214,16 @@ export function SwisstopoMap({
               typeof data.lng === "number"
             ) {
               onMapClick?.(data.lat, data.lng);
+            }
+            if (data?.type === "stt-mapdraw" && Array.isArray(data.points)) {
+              const points = data.points.filter(
+                (point: unknown): point is { lat: number; lng: number } =>
+                  !!point &&
+                  typeof point === "object" &&
+                  Number.isFinite((point as { lat?: unknown }).lat) &&
+                  Number.isFinite((point as { lng?: unknown }).lng),
+              );
+              onMapDraw?.(points);
             }
           } catch {
             // Ignoriere Nachrichten, die kein gueltiges JSON sind.

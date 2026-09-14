@@ -8,12 +8,13 @@ type LeafletMapArgs = Pick<
   | "center"
   | "label"
   | "geometry"
-   | "waypoints"
+  | "waypoints"
   | "offlineTiles"
   | "aerialways"
   | "pois"
   | "partners"
   | "pickerMode"
+   | "drawMode"
   | "altGeometry"
   | "waterSources"
   | "parkingSpots"
@@ -71,6 +72,7 @@ export function buildLeafletMapHtml(
     pois,
     partners,
     pickerMode,
+    drawMode,
     altGeometry,
     waterSources,
     parkingSpots,
@@ -293,6 +295,7 @@ export function buildLeafletMapHtml(
     var safety = ${safetyData};
     var sagaPin = ${sagaData};
     var picker = ${pickerMode ? "true" : "false"};
+    var drawingMode = ${drawMode ? "true" : "false"};
     var map = L.map("map", { zoomControl: false, attributionControl: false, tap: false }).setView(center, 14);
     // Bei einer echten Größenänderung (z. B. Rotation/Vollbild) muss Leaflet
     // sein Pixelraster neu berechnen.
@@ -649,7 +652,50 @@ export function buildLeafletMapHtml(
     };
     window.sttSetPartners = window.sttSetAerialways = function () {};
     if (pending) window.__sttApply(pending);
-    if (picker) {
+    if (drawingMode) {
+      var drawing = false;
+      var drawnPoints = [];
+      var drawnLine = null;
+      function pointFromEvent(event) {
+        return { lat: event.latlng.lat, lng: event.latlng.lng };
+      }
+      function startDrawing(event) {
+        if (event.originalEvent && event.originalEvent.preventDefault) event.originalEvent.preventDefault();
+        drawing = true;
+        drawnPoints = [pointFromEvent(event)];
+        drawnLine = L.polyline([[event.latlng.lat, event.latlng.lng]], {
+          color: "#CC0000", weight: 4, opacity: .95, lineCap: "round", lineJoin: "round"
+        }).addTo(map);
+      }
+      function continueDrawing(event) {
+        if (!drawing) return;
+        if (event.originalEvent && event.originalEvent.preventDefault) event.originalEvent.preventDefault();
+        var next = pointFromEvent(event);
+        var previous = drawnPoints[drawnPoints.length - 1];
+        if (previous && map.distance([previous.lat, previous.lng], [next.lat, next.lng]) < 8) return;
+        drawnPoints.push(next);
+        drawnLine.setLatLngs(drawnPoints.map(function (point) { return [point.lat, point.lng]; }));
+      }
+      function finishDrawing() {
+        if (!drawing) return;
+        drawing = false;
+        if (drawnPoints.length < 2) return;
+        var sampled = drawnPoints;
+        if (sampled.length > 100) {
+          sampled = [sampled[0]];
+          var stride = (drawnPoints.length - 1) / 99;
+          for (var i = 1; i < 99; i++) sampled.push(drawnPoints[Math.round(i * stride)]);
+          sampled.push(drawnPoints[drawnPoints.length - 1]);
+        }
+        post({ type: "stt-mapdraw", points: sampled });
+      }
+      map.dragging.disable();
+      map.scrollWheelZoom.disable();
+      map.getContainer().style.cursor = "crosshair";
+      map.on("mousedown touchstart", startDrawing);
+      map.on("mousemove touchmove", continueDrawing);
+      map.on("mouseup touchend touchcancel", finishDrawing);
+    } else if (picker) {
       map.getContainer().style.cursor = "crosshair";
       map.on("click", function (event) { post({ type: "stt-mapclick", lat: event.latlng.lat, lng: event.latlng.lng }); });
     }

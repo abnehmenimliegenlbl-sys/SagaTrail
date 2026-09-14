@@ -40,6 +40,14 @@ export interface CustomRouteStrings {
   waypointClear: string;
   waypointCalculate: string;
   waypointNeedTwo: string;
+  drawModeLabel: string;
+  drawTitle: string;
+  drawHint: string;
+  drawFinish: string;
+  drawClear: string;
+  drawCalculate: string;
+  drawNeedLine: string;
+  drawPointCount: (count: number) => string;
 }
 
 const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
@@ -83,6 +91,14 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     waypointClear: "Alle löschen",
     waypointCalculate: "Route berechnen",
     waypointNeedTwo: "Setze mindestens zwei Wegpunkte.",
+    drawModeLabel: "Freihandroute zeichnen",
+    drawTitle: "Route frei zeichnen",
+    drawHint: "Ziehe die gewünschte Linie auf der Karte. SagaTrail legt sie anschliessend auf echte Wanderwege.",
+    drawFinish: "Linie fertig",
+    drawClear: "Neu zeichnen",
+    drawCalculate: "Wegroute erstellen",
+    drawNeedLine: "Zeichne zuerst eine Linie mit mindestens zwei Punkten.",
+    drawPointCount: (count) => `${count} Zeichenpunkte`,
   },
   gsw: {
     eyebrow: "EIGENI ROUTE",
@@ -124,6 +140,14 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     waypointClear: "Alli lösche",
     waypointCalculate: "Route berechne",
     waypointNeedTwo: "Setz mindestens zwei Wegpünkt.",
+    drawModeLabel: "Freihandroute zeichne",
+    drawTitle: "Route frei zeichne",
+    drawHint: "Zieh d gewünschti Linie uf dr Charte. SagaTrail legt sie nachher uf echte Wanderwäg.",
+    drawFinish: "Linie fertig",
+    drawClear: "Neu zeichne",
+    drawCalculate: "Wegroute erstelle",
+    drawNeedLine: "Zeichne zerscht e Linie mit mindestens zwei Pünkt.",
+    drawPointCount: (count) => `${count} Zeichenpünkt`,
   },
   en: {
     eyebrow: "CUSTOM ROUTE",
@@ -165,6 +189,14 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     waypointClear: "Clear all",
     waypointCalculate: "Calculate route",
     waypointNeedTwo: "Set at least two waypoints.",
+    drawModeLabel: "Draw a route freehand",
+    drawTitle: "Draw your route",
+    drawHint: "Draw the route you want on the map. SagaTrail will match it to real hiking paths.",
+    drawFinish: "Finish line",
+    drawClear: "Draw again",
+    drawCalculate: "Create trail route",
+    drawNeedLine: "Draw a line with at least two points first.",
+    drawPointCount: (count) => `${count} drawing points`,
   },
   fr: {
     eyebrow: "ITINÉRAIRE PERSONNALISÉ",
@@ -206,6 +238,14 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     waypointClear: "Tout supprimer",
     waypointCalculate: "Calculer l'itinéraire",
     waypointNeedTwo: "Place au moins deux points.",
+    drawModeLabel: "Dessiner un itinéraire",
+    drawTitle: "Dessiner l'itinéraire",
+    drawHint: "Dessine la ligne souhaitée sur la carte. SagaTrail l'adaptera aux vrais sentiers.",
+    drawFinish: "Terminer la ligne",
+    drawClear: "Redessiner",
+    drawCalculate: "Créer l'itinéraire",
+    drawNeedLine: "Dessine d'abord une ligne avec au moins deux points.",
+    drawPointCount: (count) => `${count} points dessinés`,
   },
   it: {
     eyebrow: "ITINERARIO PERSONALIZZATO",
@@ -247,6 +287,14 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     waypointClear: "Cancella tutto",
     waypointCalculate: "Calcola percorso",
     waypointNeedTwo: "Imposta almeno due punti.",
+    drawModeLabel: "Disegna un percorso a mano libera",
+    drawTitle: "Disegna il percorso",
+    drawHint: "Disegna la linea sulla mappa. SagaTrail la adatterà ai sentieri escursionistici reali.",
+    drawFinish: "Fine linea",
+    drawClear: "Ridisegna",
+    drawCalculate: "Crea percorso",
+    drawNeedLine: "Disegna prima una linea con almeno due punti.",
+    drawPointCount: (count) => `${count} punti disegnati`,
   },
   es: {
     eyebrow: "RUTA PERSONALIZADA",
@@ -288,6 +336,14 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     waypointClear: "Borrar todo",
     waypointCalculate: "Calcular ruta",
     waypointNeedTwo: "Coloca al menos dos puntos.",
+    drawModeLabel: "Dibujar ruta a mano alzada",
+    drawTitle: "Dibuja tu ruta",
+    drawHint: "Dibuja la línea en el mapa. SagaTrail la ajustará a caminos de senderismo reales.",
+    drawFinish: "Terminar línea",
+    drawClear: "Dibujar de nuevo",
+    drawCalculate: "Crear ruta",
+    drawNeedLine: "Dibuja primero una línea con al menos dos puntos.",
+    drawPointCount: (count) => `${count} puntos dibujados`,
   },
   pt: {
     eyebrow: "ROTA PERSONALIZADA",
@@ -329,6 +385,14 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     waypointClear: "Limpar tudo",
     waypointCalculate: "Calcular rota",
     waypointNeedTwo: "Coloque pelo menos dois pontos.",
+    drawModeLabel: "Desenhar rota à mão livre",
+    drawTitle: "Desenhar a rota",
+    drawHint: "Desenhe a linha no mapa. O SagaTrail irá ajustá-la a trilhos pedestres reais.",
+    drawFinish: "Terminar linha",
+    drawClear: "Desenhar novamente",
+    drawCalculate: "Criar rota",
+    drawNeedLine: "Desenhe primeiro uma linha com pelo menos dois pontos.",
+    drawPointCount: (count) => `${count} pontos desenhados`,
   },
   zh: {
     eyebrow: "自定义路线",
@@ -370,6 +434,14 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     waypointClear: "全部清除",
     waypointCalculate: "计算路线",
     waypointNeedTwo: "请至少设置两个途经点。",
+    drawModeLabel: "手绘路线",
+    drawTitle: "手绘路线",
+    drawHint: "在地图上画出想走的路线。SagaTrail 会将其匹配到真实的徒步道路。",
+    drawFinish: "完成绘制",
+    drawClear: "重新绘制",
+    drawCalculate: "创建徒步路线",
+    drawNeedLine: "请先绘制至少包含两个点的路线。",
+    drawPointCount: (count) => `${count} 个绘制点`,
   },
   ru: {
     eyebrow: "СВОЙ МАРШРУТ",
@@ -411,6 +483,14 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     waypointClear: "Удалить всё",
     waypointCalculate: "Рассчитать маршрут",
     waypointNeedTwo: "Установите хотя бы две точки.",
+    drawModeLabel: "Нарисовать маршрут от руки",
+    drawTitle: "Нарисовать маршрут",
+    drawHint: "Нарисуйте линию на карте. SagaTrail привяжет её к реальным пешеходным тропам.",
+    drawFinish: "Завершить линию",
+    drawClear: "Нарисовать заново",
+    drawCalculate: "Создать маршрут",
+    drawNeedLine: "Сначала нарисуйте линию минимум из двух точек.",
+    drawPointCount: (count) => `${count} точек`,
   },
 };
 

@@ -138,7 +138,9 @@ export interface SwisstopoMapProps {
   /** Erst true, wenn die aktuelle Sicherheits-POI-Abfrage abgeschlossen ist. */
   safetyPoisReady?: boolean;
   pickerMode?: boolean;
+  drawMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
+  onMapDraw?: (points: { lat: number; lng: number }[]) => void;
   legend?: MapLegendLabels | null;
   /** Sicherer Bereich oben (iOS-Statusleiste). Schiebt den 2D/3D/Sat-Toggle
    *  nach unten damit er nicht hinter der Statusleiste verschwindet. */
