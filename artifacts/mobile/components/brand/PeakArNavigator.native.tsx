@@ -76,6 +76,10 @@ const MAX_AR_ROUTE_DIRECTION_ARROWS = 24;
 const AR_ROUTE_TURN_THRESHOLD_DEGREES = 25;
 const AR_ROUTE_ARROW_MIN_SPACING = 0.45;
 const AR_ROUTE_ARROW_ELEVATION = 0.45;
+const HIDDEN_AR_ROUTE_POINTS: TerrainRouteLine = [
+  [0, -1000, 0],
+  [0, -1000, 0.01],
+];
 // The flag is scaled against projected screen distance so its apparent width
 // stays readable even when the route endpoint is far away.
 const FINISH_FLAG_POLE_HEIGHT = 1.25;
@@ -500,9 +504,16 @@ function TerrainHologram({
     destinationPosition,
   ]);
 
-  // The distant destination flag must remain available even when the active
-  // route has no sampled points inside the 50 m near field.
-  if (routeSegments.length === 0 && destinationPosition == null) return null;
+  // Keep the native route node tree mounted while the moving GPS fix causes
+  // the visible near-field to be recomputed. Removing all route children in
+  // that transition can make Viro lose the AR overlay on iOS.
+  if (
+    routeGeometry == null &&
+    routeSegments.length === 0 &&
+    destinationPosition == null
+  ) {
+    return null;
+  }
 
   return (
     <ViroNode
@@ -510,55 +521,76 @@ function TerrainHologram({
       opacity={0.96}
       viroTag="terrain-route-ar"
     >
-      {routeSegments.map((segment, index) => (
-        <ViroPolyline
-          key={`terrain-route-line-${index}-${segment.band}`}
-          points={segment.points.map(([x, y, z]) => [
-            x,
-            AR_ROUTE_GROUND_OFFSET + y + 0.045,
-            z,
-          ])}
-          thickness={segment.thickness}
-          materials={TERRAIN_ROUTE_MATERIALS[segment.band]}
-          opacity={0.62}
-          renderingOrder={24}
-          viroTag={`terrain-route-line-${index}`}
-        />
-      ))}
-      {routeDirectionArrows.map(({ position, rotationY, band }, index) => (
-        <ViroNode
-          key={`terrain-route-direction-arrow-${index}`}
-          position={[
-            position[0],
-            AR_ROUTE_GROUND_OFFSET + position[1] + AR_ROUTE_ARROW_ELEVATION,
-            position[2],
-          ]}
-          rotation={[0, rotationY, 0]}
-          transformBehaviors="billboard"
-          renderingOrder={28}
-          opacity={0.94}
-          viroTag={`terrain-route-direction-arrow-${index}`}
-        >
-          <ViroBox
-            position={[0.035, 0, -0.065]}
-            rotation={[0, -28, 0]}
-            width={0.22}
-            height={0.026}
-            length={0.045}
-            materials={TERRAIN_ROUTE_MATERIALS[band]}
-            shadowCastingBitMask={0}
+      {Array.from({ length: MAX_AR_ROUTE_SEGMENT_SLOTS }, (_, index) => {
+        const segment = routeSegments[index] ?? null;
+        const points: TerrainRouteLine = segment
+          ? segment.points.map(
+              ([x, y, z]): TerrainVertex => [
+                x,
+                AR_ROUTE_GROUND_OFFSET + y + 0.045,
+                z,
+              ],
+            )
+          : HIDDEN_AR_ROUTE_POINTS;
+        return (
+          <ViroPolyline
+            key={`terrain-route-line-slot-${index}`}
+            points={points}
+            thickness={segment?.thickness ?? 0.032}
+            materials={
+              segment
+                ? TERRAIN_ROUTE_MATERIALS[segment.band]
+                : TERRAIN_ROUTE_MATERIALS.green
+            }
+            opacity={segment ? 0.62 : 0}
+            renderingOrder={24}
+            viroTag={`terrain-route-line-slot-${index}`}
           />
-          <ViroBox
-            position={[0.035, 0, 0.065]}
-            rotation={[0, 28, 0]}
-            width={0.22}
-            height={0.026}
-            length={0.045}
-            materials={TERRAIN_ROUTE_MATERIALS[band]}
-            shadowCastingBitMask={0}
-          />
-        </ViroNode>
-      ))}
+        );
+      })}
+      {Array.from({ length: MAX_AR_ROUTE_DIRECTION_ARROWS }, (_, index) => {
+        const arrow = routeDirectionArrows[index] ?? null;
+        const position = arrow?.position ?? [0, -1000, 0];
+        const band = arrow?.band ?? "green";
+        return (
+          <ViroNode
+            key={`terrain-route-direction-arrow-slot-${index}`}
+            position={[
+              position[0],
+              arrow
+                ? AR_ROUTE_GROUND_OFFSET +
+                  position[1] +
+                  AR_ROUTE_ARROW_ELEVATION
+                : -1000,
+              position[2],
+            ]}
+            rotation={[0, arrow?.rotationY ?? 0, 0]}
+            transformBehaviors="billboard"
+            renderingOrder={28}
+            opacity={arrow ? 0.94 : 0}
+            viroTag={`terrain-route-direction-arrow-slot-${index}`}
+          >
+            <ViroBox
+              position={[0.035, 0, -0.065]}
+              rotation={[0, -28, 0]}
+              width={0.22}
+              height={0.026}
+              length={0.045}
+              materials={TERRAIN_ROUTE_MATERIALS[band]}
+              shadowCastingBitMask={0}
+            />
+            <ViroBox
+              position={[0.035, 0, 0.065]}
+              rotation={[0, 28, 0]}
+              width={0.22}
+              height={0.026}
+              length={0.045}
+              materials={TERRAIN_ROUTE_MATERIALS[band]}
+              shadowCastingBitMask={0}
+            />
+          </ViroNode>
+        );
+      })}
       <ViroNode
         position={
           destinationPosition

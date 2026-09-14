@@ -53,6 +53,12 @@ The live AR route should use one semi-transparent colored polyline per smoothed 
 
 **How to apply:** Render each `TerrainRouteSegment` separately so grade colors and gaps remain intact. Detect turns from projected segment headings with a meaningful angle threshold and spacing guard; always place the final arrow on the last visible segment.
 
+The moving AR route must keep a fixed native Viro slot tree: route polylines and direction-arrow nodes stay mounted, while empty slots move offscreen or become transparent.
+
+**Why:** Replacing/removing the whole near-field child set during GPS updates can make the Viro overlay disappear on iOS even when the geographic projection is correct.
+
+**How to apply:** Use stable slot keys up to the native segment/arrow caps and update only points, material, position, rotation, and opacity as the hiker advances.
+
 Direction arrows must remain readable when the phone is held upright: keep them slightly above the ground route and billboard them toward the camera, while leaving the route line itself georeferenced on the terrain plane.
 
 **Why:** Floor-only arrow geometry can leave the usable camera frame unless the hiker tilts the phone almost horizontally, which is not a practical hiking interaction.
