@@ -42,7 +42,38 @@ import {
   type TerrainRouteSegment,
   type TerrainVertex,
 } from "@/lib/terrainModel";
+import { makeLogger } from "@/lib/debugLog";
+import { getRuntimeDiagnostics } from "@/lib/runtimeDiagnostics";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
+
+const peakArLog = makeLogger("[PeakAR]", "peak_ar");
+
+function peakArErrorSummary(error: unknown): Record<string, unknown> {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack?.slice(0, 1200) ?? null,
+    };
+  }
+  if (error && typeof error === "object") {
+    try {
+      return { value: JSON.parse(JSON.stringify(error)) };
+    } catch {
+      return { value: String(error) };
+    }
+  }
+  return { value: error == null ? null : String(error) };
+}
+
+function peakArPositionSummary(position: LatLng | null | undefined) {
+  return position
+    ? {
+        lat: Number.isFinite(position.lat) ? Number(position.lat.toFixed(6)) : null,
+        lng: Number.isFinite(position.lng) ? Number(position.lng.toFixed(6)) : null,
+      }
+    : null;
+}
 
 const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
@@ -522,7 +553,7 @@ function TerrainHologram({
   );
 
   useEffect(() => {
-    console.log("[PeakAR] route overlay", {
+    peakArLog("route overlay recomputed", {
       hasModel: Boolean(model),
       observerElevationM: model?.observerElevationM ?? null,
       routePointCount: routeGeometry?.length ?? 0,
@@ -533,6 +564,9 @@ function TerrainHologram({
       nearRouteRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
       destinationVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
       hasDestination: destinationPosition != null,
+      routeOriginPosition: peakArPositionSummary(routeOriginPosition),
+      observerPosition: peakArPositionSummary(observerPosition),
+      worldOffset: worldOffset.map((value) => Number(value.toFixed(3))),
     });
   }, [
     model,
@@ -541,6 +575,9 @@ function TerrainHologram({
     routeSegments.length,
     routeDirectionArrows.length,
     destinationPosition,
+    routeOriginPosition,
+    observerPosition,
+    worldOffset,
   ]);
 
   // Keep the native route node tree mounted while the moving GPS fix causes
@@ -752,13 +789,15 @@ function TerrainSurface({
   }, [model]);
 
   useEffect(() => {
-    console.log("[PeakAR] SwissTopo terrain mesh", {
+    peakArLog("terrain surface mesh prepared", {
       hasModel: Boolean(model),
       vertexCount: mesh?.vertices.length ?? 0,
       triangleCount: mesh?.triangleIndices.length ?? 0,
       radiusM: model?.radiusM ?? null,
+      center: peakArPositionSummary(model?.center),
+      textureMaterial,
     });
-  }, [mesh, model]);
+  }, [mesh, model, textureMaterial]);
 
   if (!mesh) return null;
 
