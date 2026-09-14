@@ -76,6 +76,10 @@ const MAX_AR_ROUTE_DIRECTION_ARROWS = 24;
 const AR_ROUTE_TURN_THRESHOLD_DEGREES = 25;
 const AR_ROUTE_ARROW_MIN_SPACING = 0.45;
 const AR_ROUTE_ARROW_ELEVATION = 0.45;
+const AR_ROUTE_ARROW_START_OFFSET = 0.35;
+const AR_ROUTE_ARROW_LENGTH = 0.28;
+const AR_ROUTE_ARROW_HALF_WIDTH = 0.14;
+const AR_ROUTE_ARROW_THICKNESS = 0.065;
 const HIDDEN_AR_ROUTE_POINTS: TerrainRouteLine = [
   [0, -1000, 0],
   [0, -1000, 0.01],
@@ -352,8 +356,26 @@ function buildRouteDirectionArrows(
   const arrows: RouteDirectionArrow[] = [];
   let previousHeading: number | null = null;
   let lastArrowPosition: TerrainVertex | null = null;
+  let hasStartArrow = false;
   const finalSegment =
     [...segments].reverse().find((segment) => segment.points.length >= 2) ?? null;
+
+  const addArrow = (
+    position: TerrainVertex,
+    rotationY: number,
+    band: RouteGradeBand,
+  ) => {
+    if (
+      lastArrowPosition != null &&
+      distanceBetweenRoutePoints(lastArrowPosition, position) <
+        AR_ROUTE_ARROW_MIN_SPACING
+    ) {
+      return;
+    }
+    if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS) return;
+    arrows.push({ position, rotationY, band });
+    lastArrowPosition = position;
+  };
 
   for (const segment of segments) {
     if (segment.points.length < 2) continue;
@@ -365,6 +387,24 @@ function buildRouteDirectionArrows(
       if (length < 0.02) continue;
 
       const heading = routeHeading(from, to);
+      if (!hasStartArrow) {
+        const startOffset = Math.min(
+          AR_ROUTE_ARROW_START_OFFSET,
+          length * 0.45,
+        );
+        const headingRad = (heading * Math.PI) / 180;
+        addArrow(
+          [
+            from[0] + Math.cos(headingRad) * startOffset,
+            from[1],
+            from[2] - Math.sin(headingRad) * startOffset,
+          ],
+          heading,
+          segment.band,
+        );
+        hasStartArrow = true;
+      }
+
       if (
         previousHeading != null &&
         headingChangeDegrees(previousHeading, heading) >=
@@ -373,14 +413,13 @@ function buildRouteDirectionArrows(
           distanceBetweenRoutePoints(lastArrowPosition, from) >=
             AR_ROUTE_ARROW_MIN_SPACING)
       ) {
-        arrows.push({ position: from, rotationY: heading, band: segment.band });
-        lastArrowPosition = from;
+        addArrow(from, heading, segment.band);
       }
       previousHeading = heading;
 
-      if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS - 1) break;
+      if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS) break;
     }
-    if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS - 1) break;
+    if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS) break;
   }
 
   if (finalSegment == null || finalSegment.points.length < 2) return arrows;
@@ -391,16 +430,16 @@ function buildRouteDirectionArrows(
 
   const finalHeading = routeHeading(beforeLast, last);
   const finalHeadingRad = (finalHeading * Math.PI) / 180;
-  const arrowOffset = 0.09;
-  arrows.push({
-    position: [
+  const arrowOffset = 0.12;
+  addArrow(
+    [
       last[0] - Math.cos(finalHeadingRad) * arrowOffset,
       last[1],
       last[2] + Math.sin(finalHeadingRad) * arrowOffset,
     ],
-    rotationY: finalHeading,
-    band: finalSegment.band,
-  });
+    finalHeading,
+    finalSegment.band,
+  );
   return arrows;
 }
 
@@ -570,23 +609,23 @@ function TerrainHologram({
             opacity={arrow ? 0.94 : 0}
             viroTag={`terrain-route-direction-arrow-slot-${index}`}
           >
-            <ViroBox
-              position={[0.035, 0, -0.065]}
-              rotation={[0, -28, 0]}
-              width={0.22}
-              height={0.026}
-              length={0.045}
+            <ViroPolyline
+              points={[
+                [
+                  -AR_ROUTE_ARROW_HALF_WIDTH,
+                  -AR_ROUTE_ARROW_LENGTH * 0.42,
+                  0,
+                ],
+                [0, AR_ROUTE_ARROW_LENGTH * 0.58, 0],
+                [
+                  AR_ROUTE_ARROW_HALF_WIDTH,
+                  -AR_ROUTE_ARROW_LENGTH * 0.42,
+                  0,
+                ],
+              ]}
+              thickness={AR_ROUTE_ARROW_THICKNESS}
               materials={TERRAIN_ROUTE_MATERIALS[band]}
-              shadowCastingBitMask={0}
-            />
-            <ViroBox
-              position={[0.035, 0, 0.065]}
-              rotation={[0, 28, 0]}
-              width={0.22}
-              height={0.026}
-              length={0.045}
-              materials={TERRAIN_ROUTE_MATERIALS[band]}
-              shadowCastingBitMask={0}
+              transformBehaviors="billboard"
             />
           </ViroNode>
         );

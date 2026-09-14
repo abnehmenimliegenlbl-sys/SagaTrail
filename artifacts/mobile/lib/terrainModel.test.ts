@@ -227,6 +227,43 @@ test("refreshes the AR route near the moving observer without resetting its worl
   assert.ok(points.some((point) => point[2] < worldOffset[2] - 0.5));
 });
 
+test("keeps only the connected near-field prefix for looped routes", () => {
+  const metersPerLatitudeDegree = 180 / (Math.PI * 6_371_000);
+  const route = [
+    [46, 7],
+    [46 + 40 * metersPerLatitudeDegree, 7],
+    [46 + 40 * metersPerLatitudeDegree, 7 + 40 * metersPerLatitudeDegree],
+    [46, 7 + 40 * metersPerLatitudeDegree],
+    [46 + 5 * metersPerLatitudeDegree, 7 + 5 * metersPerLatitudeDegree],
+  ];
+  const segments = buildGeographicTerrainRouteSegments(
+    null,
+    route,
+    ROUTE_CENTER,
+    500,
+    null,
+    {
+      maxRenderedDistanceM: 50,
+      realScaleRadiusM: 50,
+      maxRouteDistanceM: 250,
+      maxVirtualDistanceM: 300,
+    },
+  );
+
+  const points = segments.flatMap((segment) => segment.points);
+  assert.ok(points.length >= 2);
+  assert.ok(
+    points.every(([east, _elevation, north]) => Math.hypot(east, north) <= 2.001),
+  );
+  assert.ok(
+    points.every((point, index) => {
+      if (index === 0) return true;
+      const previous = points[index - 1]!;
+      return Math.hypot(point[0] - previous[0], point[2] - previous[2]) < 2.1;
+    }),
+  );
+});
+
 test("keeps the full route when the GPS fix is too far from it", () => {
   const route = [
     [46, 7],

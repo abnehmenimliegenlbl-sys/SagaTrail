@@ -788,7 +788,13 @@ export function buildGeographicTerrainRouteSegments(
     routeGeometryMaxDistanceM(geometry, center);
   const worldOffset = displayOptions.worldOffset ?? [0, 0, 0];
 
+  // Only keep the first connected near-field prefix. Filtering every grade
+  // band independently by radial distance lets a later part of a loop
+  // re-enter the 50 m circle and appear as a detached floating line.
+  let reachedRenderedDistanceLimit = false;
   return gradeSegments.flatMap((segment) => {
+    if (reachedRenderedDistanceLimit) return [];
+
     const projected = segment.coordinates
       .map((point) =>
         projectGeographicRoutePoint(
@@ -803,13 +809,17 @@ export function buildGeographicTerrainRouteSegments(
       )
       .filter((point): point is ProjectedGeographicRoutePoint => point !== null);
     const maxRenderedDistanceM = displayOptions.maxRenderedDistanceM;
-    const visibleProjected =
-      maxRenderedDistanceM == null
-        ? projected
-        : projected.filter(
-            ({ displayDistanceM }) =>
-              displayDistanceM <= Math.max(1, maxRenderedDistanceM),
-          );
+    const visibleProjected: ProjectedGeographicRoutePoint[] = [];
+    for (const point of projected) {
+      if (
+        maxRenderedDistanceM != null &&
+        point.displayDistanceM > Math.max(1, maxRenderedDistanceM)
+      ) {
+        reachedRenderedDistanceLimit = true;
+        break;
+      }
+      visibleProjected.push(point);
+    }
     if (visibleProjected.length < 2) return [];
     const displayDistanceM =
       visibleProjected.reduce((sum, point) => sum + point.displayDistanceM, 0) /
