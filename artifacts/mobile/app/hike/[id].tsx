@@ -4826,6 +4826,11 @@ export default function LiveHike() {
         let playbackFinished = false;
         let playbackResumeInFlight = false;
         let playbackResumeAttempts = 0;
+        // expo-audio emits an initial `isLoaded: false` status while the
+        // native player is still loading the local file. That is not the
+        // same as a player that was unloaded. Treating it as an error removes
+        // every narration player a few milliseconds after creation.
+        let sawLoadedStatus = false;
         const finishPlayback = (
           outcome: "finished" | "error",
           reason?: string,
@@ -4905,7 +4910,11 @@ export default function LiveHike() {
             finishPlayback("error", status.error);
             return;
           }
+          if (status.isLoaded) {
+            sawLoadedStatus = true;
+          }
           if (!status.isLoaded) {
+            if (!sawLoadedStatus) return;
             setNarrationUnavailable(true);
             finishPlayback("error", "playback_unloaded");
             return;
