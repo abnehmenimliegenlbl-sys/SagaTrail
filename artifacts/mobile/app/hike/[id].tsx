@@ -6544,20 +6544,19 @@ export default function LiveHike() {
       clearActiveHike(),
     ]);
     router.replace("/summary");
-    // App-Store-Bewertung: nach der 1. abgeschlossenen Route, dann jede 3. (1, 4, 7, …)
-    const newCount = hikeHistory.length + 1;
-    if (newCount % 3 === 1) {
-      setTimeout(async () => {
-        try {
-          if (await StoreReview.isAvailableAsync()) {
-            await StoreReview.requestReview();
-          }
-        } catch {
-          // Review-Anfrage ist best-effort — Fehler still ignorieren
+    // App-Store-Bewertung nach jeder abgeschlossenen Route anfragen.
+    // StoreKit/Google Play entscheiden selbst, ob der native Dialog wegen
+    // eigener Plattformlimits tatsächlich angezeigt wird.
+    setTimeout(async () => {
+      try {
+        if (await StoreReview.isAvailableAsync()) {
+          await StoreReview.requestReview();
         }
-      }, 1500);
-    }
-  }, [saga, route, localizedSagaTitle, navigationGeometry, distance, ascentM, sac, steps, hikePhotos, recognitionEntries, hikeHistory, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
+      } catch {
+        // Review-Anfrage ist best-effort — Fehler still ignorieren
+      }
+    }, 1500);
+  }, [saga, route, localizedSagaTitle, navigationGeometry, distance, ascentM, sac, steps, hikePhotos, recognitionEntries, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
 
   // Erlaubt den Abschluss, auch wenn die Route noch nicht ganz zurueckgelegt
   // wurde — damit Nutzer trotzdem zum Album und zum Social-Media-Posting
