@@ -1,6 +1,14 @@
 import { Router, type IRouter } from "express";
-import { GetCustomRouteQueryParams, GetCustomRouteResponse } from "@workspace/api-zod";
-import { buildCustomRoute, CustomRouteError } from "../lib/customRoute";
+import {
+  GetCustomRouteQueryParams,
+  GetCustomRouteResponse,
+  PlanCustomRouteBody,
+} from "@workspace/api-zod";
+import {
+  buildCustomRoute,
+  buildCustomRouteThroughWaypoints,
+  CustomRouteError,
+} from "../lib/customRoute";
 
 const router: IRouter = Router();
 
@@ -27,6 +35,28 @@ router.get("/routes/custom", async (req, res): Promise<void> => {
       return;
     }
     req.log.error({ err }, "Eigene Route konnte nicht berechnet werden");
+    res.status(502).json({ error: "Externe Datenquelle nicht erreichbar" });
+  }
+});
+
+router.post("/routes/custom-waypoints", async (req, res): Promise<void> => {
+  const parsed = PlanCustomRouteBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Bitte mindestens zwei Wegpunkte angeben." });
+    return;
+  }
+  try {
+    const route = await buildCustomRouteThroughWaypoints(
+      parsed.data.points,
+      req.log,
+    );
+    res.json(GetCustomRouteResponse.parse(route));
+  } catch (err) {
+    if (err instanceof CustomRouteError) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    req.log.error({ err }, "Wegpunkt-Route konnte nicht berechnet werden");
     res.status(502).json({ error: "Externe Datenquelle nicht erreichbar" });
   }
 });

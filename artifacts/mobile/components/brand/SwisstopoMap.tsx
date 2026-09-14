@@ -24,6 +24,7 @@ export function SwisstopoMap({
   label = "Start",
   height = 220,
   geometry,
+  waypoints,
   elevationProfile,
   altGeometry,
   offlineTiles,
@@ -54,6 +55,7 @@ export function SwisstopoMap({
           center,
           label,
           geometry,
+          waypoints,
           offlineTiles,
           aerialways,
           pois,
@@ -97,7 +99,7 @@ export function SwisstopoMap({
       ),
     // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [center.lat, center.lng, label, geometry, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, safeAreaInsetTop, t]
+    [center.lat, center.lng, label, geometry, waypoints, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, safeAreaInsetTop, t]
   );
   const webViewSource = useMemo(() => ({ html }), [html]);
 

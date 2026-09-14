@@ -33,6 +33,7 @@ import type {
   ClaimReferralCode200,
   ClaimReferralCodeBody,
   CreateSafetyShareRequest,
+  CustomWaypointsBody,
   ErrorResponse,
   GeocodePlace,
   GetAerialwaysParams,
@@ -1685,6 +1686,77 @@ export function useGetCustomRoute<TData = Awaited<ReturnType<typeof getCustomRou
 
 
 
+
+export const getPlanCustomRouteUrl = () => {
+
+
+
+
+  return `/api/routes/custom-waypoints`
+}
+
+/**
+ * Verbindet zwei bis zwoelf geordnete Wegpunkte ueber begehbare Wege (Valhalla pedestrian) und reichert die Route mit swisstopo-Hoehenmetern, SAC-Grad und Saison-Heuristik an. Die Route wird nicht persistiert.
+ * @summary Berechnet eine Wanderroute ueber mehrere selbst gesetzte Wegpunkte
+ */
+export const planCustomRoute = async (customWaypointsBody: CustomWaypointsBody, options?: RequestInit): Promise<CatalogRoute> => {
+
+  return customFetch<CatalogRoute>(getPlanCustomRouteUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customWaypointsBody)
+  }
+);}
+
+
+
+
+export const getPlanCustomRouteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof planCustomRoute>>, TError,{data: BodyType<CustomWaypointsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof planCustomRoute>>, TError,{data: BodyType<CustomWaypointsBody>}, TContext> => {
+
+const mutationKey = ['planCustomRoute'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof planCustomRoute>>, {data: BodyType<CustomWaypointsBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  planCustomRoute(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PlanCustomRouteMutationResult = NonNullable<Awaited<ReturnType<typeof planCustomRoute>>>
+    export type PlanCustomRouteMutationBody = BodyType<CustomWaypointsBody>
+    export type PlanCustomRouteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Berechnet eine Wanderroute ueber mehrere selbst gesetzte Wegpunkte
+ */
+export const usePlanCustomRoute = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof planCustomRoute>>, TError,{data: BodyType<CustomWaypointsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof planCustomRoute>>,
+        TError,
+        {data: BodyType<CustomWaypointsBody>},
+        TContext
+      > => {
+      return useMutation(getPlanCustomRouteMutationOptions(options));
+    }
 
 export const getImportGpxRouteUrl = () => {
 

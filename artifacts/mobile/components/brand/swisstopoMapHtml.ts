@@ -121,6 +121,7 @@ export interface SwisstopoMapProps {
   label?: string;
   height?: number;
   geometry?: number[][] | null;
+  waypoints?: { lat: number; lng: number; number: number }[] | null;
   elevationProfile?: TerrainProfilePoint[] | null;
   altGeometry?: number[][] | null;
   offlineTiles?: Record<string, string> | null;

@@ -8,6 +8,7 @@ type LeafletMapArgs = Pick<
   | "center"
   | "label"
   | "geometry"
+   | "waypoints"
   | "offlineTiles"
   | "aerialways"
   | "pois"
@@ -64,6 +65,7 @@ export function buildLeafletMapHtml(
     center,
     label = "Start",
     geometry,
+    waypoints,
     offlineTiles,
     aerialways,
     pois,
@@ -85,6 +87,14 @@ export function buildLeafletMapHtml(
     lng: Number.isFinite(center.lng) ? center.lng : 8.2,
   };
   const route = points(geometry);
+  const waypointData = json(
+    waypoints?.filter(
+      (point) =>
+        Number.isFinite(point.lat) &&
+        Number.isFinite(point.lng) &&
+        Number.isFinite(point.number),
+    ) ?? null,
+  );
   const routeGrades = json(buildRouteGradeSegments(geometry, _elevationProfile));
   const alternateRoute = points(altGeometry);
   const offline = json(offlineTiles);
@@ -186,6 +196,7 @@ export function buildLeafletMapHtml(
     #map:not(.view-3d) .leaflet-shadow-pane,
     #map:not(.view-3d) .leaflet-marker-pane { transition: transform .45s ease; }
     .flag { width: 30px; height: 38px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+    .waypoint-number { width: 28px; height: 28px; border-radius: 50%; background: #CC0000; border: 2px solid #F5F3EC; box-shadow: 0 1px 5px rgba(0,0,0,.5); color: #F5F3EC; font: 700 12px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
     .poi { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #2563A8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(37,99,168,.25); }
     .poi-tipp { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
     .poi-cluster { width: 24px; height: 24px; border-radius: 50%; background: #2563A8; border: 1.5px solid #F5F3EC; box-shadow: 0 0 0 2.25px rgba(37,99,168,.25), 0 1.5px 6px rgba(0,0,0,.35); color: #F5F3EC; font: 700 9px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; opacity: .75; }
@@ -270,6 +281,7 @@ export function buildLeafletMapHtml(
     }
     var center = [${safeCenter.lat}, ${safeCenter.lng}];
     var route = ${route};
+    var waypoints = ${waypointData};
     var routeGrades = ${routeGrades};
     var alternateRoute = ${alternateRoute};
     var offline = ${offline};
@@ -457,6 +469,10 @@ export function buildLeafletMapHtml(
     } else {
       addMarker({ lat: center[0], lng: center[1], name: ${json(label)} }, flagIcon("start"), null);
     }
+    (waypoints || []).forEach(function (point) {
+      var numberIcon = icon("waypoint-number", String(point.number), [28, 28]);
+      addMarker(point, numberIcon, null);
+    });
     routeDecorationsReady = true;
     flushPendingTileRetries();
     (aerialways || []).forEach(function (a) {

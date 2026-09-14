@@ -1,4 +1,5 @@
 import type { Logger } from "pino";
+import { createHash } from "crypto";
 import { computeElevationStats } from "./elevation";
 import { deriveSacFromSwissTlm3d } from "./swisstopoHiking";
 import { deriveSeason } from "./season";
@@ -65,9 +66,11 @@ function decodePolyline6(encoded: string): LatLng[] {
 export class CustomRouteError extends Error {}
 
 /** Baut einen deterministischen Bezeichner aus gerundeten Start-/Zielkoordinaten. */
-function customRouteId(start: LatLng, end: LatLng): string {
-  const r = (n: number) => n.toFixed(5);
-  return `custom-${r(start.lat)}-${r(start.lng)}-${r(end.lat)}-${r(end.lng)}`;
+function customRouteId(points: LatLng[]): string {
+  const fingerprint = points
+    .map((point) => `${point.lat.toFixed(5)},${point.lng.toFixed(5)}`)
+    .join(";");
+  return `custom-${createHash("sha256").update(fingerprint).digest("hex").slice(0, 16)}`;
 }
 
 export interface CustomRoute {
@@ -183,14 +186,44 @@ export async function buildCustomRoute(
   endLabel: string | undefined,
   log: Logger,
 ): Promise<CustomRoute> {
+  return buildPedestrianRoute(
+    [start, end],
+    startLabel,
+    endLabel,
+    "Eigene Route",
+    log,
+  );
+}
+
+/**
+ * Berechnet eine Fussweg-Route, die alle Wegpunkte in der angegebenen
+ * Reihenfolge passiert. Valhalla liefert dafuer einen Leg pro Abschnitt;
+ * die Legs werden ohne doppelte Verbindungspunkte zu einer Geometrie
+ * zusammengefuegt.
+ */
+export async function buildCustomRouteThroughWaypoints(
+  points: LatLng[],
+  log: Logger,
+): Promise<CustomRoute> {
+  return buildPedestrianRoute(points, undefined, undefined, "Eigene Wegpunkt-Route", log);
+}
+
+async function buildPedestrianRoute(
+  points: LatLng[],
+  startLabel: string | undefined,
+  endLabel: string | undefined,
+  terrain: string,
+  log: Logger,
+): Promise<CustomRoute> {
+  if (points.length < 2 || points.length > 12) {
+    throw new CustomRouteError("Bitte zwischen 2 und 12 Wegpunkte setzen.");
+  }
+
   const res = await fetch(VALHALLA_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json", "User-Agent": USER_AGENT },
     body: JSON.stringify({
-      locations: [
-        { lat: start.lat, lon: start.lng },
-        { lat: end.lat, lon: end.lng },
-      ],
+      locations: points.map((point) => ({ lat: point.lat, lon: point.lng })),
       // Fussgaengerprofil: Autobahnen/Schnellstrassen sind ausgeschlossen,
       // Wanderwege und Trails werden bevorzugt.
       costing: "pedestrian",
@@ -211,14 +244,23 @@ export async function buildCustomRoute(
     );
   }
 
-  const points: LatLng[] = shapes.flatMap((shape) => decodePolyline6(shape));
+  const routedPoints: LatLng[] = [];
+  for (const shape of shapes) {
+    const legPoints = decodePolyline6(shape);
+    for (const point of legPoints) {
+      const previous = routedPoints[routedPoints.length - 1];
+      if (!previous || previous.lat !== point.lat || previous.lng !== point.lng) {
+        routedPoints.push(point);
+      }
+    }
+  }
   return buildRouteFromPoints(
-    points,
+    routedPoints,
     {
-      id: customRouteId(start, end),
+      id: customRouteId(points),
       startLabel,
       endLabel,
-      terrain: "Eigene Route",
+      terrain,
     },
     log,
   );

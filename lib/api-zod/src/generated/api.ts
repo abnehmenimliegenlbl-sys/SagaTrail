@@ -586,6 +586,60 @@ export const GetCustomRouteResponse = zod.object({
 
 
 /**
+ * Verbindet zwei bis zwoelf geordnete Wegpunkte ueber begehbare Wege (Valhalla pedestrian) und reichert die Route mit swisstopo-Hoehenmetern, SAC-Grad und Saison-Heuristik an. Die Route wird nicht persistiert.
+ * @summary Berechnet eine Wanderroute ueber mehrere selbst gesetzte Wegpunkte
+ */
+export const planCustomRouteBodyPointsItemLatMin = 45;
+export const planCustomRouteBodyPointsItemLatMax = 49;
+
+export const planCustomRouteBodyPointsItemLngMin = 5;
+export const planCustomRouteBodyPointsItemLngMax = 11;
+
+export const planCustomRouteBodyPointsMin = 2;
+export const planCustomRouteBodyPointsMax = 12;
+
+
+
+export const PlanCustomRouteBody = zod.object({
+  "points": zod.array(zod.object({
+  "lat": zod.number().min(planCustomRouteBodyPointsItemLatMin).max(planCustomRouteBodyPointsItemLatMax),
+  "lng": zod.number().min(planCustomRouteBodyPointsItemLngMin).max(planCustomRouteBodyPointsItemLngMax)
+})).min(planCustomRouteBodyPointsMin).max(planCustomRouteBodyPointsMax)
+})
+
+export const PlanCustomRouteResponse = zod.object({
+  "id": zod.string(),
+  "sagaId": zod.string(),
+  "name": zod.string(),
+  "region": zod.string(),
+  "distanceKm": zod.number().describe('Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation).'),
+  "distanceTagKm": zod.number().describe('Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt.'),
+  "ascentM": zod.number(),
+  "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
+  "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
+  "minutes": zod.number(),
+  "sac": zod.string(),
+  "sacSource": zod.string().nullish().describe('Herkunft des SAC-Werts; osm_exact ist ein exakter OSM-Tag, swisstopo_derived eine amtliche Ableitung, unknown unbekannt.'),
+  "schweizMobilCondition": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Kondition (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
+  "schweizMobilTechnique": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
+  "terrain": zod.string(),
+  "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
+  "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
+  "technicalDifficulty": zod.string().nullish(),
+  "coordinates": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
+  "featured": zod.boolean(),
+  "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
+  "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+})
+
+
+/**
  * Liest den Track aus einer GPX-Datei (trkpt, ersatzweise rtept), prueft, ob er in der Schweiz liegt, und reichert ihn mit denselben Quellen wie eigene Routen an (swisstopo-Hoehenmeter, SAC-Grad, Saison-Heuristik, Ortsnamen). Die Route wird nicht persistiert.
  * @summary Importiert eine GPX-Datei als Wanderroute
  */

@@ -201,6 +201,27 @@ export interface GpxImportBody {
   name?: string;
 }
 
+export interface CustomRouteWaypoint {
+  /**
+     * @minimum 45
+     * @maximum 49
+     */
+  lat: number;
+  /**
+     * @minimum 5
+     * @maximum 11
+     */
+  lng: number;
+}
+
+export interface CustomWaypointsBody {
+  /**
+     * @minItems 2
+     * @maxItems 12
+     */
+  points: CustomRouteWaypoint[];
+}
+
 export interface ClaimKantonspackBody {
   /** Kanton-Slug (z. B. "zuerich", wie kantonSlug(name)) */
   kanton: string;

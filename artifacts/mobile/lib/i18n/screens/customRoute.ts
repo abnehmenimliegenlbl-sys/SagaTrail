@@ -31,6 +31,15 @@ export interface CustomRouteStrings {
   pickerTitle: string;
   pickerConfirm: string;
   pickerHint: string;
+  waypointModeLabel: string;
+  waypointTitle: string;
+  waypointHint: string;
+  waypointCount: (count: number) => string;
+  waypointPoint: (number: number) => string;
+  waypointUndo: string;
+  waypointClear: string;
+  waypointCalculate: string;
+  waypointNeedTwo: string;
 }
 
 const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
@@ -65,6 +74,15 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     pickerTitle: "Punkt auf Karte setzen",
     pickerConfirm: "Übernehmen",
     pickerHint: "Auf die Karte tippen, um einen Punkt zu setzen.",
+    waypointModeLabel: "Route über Wegpunkte planen",
+    waypointTitle: "Wegpunkte setzen",
+    waypointHint: "Tippe die Punkte in der gewünschten Reihenfolge an. SagaTrail verbindet sie über Wanderwege.",
+    waypointCount: (count) => `${count} Wegpunkte`,
+    waypointPoint: (number) => `Punkt ${number}`,
+    waypointUndo: "Letzten Punkt entfernen",
+    waypointClear: "Alle löschen",
+    waypointCalculate: "Route berechnen",
+    waypointNeedTwo: "Setze mindestens zwei Wegpunkte.",
   },
   gsw: {
     eyebrow: "EIGENI ROUTE",
@@ -97,6 +115,15 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     pickerTitle: "Punkt setze",
     pickerConfirm: "Überchoo",
     pickerHint: "Uf d Charte tippe, um en Punkt z setze.",
+    waypointModeLabel: "Route über Wegpünkt plane",
+    waypointTitle: "Wegpünkt setze",
+    waypointHint: "Tipps d Pünkt i de gewünschte Reihefolg aa. SagaTrail verbindet sie über Wanderwäg.",
+    waypointCount: (count) => `${count} Wegpünkt`,
+    waypointPoint: (number) => `Punkt ${number}`,
+    waypointUndo: "Letschte Punkt entferne",
+    waypointClear: "Alli lösche",
+    waypointCalculate: "Route berechne",
+    waypointNeedTwo: "Setz mindestens zwei Wegpünkt.",
   },
   en: {
     eyebrow: "CUSTOM ROUTE",
@@ -129,6 +156,15 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     pickerTitle: "Set point on map",
     pickerConfirm: "Confirm",
     pickerHint: "Tap the map to place a point.",
+    waypointModeLabel: "Plan route with waypoints",
+    waypointTitle: "Set waypoints",
+    waypointHint: "Tap points in the order you want to visit them. SagaTrail connects them using hiking paths.",
+    waypointCount: (count) => `${count} waypoints`,
+    waypointPoint: (number) => `Point ${number}`,
+    waypointUndo: "Remove last point",
+    waypointClear: "Clear all",
+    waypointCalculate: "Calculate route",
+    waypointNeedTwo: "Set at least two waypoints.",
   },
   fr: {
     eyebrow: "ITINÉRAIRE PERSONNALISÉ",
@@ -161,6 +197,15 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     pickerTitle: "Placer un point sur la carte",
     pickerConfirm: "Valider",
     pickerHint: "Appuie sur la carte pour placer un point.",
+    waypointModeLabel: "Planifier avec des points de passage",
+    waypointTitle: "Placer les points",
+    waypointHint: "Appuie sur les points dans l'ordre souhaité. SagaTrail les relie par des chemins de randonnée.",
+    waypointCount: (count) => `${count} points`,
+    waypointPoint: (number) => `Point ${number}`,
+    waypointUndo: "Supprimer le dernier",
+    waypointClear: "Tout supprimer",
+    waypointCalculate: "Calculer l'itinéraire",
+    waypointNeedTwo: "Place au moins deux points.",
   },
   it: {
     eyebrow: "ITINERARIO PERSONALIZZATO",
@@ -193,6 +238,15 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     pickerTitle: "Imposta punto sulla mappa",
     pickerConfirm: "Conferma",
     pickerHint: "Tocca la mappa per posizionare un punto.",
+    waypointModeLabel: "Pianifica con punti di passaggio",
+    waypointTitle: "Imposta i punti",
+    waypointHint: "Tocca i punti nell'ordine desiderato. SagaTrail li collega tramite sentieri escursionistici.",
+    waypointCount: (count) => `${count} punti`,
+    waypointPoint: (number) => `Punto ${number}`,
+    waypointUndo: "Rimuovi l'ultimo",
+    waypointClear: "Cancella tutto",
+    waypointCalculate: "Calcola percorso",
+    waypointNeedTwo: "Imposta almeno due punti.",
   },
   es: {
     eyebrow: "RUTA PERSONALIZADA",
@@ -225,6 +279,15 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     pickerTitle: "Colocar punto en el mapa",
     pickerConfirm: "Aceptar",
     pickerHint: "Toca el mapa para colocar un punto.",
+    waypointModeLabel: "Planificar con puntos intermedios",
+    waypointTitle: "Colocar puntos",
+    waypointHint: "Toca los puntos en el orden deseado. SagaTrail los conecta por caminos de senderismo.",
+    waypointCount: (count) => `${count} puntos`,
+    waypointPoint: (number) => `Punto ${number}`,
+    waypointUndo: "Eliminar el último",
+    waypointClear: "Borrar todo",
+    waypointCalculate: "Calcular ruta",
+    waypointNeedTwo: "Coloca al menos dos puntos.",
   },
   pt: {
     eyebrow: "ROTA PERSONALIZADA",
@@ -257,6 +320,15 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     pickerTitle: "Colocar ponto no mapa",
     pickerConfirm: "Confirmar",
     pickerHint: "Toca no mapa para colocar um ponto.",
+    waypointModeLabel: "Planear com pontos de passagem",
+    waypointTitle: "Colocar pontos",
+    waypointHint: "Toque nos pontos pela ordem desejada. O SagaTrail liga-os por trilhos pedestres.",
+    waypointCount: (count) => `${count} pontos`,
+    waypointPoint: (number) => `Ponto ${number}`,
+    waypointUndo: "Remover o último",
+    waypointClear: "Limpar tudo",
+    waypointCalculate: "Calcular rota",
+    waypointNeedTwo: "Coloque pelo menos dois pontos.",
   },
   zh: {
     eyebrow: "自定义路线",
@@ -289,6 +361,15 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     pickerTitle: "在地图上设置点",
     pickerConfirm: "确认",
     pickerHint: "点击地图以放置一个点。",
+    waypointModeLabel: "使用途经点规划路线",
+    waypointTitle: "设置途经点",
+    waypointHint: "按想要经过的顺序点击地图。SagaTrail 会沿徒步道路连接这些点。",
+    waypointCount: (count) => `${count} 个途经点`,
+    waypointPoint: (number) => `第 ${number} 点`,
+    waypointUndo: "删除最后一点",
+    waypointClear: "全部清除",
+    waypointCalculate: "计算路线",
+    waypointNeedTwo: "请至少设置两个途经点。",
   },
   ru: {
     eyebrow: "СВОЙ МАРШРУТ",
@@ -321,6 +402,15 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     pickerTitle: "Установить точку на карте",
     pickerConfirm: "Подтвердить",
     pickerHint: "Нажмите на карту, чтобы установить точку.",
+    waypointModeLabel: "Планировать маршрут по точкам",
+    waypointTitle: "Установить точки",
+    waypointHint: "Нажимайте точки в нужном порядке. SagaTrail соединит их пешеходными тропами.",
+    waypointCount: (count) => `${count} точек`,
+    waypointPoint: (number) => `Точка ${number}`,
+    waypointUndo: "Удалить последнюю",
+    waypointClear: "Удалить всё",
+    waypointCalculate: "Рассчитать маршрут",
+    waypointNeedTwo: "Установите хотя бы две точки.",
   },
 };
 

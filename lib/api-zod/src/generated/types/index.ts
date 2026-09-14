@@ -27,6 +27,8 @@ export * from './claimPackRewardBody';
 export * from './claimReferralCode200';
 export * from './claimReferralCodeBody';
 export * from './createSafetyShareRequest';
+export * from './customRouteWaypoint';
+export * from './customWaypointsBody';
 export * from './errorResponse';
 export * from './geocodePlace';
 export * from './getAerialwaysParams';
