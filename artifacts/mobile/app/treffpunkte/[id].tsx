@@ -15,6 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -32,6 +33,7 @@ import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 import { alert } from "@/lib/appAlert";
+import { getApiBaseUrl } from "@/lib/apiConfig";
 
 const WEB_TOP = 67;
 
@@ -214,12 +216,17 @@ export default function MeetupDetail() {
         <View style={[styles.people, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
           {meetup.participants.map((participant, index) => (
             <View key={`${participant.name}-${index}`} style={styles.personRow}>
-              <View style={[styles.avatar, { backgroundColor: colors.accent + "20" }]}>
-                <Text style={[styles.avatarText, { color: colors.accent }]}>
-                  {participant.name.slice(0, 1).toUpperCase()}
-                </Text>
-              </View>
+              {avatarUri(participant.avatarUrl) ? (
+                <Image source={{ uri: avatarUri(participant.avatarUrl)! }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, { backgroundColor: colors.accent + "20" }]}>
+                  <Text style={[styles.avatarText, { color: colors.accent }]}>
+                    {participant.name.slice(0, 1).toUpperCase()}
+                  </Text>
+                </View>
+              )}
               <Text style={[styles.personName, { color: colors.foreground }]}>{participant.name}</Text>
+              {participant.age ? <Text style={[styles.age, { color: colors.mutedForeground }]}>{participant.age}</Text> : null}
               {participant.name === meetup.organizerName ? (
                 <Text style={[styles.organizer, { color: colors.mutedForeground }]}>Organisator</Text>
               ) : meetup.isOrganizer && participant.userId ? (
@@ -305,6 +312,11 @@ function paceLabel(pace: string, t: ReturnType<typeof useMeetupStrings>): string
   if (pace === "sportlich") return t.paceSporty;
   if (pace === "normal") return t.paceNormal;
   return t.paceEasy;
+}
+
+function avatarUri(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return value.startsWith("http") ? value : `${getApiBaseUrl()}api/storage${value}`;
 }
 
 const styles = StyleSheet.create({
