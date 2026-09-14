@@ -768,6 +768,13 @@ function TerrainSurface({
     const materialName = `${TERRAIN_SURFACE_MATERIAL}-${Math.round(
       model.center.lat * 10_000,
     )}-${Math.round(model.center.lng * 10_000)}`;
+    peakArLog("terrain texture request prepared", {
+      materialName,
+      center: peakArPositionSummary(model.center),
+      radiusM: model.radiusM,
+      texture: "swisstopo.pixelkarte-farbe",
+      textureSize: "1024x1024",
+    });
     ViroMaterials.createMaterials({
       [materialName]: {
         lightingModel: "Lambert",
@@ -786,6 +793,9 @@ function TerrainSurface({
       },
     });
     setTextureMaterial(materialName);
+    peakArLog("terrain texture material registered", {
+      materialName,
+    });
   }, [model]);
 
   useEffect(() => {
@@ -926,15 +936,69 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     routeOriginPosition ?? observerPosition,
     observerPosition,
   );
+
   useEffect(() => {
-    console.log("[PeakAR] Viro markers updated", {
-      peakCount: peaks.length,
+    peakArLog("Viro scene mounted", {
+      hasNavigatorProps: Boolean(sceneNavigator?.viroAppProps),
+      runtime: getRuntimeDiagnostics(),
     });
-  }, [peaks]);
+    return () => {
+      peakArLog("Viro scene unmounted");
+    };
+  }, []);
+
+  useEffect(() => {
+    let validPeakCount = 0;
+    let invalidPeakCount = 0;
+    let occludedPeakCount = 0;
+    for (const peak of peaks) {
+      if (!peakPosition(peak)) {
+        invalidPeakCount += 1;
+        continue;
+      }
+      validPeakCount += 1;
+      if (terrainVisibilityForPeak(terrainModel, peak, observerElevationM) === "occluded") {
+        occludedPeakCount += 1;
+      }
+    }
+    peakArLog("Viro scene data updated", {
+      peakCount: peaks.length,
+      validPeakCount,
+      invalidPeakCount,
+      occludedPeakCount,
+      selectedPeakId,
+      routePointCount: routeGeometry?.length ?? 0,
+      terrainProfilePointCount: terrainProfile?.length ?? 0,
+      hasTerrainModel: Boolean(terrainModel),
+      terrainModelRadiusM: terrainModel?.radiusM ?? null,
+      routeOriginPosition: peakArPositionSummary(routeOriginPosition),
+      observerPosition: peakArPositionSummary(observerPosition),
+      observerElevationM,
+      worldOffset: worldOffset.map((value) => Number(value.toFixed(3))),
+    });
+  }, [
+    observerElevationM,
+    observerPosition,
+    peaks,
+    routeGeometry,
+    routeOriginPosition,
+    selectedPeakId,
+    terrainModel,
+    terrainProfile,
+    worldOffset,
+  ]);
 
   return (
     <ViroARScene
-      onError={() => onError?.()}
+      onError={() => {
+        peakArLog("Viro scene error", {
+          peakCount: peaks.length,
+          routePointCount: routeGeometry?.length ?? 0,
+          hasTerrainModel: Boolean(terrainModel),
+          observerPosition: peakArPositionSummary(observerPosition),
+        });
+        onError?.();
+      }}
       onTrackingUpdated={onTrackingUpdated}
     >
       {/* The model is observer-centred and uses geographic bearings. With
@@ -975,7 +1039,22 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
             opacity={peak && terrainVisibility !== "occluded" ? 1 : 0}
             transformBehaviors="billboard"
             renderingOrder={100}
-            onClick={peak ? () => onPeakPress?.(peak.id) : undefined}
+            onClick={
+              peak
+                ? () => {
+                    peakArLog("peak marker pressed", {
+                      peakId: peak.id,
+                      peakName: peak.name,
+                      bearingDeg: peak.bearingDeg,
+                      distanceKm: peak.distanceKm,
+                      elevationM: peak.elevationM,
+                      elevationAngleDeg: peak.elevationAngleDeg,
+                      terrainVisibility,
+                    });
+                    onPeakPress?.(peak.id);
+                  }
+                : undefined
+            }
             viroTag={`peak-slot:${slotIndex}`}
           >
             {/* Always mounted selection halo; opacity alone changes on tap. */}
@@ -1119,12 +1198,60 @@ export function PeakArNavigator({
   const lastTrackingResetAtRef = useRef(0);
 
   useEffect(() => {
+    peakArLog("AR navigator mounted", {
+      runtime: getRuntimeDiagnostics(),
+      peakCount: peaks.length,
+      routePointCount: routeGeometry?.length ?? 0,
+      terrainProfilePointCount: terrainProfile?.length ?? 0,
+      hasTerrainModel: Boolean(terrainModel),
+      observerPosition: peakArPositionSummary(observerPosition),
+      observerElevationM,
+      mapLayer,
+    });
+    return () => {
+      clearTrackingResetTimer();
+      peakArLog("AR navigator unmounted", {
+        lastTrackingState: trackingStateRef.current,
+        lastTrackingReason: trackingReasonRef.current,
+      });
+    };
+  }, []);
+
+  useEffect(() => {
+    peakArLog("AR navigator props updated", {
+      peakCount: peaks.length,
+      routePointCount: routeGeometry?.length ?? 0,
+      terrainProfilePointCount: terrainProfile?.length ?? 0,
+      hasTerrainModel: Boolean(terrainModel),
+      terrainModelRadiusM: terrainModel?.radiusM ?? null,
+      observerPosition: peakArPositionSummary(observerPosition),
+      observerElevationM,
+      selectedPeakId,
+      mapLayer,
+      supportState,
+      worldOriginPosition: peakArPositionSummary(worldOriginPosition),
+    });
+  }, [
+    mapLayer,
+    observerElevationM,
+    observerPosition,
+    peaks,
+    routeGeometry,
+    selectedPeakId,
+    supportState,
+    terrainModel,
+    terrainProfile,
+    worldOriginPosition,
+  ]);
+
+  useEffect(() => {
     if (worldOriginPosition || !observerPosition) return;
     const origin = routeOriginForAR(observerPosition, routeGeometry);
     setWorldOriginPosition(origin);
-    console.log("[PeakAR] fixed geographic world origin", {
-      gps: observerPosition,
-      routeOrigin: origin,
+    peakArLog("fixed geographic world origin", {
+      gps: peakArPositionSummary(observerPosition),
+      routeOrigin: peakArPositionSummary(origin),
+      routePointCount: routeGeometry?.length ?? 0,
     });
   }, [observerPosition, routeGeometry, worldOriginPosition]);
 
@@ -1144,7 +1271,14 @@ export function PeakArNavigator({
       trackingReasonRef.current = reason;
 
       if (changed) {
-        console.log("[PeakAR] tracking", { state, reason });
+        peakArLog("tracking state changed", {
+          state,
+          reason,
+          needsRecovery:
+            state === ViroTrackingStateConstants.TRACKING_UNAVAILABLE ||
+            (state === ViroTrackingStateConstants.TRACKING_LIMITED &&
+              reason === ViroARTrackingReasonConstants.TRACKING_REASON_EXCESSIVE_MOTION),
+        });
       }
 
       if (state === ViroTrackingStateConstants.TRACKING_NORMAL) {
@@ -1160,6 +1294,12 @@ export function PeakArNavigator({
 
       const delayMs =
         state === ViroTrackingStateConstants.TRACKING_UNAVAILABLE ? 1200 : 2400;
+      peakArLog("tracking recovery scheduled", {
+        state,
+        reason,
+        delayMs,
+        lastTrackingResetAt: lastTrackingResetAtRef.current || null,
+      });
       trackingResetTimerRef.current = setTimeout(() => {
         trackingResetTimerRef.current = null;
         const stillUnstable =
@@ -1167,44 +1307,92 @@ export function PeakArNavigator({
           trackingReasonRef.current === reason;
         const cooldownElapsed =
           Date.now() - lastTrackingResetAtRef.current > 5000;
-        if (!stillUnstable || !cooldownElapsed) return;
+        if (!stillUnstable || !cooldownElapsed) {
+          peakArLog("tracking recovery skipped", {
+            state,
+            reason,
+            stillUnstable,
+            cooldownElapsed,
+          });
+          return;
+        }
 
         lastTrackingResetAtRef.current = Date.now();
-        console.warn("[PeakAR] resetting AR tracking after sustained loss", {
+        peakArLog("resetting AR tracking after sustained loss", {
           state,
           reason,
         });
-        navigatorRef.current?._resetARSession?.(true, false);
+        if (!navigatorRef.current?._resetARSession) {
+          peakArLog("tracking reset unavailable: navigator ref missing", {
+            state,
+            reason,
+          });
+          return;
+        }
+        navigatorRef.current._resetARSession(true, false);
+        peakArLog("tracking reset requested", {
+          state,
+          reason,
+          resetTracking: true,
+          removeAnchors: false,
+        });
       }, delayMs);
     },
     [clearTrackingResetTimer],
   );
 
-  useEffect(() => clearTrackingResetTimer, [clearTrackingResetTimer]);
-
   useEffect(() => {
+    peakArLog("AR support check started");
     let cancelled = false;
 
     isARSupportedOnDevice()
       .then(({ isARSupported }) => {
-        if (cancelled) return;
+        if (cancelled) {
+          peakArLog("AR support result ignored after unmount", {
+            isARSupported,
+          });
+          return;
+        }
+        peakArLog("AR support check completed", {
+          isARSupported,
+        });
         if (isARSupported) {
           setSupportState("supported");
         } else {
           setSupportState("unsupported");
+          peakArLog("AR unsupported on device", {
+            runtime: getRuntimeDiagnostics(),
+          });
           onError?.();
         }
       })
-      .catch(() => {
-        if (cancelled) return;
+      .catch((error) => {
+        if (cancelled) {
+          peakArLog("AR support check error ignored after unmount", {
+            error: peakArErrorSummary(error),
+          });
+          return;
+        }
+        peakArLog("AR support check failed", {
+          error: peakArErrorSummary(error),
+          runtime: getRuntimeDiagnostics(),
+        });
         setSupportState("unsupported");
         onError?.();
       });
 
     return () => {
       cancelled = true;
+      peakArLog("AR support check cancelled");
     };
   }, [onError]);
+
+  useEffect(() => {
+    peakArLog("AR support state changed", {
+      supportState,
+      hasNavigatorRef: Boolean(navigatorRef.current),
+    });
+  }, [supportState]);
 
   const initialScene = useMemo(
     () => ({
@@ -1254,6 +1442,10 @@ export function PeakArNavigator({
     <ViroARSceneNavigator
       ref={(instance) => {
         navigatorRef.current = instance as typeof navigatorRef.current;
+        peakArLog(instance ? "Viro navigator ref attached" : "Viro navigator ref detached", {
+          supportState,
+          peakCount: peaks.length,
+        });
       }}
       style={StyleSheet.absoluteFill}
       initialScene={initialScene}

@@ -23,9 +23,12 @@ import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
 import type { LatLng } from "@/types";
 import { persistJournalImage } from "@/lib/journalMedia";
+import { makeLogger } from "@/lib/debugLog";
 import type { RecognitionJournalEntry } from "@/types";
 import type { PeakPanoramaStrings } from "./PeakPanorama";
 import { PeakArNavigator } from "./PeakArNavigator";
+
+const peakCameraLog = makeLogger("[PeakCamera]", "peak_camera");
 
 interface PeakCameraOverlayProps {
   visible: boolean;
@@ -72,7 +75,23 @@ export function PeakCameraOverlay({
   const [arPeaks, setArPeaks] = useState<readonly PanoramaGipfel[]>([]);
   const lockPulse = useRef(new Animated.Value(0)).current;
   const cameraFrameRef = useRef<View>(null);
+  const arStateRef = useRef({
+    visible,
+    arEnabled,
+    peakCount: arPeaks.length,
+    heading,
+  });
+  arStateRef.current = {
+    visible,
+    arEnabled,
+    peakCount: arPeaks.length,
+    heading,
+  };
   const handleArError = useCallback(() => {
+    const state = arStateRef.current;
+    peakCameraLog("AR error received; closing camera", {
+      ...state,
+    });
     setContentMounted(false);
     setArEnabled(false);
     setArPeaks([]);
@@ -99,12 +118,58 @@ export function PeakCameraOverlay({
     visiblePeaks.length > 0 ? `${strings.detected}: ${targetPeak?.name ?? ""}` : strings.noPeaks;
 
   useEffect(() => {
+    peakCameraLog("camera overlay lifecycle", {
+      visible,
+      contentMounted,
+      arEnabled,
+      peakCount: peaks.length,
+      arCandidateCount: arCandidates.length,
+      visiblePeakCount: visiblePeaks.length,
+      selectedPeakId,
+      targetPeakId: targetPeak?.id ?? null,
+      heading,
+      nextTurn: nextTurn
+        ? {
+            direction: nextTurn.direction,
+            distanceM: nextTurn.distanceM,
+            title: nextTurn.title,
+          }
+        : null,
+      routePointCount: routeGeometry?.length ?? 0,
+      terrainProfilePointCount: terrainProfile?.length ?? 0,
+      hasTerrainModel: Boolean(terrainModel),
+      observerPosition,
+    });
+  }, [
+    arCandidates.length,
+    arEnabled,
+    contentMounted,
+    heading,
+    nextTurn,
+    observerPosition,
+    peaks.length,
+    routeGeometry?.length,
+    selectedPeakId,
+    targetPeak?.id,
+    terrainModel,
+    terrainProfile?.length,
+    visible,
+    visiblePeaks.length,
+  ]);
+
+  useEffect(() => {
     if (!visible) {
+      peakCameraLog("camera overlay hidden; clearing AR state");
       setContentMounted(false);
       setArEnabled(false);
       setArPeaks([]);
       setSelectedPeakId(null);
     } else {
+      peakCameraLog("camera overlay shown; loading AR candidates", {
+        candidateCount: arCandidates.length,
+        peakCount: peaks.length,
+        heading,
+      });
       setArEnabled(true);
       setArPeaks(arCandidates);
     }
@@ -139,6 +204,13 @@ export function PeakCameraOverlay({
   }, [arEnabled, lockPulse, targetPeak?.id]);
 
   const closeCamera = () => {
+    peakCameraLog("camera close requested", {
+      visible,
+      contentMounted,
+      arEnabled,
+      arPeakCount: arPeaks.length,
+      selectedPeakId,
+    });
     // Unmount the native camera/AR surface before dismissing the only native
     // modal. This avoids tearing down Viro during the UIKit transition.
     setContentMounted(false);
@@ -148,6 +220,15 @@ export function PeakCameraOverlay({
   };
 
   const handlePeakPress = (peakId: string) => {
+    const peak = arPeaks.find((candidate) => candidate.id === peakId) ??
+      visiblePeaks.find((candidate) => candidate.id === peakId);
+    peakCameraLog("camera peak selected", {
+      peakId,
+      peakName: peak?.name ?? null,
+      distanceKm: peak?.distanceKm ?? null,
+      relativeBearingDeg: peak?.relativeBearingDeg ?? null,
+      arEnabled,
+    });
     hapticSelection();
     setSelectedPeakId(peakId);
   };
@@ -158,7 +239,18 @@ export function PeakCameraOverlay({
   };
 
   const capturePeakRecognition = async () => {
-    if (capturing || visiblePeaks.length === 0 || !onCaptured) return;
+    if (capturing || visiblePeaks.length === 0 || !onCaptured) {
+      peakCameraLog("camera capture skipped", {
+        capturing,
+        visiblePeakCount: visiblePeaks.length,
+        hasOnCaptured: Boolean(onCaptured),
+      });
+      return;
+    }
+    peakCameraLog("camera capture started", {
+      visiblePeakCount: visiblePeaks.length,
+      targetPeakId: targetPeak?.id ?? null,
+    });
     setCapturing(true);
     try {
       let snapshotUri: string | null = null;
@@ -171,9 +263,13 @@ export function PeakCameraOverlay({
           });
         }
       } catch {
+        peakCameraLog("camera snapshot failed");
         snapshotUri = null;
       }
-      if (!snapshotUri) return;
+      if (!snapshotUri) {
+        peakCameraLog("camera capture stopped without snapshot");
+        return;
+      }
 
       const persistentUri = await persistJournalImage(snapshotUri, "peak");
       const peakText = visiblePeaks
@@ -187,8 +283,19 @@ export function PeakCameraOverlay({
         text: peakText,
         capturedAt: Date.now(),
       });
+      peakCameraLog("camera capture completed", {
+        targetPeakId: targetPeak?.id ?? null,
+        capturedPeakCount: visiblePeaks.length,
+      });
+    } catch (error) {
+      peakCameraLog("camera capture failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setCapturing(false);
+      peakCameraLog("camera capture finished", {
+        targetPeakId: targetPeak?.id ?? null,
+      });
     }
   };
 
@@ -208,6 +315,11 @@ export function PeakCameraOverlay({
       animationType="fade"
       presentationStyle="fullScreen"
        onShow={() => {
+          peakCameraLog("native camera modal shown", {
+            candidateCount: arCandidates.length,
+            routePointCount: routeGeometry?.length ?? 0,
+            heading,
+          });
          // Keep every candidate as a stable native Viro node. Do not
          // replace/remove nodes while the AR session is running.
          setArPeaks(arCandidates);
@@ -215,7 +327,10 @@ export function PeakCameraOverlay({
          setContentMounted(true);
        }}
       onRequestClose={closeCamera}
-      onDismiss={() => setContentMounted(false)}
+       onDismiss={() => {
+         peakCameraLog("native camera modal dismissed");
+         setContentMounted(false);
+       }}
     >
       <View ref={cameraFrameRef} style={styles.fullscreenCamera} collapsable={false}>
         {contentMounted && (
