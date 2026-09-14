@@ -794,10 +794,22 @@ export default function Einstellungen() {
               returnKeyType="done"
               onSubmitEditing={() => {
                 if (nameInput.trim()) {
-                  updateProfile({ name: nameInput.trim() });
+                  void updateProfile({
+                    name: nameInput.trim(),
+                    dateOfBirth: birthInput.trim() || null,
+                  });
                 }
                 setEditingName(false);
               }}
+            />
+            <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>Geburtsdatum (TT.MM.JJJJ oder JJJJ-MM-TT)</Text>
+            <TextInput
+              value={birthInput}
+              onChangeText={setBirthInput}
+              placeholder="TT.MM.JJJJ"
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="numbers-and-punctuation"
+              style={[styles.modalInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
             />
             <View style={styles.modalButtons}>
               <Pressable onPress={() => setEditingName(false)} style={styles.modalCancelBtn}>
@@ -806,7 +818,10 @@ export default function Einstellungen() {
               <Pressable
                 onPress={() => {
                   if (nameInput.trim()) {
-                    updateProfile({ name: nameInput.trim() });
+                    void updateProfile({
+                      name: nameInput.trim(),
+                      dateOfBirth: normalizeBirthDateForProfile(birthInput),
+                    });
                   }
                   setEditingName(false);
                 }}
