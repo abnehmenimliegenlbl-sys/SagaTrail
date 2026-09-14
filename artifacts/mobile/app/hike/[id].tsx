@@ -940,8 +940,6 @@ export default function LiveHike() {
     },
     [chapters.length, currentIndex, t],
   );
-  /** Route-Fortschritt beim ersten verlässlichen Fix — verhindert einen
-   * Kapitelvorsprung, wenn die Wanderung schon vor dem ersten Fix begonnen hat. */
   const [awaitingDecision, setAwaitingDecision] = useState(false);
   const [decisionFeedbackPending, setDecisionFeedbackPending] = useState(false);
   const decisionFeedbackPendingRef = useRef(false);

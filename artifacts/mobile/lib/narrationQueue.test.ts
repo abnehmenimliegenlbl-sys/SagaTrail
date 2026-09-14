@@ -33,7 +33,7 @@ test("preserves non-replaceable narration around the latest status", () => {
   enqueueNarrationItem(queue, { text: "POI" });
   enqueueNarrationItem(queue, {
     text: "Aktueller Untergrund",
-    replaceQueuedCategory: "terrainSurface",
+    replaceQueuedCategory: "surface",
   });
 
   assert.deepEqual(
@@ -57,5 +57,26 @@ test("repairs an existing queue containing duplicate surface states", () => {
   assert.deepEqual(
     queue.map((entry) => entry.text),
     ["Aktueller Untergrund", "Kapitel"],
+  );
+});
+
+test("keeps one latest terrain and one latest surface state independently", () => {
+  const queue: NarrationQueueItem[] = [];
+  enqueueNarrationItem(queue, {
+    text: "Terrain alt",
+    replaceQueuedCategory: "terrain",
+  });
+  enqueueNarrationItem(queue, {
+    text: "Surface aktuell",
+    replaceQueuedCategory: "surface",
+  });
+  enqueueNarrationItem(queue, {
+    text: "Terrain aktuell",
+    replaceQueuedCategory: "terrain",
+  });
+
+  assert.deepEqual(
+    queue.map((entry) => entry.text),
+    ["Terrain aktuell", "Surface aktuell"],
   );
 });
