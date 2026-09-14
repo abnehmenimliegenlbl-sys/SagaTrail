@@ -41,6 +41,7 @@ import {
   type LeadRow,
 } from "../lib/leadMailer";
 import { partnerEmailLogTable, partnerEmailBlocklistTable, partnerLeadsTable } from "@workspace/db";
+import { MEDIA_CONTACTS } from "../lib/mediaContacts";
 
 const router: IRouter = Router();
 
@@ -2529,6 +2530,75 @@ router.post("/admin/leads/send", async (req, res): Promise<void> => {
     : "https://sagatrail.ch/partner/";
   await startCampaign({ subject, bodyText, leads, apiBase, infoUrl });
   res.json({ ok: true, total: leads.length, campaignId: campaignState.campaignId });
+});
+
+// ─── Medienkontakte / eigene E-Mail-Kampagne ────────────────────────────────
+
+router.get("/admin/media-contacts/list", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  res.json({ contacts: MEDIA_CONTACTS, total: MEDIA_CONTACTS.length });
+});
+
+router.post("/admin/media-contacts/preview", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { bodyText, sampleContact } = req.body ?? {};
+  if (typeof bodyText !== "string" || !bodyText.trim()) {
+    res.status(400).send("bodyText erforderlich");
+    return;
+  }
+  const sample = sampleContact ?? MEDIA_CONTACTS[0];
+  res.type("html").send(buildPreviewHtml(bodyText, sample, "https://sagatrail.ch"));
+});
+
+router.post("/admin/media-contacts/send", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (campaignState.status === "running") {
+    res.status(409).json({ error: "Kampagne läuft bereits" });
+    return;
+  }
+
+  const { subject, bodyText } = req.body ?? {};
+  if (typeof subject !== "string" || !subject.trim() ||
+      typeof bodyText !== "string" || !bodyText.trim()) {
+    res.status(400).json({ error: "subject und bodyText erforderlich" });
+    return;
+  }
+
+  const proto = req.headers["x-forwarded-proto"] as string ?? req.protocol;
+  const host = req.get("host")!;
+  await startCampaign({
+    subject,
+    bodyText,
+    leads: MEDIA_CONTACTS,
+    apiBase: `${proto}://${host}`,
+    infoUrl: "https://sagatrail.ch",
+  });
+  res.json({ ok: true, total: MEDIA_CONTACTS.length, campaignId: campaignState.campaignId });
+});
+
+router.get("/admin/media-contacts/log", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const page = Math.max(1, parseInt(String(req.query["page"] ?? "1"), 10));
+  const perPage = Math.min(200, Math.max(10, parseInt(String(req.query["perPage"] ?? "100"), 10)));
+  const offset = (page - 1) * perPage;
+  const emails = MEDIA_CONTACTS.map((contact) => contact.email.toLowerCase());
+  const emailList = sql.join(emails.map((email) => sql`${email}`), sql`, `);
+
+  const rows = await db.execute(sql`
+    SELECT id, campaign_id, subject, email, recipient_name, status, error, sent_at
+    FROM partner_email_log
+    WHERE lower(email) IN (${emailList})
+    ORDER BY sent_at DESC
+    LIMIT ${perPage} OFFSET ${offset}
+  `);
+  const count = await db.execute(sql`
+    SELECT COUNT(*) FROM partner_email_log
+    WHERE lower(email) IN (${emailList})
+  `);
+  res.json({
+    rows: rows.rows,
+    total: Number((count.rows[0] as Record<string, unknown>)["count"]),
+  });
 });
 
 // GET /admin/orgs/meta – Kategorien, Typen, Kantone (aus Postgres)

@@ -144,6 +144,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('usage',this)">&#128290; Nutzungsdaten</button>
   <button class="tab-btn" onclick="switchTab('partner',this)">&#127968; Partner</button>
   <button class="tab-btn" onclick="switchTab('verbande',this)">&#127956; Verbände</button>
+  <button class="tab-btn" onclick="switchTab('medienkampagne',this)">&#128240; Medienkontakte</button>
   <button class="tab-btn" onclick="switchTab('push',this)">&#128226; Push</button>
   <button class="tab-btn" onclick="switchTab('sagen',this)">&#128218; Sagen-Fotos</button>
   <button class="tab-btn" onclick="switchTab('gps-check',this)">&#128506; GPS-Check</button>
@@ -1099,6 +1100,71 @@ window.switchTab = function(name, btn) {
     <div id="anfragen-body"><p class="loading">Wird geladen...</p></div>
   </div>
 
+  <!-- MEDIENKONTAKTE / E-MAIL-KAMPAGNE -->
+  <div id="tab-medienkampagne" class="tab-pane">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <h2 style="margin:0">&#128240; Medienkontakte</h2>
+          <p class="hint" style="margin:5px 0 0">Eigener E-Mail-Verteiler aus der Medienkontaktliste – ohne Filter.</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="mmLoadContacts()">&#8635; Aktualisieren</button>
+      </div>
+      <div id="mm-count" class="hint" style="margin-bottom:10px">Wird geladen…</div>
+      <div id="mm-table"><p class="loading">Wird geladen…</p></div>
+    </div>
+
+    <div class="card">
+      <h2>&#9997;&#65039; Medien-Mail verfassen</h2>
+      <p class="hint" style="margin-bottom:12px">
+        Variablen:
+        <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%NAME%</code>
+        <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%KANTON%</code>
+        – werden pro Kontakt ersetzt.
+      </p>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Betreff *</label>
+        <input id="mm-subject" type="text" placeholder="SagaTrail in %KANTON% – Medieninformation"/>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Text *</label>
+        <textarea id="mm-body" style="min-height:180px;font-size:13px;line-height:1.6" placeholder="Guten Tag %NAME%,&#10;&#10;..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="mmPreview()">&#128065;&#65039; Vorschau</button>
+        <button class="btn btn-primary" id="mm-send-btn" onclick="mmSend()" disabled>&#128140; Medienkampagne starten</button>
+        <button class="btn btn-danger" id="mm-stop-btn" onclick="mmStop()" style="display:none">&#9632; Stopp</button>
+        <span id="mm-status" class="hint"></span>
+      </div>
+    </div>
+
+    <div class="card" id="mm-progress-card" style="display:none">
+      <h2>&#9654;&#65039; Medienkampagne läuft</h2>
+      <div style="background:#f0eeeb;border-radius:8px;height:12px;overflow:hidden;margin-bottom:10px">
+        <div id="mm-progress-bar" style="height:100%;background:var(--red);width:0%;transition:width .5s"></div>
+      </div>
+      <p id="mm-progress-text" class="hint"></p>
+    </div>
+
+    <div id="mm-preview-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;overflow:auto;padding:32px 16px">
+      <div style="max-width:680px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <b style="font-size:14px">&#128065;&#65039; Medien-Mail Vorschau</b>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mm-preview-modal').style.display='none'">&#10005; Schliessen</button>
+        </div>
+        <iframe id="mm-preview-iframe" style="width:100%;height:600px;border:none" sandbox="allow-same-origin"></iframe>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <h2 style="margin:0">&#128196; Medien-Versand-Log</h2>
+        <button class="btn btn-ghost btn-sm" onclick="mmLoadLog()">&#8635; Aktualisieren</button>
+      </div>
+      <div id="mm-log-body"><p class="hint">Log wird beim Öffnen geladen.</p></div>
+    </div>
+  </div>
+
   <!-- KAMPAGNE -->
   <div id="tab-kampagne" class="tab-pane">
 
@@ -1522,8 +1588,174 @@ function switchTab(name, btn) {
   if (name === 'routen'   && token()) initRoutenTab();
   if (name === 'anfragen' && token()) loadAnfragen();
   if (name === 'verbande' && token()) { ladeVerbande(); loadVerbandAnfragen(); }
+  if (name === 'medienkampagne' && token()) { mmLoadContacts(); mmLoadLog(); }
   if (name === 'kampagne'     && token()) { kmLoadMeta(); kmLoadLog(); }
   if (name === 'android-beta' && token()) loadAndroidBeta();
+}
+
+/* ═══════════════════════════════════════════════════
+   MEDIENKONTAKTE / EIGENE E-MAIL-KAMPAGNE
+   ═══════════════════════════════════════════════════ */
+var _mmContacts = [];
+var _mmPolling = null;
+
+function mmRenderContacts() {
+  var count = document.getElementById('mm-count');
+  var table = document.getElementById('mm-table');
+  var contacts = _mmContacts;
+  count.textContent = contacts.length + ' Empfänger (einmalige E-Mail-Adressen)';
+  if (!contacts.length) {
+    table.innerHTML = '<p class="hint">Keine Medienkontakte vorhanden.</p>';
+    document.getElementById('mm-send-btn').disabled = true;
+    return;
+  }
+  var html = '<table class="tbl"><thead><tr><th>Medium</th><th>E-Mail</th><th>Art</th><th>Kanton</th></tr></thead><tbody>';
+  contacts.forEach(function(c) {
+    html += '<tr><td>' + esc(c.name) + '</td><td class="mono">' + esc(c.email) +
+      '</td><td>' + esc(c.typ) + '</td><td>' + esc(c.kanton) + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  table.innerHTML = html;
+  document.getElementById('mm-send-btn').disabled = false;
+}
+
+async function mmLoadContacts() {
+  var count = document.getElementById('mm-count');
+  count.textContent = 'Wird geladen…';
+  try {
+    var data = await api('/api/admin/media-contacts/list');
+    var seen = {};
+    _mmContacts = (data.contacts || []).filter(function(c) {
+      var email = String(c.email || '').trim().toLowerCase();
+      if (!email || seen[email]) return false;
+      seen[email] = true;
+      return true;
+    });
+    mmRenderContacts();
+  } catch(e) {
+    count.textContent = '⚠ ' + e.message;
+    document.getElementById('mm-send-btn').disabled = true;
+  }
+}
+
+async function mmPreview() {
+  var bodyText = v('mm-body');
+  if (!bodyText) { alert('Bitte zuerst einen Text eingeben.'); return; }
+  try {
+    var res = await fetch('/api/admin/media-contacts/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
+      body: JSON.stringify({ bodyText: bodyText, sampleContact: _mmContacts[0] || {} })
+    });
+    if (!res.ok) throw new Error((await res.text()) || 'Vorschau fehlgeschlagen');
+    document.getElementById('mm-preview-iframe').srcdoc = await res.text();
+    document.getElementById('mm-preview-modal').style.display = 'block';
+  } catch(e) {
+    alert('Vorschau-Fehler: ' + e.message);
+  }
+}
+
+async function mmSend() {
+  var subject = v('mm-subject');
+  var bodyText = v('mm-body');
+  if (!subject || !bodyText) { alert('Betreff und Text sind erforderlich.'); return; }
+  if (!_mmContacts.length) { alert('Keine Medienkontakte geladen.'); return; }
+  if (!confirm('Medienkampagne an ' + _mmContacts.length + ' Empfänger senden? Betreff: ' + subject)) return;
+  var btn = document.getElementById('mm-send-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Sendet…';
+  document.getElementById('mm-status').textContent = '';
+  try {
+    var result = await api('/api/admin/media-contacts/send', {
+      method: 'POST',
+      body: JSON.stringify({ subject: subject, bodyText: bodyText })
+    });
+    document.getElementById('mm-progress-card').style.display = 'block';
+    document.getElementById('mm-status').textContent = '✓ Gestartet – ' + result.total + ' Empfänger';
+    mmStartPolling();
+  } catch(e) {
+    document.getElementById('mm-status').textContent = '⚠ ' + e.message;
+    btn.disabled = false;
+    btn.textContent = '📩 Medienkampagne starten';
+  }
+}
+
+function mmStartPolling() {
+  if (_mmPolling) clearInterval(_mmPolling);
+  _mmPolling = setInterval(mmPollStatus, 1500);
+  mmPollStatus();
+}
+
+async function mmPollStatus() {
+  try {
+    var s = await api('/api/admin/leads/status');
+    var total = s.total || 1;
+    var done = (s.sent || 0) + (s.failed || 0) + (s.skipped || 0);
+    var pct = Math.min(100, Math.round(done / total * 100));
+    document.getElementById('mm-progress-bar').style.width = pct + '%';
+    document.getElementById('mm-progress-text').innerHTML =
+      '&#9989; Versendet: ' + s.sent + ' &nbsp; &#10060; Fehler: ' + s.failed +
+      ' &nbsp; &#9654; Übersprungen: ' + s.skipped + ' &nbsp; / ' + s.total +
+      (s.lastRecipient ? ' · Zuletzt: ' + esc(s.lastRecipient) : '');
+    var running = s.status === 'running';
+    document.getElementById('mm-stop-btn').style.display = running ? '' : 'none';
+    if (s.status === 'done' || s.status === 'error' || s.status === 'stopped') {
+      clearInterval(_mmPolling);
+      _mmPolling = null;
+      var btn = document.getElementById('mm-send-btn');
+      btn.disabled = false;
+      btn.textContent = '📩 Medienkampagne starten';
+      if (s.status === 'error') {
+        document.getElementById('mm-progress-bar').style.background = 'var(--red)';
+        document.getElementById('mm-status').textContent = '⚠ Fehler: ' + (s.error || '?');
+      } else if (s.status === 'stopped') {
+        document.getElementById('mm-progress-bar').style.background = 'var(--orange, #f59e0b)';
+        document.getElementById('mm-status').textContent = '⏹ Gestoppt – ' + s.sent + ' versendet';
+      } else {
+        document.getElementById('mm-progress-bar').style.background = 'var(--green)';
+        document.getElementById('mm-status').textContent = '✓ Abgeschlossen – ' + s.sent + ' versendet, ' + s.failed + ' Fehler, ' + s.skipped + ' übersprungen';
+      }
+      mmLoadLog();
+    }
+  } catch(e) { /* nächster Poll versucht es erneut */ }
+}
+
+async function mmStop() {
+  var btn = document.getElementById('mm-stop-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Stoppe…';
+  try {
+    await api('/api/admin/leads/stop', { method: 'POST' });
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '⏹ Stopp';
+  }
+}
+
+async function mmLoadLog() {
+  var logBody = document.getElementById('mm-log-body');
+  logBody.innerHTML = '<p class="loading">Wird geladen…</p>';
+  try {
+    var data = await api('/api/admin/media-contacts/log?perPage=100');
+    var rows = data.rows || [];
+    if (!rows.length) { logBody.innerHTML = '<p class="hint">Noch keine Medien-Versandeinträge.</p>'; return; }
+    var html = '<table class="tbl"><thead><tr><th>Datum</th><th>Status</th><th>E-Mail</th><th>Name</th><th>Betreff</th><th>Fehler</th></tr></thead><tbody>';
+    rows.forEach(function(r) {
+      var badge = r.status === 'ok'
+        ? '<span class="badge badge-green">&#10003; OK</span>'
+        : '<span class="badge badge-red">&#10005; Fail</span>';
+      html += '<tr><td class="mono" style="white-space:nowrap">' + fmtDate(r.sent_at) +
+        '</td><td>' + badge + '</td><td class="mono">' + esc(r.email) +
+        '</td><td>' + esc(r.recipient_name || '–') + '</td><td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+        esc(r.subject) + '</td><td style="max-width:160px;font-size:11px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+        esc(r.error || '') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    if (data.total > rows.length) html += '<p class="hint" style="margin-top:6px">Zeige ' + rows.length + ' von ' + data.total + ' Einträgen.</p>';
+    logBody.innerHTML = html;
+  } catch(e) {
+    logBody.innerHTML = '<p class="hint">⚠ ' + esc(e.message) + '</p>';
+  }
 }
 
 /* ===================== ANDROID BETA ===================== */
