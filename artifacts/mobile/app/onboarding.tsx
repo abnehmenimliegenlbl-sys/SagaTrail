@@ -34,6 +34,20 @@ import { translateCanton } from "@/lib/i18n/cantonNames";
 
 const WEB_TOP = 67;
 
+function normalizeBirthDate(value: string): string {
+  const match = value.trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  if (!match) throw new Error("Ungültiges Geburtsdatum");
+  const [, day, month, year] = match;
+  const iso = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  const date = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== iso) {
+    throw new Error("Ungültiges Geburtsdatum");
+  }
+  const age = new Date().getUTCFullYear() - date.getUTCFullYear();
+  if (age < 13 || age > 120) throw new Error("Ungültiges Alter");
+  return iso;
+}
+
 export default function Onboarding() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -496,6 +510,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 17,
   },
+  photoButton: { alignItems: "center", borderWidth: 1, borderRadius: 12, flexDirection: "row", gap: 8, marginTop: 14, padding: 13 },
+  photoButtonText: { fontFamily: fonts.bodyBold, fontSize: 13 },
   stepEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2 },
   stepTitle: { fontFamily: fonts.titleBold, fontSize: 34, marginTop: 4 },
   hint: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21, marginBottom: 18 },
