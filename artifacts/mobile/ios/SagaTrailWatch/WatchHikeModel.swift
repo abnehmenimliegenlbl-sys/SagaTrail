@@ -579,7 +579,9 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   private func persistComplication(_ state: SagaTrailWatchProtocol.LiveState) {
     let copy = WatchCopy(language: state.language)
-    let turnDistance = state.distanceToTurnMeters.map { "\(Int($0)) m" } ?? "—"
+    let turnDistance = state.distanceToTurnMeters
+      .map(SagaTrailWatchProtocol.formattedTurnDistance)
+      ?? "—"
     let remaining = state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—"
     let status = state.offRoute.map { "\(copy.t("complicationOffRoute")) \(Int($0.distanceMeters)) m" }
       ?? (state.isHiking ? localizedDirection(state.navigationDirection, copy: copy) : copy.t("complicationPause"))

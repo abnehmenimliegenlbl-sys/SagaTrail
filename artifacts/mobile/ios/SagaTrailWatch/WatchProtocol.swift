@@ -9,6 +9,23 @@ enum SagaTrailWatchProtocol {
     Int64(date.timeIntervalSince1970 * 1000)
   }
 
+  /// Human-friendly distance for turn instructions:
+  /// kilometers to the nearest 100 m, 100–999 m to the nearest 10 m,
+  /// and below 100 m to the nearest 5 m.
+  static func formattedTurnDistance(_ meters: Double) -> String {
+    let safeMeters = meters.isFinite ? max(0, meters) : 0
+    if safeMeters >= 1_000 {
+      let roundedMeters = (safeMeters / 100).rounded() * 100
+      return String(format: "%.1f km", locale: Locale.current, roundedMeters / 1_000)
+    }
+    if safeMeters >= 100 {
+      let roundedMeters = (safeMeters / 10).rounded() * 10
+      return "\(Int(roundedMeters)) m"
+    }
+    let roundedMeters = (safeMeters / 5).rounded() * 5
+    return "\(Int(roundedMeters)) m"
+  }
+
   struct NavigationHint {
     let direction: String
     let bearingDegrees: Double?

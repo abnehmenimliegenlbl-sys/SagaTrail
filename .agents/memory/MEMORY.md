@@ -146,3 +146,4 @@
 - [Safety link personal messaging](sagatrail-safety-personal-messaging.md) — personal WhatsApp/SMS uses a prefilled contact message and requires the hiker’s final send tap.
 - [Native map WebView source identity](native-map-webview-source.md) — memoize `{html}` sources; a fresh object per GPS render makes WKWebView reload the whole map.
 - [Watch localization fallback](sagatrail-watch-localization-fallback.md) — exhaust the selected language across all Watch copy tables before falling back to German.
+- [Watch turn-distance rounding](sagatrail-watch-turn-distance-rounding.md) — show turn distances as km/100 m, 10 m, or 5 m based on range, including the complication.

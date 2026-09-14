@@ -605,10 +605,7 @@ struct WatchHikeView: View {
   }
 
   private func routeDistance(_ meters: Double) -> String {
-    if meters >= 1_000 {
-      return String(format: "%.1f km", meters / 1_000)
-    }
-    return "\(Int(meters.rounded())) m"
+    SagaTrailWatchProtocol.formattedTurnDistance(meters)
   }
 
   private func surfaceLabel(_ surface: String) -> String {
@@ -759,7 +756,11 @@ struct WatchHikeView: View {
                   .tracking(0.5)
               }
               .foregroundStyle(WatchPalette.red)
-              Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
+              Text(
+                state.distanceToTurnMeters
+                  .map(SagaTrailWatchProtocol.formattedTurnDistance)
+                  ?? "—"
+              )
                 .font(WatchType.display.monospacedDigit())
                 .foregroundStyle(WatchPalette.ink)
               Text(state.nextInstruction)
