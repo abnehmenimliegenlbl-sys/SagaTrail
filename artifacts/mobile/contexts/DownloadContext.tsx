@@ -148,6 +148,27 @@ function panoramaKey(routeId: string): string {
   return `${panoramaKeyPrefix}${routeId}`;
 }
 
+async function deleteOfflinePayload(record: DownloadRecord): Promise<void> {
+  await AsyncStorage.removeItem(
+    storyKey(record.sagaId, record.archetype, record.ageTier, record.language),
+  ).catch(() => {});
+
+  try {
+    const poisRaw = await AsyncStorage.getItem(poisKey(record.routeId));
+    if (poisRaw) {
+      const pois = JSON.parse(poisRaw) as { id: string }[];
+      await deletePoiCaches(pois.map((poi) => poi.id));
+    }
+  } catch {
+    // Einzelne fehlerhafte POI-Daten dürfen den restlichen Löschvorgang nicht blockieren.
+  }
+
+  await AsyncStorage.removeItem(poisKey(record.routeId)).catch(() => {});
+  await AsyncStorage.removeItem(panoramaKey(record.routeId)).catch(() => {});
+  await deleteTiles(record.sagaId);
+  await deleteNarrationAudio(record.sagaId);
+}
+
 async function loadTerrainProfileForDownload(
   geometry: number[][] | null | undefined,
 ): Promise<TerrainProfilePoint[] | null> {
@@ -237,6 +258,18 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
 
   const download = useCallback(
     async (saga: Saga, route: HikingRoute, profile: Profile, premium: boolean) => {
+      // SagaTrail hält bewusst nur ein Offline-Paket gleichzeitig. Vor einem
+      // neuen Download werden alle bisher indexierten Pakete entfernt, damit
+      // alte Routen nicht weiter Speicher belegen oder versehentlich mit
+      // aktuellen Inhalten vermischt werden.
+      const previousDownloads = Object.values(downloads);
+      for (const previousDownload of previousDownloads) {
+        await deleteOfflinePayload(previousDownload);
+      }
+      if (previousDownloads.length > 0) {
+        await persist({});
+      }
+
       // Fuer Premium (KI-Erzaehlstimme) wird gsw nie als Dialekt-Text
       // heruntergeladen — siehe effectiveStoryLanguage.
       const lang = effectiveStoryLanguage(profile.language, premium);
@@ -433,7 +466,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         offlinePackageVersion: 5,
         emergencyNumbers: ["1414", "144", "117", "112"],
       };
-      await persist({ ...downloads, [saga.id]: record });
+      await persist({ [saga.id]: record });
       setProgress(null);
     },
     [downloads, persist]
@@ -443,22 +476,8 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
     async (sagaId: string) => {
       const rec = downloads[sagaId];
       if (rec) {
-        await AsyncStorage.removeItem(
-          storyKey(sagaId, rec.archetype, rec.ageTier, rec.language)
-        ).catch(() => {});
-        // POI-Detail- und Story-Caches loeschen
-      try {
-        const poisRaw = await AsyncStorage.getItem(poisKey(rec.routeId));
-        if (poisRaw) {
-          const pois = JSON.parse(poisRaw) as { id: string }[];
-          await deletePoiCaches(pois.map((p) => p.id));
-        }
-      } catch {}
-      await AsyncStorage.removeItem(poisKey(rec.routeId)).catch(() => {});
-      await AsyncStorage.removeItem(panoramaKey(rec.routeId)).catch(() => {});
+        await deleteOfflinePayload(rec);
       }
-      await deleteTiles(sagaId);
-      await deleteNarrationAudio(sagaId);
       const next = { ...downloads };
       delete next[sagaId];
       await persist(next);
