@@ -1719,8 +1719,6 @@ export default function LiveHike() {
   const storyEligibleChapterRef = useRef(0);
   /** Hoechstes Kapitel, dessen Audio vollstaendig beendet wurde. */
   const narratedThroughRef = useRef(-1);
-  /** Kapitel, das von einer hoeher priorisierten Ansage unterbrochen wurde. */
-  const chapterResumeAfterInterruptRef = useRef<number | null>(null);
   /** Gruppenmitglieder warten nach einer fremden Entscheidung bis ihr Audio endet. */
   const pendingGroupDecisionAdvanceRef = useRef<number | null>(null);
   /** Verhindert, dass setAwaitingDecision(true) mehrfach fuer denselben
@@ -2211,7 +2209,6 @@ export default function LiveHike() {
       routeCompletedRef.current = false;
       storyProgressMaxRef.current = 0;
       storyEligibleChapterRef.current = 0;
-      chapterResumeAfterInterruptRef.current = null;
       chapterAudioRetryCountRef.current.clear();
       if (chapterAudioRetryTimerRef.current !== null) {
         clearTimeout(chapterAudioRetryTimerRef.current);
@@ -4484,7 +4481,6 @@ export default function LiveHike() {
   // nach dem Stopp nicht doch noch zu sprechen beginnen.
   const cancelNarration = useCallback(async () => {
     narrationQueueRef.current = [];
-    chapterResumeAfterInterruptRef.current = null;
     chapterAudioRetryCountRef.current.clear();
     if (chapterAudioRetryTimerRef.current !== null) {
       clearTimeout(chapterAudioRetryTimerRef.current);
@@ -4522,45 +4518,6 @@ export default function LiveHike() {
   // z. B. nach einem POI-Einschub die unterbrochene Kapitel-Erzaehlung
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
-  const rememberInterruptedChapter = useCallback((interruptedBy: "partner" | "terrain") => {
-    const active = nowPlayingRef.current;
-    const chapterIndex = active?.chapterIndex;
-    if (
-      !active ||
-      chapterIndex == null ||
-      storyCompleteRef.current ||
-      narratedThroughRef.current >= chapterIndex
-    ) {
-      return;
-    }
-    chapterResumeAfterInterruptRef.current = chapterIndex;
-    storyAudioLog("chapter interrupted by priority narration", {
-      chapterIndex,
-      interruptedBy,
-      activeKind: active.kind,
-      title: active.title ?? null,
-    });
-  }, []);
-
-  const resumeInterruptedChapter = useCallback(() => {
-    const chapterIndex = chapterResumeAfterInterruptRef.current;
-    if (chapterIndex == null) return;
-    chapterResumeAfterInterruptRef.current = null;
-    if (
-      storyCompleteRef.current ||
-      currentIndexRef.current !== chapterIndex ||
-      narratedThroughRef.current >= chapterIndex
-    ) {
-      return;
-    }
-    lastNarratedRef.current = chapterIndex - 1;
-    storyAudioLog("chapter resume scheduled", {
-      chapterIndex,
-      currentIndex: currentIndexRef.current,
-    });
-    setChapterNarrationRetry((retry) => retry + 1);
-  }, []);
-
   const retryChapterAfterPlaybackFailure = useCallback((
     chapterIndex: number,
     reason: string,
@@ -4623,6 +4580,8 @@ export default function LiveHike() {
         };
         enqueueNarrationItem(narrationQueueRef.current, entry);
       };
+      const hasActiveAudio =
+        speakingRef.current || narrationSoundRef.current !== null;
       // NAV-INTERRUPT: Navigationsanweisung unterbricht sofort und setzt die
       // laufende Erzaehlung danach an derselben Stelle fort.
       if (opts?.navInterrupt) {
@@ -4735,58 +4694,46 @@ export default function LiveHike() {
         return;
       }
 
-      // PRIO 2 — PARTNER: Premium-Partner haben gegen normale POI- und
-      // Kapitelansagen Vorrang. Ein Abbiegehinweis darf aber nicht abgeschnitten
-      // werden; danach wird die Partneransage abgespielt.
+      // Partneransagen dürfen laufendes Audio nicht abschneiden. Sie warten
+      // hinter einer laufenden Kapitel-, POI- oder Terrainansage.
       if (opts?.partnerInterrupt) {
-        if (navInterruptingRef.current || decisionFeedbackPendingRef.current) {
+        if (
+          navInterruptingRef.current ||
+          decisionFeedbackPendingRef.current ||
+          hasActiveAudio
+        ) {
           enqueueNarration();
           return;
         }
-        rememberInterruptedChapter("partner");
-        narrationQueueRef.current = [];
-        const prev = narrationSoundRef.current;
-        narrationSoundRef.current = null;
-        if (prev) { try { await prev.stopAsync(); await prev.unloadAsync(); } catch {} }
       }
 
-      // PRIO 3 — SAGA-INTERRUPT: unterbricht alles ausser einem laufenden navInterrupt.
-      // Eingesetzt fuer die 10-m-Sagenmittelpunkt-Ansage.
+      // SAGA-INTERRUPT ist nur noch ein Queue-Hinweis. Auch eine sehr steile
+      // Terrainwarnung oder die Sagenankunft darf kein laufendes Audio
+      // abschneiden.
       if (opts?.sagaInterrupt) {
         if (
           poiNarrationPendingRef.current.size > 0 ||
-          decisionFeedbackPendingRef.current
+          decisionFeedbackPendingRef.current ||
+          hasActiveAudio
         ) {
-          // Eine POI-Geschichte hat Vorrang, auch wenn ihr Audio noch
-          // asynchron geladen wird. Auch ein bereits angenommenes
-          // Entscheidungsfeedback muss atomar zu Ende laufen.
           enqueueNarration();
           return;
         }
-        if (navInterruptingRef.current) {
-          // Abbiegehinweis laeuft gerade — dahinter einreihen, nicht unterbrechen.
-          enqueueNarration();
-          return;
-        }
-        rememberInterruptedChapter("terrain");
-        // Alles andere (Kapitel, POI, Meilenstein): Queue leeren, sofort starten.
-        narrationQueueRef.current = [];
-        // Laufenden Sound stoppen — wird im normalen Pfad neu gestartet.
-        const prev = narrationSoundRef.current;
-        narrationSoundRef.current = null;
-        if (prev) { try { await prev.stopAsync(); await prev.unloadAsync(); } catch {} }
       }
 
-      // PRIO 4 — ohne interrupt: in die Warteschlange einreihen, wenn gerade
-      // gesprochen wird — so unterbrechen POI, Meilenstein etc. keine laufende
-      // Kapitel-Erzaehlung, sondern warten auf deren natuerliches Ende.
-      if (!opts?.interrupt && !opts?.partnerInterrupt && !opts?.sagaInterrupt && speakingRef.current) {
+      // Einzige automatische Ausnahme: navInterrupt darf die aktive
+      // Wiedergabe pausieren. Alle anderen Audioquellen warten in der Queue.
+      if (
+        hasActiveAudio &&
+        !(opts?.interrupt && opts?.kind === "navigation")
+      ) {
         enqueueNarration();
         return;
       }
-      // Expliziter Interrupt (Kapitel-Wechsel, Wiederholen-Button): Queue leeren
-      // und laufenden Nav-Interrupt abbrechen.
-      if (opts?.interrupt) {
+      // Der TTS-Fallback eines Abbiegehinweises nutzt interrupt, weil der
+      // vorbereitete Turn-Clip nicht verfügbar war. Auch hier bleibt der
+      // Interrupt ausschließlich auf Navigation beschränkt.
+      if (opts?.interrupt && opts?.kind === "navigation") {
         narrationQueueRef.current = [];
         navInterruptingRef.current = false;
       }
@@ -4887,12 +4834,6 @@ export default function LiveHike() {
             // completion callback to release pending state or continue the
             // flow even when the native player reports an error.
             onFinished?.();
-          }
-          if (
-            !speakingRef.current &&
-            narrationQueueRef.current.length === 0
-          ) {
-            resumeInterruptedChapter();
           }
           // Queue nur verarbeiten, wenn onFinished keinen neuen speak()-Aufruf
           // ausgeloest hat — sonst wuerde der Queue-Eintrag via Gen-Bump die
@@ -5001,12 +4942,6 @@ export default function LiveHike() {
         } else {
           onFinished?.();
         }
-        if (
-          !speakingRef.current &&
-          narrationQueueRef.current.length === 0
-        ) {
-          resumeInterruptedChapter();
-        }
         if (!speakingRef.current) {
           const next = narrationQueueRef.current.shift();
           if (next) {
@@ -5029,7 +4964,7 @@ export default function LiveHike() {
         }
       }
     },
-    [narrationLabel, profile?.language, resumeInterruptedChapter, retryChapterAfterPlaybackFailure, stopTurnAudio, updateNowPlaying]
+    [narrationLabel, profile?.language, retryChapterAfterPlaybackFailure, stopTurnAudio, updateNowPlaying]
   );
   speakRef.current = speak;
 
@@ -5094,7 +5029,6 @@ export default function LiveHike() {
         if (startupSequenceGen !== startupSequenceGenRef.current) return;
         if (currentIndexRef.current !== capturedIndex) return;
         narratedThroughRef.current = Math.max(narratedThroughRef.current, capturedIndex);
-        chapterResumeAfterInterruptRef.current = null;
         storyAudioLog("chapter audio finished", {
           chapterIndex: capturedIndex,
           chapterCount: chapters.length,
@@ -6215,7 +6149,6 @@ export default function LiveHike() {
           ackPack.decisionAck,
           speakDecisionFeedback,
           {
-            ...(poiNarrationPendingRef.current.size === 0 ? { interrupt: true } : {}),
             ...(ackUri ? { preFetchedUri: ackUri } : { useOpenAI: true }),
             kind: "feedback",
             displayTitle: t.perception,
@@ -7359,7 +7292,6 @@ export default function LiveHike() {
                   onPress={() => {
                     if (currentChapter) {
                       speak(currentChapter.text, undefined, {
-                        interrupt: true,
                         kind: "chapter",
                         displayTitle: t.chapterMark(currentIndex + 1, chapters.length),
                       });
@@ -7380,7 +7312,6 @@ export default function LiveHike() {
                       cancelNarration();
                     } else if (currentChapter) {
                       speak(currentChapter.text, undefined, {
-                        interrupt: true,
                         kind: "chapter",
                         displayTitle: t.chapterMark(currentIndex + 1, chapters.length),
                       });
