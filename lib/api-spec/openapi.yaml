@@ -2046,15 +2046,6 @@ components:
           nullable: true
         name:
           type: string
-        avatarUrl:
-          type: string
-          nullable: true
-          description: Privater Objektpfad des Profilbilds
-        dateOfBirth:
-          type: string
-          format: date
-          nullable: true
-          description: Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben
         joinedAt:
           type: string
           format: date-time
@@ -2470,6 +2461,15 @@ components:
           description: Clerk-Benutzer-ID
         name:
           type: string
+        avatarUrl:
+          type: string
+          nullable: true
+          description: Privater Objektpfad des Profilbilds
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben
         archetype:
           type: string
           enum: [reisende, hueterin, gewitzte, senn]
