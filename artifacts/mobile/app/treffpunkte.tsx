@@ -120,7 +120,7 @@ export default function Treffpunkte() {
                 key={meetup.id}
                 meetup={meetup}
                 language={language as LanguageCode}
-                onRoute={() => router.push(`/route/${encodeURIComponent(meetup.routeId)}`)}
+                onDetail={() => router.push(`/treffpunkte/${meetup.id}`)}
                 onToggle={() => void toggleParticipation(meetup)}
                 busy={join.isPending || leave.isPending}
                 t={t}
@@ -136,14 +136,14 @@ export default function Treffpunkte() {
 function MeetupCard({
   meetup,
   language,
-  onRoute,
+  onDetail,
   onToggle,
   busy,
   t,
 }: {
   meetup: Meetup;
   language: LanguageCode;
-  onRoute: () => void;
+  onDetail: () => void;
   onToggle: () => void;
   busy: boolean;
   t: ReturnType<typeof useMeetupStrings>;
@@ -157,7 +157,7 @@ function MeetupCard({
 
   return (
     <View style={[styles.card, GLAS_3D, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
-      <Pressable onPress={onRoute} accessibilityRole="button">
+      <Pressable onPress={onDetail} accessibilityRole="button">
         <View style={styles.cardTop}>
           <View style={[styles.dateBadge, { backgroundColor: colors.accent + "20" }]}>
             <Feather name="calendar" size={17} color={colors.accent} />

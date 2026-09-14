@@ -6,8 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface MeetupParticipant {
-  userId?: string;
-  name: string;
-  joinedAt: Date;
+export interface MeetupActionResponse {
+  ok: boolean;
 }

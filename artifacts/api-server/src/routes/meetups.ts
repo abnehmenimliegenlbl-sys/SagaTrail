@@ -1,11 +1,14 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { getAuth } from "@clerk/express";
-import { and, asc, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { createHash, randomBytes } from "node:crypto";
+import { and, asc, eq, gt, gte, inArray, notInArray, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
 import {
   db,
+  meetupBlocksTable,
   meetupParticipantsTable,
+  meetupReportsTable,
   meetupsTable,
   profilesTable,
 } from "@workspace/db";
@@ -20,6 +23,11 @@ const CreateMeetupSchema = z.object({
   maxParticipants: z.number().int().min(2).max(30).default(8),
   pace: z.enum(["gemuetlich", "normal", "sportlich"]).default("gemuetlich"),
   note: z.string().trim().max(500).nullable().optional(),
+});
+const ReportMeetupSchema = z.object({
+  reason: z.enum(["safety", "harassment", "spam", "other"]),
+  reportedUserId: z.string().trim().min(1).optional(),
+  note: z.string().trim().max(500).optional(),
 });
 
 function requireUserId(req: Request, res: Response): string | null {
@@ -51,6 +59,7 @@ function shapeMeetup(
   participantCount: number,
   organizerName: string,
   joined: boolean,
+  isOrganizer = false,
 ) {
   return {
     id: row.id,
@@ -64,6 +73,8 @@ function shapeMeetup(
     note: row.note,
     organizerName,
     joined,
+    status: row.status,
+    isOrganizer,
   };
 }
 
@@ -71,6 +82,13 @@ router.get("/meetups", async (req, res): Promise<void> => {
   const currentUserId = getAuth(req)?.userId ?? null;
   const from = parseFrom(req.query.from);
   const routeId = typeof req.query.routeId === "string" ? req.query.routeId.trim() : "";
+  const blockedRows = currentUserId
+    ? await db
+        .select({ userId: meetupBlocksTable.blockedUserId })
+        .from(meetupBlocksTable)
+        .where(eq(meetupBlocksTable.blockerId, currentUserId))
+    : [];
+  const blockedIds = blockedRows.map((row) => row.userId);
 
   const rows = await db
     .select({
@@ -85,7 +103,9 @@ router.get("/meetups", async (req, res): Promise<void> => {
     .where(
       and(
         gte(meetupsTable.startsAt, from),
+        eq(meetupsTable.status, "scheduled"),
         routeId ? eq(meetupsTable.routeId, routeId) : undefined,
+        blockedIds.length ? notInArray(meetupsTable.organizerId, blockedIds) : undefined,
       ),
     )
     .groupBy(meetupsTable.id)
@@ -114,6 +134,7 @@ router.get("/meetups", async (req, res): Promise<void> => {
         Number(participantCount),
         organizerNames.get(meetup.organizerId) ?? "SagaTrail-Wanderer",
         joinedIds.has(meetup.id),
+        currentUserId === meetup.organizerId,
       ),
     ),
   });
@@ -141,6 +162,22 @@ router.get("/meetups/:id", async (req, res): Promise<void> => {
     .where(eq(meetupParticipantsTable.meetupId, row.id))
     .orderBy(asc(meetupParticipantsTable.joinedAt));
   const currentUserId = getAuth(req)?.userId ?? null;
+  if (currentUserId) {
+    const [blocked] = await db
+      .select({ blockedUserId: meetupBlocksTable.blockedUserId })
+      .from(meetupBlocksTable)
+      .where(
+        and(
+          eq(meetupBlocksTable.blockerId, currentUserId),
+          eq(meetupBlocksTable.blockedUserId, row.organizerId),
+        ),
+      )
+      .limit(1);
+    if (blocked) {
+      res.status(404).json({ error: "Treffpunkt nicht gefunden" });
+      return;
+    }
+  }
 
   res.json({
     ...shapeMeetup(
@@ -148,8 +185,10 @@ router.get("/meetups/:id", async (req, res): Promise<void> => {
       participants.length,
       (await profileNames([row.organizerId])).get(row.organizerId) ?? "SagaTrail-Wanderer",
       Boolean(currentUserId && participants.some((participant) => participant.userId === currentUserId)),
+      currentUserId === row.organizerId,
     ),
     participants: participants.map((participant) => ({
+      ...(currentUserId === row.organizerId ? { userId: participant.userId } : {}),
       name: participant.name ?? "SagaTrail-Wanderer",
       joinedAt: participant.joinedAt.toISOString(),
     })),
@@ -191,7 +230,7 @@ router.post("/meetups", async (req, res): Promise<void> => {
 
   const organizer = await profileNames([userId]);
   res.status(201).json({
-    ...shapeMeetup(row, 1, organizer.get(userId) ?? "SagaTrail-Wanderer", true),
+    ...shapeMeetup(row, 1, organizer.get(userId) ?? "SagaTrail-Wanderer", true, true),
     participants: [{ name: organizer.get(userId) ?? "SagaTrail-Wanderer", joinedAt: new Date().toISOString() }],
   });
 });
@@ -206,6 +245,20 @@ router.post("/meetups/:id/join", async (req, res): Promise<void> => {
     .where(eq(meetupsTable.id, meetupId))
     .limit(1);
   if (!meetup) {
+    res.status(404).json({ error: "Treffpunkt nicht gefunden" });
+    return;
+  }
+  const [organizerBlocked] = await db
+    .select({ blockedUserId: meetupBlocksTable.blockedUserId })
+    .from(meetupBlocksTable)
+    .where(
+      and(
+        eq(meetupBlocksTable.blockerId, userId),
+        eq(meetupBlocksTable.blockedUserId, meetup.organizerId),
+      ),
+    )
+    .limit(1);
+  if (organizerBlocked) {
     res.status(404).json({ error: "Treffpunkt nicht gefunden" });
     return;
   }
@@ -261,20 +314,221 @@ router.delete("/meetups/:id/join", async (req, res): Promise<void> => {
   res.json({ joined: false });
 });
 
+router.post("/meetups/:id/block-organizer", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const [meetup] = await db
+    .select({ organizerId: meetupsTable.organizerId })
+    .from(meetupsTable)
+    .where(eq(meetupsTable.id, String(req.params.id)))
+    .limit(1);
+  if (!meetup) {
+    res.status(404).json({ error: "Treffpunkt nicht gefunden" });
+    return;
+  }
+  if (meetup.organizerId === userId) {
+    res.status(400).json({ error: "Du kannst dich nicht selbst blockieren" });
+    return;
+  }
+  await db
+    .insert(meetupBlocksTable)
+    .values({ blockerId: userId, blockedUserId: meetup.organizerId })
+    .onConflictDoNothing()
+    .execute();
+  res.json({ ok: true });
+});
+
 router.delete("/meetups/:id", async (req, res): Promise<void> => {
   const userId = requireUserId(req, res);
   if (!userId) return;
-  const deleted = await db
-    .delete(meetupsTable)
+  const cancelled = await db
+    .update(meetupsTable)
+    .set({
+      status: "cancelled",
+      sharedTokenHash: null,
+      shareExpiresAt: null,
+      updatedAt: new Date(),
+    })
     .where(
       and(
         eq(meetupsTable.id, String(req.params.id)),
         eq(meetupsTable.organizerId, userId),
+        eq(meetupsTable.status, "scheduled"),
       ),
     )
     .returning({ id: meetupsTable.id });
-  if (!deleted.length) {
+  if (!cancelled.length) {
     res.status(404).json({ error: "Treffpunkt nicht gefunden oder nicht berechtigt" });
+    return;
+  }
+  res.status(204).send();
+});
+
+router.post("/meetups/:id/share", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const meetupId = String(req.params.id);
+  const [meetup] = await db
+    .select()
+    .from(meetupsTable)
+    .where(and(eq(meetupsTable.id, meetupId), eq(meetupsTable.status, "scheduled")))
+    .limit(1);
+  if (!meetup) {
+    res.status(404).json({ error: "Treffpunkt nicht gefunden" });
+    return;
+  }
+  const [participant] = await db
+    .select({ userId: meetupParticipantsTable.userId })
+    .from(meetupParticipantsTable)
+    .where(
+      and(
+        eq(meetupParticipantsTable.meetupId, meetupId),
+        eq(meetupParticipantsTable.userId, userId),
+      ),
+    )
+    .limit(1);
+  if (!participant) {
+    res.status(403).json({ error: "Nur Teilnehmende dürfen teilen" });
+    return;
+  }
+
+  const token = randomBytes(24).toString("base64url");
+  const expiresAt = new Date(Math.max(
+    meetup.startsAt.getTime() + 24 * 60 * 60_000,
+    Date.now() + 60 * 60_000,
+  ));
+  await db
+    .update(meetupsTable)
+    .set({
+      sharedTokenHash: createHash("sha256").update(token).digest("hex"),
+      shareExpiresAt: expiresAt,
+      updatedAt: new Date(),
+    })
+    .where(eq(meetupsTable.id, meetupId));
+  res.json({ token, path: `/treffpunkte/shared/${token}`, expiresAt: expiresAt.toISOString() });
+});
+
+router.get("/meetups/shared/:token", async (req, res): Promise<void> => {
+  const tokenHash = createHash("sha256").update(String(req.params.token)).digest("hex");
+  const [row] = await db
+    .select()
+    .from(meetupsTable)
+    .where(
+      and(
+        eq(meetupsTable.sharedTokenHash, tokenHash),
+        gt(meetupsTable.shareExpiresAt, new Date()),
+      ),
+    )
+    .limit(1);
+  if (!row || !row.shareExpiresAt) {
+    res.status(404).json({ error: "Link unbekannt oder abgelaufen" });
+    return;
+  }
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(meetupParticipantsTable)
+    .where(eq(meetupParticipantsTable.meetupId, row.id));
+  res.json({
+    routeName: row.routeName,
+    canton: row.canton,
+    startsAt: row.startsAt.toISOString(),
+    participantCount: Number(count),
+    maxParticipants: row.maxParticipants,
+    status: row.status,
+    expiresAt: row.shareExpiresAt.toISOString(),
+  });
+});
+
+router.post("/meetups/:id/report", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const parsed = ReportMeetupSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Ungültige Meldung" });
+    return;
+  }
+  const meetupId = String(req.params.id);
+  const [meetup] = await db
+    .select({ id: meetupsTable.id, organizerId: meetupsTable.organizerId })
+    .from(meetupsTable)
+    .where(eq(meetupsTable.id, meetupId))
+    .limit(1);
+  if (!meetup) {
+    res.status(404).json({ error: "Treffpunkt nicht gefunden" });
+    return;
+  }
+  await db
+    .insert(meetupReportsTable)
+    .values({
+      meetupId,
+      reporterId: userId,
+      reportedUserId: parsed.data.reportedUserId ?? meetup.organizerId,
+      reason: parsed.data.reason,
+      note: parsed.data.note ?? null,
+    })
+    .execute();
+  res.status(201).json({ ok: true });
+});
+
+router.post("/meetups/users/:userId/block", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const blockedUserId = String(req.params.userId);
+  if (blockedUserId === userId) {
+    res.status(400).json({ error: "Du kannst dich nicht selbst blockieren" });
+    return;
+  }
+  await db
+    .insert(meetupBlocksTable)
+    .values({ blockerId: userId, blockedUserId })
+    .onConflictDoNothing()
+    .execute();
+  res.json({ ok: true });
+});
+
+router.delete("/meetups/users/:userId/block", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  await db
+    .delete(meetupBlocksTable)
+    .where(
+      and(
+        eq(meetupBlocksTable.blockerId, userId),
+        eq(meetupBlocksTable.blockedUserId, String(req.params.userId)),
+      ),
+    )
+    .execute();
+  res.json({ ok: true });
+});
+
+router.delete("/meetups/:id/participants/:userId", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const meetupId = String(req.params.id);
+  const [meetup] = await db
+    .select({ organizerId: meetupsTable.organizerId })
+    .from(meetupsTable)
+    .where(eq(meetupsTable.id, meetupId))
+    .limit(1);
+  if (!meetup) {
+    res.status(404).json({ error: "Treffpunkt nicht gefunden" });
+    return;
+  }
+  if (meetup.organizerId !== userId) {
+    res.status(403).json({ error: "Nur der Organisator darf Teilnehmer entfernen" });
+    return;
+  }
+  const removed = await db
+    .delete(meetupParticipantsTable)
+    .where(
+      and(
+        eq(meetupParticipantsTable.meetupId, meetupId),
+        eq(meetupParticipantsTable.userId, String(req.params.userId)),
+      ),
+    )
+    .returning({ userId: meetupParticipantsTable.userId });
+  if (!removed.length) {
+    res.status(404).json({ error: "Teilnehmer nicht gefunden" });
     return;
   }
   res.status(204).send();

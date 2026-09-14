@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { MeetupStatus } from './meetupStatus';
 
 export interface Meetup {
   id: string;
@@ -18,4 +19,6 @@ export interface Meetup {
   note?: string | null;
   organizerName: string;
   joined: boolean;
+  status: MeetupStatus;
+  isOrganizer: boolean;
 }

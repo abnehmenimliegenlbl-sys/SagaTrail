@@ -29,6 +29,14 @@ export interface CreateMeetupRequest {
   note?: string | null;
 }
 
+export type MeetupStatus = typeof MeetupStatus[keyof typeof MeetupStatus];
+
+
+export const MeetupStatus = {
+  scheduled: 'scheduled',
+  cancelled: 'cancelled',
+} as const;
+
 export interface Meetup {
   id: string;
   routeId: string;
@@ -41,9 +49,12 @@ export interface Meetup {
   note?: string | null;
   organizerName: string;
   joined: boolean;
+  status: MeetupStatus;
+  isOrganizer: boolean;
 }
 
 export interface MeetupParticipant {
+  userId?: string;
   name: string;
   joinedAt: string;
 }
@@ -58,6 +69,51 @@ export interface MeetupListResponse {
 
 export interface MeetupJoinResponse {
   joined: boolean;
+}
+
+export interface MeetupShareResponse {
+  token: string;
+  path: string;
+  expiresAt: string;
+}
+
+export type SharedMeetupStatus = typeof SharedMeetupStatus[keyof typeof SharedMeetupStatus];
+
+
+export const SharedMeetupStatus = {
+  scheduled: 'scheduled',
+  cancelled: 'cancelled',
+} as const;
+
+export interface SharedMeetup {
+  routeName: string;
+  canton: string;
+  startsAt: string;
+  participantCount: number;
+  maxParticipants: number;
+  status: SharedMeetupStatus;
+  expiresAt: string;
+}
+
+export type MeetupReportRequestReason = typeof MeetupReportRequestReason[keyof typeof MeetupReportRequestReason];
+
+
+export const MeetupReportRequestReason = {
+  safety: 'safety',
+  harassment: 'harassment',
+  spam: 'spam',
+  other: 'other',
+} as const;
+
+export interface MeetupReportRequest {
+  reason: MeetupReportRequestReason;
+  reportedUserId?: string;
+  /** @maxLength 500 */
+  note?: string;
+}
+
+export interface MeetupActionResponse {
+  ok: boolean;
 }
 
 export type TerrainCorridorRequestOptions = {

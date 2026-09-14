@@ -1340,7 +1340,9 @@ export const GetMeetupsResponse = zod.object({
   "pace": zod.string(),
   "note": zod.string().nullish(),
   "organizerName": zod.string(),
-  "joined": zod.boolean()
+  "joined": zod.boolean(),
+  "status": zod.enum(['scheduled', 'cancelled']),
+  "isOrganizer": zod.boolean()
 }))
 })
 
@@ -1378,7 +1380,9 @@ export const CreateMeetupResponse = zod.object({
   "pace": zod.string(),
   "note": zod.string().nullish(),
   "organizerName": zod.string(),
-  "joined": zod.boolean()
+  "joined": zod.boolean(),
+  "status": zod.enum(['scheduled', 'cancelled']),
+  "isOrganizer": zod.boolean()
 })
 
 
@@ -1400,9 +1404,12 @@ export const GetMeetupResponse = zod.object({
   "pace": zod.string(),
   "note": zod.string().nullish(),
   "organizerName": zod.string(),
-  "joined": zod.boolean()
+  "joined": zod.boolean(),
+  "status": zod.enum(['scheduled', 'cancelled']),
+  "isOrganizer": zod.boolean()
 }).and(zod.object({
   "participants": zod.array(zod.object({
+  "userId": zod.string().optional(),
   "name": zod.string(),
   "joinedAt": zod.coerce.date()
 }))
@@ -1441,5 +1448,106 @@ export const LeaveMeetupParams = zod.object({
 export const LeaveMeetupResponse = zod.object({
   "joined": zod.boolean()
 })
+
+
+/**
+ * @summary Sicheren Treffpunkt-Link erstellen
+ */
+export const CreateMeetupShareParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const CreateMeetupShareResponse = zod.object({
+  "token": zod.string(),
+  "path": zod.string(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Öffentlichen Treffpunkt-Link laden
+ */
+export const GetSharedMeetupParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const GetSharedMeetupResponse = zod.object({
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "participantCount": zod.number(),
+  "maxParticipants": zod.number(),
+  "status": zod.enum(['scheduled', 'cancelled']),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Treffpunkt oder Nutzer melden
+ */
+export const ReportMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const reportMeetupBodyNoteMax = 500;
+
+
+
+export const ReportMeetupBody = zod.object({
+  "reason": zod.enum(['safety', 'harassment', 'spam', 'other']),
+  "reportedUserId": zod.string().optional(),
+  "note": zod.string().max(reportMeetupBodyNoteMax).optional()
+})
+
+export const ReportMeetupResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Organisator eines Treffpunkts blockieren
+ */
+export const BlockMeetupOrganizerParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const BlockMeetupOrganizerResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Nutzer für Treffpunkte blockieren
+ */
+export const BlockMeetupUserParams = zod.object({
+  "userId": zod.coerce.string()
+})
+
+export const BlockMeetupUserResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Nutzerblockierung aufheben
+ */
+export const UnblockMeetupUserParams = zod.object({
+  "userId": zod.coerce.string()
+})
+
+export const UnblockMeetupUserResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Teilnehmer als Organisator entfernen
+ */
+export const RemoveMeetupParticipantParams = zod.object({
+  "id": zod.coerce.string().uuid(),
+  "userId": zod.coerce.string()
+})
+
+export const RemoveMeetupParticipantResponse = zod.void()
 
 

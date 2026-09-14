@@ -1766,6 +1766,182 @@ paths:
                 $ref: "#/components/schemas/MeetupJoinResponse"
         "401":
           description: Anmeldung erforderlich
+  /meetups/{id}/share:
+    post:
+      operationId: createMeetupShare
+      tags: [meetups]
+      summary: Sicheren Treffpunkt-Link erstellen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Temporärer Freigabelink
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupShareResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "403":
+          description: Nur Teilnehmende dürfen teilen
+        "404":
+          description: Treffpunkt nicht gefunden
+  /meetups/shared/{token}:
+    get:
+      operationId: getSharedMeetup
+      tags: [meetups]
+      summary: Öffentlichen Treffpunkt-Link laden
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Datenschutzreduzierter Treffpunkt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedMeetup"
+        "404":
+          description: Link unbekannt, abgelaufen oder widerrufen
+  /meetups/{id}/report:
+    post:
+      operationId: reportMeetup
+      tags: [meetups]
+      summary: Treffpunkt oder Nutzer melden
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetupReportRequest"
+      responses:
+        "201":
+          description: Meldung gespeichert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupActionResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt nicht gefunden
+  /meetups/{id}/block-organizer:
+    post:
+      operationId: blockMeetupOrganizer
+      tags: [meetups]
+      summary: Organisator eines Treffpunkts blockieren
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Organisator blockiert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupActionResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt nicht gefunden
+  /meetups/users/{userId}/block:
+    post:
+      operationId: blockMeetupUser
+      tags: [meetups]
+      summary: Nutzer für Treffpunkte blockieren
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Nutzer blockiert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupActionResponse"
+        "400":
+          description: Selbstblockierung nicht möglich
+        "401":
+          description: Anmeldung erforderlich
+    delete:
+      operationId: unblockMeetupUser
+      tags: [meetups]
+      summary: Nutzerblockierung aufheben
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Nutzerblockierung aufgehoben
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupActionResponse"
+        "401":
+          description: Anmeldung erforderlich
+  /meetups/{id}/participants/{userId}:
+    delete:
+      operationId: removeMeetupParticipant
+      tags: [meetups]
+      summary: Teilnehmer als Organisator entfernen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Teilnehmer entfernt
+        "401":
+          description: Anmeldung erforderlich
+        "403":
+          description: Nur der Organisator darf Teilnehmer entfernen
+        "404":
+          description: Treffpunkt oder Teilnehmer nicht gefunden
 components:
   securitySchemes:
     bearerAuth:
@@ -1800,7 +1976,7 @@ components:
           maxLength: 500
     Meetup:
       type: object
-      required: [id, routeId, routeName, canton, startsAt, maxParticipants, participantCount, pace, organizerName, joined]
+      required: [id, routeId, routeName, canton, startsAt, maxParticipants, participantCount, pace, organizerName, joined, status, isOrganizer]
       properties:
         id:
           type: string
@@ -1827,10 +2003,17 @@ components:
           type: string
         joined:
           type: boolean
+        status:
+          type: string
+          enum: [scheduled, cancelled]
+        isOrganizer:
+          type: boolean
     MeetupParticipant:
       type: object
       required: [name, joinedAt]
       properties:
+        userId:
+          type: string
         name:
           type: string
         joinedAt:
@@ -1859,6 +2042,56 @@ components:
       required: [joined]
       properties:
         joined:
+          type: boolean
+    MeetupShareResponse:
+      type: object
+      required: [token, path, expiresAt]
+      properties:
+        token:
+          type: string
+        path:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    SharedMeetup:
+      type: object
+      required: [routeName, canton, startsAt, participantCount, maxParticipants, status, expiresAt]
+      properties:
+        routeName:
+          type: string
+        canton:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        participantCount:
+          type: integer
+        maxParticipants:
+          type: integer
+        status:
+          type: string
+          enum: [scheduled, cancelled]
+        expiresAt:
+          type: string
+          format: date-time
+    MeetupReportRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          enum: [safety, harassment, spam, other]
+        reportedUserId:
+          type: string
+        note:
+          type: string
+          maxLength: 500
+    MeetupActionResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
           type: boolean
     TerrainCorridorRequest:
       type: object

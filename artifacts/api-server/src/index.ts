@@ -7,6 +7,7 @@ import { warmAllCantonCaches, startDailyCantonSync, startDailySchweizMobilHandic
 import { startEnrichAllIfNeeded, scheduleNightlyRestitch } from "./routes/admin";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
+import { startMeetupReminderCron } from "./lib/meetupNotifications";
 import { db, externalRoutesTable, mediaContactsTable } from "@workspace/db";
 import { MEDIA_CONTACT_SEED } from "./lib/mediaContacts";
 import { eq, gte, isNotNull } from "drizzle-orm";
@@ -351,6 +352,7 @@ const server = app.listen(port, async (err) => {
 
   // Taeglich-Wetter-Benachrichtigungen starten (07:00 UTC).
   startWeatherNotificationCron();
+  startMeetupReminderCron();
 
   // Jeden Tag um 02:00 UTC einen Kanton reihum aktualisieren (cap 150, inkl. Fotos).
   startDailyCantonSync();

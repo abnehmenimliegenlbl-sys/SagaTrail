@@ -58,9 +58,12 @@ import type {
   GpxImportBody,
   HealthStatus,
   Meetup,
+  MeetupActionResponse,
   MeetupDetail,
   MeetupJoinResponse,
   MeetupListResponse,
+  MeetupReportRequest,
+  MeetupShareResponse,
   NarrationInput,
   ObjectRecognitionLimitError,
   Partner,
@@ -78,6 +81,7 @@ import type {
   SafetyShareLocation,
   SafetySharePublicStatus,
   SearchPlacesParams,
+  SharedMeetup,
   StoryRequest,
   StoryResponse,
   TerrainAreaRequest,
@@ -3881,5 +3885,505 @@ export const useLeaveMeetup = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getLeaveMeetupMutationOptions(options));
+    }
+
+export const getCreateMeetupShareUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/share`
+}
+
+/**
+ * @summary Sicheren Treffpunkt-Link erstellen
+ */
+export const createMeetupShare = async (id: string, options?: RequestInit): Promise<MeetupShareResponse> => {
+
+  return customFetch<MeetupShareResponse>(getCreateMeetupShareUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCreateMeetupShareMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMeetupShare>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMeetupShare>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['createMeetupShare'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMeetupShare>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  createMeetupShare(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMeetupShareMutationResult = NonNullable<Awaited<ReturnType<typeof createMeetupShare>>>
+
+    export type CreateMeetupShareMutationError = ErrorType<void>
+
+    /**
+ * @summary Sicheren Treffpunkt-Link erstellen
+ */
+export const useCreateMeetupShare = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMeetupShare>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createMeetupShare>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getCreateMeetupShareMutationOptions(options));
+    }
+
+export const getGetSharedMeetupUrl = (token: string,) => {
+
+
+
+
+  return `/api/meetups/shared/${token}`
+}
+
+/**
+ * @summary Öffentlichen Treffpunkt-Link laden
+ */
+export const getSharedMeetup = async (token: string, options?: RequestInit): Promise<SharedMeetup> => {
+
+  return customFetch<SharedMeetup>(getGetSharedMeetupUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSharedMeetupQueryKey = (token: string,) => {
+    return [
+    `/api/meetups/shared/${token}`
+    ] as const;
+    }
+
+
+export const getGetSharedMeetupQueryOptions = <TData = Awaited<ReturnType<typeof getSharedMeetup>>, TError = ErrorType<void>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSharedMeetup>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSharedMeetupQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSharedMeetup>>> = ({ signal }) => getSharedMeetup(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSharedMeetup>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSharedMeetupQueryResult = NonNullable<Awaited<ReturnType<typeof getSharedMeetup>>>
+export type GetSharedMeetupQueryError = ErrorType<void>
+
+
+/**
+ * @summary Öffentlichen Treffpunkt-Link laden
+ */
+
+export function useGetSharedMeetup<TData = Awaited<ReturnType<typeof getSharedMeetup>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSharedMeetup>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSharedMeetupQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getReportMeetupUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/report`
+}
+
+/**
+ * @summary Treffpunkt oder Nutzer melden
+ */
+export const reportMeetup = async (id: string,
+    meetupReportRequest: MeetupReportRequest, options?: RequestInit): Promise<MeetupActionResponse> => {
+
+  return customFetch<MeetupActionResponse>(getReportMeetupUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(meetupReportRequest)
+  }
+);}
+
+
+
+
+export const getReportMeetupMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportMeetup>>, TError,{id: string;data: BodyType<MeetupReportRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reportMeetup>>, TError,{id: string;data: BodyType<MeetupReportRequest>}, TContext> => {
+
+const mutationKey = ['reportMeetup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reportMeetup>>, {id: string;data: BodyType<MeetupReportRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reportMeetup(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReportMeetupMutationResult = NonNullable<Awaited<ReturnType<typeof reportMeetup>>>
+    export type ReportMeetupMutationBody = BodyType<MeetupReportRequest>
+    export type ReportMeetupMutationError = ErrorType<void>
+
+    /**
+ * @summary Treffpunkt oder Nutzer melden
+ */
+export const useReportMeetup = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportMeetup>>, TError,{id: string;data: BodyType<MeetupReportRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reportMeetup>>,
+        TError,
+        {id: string;data: BodyType<MeetupReportRequest>},
+        TContext
+      > => {
+      return useMutation(getReportMeetupMutationOptions(options));
+    }
+
+export const getBlockMeetupOrganizerUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/block-organizer`
+}
+
+/**
+ * @summary Organisator eines Treffpunkts blockieren
+ */
+export const blockMeetupOrganizer = async (id: string, options?: RequestInit): Promise<MeetupActionResponse> => {
+
+  return customFetch<MeetupActionResponse>(getBlockMeetupOrganizerUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getBlockMeetupOrganizerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof blockMeetupOrganizer>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof blockMeetupOrganizer>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['blockMeetupOrganizer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof blockMeetupOrganizer>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  blockMeetupOrganizer(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BlockMeetupOrganizerMutationResult = NonNullable<Awaited<ReturnType<typeof blockMeetupOrganizer>>>
+
+    export type BlockMeetupOrganizerMutationError = ErrorType<void>
+
+    /**
+ * @summary Organisator eines Treffpunkts blockieren
+ */
+export const useBlockMeetupOrganizer = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof blockMeetupOrganizer>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof blockMeetupOrganizer>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getBlockMeetupOrganizerMutationOptions(options));
+    }
+
+export const getBlockMeetupUserUrl = (userId: string,) => {
+
+
+
+
+  return `/api/meetups/users/${userId}/block`
+}
+
+/**
+ * @summary Nutzer für Treffpunkte blockieren
+ */
+export const blockMeetupUser = async (userId: string, options?: RequestInit): Promise<MeetupActionResponse> => {
+
+  return customFetch<MeetupActionResponse>(getBlockMeetupUserUrl(userId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getBlockMeetupUserMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof blockMeetupUser>>, TError,{userId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof blockMeetupUser>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['blockMeetupUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof blockMeetupUser>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  blockMeetupUser(userId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BlockMeetupUserMutationResult = NonNullable<Awaited<ReturnType<typeof blockMeetupUser>>>
+
+    export type BlockMeetupUserMutationError = ErrorType<void>
+
+    /**
+ * @summary Nutzer für Treffpunkte blockieren
+ */
+export const useBlockMeetupUser = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof blockMeetupUser>>, TError,{userId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof blockMeetupUser>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+      return useMutation(getBlockMeetupUserMutationOptions(options));
+    }
+
+export const getUnblockMeetupUserUrl = (userId: string,) => {
+
+
+
+
+  return `/api/meetups/users/${userId}/block`
+}
+
+/**
+ * @summary Nutzerblockierung aufheben
+ */
+export const unblockMeetupUser = async (userId: string, options?: RequestInit): Promise<MeetupActionResponse> => {
+
+  return customFetch<MeetupActionResponse>(getUnblockMeetupUserUrl(userId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getUnblockMeetupUserMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unblockMeetupUser>>, TError,{userId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unblockMeetupUser>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['unblockMeetupUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unblockMeetupUser>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  unblockMeetupUser(userId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnblockMeetupUserMutationResult = NonNullable<Awaited<ReturnType<typeof unblockMeetupUser>>>
+
+    export type UnblockMeetupUserMutationError = ErrorType<void>
+
+    /**
+ * @summary Nutzerblockierung aufheben
+ */
+export const useUnblockMeetupUser = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unblockMeetupUser>>, TError,{userId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof unblockMeetupUser>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+      return useMutation(getUnblockMeetupUserMutationOptions(options));
+    }
+
+export const getRemoveMeetupParticipantUrl = (id: string,
+    userId: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/participants/${userId}`
+}
+
+/**
+ * @summary Teilnehmer als Organisator entfernen
+ */
+export const removeMeetupParticipant = async (id: string,
+    userId: string, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getRemoveMeetupParticipantUrl(id,userId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getRemoveMeetupParticipantMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMeetupParticipant>>, TError,{id: string;userId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeMeetupParticipant>>, TError,{id: string;userId: string}, TContext> => {
+
+const mutationKey = ['removeMeetupParticipant'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeMeetupParticipant>>, {id: string;userId: string}> = (props) => {
+          const {id,userId} = props ?? {};
+
+          return  removeMeetupParticipant(id,userId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveMeetupParticipantMutationResult = NonNullable<Awaited<ReturnType<typeof removeMeetupParticipant>>>
+
+    export type RemoveMeetupParticipantMutationError = ErrorType<void>
+
+    /**
+ * @summary Teilnehmer als Organisator entfernen
+ */
+export const useRemoveMeetupParticipant = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMeetupParticipant>>, TError,{id: string;userId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeMeetupParticipant>>,
+        TError,
+        {id: string;userId: string},
+        TContext
+      > => {
+      return useMutation(getRemoveMeetupParticipantMutationOptions(options));
     }
 
