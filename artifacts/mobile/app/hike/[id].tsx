@@ -994,19 +994,21 @@ export default function LiveHike() {
   const startChoiceHandledRef = useRef(false);
   // Neue Wanderungen bleiben bis zur GPS-basierten Startentscheidung komplett
   // stumm. Ein Resume ist bereits bestätigt und darf direkt fortsetzen.
-  const [startGateConfirmed, setStartGateConfirmed] = useState(isResume);
-  const startGateConfirmedRef = useRef(isResume);
-  const startGateShownRef = useRef(isResume);
-  const startTimeRef = useRef<number>(isResume ? Date.now() : 0);
-  const [startAudioReleased, setStartAudioReleased] = useState(isResume);
-  const startAudioReleasedRef = useRef(isResume);
+  const [startGateConfirmed, setStartGateConfirmed] = useState(false);
+  const startGateConfirmedRef = useRef(false);
+  const startGateShownRef = useRef(false);
+  const startTimeRef = useRef<number>(Date.now());
+  const [startAudioReleased, setStartAudioReleased] = useState(false);
+  const startAudioReleasedRef = useRef(false);
   const autoFollowRecalcStartedRef = useRef(false);
   const releaseStartAudio = useCallback(() => {
     startAudioReleasedRef.current = true;
     setStartAudioReleased(true);
   }, []);
   const confirmStartAtTrailhead = useCallback(() => {
-    startTimeRef.current = Date.now();
+    if (!isResume && startTimeRef.current === 0) {
+      startTimeRef.current = Date.now();
+    }
     startGateConfirmedRef.current = true;
     startGateShownRef.current = true;
     startChoiceHandledRef.current = true;
@@ -1017,7 +1019,7 @@ export default function LiveHike() {
     setStartReached(true);
     setOffRoutePos(null);
     releaseStartAudio();
-  }, [releaseStartAudio]);
+  }, [isResume, releaseStartAudio]);
   const chooseStartRoute = useCallback((mode: "start" | "fastest", position: LatLng) => {
     startChoicePendingRef.current = true;
     autoFollowRecalcStartedRef.current = false;
@@ -1445,12 +1447,10 @@ export default function LiveHike() {
   livePosRef.current = livePos;
   hasFreshGpsRef.current = hasFreshGps;
 
-  // Neue Wanderung: erst nach dem ersten frischen GPS-Fix entscheiden, ob der
-  // Nutzer bereits am offiziellen Start steht oder einen Zubringer braucht.
-  // Ein Resume umgeht diesen Dialog bewusst.
+  // Bei jedem Einstieg: erst nach dem ersten frischen GPS-Fix entscheiden, ob
+  // der Nutzer bereits am offiziellen Start steht oder einen Zubringer braucht.
   useEffect(() => {
     if (
-      isResume ||
       startGateConfirmedRef.current ||
       startGateShownRef.current ||
       !hasFreshGps ||
@@ -1486,7 +1486,6 @@ export default function LiveHike() {
     chooseStartRoute,
     confirmStartAtTrailhead,
     hasFreshGps,
-    isResume,
     livePos,
     navigationGeometry,
     t,
