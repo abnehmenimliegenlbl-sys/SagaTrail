@@ -446,6 +446,25 @@ export const GetTransportStationboardResponse = zod.object({
 
 
 /**
+ * Liefert den naechsten oeffentlichen Verkehrshalt zu einem GPS-Punkt. Die Koordinaten werden fuer eine anschliessende Fusswegroute verwendet.
+ * @summary Naechsten Verkehrshalt mit Koordinaten finden
+ */
+export const GetTransportNearbyQueryParams = zod.object({
+  "lat": zod.coerce.number(),
+  "lng": zod.coerce.number()
+})
+
+export const GetTransportNearbyResponse = zod.object({
+  "station": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "lat": zod.number(),
+  "lng": zod.number()
+}).nullable()
+})
+
+
+/**
  * Liefert aktuelle Wetterdaten (Open-Meteo, ohne API-Key) fuer den Ausgangspunkt einer Route sowie einen daraus abgeleiteten Wegzustand-Hinweis (kein offizieller Sperr-/Lawinenstatus, sondern eine Einschaetzung aus Niederschlag, Schneehoehe, Temperatur und Boeen).
  * @summary Live-Wetter und daraus abgeleiteter Wegzustand fuer einen Punkt
  */

@@ -619,6 +619,36 @@ paths:
           description: Fehlende lat/lng Parameter
         "502":
           description: Upstream-Fehler von transport.opendata.ch
+  /transport/nearby:
+    get:
+      operationId: getTransportNearby
+      tags: [routes]
+      summary: Naechsten Verkehrshalt mit Koordinaten finden
+      description: >
+        Liefert den naechsten oeffentlichen Verkehrshalt zu einem GPS-Punkt.
+        Die Koordinaten werden fuer eine anschliessende Fusswegroute verwendet.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Naechster Verkehrshalt oder null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransportNearbyResponse"
+        "400":
+          description: Fehlende lat/lng Parameter
+        "502":
+          description: Upstream-Fehler bei der Haltestellensuche
   /routes/weather:
     get:
       operationId: getWeather
@@ -2488,6 +2518,28 @@ components:
             $ref: "#/components/schemas/TransportDeparture"
       required:
         - departures
+    TransportNearbyResponse:
+      type: object
+      properties:
+        station:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            lat:
+              type: number
+            lng:
+              type: number
+          required:
+            - id
+            - name
+            - lat
+            - lng
+      required:
+        - station
     TrailConditionReport:
       type: object
       description: >-

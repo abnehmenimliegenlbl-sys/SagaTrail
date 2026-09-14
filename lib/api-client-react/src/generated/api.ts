@@ -50,6 +50,7 @@ import type {
   GetRoutePhotoParams,
   GetRouteSurfacesParams,
   GetSagaPhotoParams,
+  GetTransportNearbyParams,
   GetTransportStationboardParams,
   GetWeatherParams,
   GpxImportBody,
@@ -79,6 +80,7 @@ import type {
   TerrainCorridorResponse,
   TrailConditionInput,
   TrailConditionReport,
+  TransportNearbyResponse,
   TransportStationboard,
   WeatherReport
 } from './api.schemas';
@@ -1166,6 +1168,91 @@ export function useGetTransportStationboard<TData = Awaited<ReturnType<typeof ge
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetTransportStationboardQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetTransportNearbyUrl = (params: GetTransportNearbyParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/transport/nearby?${stringifiedParams}` : `/api/transport/nearby`
+}
+
+/**
+ * Liefert den naechsten oeffentlichen Verkehrshalt zu einem GPS-Punkt. Die Koordinaten werden fuer eine anschliessende Fusswegroute verwendet.
+ * @summary Naechsten Verkehrshalt mit Koordinaten finden
+ */
+export const getTransportNearby = async (params: GetTransportNearbyParams, options?: RequestInit): Promise<TransportNearbyResponse> => {
+
+  return customFetch<TransportNearbyResponse>(getGetTransportNearbyUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTransportNearbyQueryKey = (params?: GetTransportNearbyParams,) => {
+    return [
+    `/api/transport/nearby`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTransportNearbyQueryOptions = <TData = Awaited<ReturnType<typeof getTransportNearby>>, TError = ErrorType<void>>(params: GetTransportNearbyParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTransportNearby>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTransportNearbyQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTransportNearby>>> = ({ signal }) => getTransportNearby(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTransportNearby>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTransportNearbyQueryResult = NonNullable<Awaited<ReturnType<typeof getTransportNearby>>>
+export type GetTransportNearbyQueryError = ErrorType<void>
+
+
+/**
+ * @summary Naechsten Verkehrshalt mit Koordinaten finden
+ */
+
+export function useGetTransportNearby<TData = Awaited<ReturnType<typeof getTransportNearby>>, TError = ErrorType<void>>(
+ params: GetTransportNearbyParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTransportNearby>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTransportNearbyQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import {
   createNarration,
   getAerialways,
+  getTransportNearby,
   getPeakPois,
   getPartners,
   getPois,
@@ -216,6 +217,20 @@ function geometryLengthKm(geometry: number[][] | null | undefined): number {
     );
   }
   return lengthKm;
+}
+
+function nearestAerialwayEndpoint(
+  position: LatLng,
+  aerialway: { id: string; geometry: number[][] },
+): LatLng | null {
+  const first = aerialway.geometry[0];
+  const last = aerialway.geometry[aerialway.geometry.length - 1];
+  if (!first || !last) return null;
+  const firstPoint = { lat: first[0], lng: first[1] };
+  const lastPoint = { lat: last[0], lng: last[1] };
+  return haversineKm(position, firstPoint) <= haversineKm(position, lastPoint)
+    ? firstPoint
+    : lastPoint;
 }
 
 function createTimedSignal(parentSignal: AbortSignal, timeoutMs: number) {
@@ -982,6 +997,11 @@ export default function LiveHike() {
   const [followingRecalc, setFollowingRecalc] = useState(false);
   /** Anteil (0..1) der Originalroute, an dem die Neuberechnung wieder einmuendet. */
   const [recalcRejoinFraction, setRecalcRejoinFraction] = useState<number | null>(null);
+  const [routeChangeOpen, setRouteChangeOpen] = useState(false);
+  const [routeChangePickerOpen, setRouteChangePickerOpen] = useState(false);
+  const [routeChangeLoading, setRouteChangeLoading] = useState(false);
+  const [routeChangeError, setRouteChangeError] = useState(false);
+  const routeChangeAbortRef = useRef<AbortController | null>(null);
   // Der Storystart ist nicht an den offiziellen Routenpunkt gebunden. Das
   // Audio darf nach dem Story-Load beginnen; startReached bleibt davon
   // getrennt und wird nur durch echte GPS-Nähe zum Routenstart gesetzt.
@@ -6480,6 +6500,206 @@ export default function LiveHike() {
     isOffline,
   ]);
 
+  const commitRouteChange = useCallback(
+    (geometry: number[][]) => {
+      if (geometry.length < 2) return;
+      detourPoiSearchKeyRef.current = null;
+      if (!isOffline) searchDetourPois(geometry);
+      turnGenRef.current++;
+      void stopTurnAudio();
+      notifiedTurnsRef.current.clear();
+      terrainStartedRef.current.clear();
+      terrainProgressRef.current.clear();
+      terrainEndedRef.current.clear();
+      setAcceptedRouteGeometry(geometry);
+      setRecalcGeom(null);
+      setRecalcRejoinFraction(null);
+      setFollowingRecalc(false);
+      followingRecalcRef.current = false;
+      setOffRoutePos(null);
+      isOffRouteRef.current = false;
+      offRouteCountRef.current = 0;
+      routeCompletedRef.current = false;
+      setFinished(false);
+      if (startTimeRef.current === 0) startTimeRef.current = Date.now();
+      startGateConfirmedRef.current = true;
+      startGateShownRef.current = true;
+      setStartGateConfirmed(true);
+      setStartReached(true);
+      releaseStartAudio();
+      startChoicePendingRef.current = false;
+      setStartChoicePending(false);
+      setRouteChangeError(false);
+      setRouteChangeLoading(false);
+      setRouteChangePickerOpen(false);
+      setRouteChangeOpen(false);
+      setKarteVollbild(false);
+      setKarteCloseSignal((signal) => signal + 1);
+    },
+    [
+      isOffline,
+      releaseStartAudio,
+      searchDetourPois,
+      stopTurnAudio,
+    ],
+  );
+
+  const routeToTarget = useCallback(
+    async (target: LatLng, label: string) => {
+      if (!hasFreshGps || !livePos || isOffline || finished) {
+        setRouteChangeError(true);
+        return;
+      }
+      routeChangeAbortRef.current?.abort();
+      const controller = new AbortController();
+      routeChangeAbortRef.current = controller;
+      setRouteChangeLoading(true);
+      setRouteChangeError(false);
+      setRouteChangeOpen(false);
+      setRouteChangePickerOpen(false);
+      await stopTurnAudio();
+      try {
+        const geometry = await requestWalkingRoute(
+          livePos,
+          target,
+          controller.signal,
+        );
+        if (controller.signal.aborted || geometry.length < 2) return;
+        commitRouteChange(geometry);
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setRouteChangeError(true);
+          setRouteChangeLoading(false);
+        }
+      } finally {
+        if (routeChangeAbortRef.current === controller) {
+          routeChangeAbortRef.current = null;
+        }
+      }
+    },
+    [
+      commitRouteChange,
+      finished,
+      hasFreshGps,
+      isOffline,
+      livePos,
+      stopTurnAudio,
+    ],
+  );
+
+  const routeToNearestTransport = useCallback(async () => {
+    if (!hasFreshGps || !livePos || isOffline || finished) {
+      setRouteChangeError(true);
+      return;
+    }
+    routeChangeAbortRef.current?.abort();
+    const controller = new AbortController();
+    routeChangeAbortRef.current = controller;
+    setRouteChangeLoading(true);
+    setRouteChangeError(false);
+    setRouteChangeOpen(false);
+    await stopTurnAudio();
+
+    try {
+      const transportBox = bboxAroundGeometry(null, livePos, 8);
+      const [stationResult, aerialwayResult] = await Promise.allSettled([
+        getTransportNearby(
+          { lat: livePos.lat, lng: livePos.lng },
+          { signal: controller.signal },
+        ),
+        getAerialways(transportBox, { signal: controller.signal }),
+      ]);
+      if (controller.signal.aborted) return;
+
+      const candidates: Array<{ target: LatLng; label: string }> = [];
+      if (stationResult.status === "fulfilled" && stationResult.value.station) {
+        candidates.push({
+          target: {
+            lat: stationResult.value.station.lat,
+            lng: stationResult.value.station.lng,
+          },
+          label: stationResult.value.station.name,
+        });
+      }
+      if (aerialwayResult.status === "fulfilled") {
+        const seen = new Set<string>();
+        const aerialwayCandidates = aerialwayResult.value
+          .map((aerialway) => ({
+            aerialway,
+            target: nearestAerialwayEndpoint(livePos, aerialway),
+          }))
+          .filter((entry) => entry.target !== null)
+          .sort(
+            (a, b) =>
+              haversineKm(livePos, a.target!) - haversineKm(livePos, b.target!),
+          )
+          .slice(0, 8);
+        for (const entry of aerialwayCandidates) {
+          const target = entry.target;
+          if (!target) continue;
+          const key = `${target.lat.toFixed(5)},${target.lng.toFixed(5)}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          candidates.push({
+            target,
+            label: t.routeChangeCableCarLabel,
+          });
+        }
+      }
+      if (candidates.length === 0) throw new Error("no transport target");
+
+      const routed = await Promise.allSettled(
+        candidates.map(async (candidate) => ({
+          ...candidate,
+          geometry: await requestWalkingRoute(
+            livePos,
+            candidate.target,
+            controller.signal,
+          ),
+        })),
+      );
+      if (controller.signal.aborted) return;
+      const successful = routed
+        .filter(
+          (
+            result,
+          ): result is PromiseFulfilledResult<{
+            target: LatLng;
+            label: string;
+            geometry: number[][];
+          }> => result.status === "fulfilled" && result.value.geometry.length >= 2,
+        )
+        .map((result) => result.value)
+        .sort((a, b) => geometryLengthKm(a.geometry) - geometryLengthKm(b.geometry));
+      const best = successful[0];
+      if (!best) throw new Error("no walkable transport target");
+      commitRouteChange(best.geometry);
+    } catch (error) {
+      if ((error as Error).name !== "AbortError") {
+        setRouteChangeError(true);
+        setRouteChangeLoading(false);
+      }
+    } finally {
+      if (routeChangeAbortRef.current === controller) {
+        routeChangeAbortRef.current = null;
+      }
+    }
+  }, [
+    commitRouteChange,
+    finished,
+    hasFreshGps,
+    isOffline,
+    livePos,
+    stopTurnAudio,
+    t.routeChangeCableCarLabel,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      routeChangeAbortRef.current?.abort();
+    };
+  }, []);
+
   // Eine Neuberechnung, die direkt aus der Startauswahl stammt, wird nach
   // erfolgreicher Routenantwort automatisch übernommen. Der manuelle
   // "Dieser Route folgen"-Schritt bleibt für spätere Off-Route-Fälle bestehen.
@@ -6809,6 +7029,14 @@ export default function LiveHike() {
                   waterSources={waterSources.length > 0 ? waterSources : null}
                   parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
                   safetyPois={visibleSafetyPois.length > 0 ? visibleSafetyPois : null}
+                  pickerMode={routeChangePickerOpen}
+                  onMapClick={(lat, lng) => {
+                    if (!routeChangePickerOpen) return;
+                    void routeToTarget(
+                      { lat, lng },
+                      t.routeChangeWaypoint,
+                    );
+                  }}
                   safeAreaInsetTop={safeAreaTop}
                   sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: localizedSagaTitle } : null}
                   onPoiPress={(id) => {
@@ -7603,6 +7831,87 @@ export default function LiveHike() {
               onPress={finishHikeEarly}
               style={styles.hikeActionButton}
             />
+          )}
+
+          {!finished && !preparing && (
+            <View style={styles.routeChangeArea}>
+              <PrimaryButton
+                label={routeChangeLoading ? t.routeChangeCalculating : t.routeChange}
+                variant="secondary"
+                onPress={() => {
+                  if (routeChangeLoading) return;
+                  setRouteChangeError(false);
+                  setRouteChangeOpen((open) => !open);
+                }}
+                disabled={routeChangeLoading}
+                style={styles.hikeActionButton}
+              />
+              {routeChangeError && (
+                <Text style={[styles.routeChangeError, { color: colors.destructive }]}>
+                  {isOffline ? t.offlineHikeBanner : t.routeChangeError}
+                </Text>
+              )}
+              {routeChangeOpen && (
+                <View
+                  style={[
+                    styles.routeChangePanel,
+                    {
+                      backgroundColor: colors.glassBgStrong,
+                      borderColor: colors.glassBorder,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.routeChangeTitle, { color: colors.foreground }]}>
+                    {t.routeChange}
+                  </Text>
+                  <Text style={[styles.routeChangeHint, { color: colors.mutedForeground }]}>
+                    {t.routeChangePickHint}
+                  </Text>
+                  <Pressable
+                    style={[styles.routeChangeOption, { borderColor: colors.glassBorder }]}
+                    onPress={() => {
+                      const start = navigationGeometry?.[0];
+                      if (!start) return;
+                      void routeToTarget(
+                        { lat: start[0], lng: start[1] },
+                        t.routeChangeStart,
+                      );
+                    }}
+                    accessibilityRole="button"
+                  >
+                    <Feather name="corner-left-up" size={18} color={colors.accent} />
+                    <Text style={[styles.routeChangeOptionText, { color: colors.foreground }]}>
+                      {t.routeChangeStart}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.routeChangeOption, { borderColor: colors.glassBorder }]}
+                    onPress={() => {
+                      setRouteChangeError(false);
+                      setRouteChangeOpen(false);
+                      setRouteChangePickerOpen(true);
+                      setKarteVollbild(true);
+                    }}
+                    accessibilityRole="button"
+                  >
+                    <Feather name="map-pin" size={18} color={colors.accent} />
+                    <Text style={[styles.routeChangeOptionText, { color: colors.foreground }]}>
+                      {t.routeChangeWaypoint}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.routeChangeOption, { borderColor: colors.glassBorder }]}
+                    onPress={() => void routeToNearestTransport()}
+                    accessibilityRole="button"
+                  >
+                    <Feather name="navigation" size={18} color={colors.accent} />
+                    <Text style={[styles.routeChangeOptionText, { color: colors.foreground }]}>
+                      {t.routeChangeTransport}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
           )}
         </View>
 
@@ -8455,6 +8764,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   offRouteFollowText: { fontFamily: fonts.bodyBold, fontSize: 13 },
+  routeChangeArea: { marginTop: 12 },
+  routeChangePanel: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 10,
+    gap: 9,
+  },
+  routeChangeTitle: { fontFamily: fonts.titleBold, fontSize: 18 },
+  routeChangeHint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
+  routeChangeOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 12,
+  },
+  routeChangeOptionText: { fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 },
+  routeChangeError: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 8 },
   bannerBtn: {
     flexDirection: "row",
     alignItems: "center",

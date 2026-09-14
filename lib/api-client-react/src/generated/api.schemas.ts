@@ -588,6 +588,17 @@ export interface TransportStationboard {
   departures: TransportDeparture[];
 }
 
+export type TransportNearbyResponseStation = {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+} | null;
+
+export interface TransportNearbyResponse {
+  station: TransportNearbyResponseStation;
+}
+
 export type TrailConditionReportCondition = typeof TrailConditionReportCondition[keyof typeof TrailConditionReportCondition];
 
 
@@ -993,6 +1004,11 @@ lat: number;
 /**
  * Laengengrad (WGS84)
  */
+lng: number;
+};
+
+export type GetTransportNearbyParams = {
+lat: number;
 lng: number;
 };
 
