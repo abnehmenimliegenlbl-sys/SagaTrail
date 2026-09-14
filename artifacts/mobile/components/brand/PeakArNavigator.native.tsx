@@ -75,6 +75,7 @@ const MAX_AR_ROUTE_SEGMENT_SLOTS = 96;
 const MAX_AR_ROUTE_DIRECTION_ARROWS = 24;
 const AR_ROUTE_TURN_THRESHOLD_DEGREES = 25;
 const AR_ROUTE_ARROW_MIN_SPACING = 0.45;
+const AR_ROUTE_ARROW_ELEVATION = 0.45;
 // The flag is scaled against projected screen distance so its apparent width
 // stays readable even when the route endpoint is far away.
 const FINISH_FLAG_POLE_HEIGHT = 1.25;
@@ -529,10 +530,11 @@ function TerrainHologram({
           key={`terrain-route-direction-arrow-${index}`}
           position={[
             position[0],
-            AR_ROUTE_GROUND_OFFSET + position[1] + 0.09,
+            AR_ROUTE_GROUND_OFFSET + position[1] + AR_ROUTE_ARROW_ELEVATION,
             position[2],
           ]}
           rotation={[0, rotationY, 0]}
+          transformBehaviors="billboard"
           renderingOrder={28}
           opacity={0.94}
           viroTag={`terrain-route-direction-arrow-${index}`}

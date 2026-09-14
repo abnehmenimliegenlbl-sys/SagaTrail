@@ -53,6 +53,12 @@ The live AR route should use one semi-transparent colored polyline per smoothed 
 
 **How to apply:** Render each `TerrainRouteSegment` separately so grade colors and gaps remain intact. Detect turns from projected segment headings with a meaningful angle threshold and spacing guard; always place the final arrow on the last visible segment.
 
+Direction arrows must remain readable when the phone is held upright: keep them slightly above the ground route and billboard them toward the camera, while leaving the route line itself georeferenced on the terrain plane.
+
+**Why:** Floor-only arrow geometry can leave the usable camera frame unless the hiker tilts the phone almost horizontally, which is not a practical hiking interaction.
+
+**How to apply:** Elevate only the arrow marker, not the route line, and keep its existing geographic heading/world anchor so billboarding improves legibility without adding a second compass rotation.
+
 Destination flags need a screen-space minimum, not only a fixed AR-world size: scale the billboard with camera distance so its projected width stays approximately 30 px.
 
 **Why:** A physically sized flag becomes unreadably small at the bounded virtual depth used for distant destinations.
