@@ -1875,6 +1875,7 @@ export default function LiveHike() {
   const terrainProgressRef = useRef<Set<string>>(new Set());
   const terrainEndedRef = useRef<Set<string>>(new Set());
   const narrationSoundRef = useRef<AudioSound | null>(null);
+  const narrationTeardownRef = useRef<Promise<void>>(Promise.resolve());
   const turnSoundRef = useRef<AudioSound | null>(null);
   const turnCompletionRef = useRef<(() => void) | null>(null);
   const turnGenRef = useRef(0);
@@ -4447,21 +4448,31 @@ export default function LiveHike() {
     }
   }, []);
 
+  const teardownNarrationSound = useCallback((sound: AudioSound | null) => {
+    if (!sound) return narrationTeardownRef.current;
+    const teardown = narrationTeardownRef.current.then(async () => {
+      try {
+        await sound.stopAsync();
+      } catch {
+        // Der Player kann bei einem nativen Playback-Fehler bereits gestoppt sein.
+      }
+      try {
+        await sound.unloadAsync();
+      } catch {
+        // Best effort — der Player kann bereits entladen sein.
+      }
+    });
+    narrationTeardownRef.current = teardown.catch(() => {});
+    return teardown;
+  }, []);
+
   const stopNarration = useCallback(async () => {
     const sound = narrationSoundRef.current;
     narrationSoundRef.current = null;
     navInterruptingRef.current = false;
     await Promise.all([
       stopTurnAudio(),
-      (async () => {
-        if (!sound) return;
-        try {
-          await sound.stopAsync();
-          await sound.unloadAsync();
-        } catch {
-          // Best effort — Sound koennte bereits entladen sein.
-        }
-      })(),
+      teardownNarrationSound(sound),
     ]);
     // Zurueck auf MixWithOthers — andere Apps duerfen wieder ungedimmt spielen.
     setAudioModeAsync({
@@ -4473,7 +4484,7 @@ export default function LiveHike() {
     setSpeaking(false);
     speakingRef.current = false;
           updateNowPlaying(null);
-  }, [stopTurnAudio, updateNowPlaying]);
+  }, [stopTurnAudio, teardownNarrationSound, updateNowPlaying]);
 
   // Manueller Stopp (Pause-Button, Abschluss, Verlassen des Screens):
   // erhoeht zusaetzlich die Generation, damit auch noch in-flight laufende
@@ -4786,8 +4797,12 @@ export default function LiveHike() {
         const prevSound = narrationSoundRef.current;
         narrationSoundRef.current = null;
         if (prevSound) {
-          try { await prevSound.stopAsync(); await prevSound.unloadAsync(); } catch {}
+          await teardownNarrationSound(prevSound);
         }
+        // Auch ein vorheriger natural-end/error cleanup kann noch laufen,
+        // nachdem der Ref bereits auf null gesetzt wurde. Vor dem Erzeugen
+        // des naechsten Players muss diese native Teardown-Kette beendet sein.
+        await narrationTeardownRef.current;
         if (gen !== narrationGenRef.current) return;
         // Vor dem Abspielen auf DuckOthers wechseln — nur waehrend aktiver Erzaehlung.
         await setAudioModeAsync({
@@ -4799,10 +4814,15 @@ export default function LiveHike() {
         if (gen !== narrationGenRef.current) return;
         const { sound } = await createAudioSound({ uri });
         if (gen !== narrationGenRef.current) {
-          await sound.unloadAsync().catch(() => {});
+          await teardownNarrationSound(sound);
           return;
         }
         narrationSoundRef.current = sound;
+        storyAudioLog("narration player started", {
+          kind: activeKind,
+          chapterIndex: activeChapterIndex,
+          generation: gen,
+        });
         let playbackFinished = false;
         let playbackResumeInFlight = false;
         let playbackResumeAttempts = 0;
@@ -4816,8 +4836,15 @@ export default function LiveHike() {
           speakingRef.current = false;
           if (narrationSoundRef.current === sound) {
             narrationSoundRef.current = null;
-            void sound.unloadAsync().catch(() => {});
           }
+          void teardownNarrationSound(sound);
+          storyAudioLog("narration player finished", {
+            kind: activeKind,
+            chapterIndex: activeChapterIndex,
+            generation: gen,
+            outcome,
+            reason,
+          });
           updateNowPlaying(null);
           if (outcome === "finished") {
             if (activeKind === "chapter" && activeChapterIndex != null) {
@@ -4915,7 +4942,7 @@ export default function LiveHike() {
           gen !== narrationGenRef.current ||
           narrationSoundRef.current !== sound
         ) {
-          await sound.unloadAsync().catch(() => {});
+          await teardownNarrationSound(sound);
           return;
         }
         await sound.playAsync();
@@ -4931,8 +4958,14 @@ export default function LiveHike() {
         const failedSound = narrationSoundRef.current;
         narrationSoundRef.current = null;
         if (failedSound) {
-          void failedSound.unloadAsync().catch(() => {});
+          void teardownNarrationSound(failedSound);
         }
+        storyAudioLog("narration player failed", {
+          kind: activeKind,
+          chapterIndex: activeChapterIndex,
+          generation: gen,
+          reason: err instanceof Error ? err.message : String(err),
+        });
         updateNowPlaying(null);
         if (activeKind === "chapter" && activeChapterIndex != null) {
           retryChapterAfterPlaybackFailure(
@@ -4964,7 +4997,7 @@ export default function LiveHike() {
         }
       }
     },
-    [narrationLabel, profile?.language, retryChapterAfterPlaybackFailure, stopTurnAudio, updateNowPlaying]
+    [narrationLabel, profile?.language, retryChapterAfterPlaybackFailure, stopTurnAudio, teardownNarrationSound, updateNowPlaying]
   );
   speakRef.current = speak;
 
