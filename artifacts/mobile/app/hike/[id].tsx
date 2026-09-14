@@ -992,12 +992,12 @@ export default function LiveHike() {
   const [startChoicePending, setStartChoicePending] = useState(false);
   const startChoicePendingRef = useRef(false);
   const startChoiceHandledRef = useRef(false);
-  // Neue Wanderungen bleiben bis zur GPS-basierten Startentscheidung komplett
-  // stumm. Ein Resume ist bereits bestätigt und darf direkt fortsetzen.
+  // Jeder Einstieg bleibt bis zur GPS-basierten Startentscheidung komplett
+  // stumm — auch ein Resume über den "Weiter wandern"-Button.
   const [startGateConfirmed, setStartGateConfirmed] = useState(false);
   const startGateConfirmedRef = useRef(false);
   const startGateShownRef = useRef(false);
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(isResume ? Date.now() : 0);
   const [startAudioReleased, setStartAudioReleased] = useState(false);
   const startAudioReleasedRef = useRef(false);
   const autoFollowRecalcStartedRef = useRef(false);
@@ -1006,7 +1006,7 @@ export default function LiveHike() {
     setStartAudioReleased(true);
   }, []);
   const confirmStartAtTrailhead = useCallback(() => {
-    if (!isResume && startTimeRef.current === 0) {
+    if (!isResume || startTimeRef.current === 0) {
       startTimeRef.current = Date.now();
     }
     startGateConfirmedRef.current = true;
