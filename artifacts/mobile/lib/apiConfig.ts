@@ -1,4 +1,5 @@
 import { setBaseUrl } from "@workspace/api-client-react";
+import Constants from "expo-constants";
 
 /**
  * Absolute Basis-URL des SagaTrail-API-Servers.
@@ -10,7 +11,9 @@ import { setBaseUrl } from "@workspace/api-client-react";
  * der Client bei relativen Pfaden (funktioniert im Web-Preview via Proxy).
  */
 export function getApiBaseUrl(): string | null {
-  const domain = process.env.EXPO_PUBLIC_DOMAIN;
+  const domain =
+    process.env.EXPO_PUBLIC_DOMAIN ??
+    (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined);
   if (!domain) return null;
   const host = domain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
   return `https://${host}`;

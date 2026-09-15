@@ -72,7 +72,13 @@ export default function Onboarding() {
   const canAdvance = () => {
     switch (step) {
       case 0:
-        return name.trim().length >= 2;
+        if (name.trim().length < 2 || !dateOfBirth.trim()) return false;
+        try {
+          normalizeBirthDate(dateOfBirth);
+          return true;
+        } catch {
+          return false;
+        }
       case 1:
         return archetype !== null;
       case 2:

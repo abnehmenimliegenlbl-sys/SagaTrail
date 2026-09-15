@@ -830,7 +830,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const result = await saveMyProfileMutation({
         data: {
           name: next.name,
-          ...(next.dateOfBirth ? { dateOfBirth: next.dateOfBirth } : {}),
+          dateOfBirth: next.dateOfBirth ?? null,
           archetype: next.archetype,
           ...(next.homeCanton ? { homeCanton: next.homeCanton } : {}),
           language: next.language,
@@ -852,7 +852,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const result = await saveMyProfileMutation({
         data: {
           name: merged.name,
-          ...(merged.dateOfBirth ? { dateOfBirth: merged.dateOfBirth } : {}),
+          dateOfBirth: merged.dateOfBirth ?? null,
           archetype: merged.archetype,
           ...(merged.homeCanton ? { homeCanton: merged.homeCanton } : {}),
           language: merged.language,
@@ -871,6 +871,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const token = await getTokenRef.current();
     if (!token) throw new Error("Nicht authentifiziert");
     const base = getApiBaseUrl();
+    if (!base) throw new Error("API-Adresse fehlt");
     const result = await FileSystem.uploadAsync(`${base}api/me/avatar`, localUri, {
       httpMethod: "POST",
       uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
@@ -880,7 +881,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
     });
     if (result.status < 200 || result.status >= 300) {
-      throw new Error(`Profilbild-Upload fehlgeschlagen: ${result.status}`);
+      let detail = "";
+      try {
+        detail = JSON.parse(result.body)?.error ?? "";
+      } catch {
+        detail = result.body?.slice(0, 120) ?? "";
+      }
+      throw new Error(detail || `Profilbild-Upload fehlgeschlagen: ${result.status}`);
     }
     await applyServerProfile(JSON.parse(result.body));
   }, [applyServerProfile]);

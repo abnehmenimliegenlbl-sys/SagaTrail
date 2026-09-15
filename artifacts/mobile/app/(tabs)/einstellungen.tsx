@@ -70,11 +70,16 @@ function normalizeBirthDateForProfile(value: string): string | null {
   const input = value.trim();
   if (!input) return null;
   const match = input.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  let iso = input;
   if (match) {
     const [, day, month, year] = match;
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    iso = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
   }
-  return /^\d{4}-\d{2}-\d{2}$/.test(input) ? input : null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+  const date = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== iso) return null;
+  const age = new Date().getUTCFullYear() - date.getUTCFullYear();
+  return age >= 13 && age <= 120 ? iso : null;
 }
 
 export default function Einstellungen() {
@@ -169,6 +174,7 @@ export default function Einstellungen() {
   const [nameInput, setNameInput] = useState(profile?.name ?? "");
   const [birthInput, setBirthInput] = useState(profile?.dateOfBirth ?? "");
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
 
   const pickProfileAvatar = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -181,10 +187,33 @@ export default function Einstellungen() {
     setAvatarUploading(true);
     try {
       await uploadProfileAvatar(result.assets[0].uri);
+    } catch (error) {
+      alert("Profilbild konnte nicht gespeichert werden", error instanceof Error ? error.message : "Bitte später erneut versuchen.");
     } finally {
       setAvatarUploading(false);
     }
   };
+
+  const saveCommunityProfile = useCallback(async () => {
+    if (!nameInput.trim()) return;
+    const normalizedBirthDate = normalizeBirthDateForProfile(birthInput);
+    if (birthInput.trim() && !normalizedBirthDate) {
+      alert("Geburtsdatum prüfen", "Bitte ein gültiges Datum zwischen 13 und 120 Jahren eingeben.");
+      return;
+    }
+    setProfileSaving(true);
+    try {
+      await updateProfile({
+        name: nameInput.trim(),
+        dateOfBirth: normalizedBirthDate,
+      });
+      setEditingName(false);
+    } catch (error) {
+      alert("Profil konnte nicht gespeichert werden", error instanceof Error ? error.message : "Bitte später erneut versuchen.");
+    } finally {
+      setProfileSaving(false);
+    }
+  }, [birthInput, nameInput, updateProfile]);
 
   // Vorschau-Sound (KI-Stimme via expo-audio); Generation-Zaehler verhindert,
   // dass eine langsame alte Anfrage eine neuere Vorschau ueberschreibt.
@@ -804,13 +833,7 @@ export default function Einstellungen() {
               style={[styles.modalInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
               returnKeyType="done"
               onSubmitEditing={() => {
-                if (nameInput.trim()) {
-                  void updateProfile({
-                    name: nameInput.trim(),
-                    dateOfBirth: birthInput.trim() || null,
-                  });
-                }
-                setEditingName(false);
+                void saveCommunityProfile();
               }}
             />
             <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>Geburtsdatum (TT.MM.JJJJ oder JJJJ-MM-TT)</Text>
@@ -827,18 +850,13 @@ export default function Einstellungen() {
                 <Text style={[styles.modalBtnText, { color: colors.mutedForeground }]}>{t.cancel}</Text>
               </Pressable>
               <Pressable
-                onPress={() => {
-                  if (nameInput.trim()) {
-                    void updateProfile({
-                      name: nameInput.trim(),
-                      dateOfBirth: normalizeBirthDateForProfile(birthInput),
-                    });
-                  }
-                  setEditingName(false);
-                }}
+                onPress={() => void saveCommunityProfile()}
+                disabled={profileSaving}
                 style={[styles.modalSaveBtn, { backgroundColor: colors.primary }]}
               >
-                <Text style={[styles.modalBtnText, { color: colors.primaryForeground }]}>{t.saveLabel}</Text>
+                <Text style={[styles.modalBtnText, { color: colors.primaryForeground }]}>
+                  {profileSaving ? "Speichert …" : t.saveLabel}
+                </Text>
               </Pressable>
             </View>
           </View>

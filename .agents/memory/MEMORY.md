@@ -145,6 +145,7 @@
 - [Required permission gate](sagatrail-required-permission-gate.md) — every authenticated foreground entry trusts live OS status; stored grants are diagnostic evidence only.
 - [Safety link personal messaging](sagatrail-safety-personal-messaging.md) — personal WhatsApp/SMS uses a prefilled contact message and requires the hiker’s final send tap.
 - [Native map WebView source identity](native-map-webview-source.md) — memoize `{html}` sources; a fresh object per GPS render makes WKWebView reload the whole map.
+- [Native OTA API base URL](sagatrail-native-ota-api-base.md) — native OTA bundles need a static production API fallback; dev-only EXPO_PUBLIC_DOMAIN can be absent during EAS Update.
 - [Watch localization fallback](sagatrail-watch-localization-fallback.md) — exhaust the selected language across all Watch copy tables before falling back to German.
 - [Watch turn-distance rounding](sagatrail-watch-turn-distance-rounding.md) — show turn distances as km/100 m, 10 m, or 5 m based on range, including the complication.
 - [Watch battery strategy](sagatrail-watch-battery-strategy.md) — iPhone owns GPS; Watch HR workout must not request outdoor location, and routine live snapshots stay at 15 s.
