@@ -52,6 +52,7 @@ export default function MeetupDetail() {
   const leave = useLeaveMeetup();
   const remove = useRemoveMeetupParticipant();
   const meetup = query.data;
+  const isNotFound = query.error instanceof Error && "status" in query.error && query.error.status === 404;
 
   const exportCalendar = async () => {
     if (!meetup) return;
@@ -177,7 +178,15 @@ export default function MeetupDetail() {
     return (
       <Background>
         <View style={[styles.center, { paddingTop: insets.top + 40 }]}>
-          <Text style={[styles.error, { color: colors.mutedForeground }]}>Treffpunkt nicht gefunden.</Text>
+          <Feather name={isNotFound ? "calendar" : "wifi-off"} size={28} color={colors.accent} />
+          <Text style={[styles.error, { color: colors.mutedForeground }]}>
+            {isNotFound ? "Dieser Treffpunkt ist nicht mehr verfügbar." : "Treffpunkt konnte nicht geladen werden."}
+          </Text>
+          <PrimaryButton
+            label="Zu den Treffpunkten"
+            onPress={() => router.replace("/treffpunkte")}
+            style={{ marginTop: 18 }}
+          />
         </View>
       </Background>
     );

@@ -778,6 +778,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (result: {
       id: string;
       name: string;
+      avatarUrl?: string | null;
+      dateOfBirth?: string | null;
       archetype: string;
       homeCanton?: string;
       language: string;
@@ -797,6 +799,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const next: Profile = {
         id: result.id,
         name: result.name,
+        avatarUrl:
+          result.avatarUrl !== undefined
+            ? result.avatarUrl
+            : profileRef.current?.avatarUrl ?? null,
+        dateOfBirth:
+          result.dateOfBirth !== undefined
+            ? result.dateOfBirth
+            : profileRef.current?.dateOfBirth ?? null,
         archetype: result.archetype,
         ...(result.homeCanton ? { homeCanton: result.homeCanton } : {}),
         language: result.language,
@@ -872,7 +882,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!token) throw new Error("Nicht authentifiziert");
     const base = getApiBaseUrl();
     if (!base) throw new Error("API-Adresse fehlt");
-    const result = await FileSystem.uploadAsync(`${base}api/me/avatar`, localUri, {
+    const result = await FileSystem.uploadAsync(`${base}/api/me/avatar`, localUri, {
       httpMethod: "POST",
       uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
       headers: {

@@ -65,7 +65,7 @@ async function rewardReferralInviter(inviteeId: string): Promise<void> {
 }
 
 function toProfile(row: typeof profilesTable.$inferSelect) {
-  return GetMyProfileResponse.parse({
+  const parsed = GetMyProfileResponse.parse({
     id: row.id,
     name: row.name,
     avatarUrl: row.avatarUrl ?? null,
@@ -81,6 +81,13 @@ function toProfile(row: typeof profilesTable.$inferSelect) {
     subscriptionTier: row.subscriptionTier,
     pendingPackRewards: row.pendingPackRewards ?? 0,
   });
+  // The generated response schema coerces OpenAPI `format: date` values to a
+  // JavaScript Date. Keep the wire format date-only so mobile profile editing
+  // can round-trip `YYYY-MM-DD` without exposing a timezone timestamp.
+  return {
+    ...parsed,
+    dateOfBirth: row.dateOfBirth ?? null,
+  };
 }
 
 router.get("/me", async (req, res): Promise<void> => {

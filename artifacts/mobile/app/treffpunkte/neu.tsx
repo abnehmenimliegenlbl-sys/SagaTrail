@@ -75,8 +75,13 @@ export default function NeuerTreffpunkt() {
       alert(t.createTitle, t.published, [
         { text: "OK", onPress: () => router.replace("/treffpunkte") },
       ]);
-    } catch {
-      alert(t.createTitle, t.error);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t.error;
+      if (message.includes("401") || message.toLowerCase().includes("auth")) {
+        alert(t.createTitle, t.loginRequired);
+      } else {
+        alert(t.createTitle, message);
+      }
     }
   };
 

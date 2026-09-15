@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import {
+  ApiError,
   useGetMeetups,
   useJoinMeetup,
   useLeaveMeetup,
@@ -81,7 +82,11 @@ export default function Treffpunkte() {
           {t.intro}
         </Text>
 
-        <View style={[styles.hintCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
+        <Pressable
+          onPress={() => router.push("/")}
+          accessibilityRole="button"
+          style={[styles.hintCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
+        >
           <Feather name="users" size={20} color={colors.accent} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.hintTitle, { color: colors.foreground }]}>
@@ -91,7 +96,8 @@ export default function Treffpunkte() {
               {t.noRoute}
             </Text>
           </View>
-        </View>
+          <Feather name="chevron-right" size={18} color={colors.accent} />
+        </Pressable>
 
         {meetups.isLoading ? (
           <View style={styles.loading}>
@@ -103,7 +109,11 @@ export default function Treffpunkte() {
         ) : meetups.isError ? (
           <View style={[styles.empty, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
             <Feather name="wifi-off" size={22} color={colors.mutedForeground} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.error}</Text>
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+              {meetups.error instanceof ApiError && meetups.error.status === 401
+                ? t.loginRequired
+                : t.error}
+            </Text>
             <Pressable onPress={refresh} style={styles.retry}>
               <Text style={[styles.retryText, { color: colors.accent }]}>Erneut laden</Text>
             </Pressable>
