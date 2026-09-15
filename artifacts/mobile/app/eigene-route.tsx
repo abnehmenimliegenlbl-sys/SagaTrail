@@ -114,6 +114,9 @@ export default function EigeneRoute() {
   >(null);
   const [pickerPending, setPickerPending] = useState<{ lat: number; lng: number } | null>(null);
   const [drawnPoints, setDrawnPoints] = useState<Point[]>([]);
+  const [waypointPreview, setWaypointPreview] = useState<number[][] | null>(null);
+  const [waypointPreviewLoading, setWaypointPreviewLoading] = useState(false);
+  const waypointPreviewRequestRef = useRef(0);
   const [pickerCenter, setPickerCenter] = useState<{ lat: number; lng: number }>({ lat: 46.9479, lng: 7.4446 });
   const [pickerMapHeight, setPickerMapHeight] = useState(0);
   const [reversing, setReversing] = useState(false);
@@ -299,6 +302,7 @@ export default function EigeneRoute() {
       lng: start?.lng ?? end?.lng ?? 7.4446,
     });
     setPickerPending(null);
+    setWaypointPreview(null);
     setPickerTarget("waypoints");
   }, [start, end]);
 
@@ -311,6 +315,45 @@ export default function EigeneRoute() {
     setPickerPending(null);
     setPickerTarget("freehand");
   }, [start, end]);
+
+  useEffect(() => {
+    if (pickerTarget !== "waypoints" || waypoints.length < 2) {
+      waypointPreviewRequestRef.current += 1;
+      setWaypointPreview(null);
+      setWaypointPreviewLoading(false);
+      return;
+    }
+
+    const requestId = ++waypointPreviewRequestRef.current;
+    const timer = setTimeout(() => {
+      setWaypointPreviewLoading(true);
+      void planCustomRoute({
+        points: waypoints.map(({ lat, lng }) => ({ lat, lng })),
+      })
+        .then((route) => {
+          if (waypointPreviewRequestRef.current !== requestId) return;
+          const geometry = (route as HikingRoute).geometry;
+          setWaypointPreview(geometry && geometry.length >= 2 ? geometry : null);
+        })
+        .catch(() => {
+          if (waypointPreviewRequestRef.current === requestId) {
+            setWaypointPreview(null);
+          }
+        })
+        .finally(() => {
+          if (waypointPreviewRequestRef.current === requestId) {
+            setWaypointPreviewLoading(false);
+          }
+        });
+    }, DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timer);
+      if (waypointPreviewRequestRef.current === requestId) {
+        waypointPreviewRequestRef.current += 1;
+      }
+    };
+  }, [pickerTarget, waypoints]);
 
   const onPickerMapClick = useCallback(
     (lat: number, lng: number) => {
@@ -615,7 +658,7 @@ export default function EigeneRoute() {
                   pickerMode
                   geometry={
                     pickerTarget === "waypoints"
-                      ? waypoints.map(({ lat, lng }) => [lat, lng])
+                      ? waypointPreview ?? undefined
                       : pickerTarget === "freehand-preview"
                         ? drawnPoints.map(({ lat, lng }) => [lat, lng])
                         : undefined
@@ -681,6 +724,14 @@ export default function EigeneRoute() {
                     </View>
                   ))}
                 </ScrollView>
+                {waypointPreviewLoading ? (
+                  <View style={styles.waypointPreviewStatus}>
+                    <ActivityIndicator size="small" color={colors.accent} />
+                    <Text style={[styles.waypointAction, { color: colors.mutedForeground }]}>
+                      {t.calculatingLabel}
+                    </Text>
+                  </View>
+                ) : null}
                 <View style={styles.waypointActions}>
                   <Pressable
                     onPress={() => setWaypoints((current) => current.slice(0, -1))}
@@ -1011,6 +1062,7 @@ const styles = StyleSheet.create({
   drawStatus: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 2, marginBottom: 4 },
   waypointList: { maxHeight: 96 },
   waypointListContent: { gap: 5, paddingBottom: 8 },
+  waypointPreviewStatus: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 },
   waypointRow: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 25 },
   waypointNumber: {
     width: 22,
