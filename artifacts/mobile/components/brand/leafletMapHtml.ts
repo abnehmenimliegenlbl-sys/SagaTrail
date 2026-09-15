@@ -656,28 +656,40 @@ export function buildLeafletMapHtml(
       var drawing = false;
       var drawnPoints = [];
       var drawnLine = null;
-      function pointFromEvent(event) {
-        return { lat: event.latlng.lat, lng: event.latlng.lng };
+      var drawContainer = map.getContainer();
+      drawContainer.style.touchAction = "none";
+      drawContainer.style.webkitUserSelect = "none";
+      drawContainer.style.userSelect = "none";
+      function pointFromPointerEvent(event) {
+        var rect = drawContainer.getBoundingClientRect();
+        var containerPoint = L.point(event.clientX - rect.left, event.clientY - rect.top);
+        var latLng = map.containerPointToLatLng(containerPoint);
+        return { lat: latLng.lat, lng: latLng.lng };
       }
       function startDrawing(event) {
-        if (event.originalEvent && event.originalEvent.preventDefault) event.originalEvent.preventDefault();
+        if (event.pointerType === "mouse" && event.buttons !== 1) return;
+        if (event.preventDefault) event.preventDefault();
+        if (drawContainer.setPointerCapture && event.pointerId !== undefined) {
+          try { drawContainer.setPointerCapture(event.pointerId); } catch (_) {}
+        }
         drawing = true;
-        drawnPoints = [pointFromEvent(event)];
-        drawnLine = L.polyline([[event.latlng.lat, event.latlng.lng]], {
+        drawnPoints = [pointFromPointerEvent(event)];
+        drawnLine = L.polyline([[drawnPoints[0].lat, drawnPoints[0].lng]], {
           color: "#CC0000", weight: 4, opacity: .95, lineCap: "round", lineJoin: "round"
         }).addTo(map);
       }
       function continueDrawing(event) {
         if (!drawing) return;
-        if (event.originalEvent && event.originalEvent.preventDefault) event.originalEvent.preventDefault();
-        var next = pointFromEvent(event);
+        if (event.preventDefault) event.preventDefault();
+        var next = pointFromPointerEvent(event);
         var previous = drawnPoints[drawnPoints.length - 1];
         if (previous && map.distance([previous.lat, previous.lng], [next.lat, next.lng]) < 8) return;
         drawnPoints.push(next);
         drawnLine.setLatLngs(drawnPoints.map(function (point) { return [point.lat, point.lng]; }));
       }
-      function finishDrawing() {
+      function finishDrawing(event) {
         if (!drawing) return;
+        if (event && event.preventDefault) event.preventDefault();
         drawing = false;
         if (drawnPoints.length < 2) return;
         var sampled = drawnPoints;
@@ -691,10 +703,11 @@ export function buildLeafletMapHtml(
       }
       map.dragging.disable();
       map.scrollWheelZoom.disable();
-      map.getContainer().style.cursor = "crosshair";
-      map.on("mousedown touchstart", startDrawing);
-      map.on("mousemove touchmove", continueDrawing);
-      map.on("mouseup touchend touchcancel", finishDrawing);
+      drawContainer.style.cursor = "crosshair";
+      drawContainer.addEventListener("pointerdown", startDrawing, { passive: false });
+      drawContainer.addEventListener("pointermove", continueDrawing, { passive: false });
+      drawContainer.addEventListener("pointerup", finishDrawing, { passive: false });
+      drawContainer.addEventListener("pointercancel", finishDrawing, { passive: false });
     } else if (picker) {
       map.getContainer().style.cursor = "crosshair";
       map.on("click", function (event) { post({ type: "stt-mapclick", lat: event.latlng.lat, lng: event.latlng.lng }); });
