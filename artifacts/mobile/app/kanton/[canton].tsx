@@ -50,15 +50,13 @@ import {
   useSubscription,
 } from "@/lib/revenuecat";
 import { useClaimKantonspack, getGetMyProfileQueryKey } from "@workspace/api-client-react";
-import { getPois } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { bboxAroundGeometry, filterByRouteCorridor } from "@/lib/geo";
 import {
   ROUTE_THEME_KEYS,
-  deriveRouteThemes,
   routeThemeLabel,
   type RouteThemeKey,
 } from "@/lib/routeThemes";
+import { getRouteThemes, routeThemeCache } from "@/lib/routeThemeIndex";
 
 const DIST_MIN = 0;
 const DIST_MAX = 50;
@@ -66,18 +64,6 @@ const ASC_MIN = 0;
 const ASC_MAX = 3000;
 const DIFF_MIN = 1;
 const DIFF_MAX = 6;
-
-const routeThemeCache = new Map<string, RouteThemeKey[]>();
-const THEME_POI_RETRY_MS = 5000;
-
-async function loadThemePois(
-  bbox: ReturnType<typeof bboxAroundGeometry>,
-): Promise<Awaited<ReturnType<typeof getPois>>> {
-  const initial = await getPois(bbox);
-  if (initial.length > 0) return initial;
-  await new Promise((resolve) => setTimeout(resolve, THEME_POI_RETRY_MS));
-  return getPois(bbox);
-}
 
 function getLastSundayOf(year: number, month: number): Date {
   const d = new Date(year, month + 1, 0);
@@ -354,13 +340,7 @@ export default function KantonRouten() {
       const route = missingRoutes[cursor++];
       if (!route) return;
       try {
-        const geometry = route.geometry ?? [];
-        const pois = await loadThemePois(bboxAroundGeometry(geometry, route.coordinates, 2));
-        const nearbyPois =
-          geometry.length > 1
-            ? filterByRouteCorridor(pois, geometry, 2)
-            : pois;
-        const themes = deriveRouteThemes(nearbyPois, route);
+        const themes = await getRouteThemes(route);
         routeThemeCache.set(route.id, themes);
         loaded[route.id] = themes;
         if (!cancelled) setRouteThemesById((current) => ({ ...current, [route.id]: themes }));

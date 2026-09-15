@@ -293,8 +293,11 @@ export default function Entdecken() {
             accessibilityLabel={t.themeWorldsTitle}
           >
             {ROUTE_THEME_KEYS.map((theme) => (
-              <View
+              <Pressable
                 key={theme}
+                onPress={() => router.push(`/themenwelt/${theme}`)}
+                accessibilityRole="button"
+                accessibilityLabel={routeThemeLabel(theme, language)}
                 style={[
                   styles.themeWorldCard,
                   {
@@ -303,7 +306,6 @@ export default function Entdecken() {
                     borderRadius: colors.radius,
                   },
                 ]}
-                accessibilityLabel={routeThemeLabel(theme, language)}
               >
                 <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "1F" }]}>
                   <Feather name={THEME_ICONS[theme]} size={18} color={colors.accent} />
@@ -314,7 +316,7 @@ export default function Entdecken() {
                 >
                   {routeThemeLabel(theme, language)}
                 </Text>
-              </View>
+              </Pressable>
             ))}
           </ScrollView>
         </Animated.View>
