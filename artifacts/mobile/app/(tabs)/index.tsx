@@ -36,8 +36,28 @@ import {
 } from "@/lib/kantonSlug";
 import { hapticSelection } from "@/lib/haptics";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
+import {
+  ROUTE_THEME_KEYS,
+  routeThemeLabel,
+  type RouteThemeKey,
+} from "@/lib/routeThemes";
 
 const WEB_TOP = 67;
+
+const THEME_ICONS: Record<RouteThemeKey, React.ComponentProps<typeof Feather>["name"]> = {
+  wasserwege: "droplet",
+  burgen_ruinen_alte_wege: "home",
+  gipfel_panorama: "triangle",
+  geologie_eiszeit: "layers",
+  wald_wildtiere: "map",
+  alpen_landwirtschaft: "compass",
+  pilger_handelswege: "navigation",
+  industriekultur: "archive",
+  familien_entdecker: "users",
+  nacht_sterne: "moon",
+  flora_jahreszeiten: "sun",
+  bahn_seilbahn: "truck",
+};
 
 export default function Entdecken() {
   const colors = useColors();
@@ -255,6 +275,48 @@ export default function Entdecken() {
             </View>
             <Feather name="chevron-right" size={19} color={colors.mutedForeground} />
           </Pressable>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.duration(400)} style={styles.themeWorldsSection}>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+              {t.themeWorldsTitle}
+            </Text>
+            <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
+              {t.themeWorldsHint}
+            </Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.themeWorldsContent}
+            accessibilityLabel={t.themeWorldsTitle}
+          >
+            {ROUTE_THEME_KEYS.map((theme) => (
+              <View
+                key={theme}
+                style={[
+                  styles.themeWorldCard,
+                  {
+                    backgroundColor: colors.glassBg,
+                    borderColor: colors.glassBorder,
+                    borderRadius: colors.radius,
+                  },
+                ]}
+                accessibilityLabel={routeThemeLabel(theme, language)}
+              >
+                <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "1F" }]}>
+                  <Feather name={THEME_ICONS[theme]} size={18} color={colors.accent} />
+                </View>
+                <Text
+                  style={[styles.themeWorldLabel, { color: colors.foreground }]}
+                  numberOfLines={2}
+                >
+                  {routeThemeLabel(theme, language)}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
         </Animated.View>
 
         <View style={styles.section}>
@@ -489,6 +551,28 @@ const styles = StyleSheet.create({
   meetupIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   meetupTitle: { fontFamily: fonts.titleBold, fontSize: 18 },
   meetupText: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  themeWorldsSection: { marginTop: 8 },
+  themeWorldsContent: { paddingHorizontal: 20, gap: 10 },
+  themeWorldCard: {
+    width: 132,
+    minHeight: 112,
+    borderWidth: 1,
+    padding: 12,
+    justifyContent: "space-between",
+  },
+  themeWorldIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  themeWorldLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    lineHeight: 17,
+    marginTop: 10,
+  },
   section: { paddingHorizontal: 20, marginTop: 28, marginBottom: 14 },
   sectionTitle: { fontFamily: fonts.titleBold, fontSize: 22 },
   sectionHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 2 },

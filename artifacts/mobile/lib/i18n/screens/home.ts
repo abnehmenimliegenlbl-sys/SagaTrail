@@ -25,6 +25,8 @@ export interface HomeStrings {
   premiumBannerCta: string;
   referralRewardTitle: string;
   referralRewardCta: string;
+  themeWorldsTitle: string;
+  themeWorldsHint: string;
 }
 
 const HOME_STRINGS: StringsDict<HomeStrings> = {
@@ -53,6 +55,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerCta: "Premium holen",
     referralRewardTitle: "Belohnung wartet!",
     referralRewardCta: "Sagenpaket wählen",
+    themeWorldsTitle: "Themenwelten",
+    themeWorldsHint: "Wähle dein nächstes Wandererlebnis",
   },
   gsw: {
     welcomeBack: "Willkomme zrugg",
@@ -79,6 +83,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerCta: "Premium hole",
     referralRewardTitle: "Belohnig wartet!",
     referralRewardCta: "Sagenpaket wähle",
+    themeWorldsTitle: "Thema-Wälte",
+    themeWorldsHint: "Wähl dis nöchste Wandererlebnis",
   },
   en: {
     welcomeBack: "Welcome back",
@@ -105,6 +111,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerCta: "Get Premium",
     referralRewardTitle: "Reward waiting!",
     referralRewardCta: "Choose saga pack",
+    themeWorldsTitle: "Theme worlds",
+    themeWorldsHint: "Choose your next hiking experience",
   },
   fr: {
     welcomeBack: "Bon retour parmi nous",
@@ -131,6 +139,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerCta: "Passer Premium",
     referralRewardTitle: "Récompense disponible !",
     referralRewardCta: "Choisir un pack",
+    themeWorldsTitle: "Univers thématiques",
+    themeWorldsHint: "Choisis ta prochaine expérience de randonnée",
   },
   it: {
     welcomeBack: "Bentornato/a",
@@ -157,6 +167,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerCta: "Ottieni Premium",
     referralRewardTitle: "Ricompensa disponibile!",
     referralRewardCta: "Scegli un pacchetto",
+    themeWorldsTitle: "Mondi tematici",
+    themeWorldsHint: "Scegli la tua prossima esperienza escursionistica",
   },
   es: {
     welcomeBack: "Bienvenido/a de nuevo",
@@ -183,6 +195,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerCta: "Obtener Premium",
     referralRewardTitle: "¡Recompensa disponible!",
     referralRewardCta: "Elegir pack de sagas",
+    themeWorldsTitle: "Mundos temáticos",
+    themeWorldsHint: "Elige tu próxima experiencia de senderismo",
   },
   pt: {
     welcomeBack: "Bem-vindo/a de volta",
@@ -209,6 +223,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerCta: "Obter Premium",
     referralRewardTitle: "Recompensa disponível!",
     referralRewardCta: "Escolher pacote de lendas",
+    themeWorldsTitle: "Mundos temáticos",
+    themeWorldsHint: "Escolha a sua próxima experiência de caminhada",
   },
   zh: {
     welcomeBack: "欢迎回来",
@@ -235,6 +251,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerCta: "获取高级版",
     referralRewardTitle: "奖励等待领取！",
     referralRewardCta: "选择传说包",
+    themeWorldsTitle: "主题世界",
+    themeWorldsHint: "选择你的下一次徒步体验",
   },
   ru: {
     welcomeBack: "С возвращением",
@@ -261,6 +279,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerCta: "Получить Premium",
     referralRewardTitle: "Награда ждёт тебя!",
     referralRewardCta: "Выбрать пакет саг",
+    themeWorldsTitle: "Тематические миры",
+    themeWorldsHint: "Выбери следующий поход",
   },
 };
 
