@@ -4,6 +4,13 @@ export interface KantonStrings {
   eyebrow: string;
   intro: (cantonName: string) => string;
   filterTitle: string;
+  themeFilterTitle: string;
+  themeFilterCount: (selected: number, total: number) => string;
+  themeFilterSelectAll: string;
+  themeFilterClear: string;
+  themeFilterLoading: string;
+  themeFilterError: string;
+  themeFilterNone: string;
   distanceLabel: string;
   elevationLabel: string;
   difficultyLabel: string;
@@ -60,6 +67,13 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
         cantonName || "diesem Kanton"
       }.`,
     filterTitle: "Filter",
+    themeFilterTitle: "Themenwelten",
+    themeFilterCount: (selected, total) => `${selected} von ${total} angewählt`,
+    themeFilterSelectAll: "Alle auswählen",
+    themeFilterClear: "Alle abwählen",
+    themeFilterLoading: "Themen werden für die Routen geprüft …",
+    themeFilterError: "Einige Themen konnten nicht geprüft werden.",
+    themeFilterNone: "Keine Route passt zu den gewählten Themen.",
     distanceLabel: "Distanz",
     elevationLabel: "Höhenmeter",
     difficultyLabel: "Schwierigkeit",
@@ -115,6 +129,13 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
         cantonName || "däm Kanton"
       }.`,
     filterTitle: "Filter",
+    themeFilterTitle: "Thema-Wälte",
+    themeFilterCount: (selected, total) => `${selected} vo ${total} agwählt`,
+    themeFilterSelectAll: "Alli uswähle",
+    themeFilterClear: "Alli abwähle",
+    themeFilterLoading: "Thema vo de Route werde prüeft …",
+    themeFilterError: "Es hend nöd alli Thema chönne prüeft werde.",
+    themeFilterNone: "Kei Route passt zu de gwählte Thema.",
     distanceLabel: "Distanz",
     elevationLabel: "Höhemeter",
     difficultyLabel: "Schwierigkeit",
@@ -170,6 +191,13 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
         cantonName || "ce canton"
       }.`,
     filterTitle: "Filtres",
+    themeFilterTitle: "Univers thématiques",
+    themeFilterCount: (selected, total) => `${selected} sur ${total} sélectionnés`,
+    themeFilterSelectAll: "Tout sélectionner",
+    themeFilterClear: "Tout désélectionner",
+    themeFilterLoading: "Vérification des thèmes des itinéraires …",
+    themeFilterError: "Certains thèmes n’ont pas pu être vérifiés.",
+    themeFilterNone: "Aucun itinéraire ne correspond aux thèmes choisis.",
     distanceLabel: "Distance",
     elevationLabel: "Dénivelé",
     difficultyLabel: "Difficulté",
@@ -225,6 +253,13 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
         cantonName || "questo cantone"
       }.`,
     filterTitle: "Filtri",
+    themeFilterTitle: "Mondi tematici",
+    themeFilterCount: (selected, total) => `${selected} di ${total} selezionati`,
+    themeFilterSelectAll: "Seleziona tutto",
+    themeFilterClear: "Deseleziona tutto",
+    themeFilterLoading: "Verifica dei temi degli itinerari …",
+    themeFilterError: "Non è stato possibile verificare tutti i temi.",
+    themeFilterNone: "Nessun itinerario corrisponde ai temi scelti.",
     distanceLabel: "Distanza",
     elevationLabel: "Dislivello",
     difficultyLabel: "Difficoltà",
@@ -280,6 +315,13 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
         cantonName || "this canton"
       }.`,
     filterTitle: "Filters",
+    themeFilterTitle: "Theme worlds",
+    themeFilterCount: (selected, total) => `${selected} of ${total} selected`,
+    themeFilterSelectAll: "Select all",
+    themeFilterClear: "Clear all",
+    themeFilterLoading: "Checking route themes …",
+    themeFilterError: "Some themes could not be checked.",
+    themeFilterNone: "No route matches the selected themes.",
     distanceLabel: "Distance",
     elevationLabel: "Elevation",
     difficultyLabel: "Difficulty",
@@ -335,6 +377,13 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
         cantonName || "该州"
       } 内的匹配路线。`,
     filterTitle: "过滤器",
+    themeFilterTitle: "主题世界",
+    themeFilterCount: (selected, total) => `已选择 ${selected}/${total}`,
+    themeFilterSelectAll: "全选",
+    themeFilterClear: "全部取消",
+    themeFilterLoading: "正在检查路线主题……",
+    themeFilterError: "部分主题无法检查。",
+    themeFilterNone: "没有路线符合所选主题。",
     distanceLabel: "距离",
     elevationLabel: "海拔高度",
     difficultyLabel: "难度",
@@ -389,6 +438,13 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
         cantonName || "этом кантоне"
       }.`,
     filterTitle: "Фильтры",
+    themeFilterTitle: "Тематические миры",
+    themeFilterCount: (selected, total) => `Выбрано ${selected} из ${total}`,
+    themeFilterSelectAll: "Выбрать все",
+    themeFilterClear: "Снять выбор",
+    themeFilterLoading: "Проверяем темы маршрутов …",
+    themeFilterError: "Не все темы удалось проверить.",
+    themeFilterNone: "Нет маршрутов с выбранными темами.",
     distanceLabel: "Дистанция",
     elevationLabel: "Набор высоты",
     difficultyLabel: "Сложность",
@@ -444,6 +500,13 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
         cantonName || "este cantón"
       }.`,
     filterTitle: "Filtros",
+    themeFilterTitle: "Mundos temáticos",
+    themeFilterCount: (selected, total) => `${selected} de ${total} seleccionados`,
+    themeFilterSelectAll: "Seleccionar todo",
+    themeFilterClear: "Quitar todo",
+    themeFilterLoading: "Comprobando los temas de las rutas …",
+    themeFilterError: "No se han podido comprobar algunos temas.",
+    themeFilterNone: "Ninguna ruta coincide con los temas elegidos.",
     distanceLabel: "Distancia",
     elevationLabel: "Desnivel",
     difficultyLabel: "Dificultad",
@@ -499,6 +562,13 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
         cantonName || "este cantão"
       }.`,
     filterTitle: "Filtros",
+    themeFilterTitle: "Mundos temáticos",
+    themeFilterCount: (selected, total) => `${selected} de ${total} selecionados`,
+    themeFilterSelectAll: "Selecionar tudo",
+    themeFilterClear: "Limpar tudo",
+    themeFilterLoading: "A verificar os temas das rotas …",
+    themeFilterError: "Não foi possível verificar alguns temas.",
+    themeFilterNone: "Nenhuma rota corresponde aos temas escolhidos.",
     distanceLabel: "Distância",
     elevationLabel: "Desnível",
     difficultyLabel: "Dificuldade",

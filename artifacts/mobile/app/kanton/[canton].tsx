@@ -50,7 +50,15 @@ import {
   useSubscription,
 } from "@/lib/revenuecat";
 import { useClaimKantonspack, getGetMyProfileQueryKey } from "@workspace/api-client-react";
+import { getPois } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { bboxAroundGeometry, filterByRouteCorridor } from "@/lib/geo";
+import {
+  ROUTE_THEME_KEYS,
+  deriveRouteThemes,
+  routeThemeLabel,
+  type RouteThemeKey,
+} from "@/lib/routeThemes";
 
 const DIST_MIN = 0;
 const DIST_MAX = 50;
@@ -58,6 +66,18 @@ const ASC_MIN = 0;
 const ASC_MAX = 3000;
 const DIFF_MIN = 1;
 const DIFF_MAX = 6;
+
+const routeThemeCache = new Map<string, RouteThemeKey[]>();
+const THEME_POI_RETRY_MS = 5000;
+
+async function loadThemePois(
+  bbox: ReturnType<typeof bboxAroundGeometry>,
+): Promise<Awaited<ReturnType<typeof getPois>>> {
+  const initial = await getPois(bbox);
+  if (initial.length > 0) return initial;
+  await new Promise((resolve) => setTimeout(resolve, THEME_POI_RETRY_MS));
+  return getPois(bbox);
+}
 
 function getLastSundayOf(year: number, month: number): Date {
   const d = new Date(year, month + 1, 0);
@@ -247,6 +267,14 @@ export default function KantonRouten() {
   const [startMin, setStartMin] = useState(0);
   const [sliderAktiv, setSliderAktiv] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showThemeFilters, setShowThemeFilters] = useState(false);
+  const [selectedThemeKeys, setSelectedThemeKeys] = useState<RouteThemeKey[]>([
+    ...ROUTE_THEME_KEYS,
+  ]);
+  const [routeThemesById, setRouteThemesById] = useState<Record<string, RouteThemeKey[]>>({});
+  const [themeFilterLoading, setThemeFilterLoading] = useState(false);
+  const [themeFilterError, setThemeFilterError] = useState(false);
+  const themeFilterActive = selectedThemeKeys.length < ROUTE_THEME_KEYS.length;
   const suitabilityCopy = useMemo(() => {
     if (language === "fr") return { title: "Recommandation technique", family: "Adapté aux enfants / familles", accessible: "Accès sans barrières officiel", note: "La recommandation enfants / familles est technique; l'accès sans barrières repose sur la classification officielle de SuisseMobile." };
     if (language === "it") return { title: "Raccomandazione tecnica", family: "Adatto a bambini / famiglie", accessible: "Accesso senza barriere ufficiale", note: "La raccomandation bambini / famiglie è tecnica; l'accesso senza barriere si basa sulla classificazione ufficiale di SvizzeraMobile." };
@@ -257,12 +285,26 @@ export default function KantonRouten() {
   const sunsetTime = useMemo(() => calcSunsetCH(new Date()), []);
   const sunsetTimeStr = `${String(sunsetTime.h).padStart(2, "0")}:${String(sunsetTime.m).padStart(2, "0")}`;
 
-  const filteredRoutes = useMemo(() => {
+  const sunsetFilteredRoutes = useMemo(() => {
     if (!sunsetFilter) return routes;
     const availMin = sunsetTime.h * 60 + sunsetTime.m - (startH * 60 + startMin);
     if (availMin <= 0) return [];
     return routes.filter((r) => r.minutes <= availMin);
   }, [routes, sunsetFilter, startH, startMin, sunsetTime]);
+
+  const filteredRoutes = useMemo(() => {
+    if (!themeFilterActive || themeFilterLoading) return sunsetFilteredRoutes;
+    const selected = new Set(selectedThemeKeys);
+    return sunsetFilteredRoutes.filter((route) =>
+      (routeThemesById[route.id] ?? []).some((theme) => selected.has(theme)),
+    );
+  }, [
+    sunsetFilteredRoutes,
+    themeFilterActive,
+    themeFilterLoading,
+    selectedThemeKeys,
+    routeThemesById,
+  ]);
 
   // Beim Kantonswechsel Filter und Ergebnisse zuruecksetzen — erst suchen,
   // wenn der Nutzer die Filter gesetzt und die Suche gestartet hat.
@@ -280,10 +322,70 @@ export default function KantonRouten() {
     setStartH(9);
     setStartMin(0);
     setShowAdvancedFilters(false);
+    setShowThemeFilters(false);
+    setSelectedThemeKeys([...ROUTE_THEME_KEYS]);
+    setRouteThemesById({});
+    setThemeFilterLoading(false);
+    setThemeFilterError(false);
     setRoutes([]);
     setSearched(false);
     setSearching(false);
   }, [cantonName]);
+
+  useEffect(() => {
+    if (!themeFilterActive || routes.length === 0) {
+      setThemeFilterLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setThemeFilterLoading(true);
+    setThemeFilterError(false);
+
+    const missingRoutes = routes.filter((route) => !routeThemeCache.has(route.id));
+    let cursor = 0;
+    const loaded: Record<string, RouteThemeKey[]> = {};
+    for (const route of routes) {
+      const cached = routeThemeCache.get(route.id);
+      if (cached) loaded[route.id] = cached;
+    }
+    if (Object.keys(loaded).length > 0) setRouteThemesById((current) => ({ ...current, ...loaded }));
+
+    const loadNext = async (): Promise<void> => {
+      const route = missingRoutes[cursor++];
+      if (!route) return;
+      try {
+        const geometry = route.geometry ?? [];
+        const pois = await loadThemePois(bboxAroundGeometry(geometry, route.coordinates, 2));
+        const nearbyPois =
+          geometry.length > 1
+            ? filterByRouteCorridor(pois, geometry, 2)
+            : pois;
+        const themes = deriveRouteThemes(nearbyPois, route);
+        routeThemeCache.set(route.id, themes);
+        loaded[route.id] = themes;
+        if (!cancelled) setRouteThemesById((current) => ({ ...current, [route.id]: themes }));
+      } catch {
+        routeThemeCache.set(route.id, []);
+        loaded[route.id] = [];
+        if (!cancelled) {
+          setThemeFilterError(true);
+          setRouteThemesById((current) => ({ ...current, [route.id]: [] }));
+        }
+      }
+      if (!cancelled) await loadNext();
+    };
+
+    Promise.all([loadNext(), loadNext(), loadNext(), loadNext()])
+      .catch(() => {
+        if (!cancelled) setThemeFilterError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setThemeFilterLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [routes, themeFilterActive]);
 
   const handleNearbyToggle = useCallback(async (value: boolean) => {
     if (!value) {
@@ -472,6 +574,108 @@ export default function KantonRouten() {
             formatValue={(v) => t.difficultyUnit(v)}
             onDraggingChange={setSliderAktiv}
           />
+
+          <View style={[styles.themeFilterBox, { borderColor: colors.glassBorder }]}>
+            <Pressable
+              onPress={() => setShowThemeFilters((visible) => !visible)}
+              accessibilityRole="button"
+              accessibilityLabel={t.themeFilterTitle}
+              accessibilityState={{ expanded: showThemeFilters }}
+              style={styles.themeFilterHeader}
+            >
+              <View style={[styles.themeFilterIcon, { backgroundColor: colors.accent + "1F" }]}>
+                <Feather name="tag" size={14} color={colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.themeFilterTitle, { color: colors.foreground }]}>
+                  {t.themeFilterTitle}
+                </Text>
+                <Text style={[styles.themeFilterHint, { color: colors.mutedForeground }]}>
+                  {t.themeFilterCount(selectedThemeKeys.length, ROUTE_THEME_KEYS.length)}
+                </Text>
+              </View>
+              <Feather
+                name={showThemeFilters ? "chevron-up" : "chevron-down"}
+                size={17}
+                color={colors.mutedForeground}
+              />
+            </Pressable>
+            {showThemeFilters && (
+              <View style={[styles.themeFilterBody, { borderTopColor: colors.glassBorder }]}>
+                <View style={styles.themeFilterActions}>
+                  <Pressable
+                    onPress={() => setSelectedThemeKeys([...ROUTE_THEME_KEYS])}
+                    accessibilityRole="button"
+                    style={[styles.themeFilterAction, { borderColor: colors.glassBorder }]}
+                  >
+                    <Text style={[styles.themeFilterActionText, { color: colors.accent }]}>
+                      {t.themeFilterSelectAll}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setSelectedThemeKeys([])}
+                    accessibilityRole="button"
+                    style={[styles.themeFilterAction, { borderColor: colors.glassBorder }]}
+                  >
+                    <Text style={[styles.themeFilterActionText, { color: colors.mutedForeground }]}>
+                      {t.themeFilterClear}
+                    </Text>
+                  </Pressable>
+                </View>
+                <View style={styles.themeFilterGrid}>
+                  {ROUTE_THEME_KEYS.map((theme) => {
+                    const selected = selectedThemeKeys.includes(theme);
+                    return (
+                      <Pressable
+                        key={theme}
+                        onPress={() =>
+                          setSelectedThemeKeys((current) =>
+                            current.includes(theme)
+                              ? current.filter((key) => key !== theme)
+                              : [...current, theme],
+                          )
+                        }
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: selected }}
+                        accessibilityLabel={routeThemeLabel(theme, language)}
+                        style={[
+                          styles.themeFilterChip,
+                          {
+                            backgroundColor: selected ? colors.accent + "1F" : "transparent",
+                            borderColor: selected ? colors.accent : colors.glassBorder,
+                          },
+                        ]}
+                      >
+                        <Feather
+                          name={selected ? "check-circle" : "circle"}
+                          size={14}
+                          color={selected ? colors.accent : colors.mutedForeground}
+                        />
+                        <Text
+                          style={[
+                            styles.themeFilterChipText,
+                            { color: selected ? colors.foreground : colors.mutedForeground },
+                          ]}
+                        >
+                          {routeThemeLabel(theme, language)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                {themeFilterLoading && (
+                  <Text style={[styles.themeFilterStatus, { color: colors.mutedForeground }]}>
+                    {t.themeFilterLoading}
+                  </Text>
+                )}
+                {themeFilterError && !themeFilterLoading && (
+                  <Text style={[styles.themeFilterStatus, { color: colors.destructive }]}>
+                    {t.themeFilterError}
+                  </Text>
+                )}
+              </View>
+            )}
+          </View>
 
           <Pressable
             onPress={() => setShowAdvancedFilters((visible) => !visible)}
@@ -670,6 +874,7 @@ export default function KantonRouten() {
                     setSunsetFilter(false);
                     setStartH(9);
                     setStartMin(0);
+                    setSelectedThemeKeys([...ROUTE_THEME_KEYS]);
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={t.resetFilters}
@@ -682,20 +887,26 @@ export default function KantonRouten() {
                 </Pressable>
               )}
             </View>
-          ) : filteredRoutes.length === 0 && sunsetFilter ? (
+          ) : filteredRoutes.length === 0 && (sunsetFilter || themeFilterActive) ? (
             <View style={styles.hint}>
-              <Feather name="sunset" size={28} color={colors.mutedForeground} />
+              <Feather
+                name={themeFilterActive && !sunsetFilter ? "tag" : "sunset"}
+                size={28}
+                color={colors.mutedForeground}
+              />
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-                {t.sunsetNoneInTime}
+                {themeFilterActive && !sunsetFilter ? t.themeFilterNone : t.sunsetNoneInTime}
               </Text>
               <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-                {t.sunsetInfo(sunsetTimeStr)}
+                {themeFilterActive && !sunsetFilter
+                  ? t.themeFilterCount(selectedThemeKeys.length, ROUTE_THEME_KEYS.length)
+                  : t.sunsetInfo(sunsetTimeStr)}
               </Text>
             </View>
           ) : (
             <>
               <Text style={[styles.resultCount, { color: colors.mutedForeground }]}>
-                {sunsetFilter
+                {sunsetFilter || themeFilterActive
                   ? (filteredRoutes.length === 1 ? t.routeFound : t.routesFound(filteredRoutes.length))
                   : (routes.length === 1 ? t.routeFound : t.routesFound(routes.length))
                 }
@@ -913,6 +1124,63 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   filterTitle: { fontFamily: fonts.titleBold, fontSize: 16, flex: 1 },
+  themeFilterBox: {
+    borderWidth: 1,
+    borderRadius: 12,
+    marginTop: 2,
+    marginBottom: 10,
+    overflow: "hidden",
+  },
+  themeFilterHeader: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  themeFilterIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  themeFilterTitle: { fontFamily: fonts.bodyBold, fontSize: 14 },
+  themeFilterHint: { fontFamily: fonts.mono, fontSize: 11, marginTop: 2 },
+  themeFilterBody: {
+    borderTopWidth: 1,
+    padding: 10,
+  },
+  themeFilterActions: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 10,
+  },
+  themeFilterAction: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  themeFilterActionText: { fontFamily: fonts.bodyBold, fontSize: 11 },
+  themeFilterGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  themeFilterChip: {
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  themeFilterChipText: { fontFamily: fonts.bodyMedium, fontSize: 11, flexShrink: 1 },
+  themeFilterStatus: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 10 },
   switchRow: {
     flexDirection: "row",
     alignItems: "center",
