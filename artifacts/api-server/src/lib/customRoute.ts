@@ -4,7 +4,14 @@ import { computeElevationStats } from "./elevation";
 import { deriveSacFromSwissTlm3d } from "./swisstopoHiking";
 import { deriveSeason } from "./season";
 import { reverseGeocode } from "./geocoding";
-import { downsample, estimateMinutes, pathDistanceKm, type LatLng } from "./geo";
+import {
+  downsample,
+  estimateMinutes,
+  haversineM,
+  pathDistanceKm,
+  rdpSimplify,
+  type LatLng,
+} from "./geo";
 
 /**
  * Berechnet eine Wanderroute zwischen zwei selbst gewaehlten Punkten
@@ -27,6 +34,7 @@ const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion)";
 const STORED_GEOMETRY_POINTS = 80;
 const MIN_KM = 0.3;
 const MAX_KM = 60;
+const DRAWN_ROUTE_WAYPOINTS = 48;
 
 interface ValhallaResponse {
   trip?: {
@@ -240,11 +248,6 @@ export async function buildCustomRouteFromDrawnPoints(
   const shapes = (data.trip?.legs ?? [])
     .map((leg) => leg.shape)
     .filter((shape): shape is string => Boolean(shape));
-  if (!data.trip || shapes.length === 0) {
-    throw new CustomRouteError(
-      "Die gezeichnete Linie konnte keinem begehbaren Weg zugeordnet werden.",
-    );
-  }
 
   const routedPoints: LatLng[] = [];
   for (const shape of shapes) {
@@ -255,6 +258,61 @@ export async function buildCustomRouteFromDrawnPoints(
       }
     }
   }
+
+  const inputDistanceKm = pathDistanceKm(points);
+  const tracedDistanceKm = pathDistanceKm(routedPoints);
+  const firstInput = points[0]!;
+  const lastInput = points[points.length - 1]!;
+  const isClosedInput =
+    haversineM(firstInput, lastInput) <=
+    Math.max(50, Math.min(500, inputDistanceKm * 1000 * 0.05));
+  const tracedEndGapM =
+    routedPoints.length >= 2
+      ? haversineM(routedPoints[0]!, routedPoints[routedPoints.length - 1]!)
+      : Number.POSITIVE_INFINITY;
+  const traceLooksCollapsed =
+    routedPoints.length < 2 ||
+    tracedDistanceKm < Math.max(MIN_KM, inputDistanceKm * 0.45) ||
+    (isClosedInput && tracedEndGapM > Math.max(150, inputDistanceKm * 1000 * 0.12));
+
+  if (traceLooksCollapsed) {
+    // trace_route kann bei einer geschlossenen Handskizze einen Abschnitt
+    // mehrfach verwenden oder nach dem ersten Segment abbrechen. Die
+    // gleichmaessig verteilten Stuetzpunkte zwingen den normalen Router,
+    // alle gezeichneten Segmente in ihrer Reihenfolge zu verbinden.
+    // Nicht nur die ersten Wegpunkte verwenden: Die RDP-Vereinfachung
+    // bewahrt die Biegungen der gezeichneten Linie und begrenzt nur die
+    // Punktzahl, die der normale Valhalla-Router verarbeiten muss.
+    const waypointPoints = rdpSimplify(points, 8, DRAWN_ROUTE_WAYPOINTS);
+    if (waypointPoints.length >= 2) {
+      log.warn(
+        {
+          inputPoints: points.length,
+          waypointPoints: waypointPoints.length,
+          inputDistanceKm: Number(inputDistanceKm.toFixed(2)),
+          tracedDistanceKm: Number(tracedDistanceKm.toFixed(2)),
+          isClosedInput,
+        },
+        "Freihand-Map-Matching zu kurz — Wegpunkt-Fallback",
+      );
+      return buildPedestrianRoute(
+        waypointPoints,
+        undefined,
+        undefined,
+        "Freihand-Route",
+        log,
+        customRouteId(points),
+        DRAWN_ROUTE_WAYPOINTS,
+      );
+    }
+  }
+
+  if (routedPoints.length < 2) {
+    throw new CustomRouteError(
+      "Die gezeichnete Linie konnte keinem begehbaren Weg zugeordnet werden.",
+    );
+  }
+
   return buildRouteFromPoints(
     routedPoints,
     {
@@ -271,9 +329,11 @@ async function buildPedestrianRoute(
   endLabel: string | undefined,
   terrain: string,
   log: Logger,
+  routeId = customRouteId(points),
+  maxWaypoints = 12,
 ): Promise<CustomRoute> {
-  if (points.length < 2 || points.length > 12) {
-    throw new CustomRouteError("Bitte zwischen 2 und 12 Wegpunkte setzen.");
+  if (points.length < 2 || points.length > maxWaypoints) {
+    throw new CustomRouteError(`Bitte zwischen 2 und ${maxWaypoints} Wegpunkte setzen.`);
   }
 
   const res = await fetch(VALHALLA_URL, {
@@ -314,7 +374,7 @@ async function buildPedestrianRoute(
   return buildRouteFromPoints(
     routedPoints,
     {
-      id: customRouteId(points),
+      id: routeId,
       startLabel,
       endLabel,
       terrain,

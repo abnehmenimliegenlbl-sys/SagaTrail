@@ -254,13 +254,12 @@ export default function KantonRouten() {
   const [sliderAktiv, setSliderAktiv] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showThemeFilters, setShowThemeFilters] = useState(false);
-  const [selectedThemeKeys, setSelectedThemeKeys] = useState<RouteThemeKey[]>([
-    ...ROUTE_THEME_KEYS,
-  ]);
+  // Keine Auswahl bedeutet: Themenfilter ist aus und alle Kantonsrouten bleiben sichtbar.
+  const [selectedThemeKeys, setSelectedThemeKeys] = useState<RouteThemeKey[]>([]);
   const [routeThemesById, setRouteThemesById] = useState<Record<string, RouteThemeKey[]>>({});
   const [themeFilterLoading, setThemeFilterLoading] = useState(false);
   const [themeFilterError, setThemeFilterError] = useState(false);
-  const themeFilterActive = selectedThemeKeys.length < ROUTE_THEME_KEYS.length;
+  const themeFilterActive = selectedThemeKeys.length > 0;
   const suitabilityCopy = useMemo(() => {
     if (language === "fr") return { title: "Recommandation technique", family: "Adapté aux enfants / familles", accessible: "Accès sans barrières officiel", note: "La recommandation enfants / familles est technique; l'accès sans barrières repose sur la classification officielle de SuisseMobile." };
     if (language === "it") return { title: "Raccomandazione tecnica", family: "Adatto a bambini / famiglie", accessible: "Accesso senza barriere ufficiale", note: "La raccomandation bambini / famiglie è tecnica; l'accesso senza barriere si basa sulla classificazione ufficiale di SvizzeraMobile." };
@@ -309,7 +308,7 @@ export default function KantonRouten() {
     setStartMin(0);
     setShowAdvancedFilters(false);
     setShowThemeFilters(false);
-    setSelectedThemeKeys([...ROUTE_THEME_KEYS]);
+    setSelectedThemeKeys([]);
     setRouteThemesById({});
     setThemeFilterLoading(false);
     setThemeFilterError(false);
@@ -854,7 +853,7 @@ export default function KantonRouten() {
                     setSunsetFilter(false);
                     setStartH(9);
                     setStartMin(0);
-                    setSelectedThemeKeys([...ROUTE_THEME_KEYS]);
+                    setSelectedThemeKeys([]);
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={t.resetFilters}

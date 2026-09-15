@@ -1,4 +1,6 @@
 import { Feather } from "@expo/vector-icons";
+import { Image as ExpoImage } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
@@ -17,6 +19,7 @@ import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { CantonWappen } from "@/components/brand/CantonWappen";
 import { PremiumUpsellBanner } from "@/components/brand/PremiumUpsellBanner";
+import { ProfileAvatar } from "@/components/brand/ProfileAvatar";
 import { Skeleton } from "@/components/brand/Skeleton";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { CantonWithRoutes } from "@/constants/routes";
@@ -36,28 +39,9 @@ import {
 } from "@/lib/kantonSlug";
 import { hapticSelection } from "@/lib/haptics";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
-import {
-  ROUTE_THEME_KEYS,
-  routeThemeLabel,
-  type RouteThemeKey,
-} from "@/lib/routeThemes";
+import { MEETUP_HOME_BANNER, THEME_WORLD_HOME_BANNER } from "@/lib/themeWorldVisuals";
 
 const WEB_TOP = 67;
-
-const THEME_ICONS: Record<RouteThemeKey, React.ComponentProps<typeof Feather>["name"]> = {
-  wasserwege: "droplet",
-  burgen_ruinen_alte_wege: "home",
-  gipfel_panorama: "triangle",
-  geologie_eiszeit: "layers",
-  wald_wildtiere: "map",
-  alpen_landwirtschaft: "compass",
-  pilger_handelswege: "navigation",
-  industriekultur: "archive",
-  familien_entdecker: "users",
-  nacht_sterne: "moon",
-  flora_jahreszeiten: "sun",
-  bahn_seilbahn: "truck",
-};
 
 export default function Entdecken() {
   const colors = useColors();
@@ -109,6 +93,7 @@ export default function Entdecken() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
+          <ProfileAvatar avatarUrl={profile?.avatarUrl} name={profile?.name} size={58} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.greeting, { color: colors.mutedForeground }]}>
               {t.welcomeBack}
@@ -122,30 +107,6 @@ export default function Entdecken() {
           </View>
         </View>
 
-        {/* Hero */}
-        <Animated.View
-          entering={FadeInDown.duration(500)}
-          style={[
-            styles.hero,
-            GLAS_3D,
-            {
-              backgroundColor: colors.glassBg,
-              borderColor: colors.glassBorder,
-              borderRadius: colors.radius,
-            },
-          ]}
-        >
-          <Text style={[styles.heroEyebrow, { color: colors.accent }]}>
-            {t.step1Title}
-          </Text>
-          <Text style={[styles.heroTitle, { color: colors.foreground }]}>
-            {t.whereStart}
-          </Text>
-          <Text style={[styles.heroBody, { color: colors.mutedForeground }]}>
-            {t.heroBody}
-          </Text>
-        </Animated.View>
-
         {activeHike && (
           <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
             <Pressable
@@ -156,6 +117,7 @@ export default function Entdecken() {
               }
               style={[
                 styles.resumeCard,
+                styles.resumeCardCompact,
                 { backgroundColor: colors.glassBgStrong, borderColor: colors.accent, borderRadius: colors.radius },
               ]}
             >
@@ -166,10 +128,7 @@ export default function Entdecken() {
                 <Text style={[styles.resumeName, { color: colors.foreground }]} numberOfLines={1}>
                   {activeHike.routeName}
                 </Text>
-                <Text style={[styles.resumeHint, { color: colors.mutedForeground }]}>
-                  {t.resumeHint(activeHike.chapterIndex + 1, activeHike.chapterCount)}
-                </Text>
-                <View style={styles.resumeCtaRow}>
+                <View style={styles.resumeCtaRowCompact}>
                   <Feather name="play" size={14} color={colors.accent} />
                   <Text style={[styles.resumeCta, { color: colors.accent }]}>{t.resumeCta}</Text>
                 </View>
@@ -256,7 +215,6 @@ export default function Entdecken() {
             style={[
               styles.meetupCard,
               {
-                backgroundColor: colors.glassBg,
                 borderColor: colors.glassBorder,
                 borderRadius: colors.radius,
               },
@@ -264,61 +222,69 @@ export default function Entdecken() {
             accessibilityRole="button"
             accessibilityLabel={meetupT.title}
           >
-            <View style={[styles.meetupIcon, { backgroundColor: colors.accent + "1F" }]}>
-              <Feather name="users" size={19} color={colors.accent} />
+            <ExpoImage
+              source={MEETUP_HOME_BANNER}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
+            <LinearGradient
+              colors={["rgba(7,16,20,0.08)", "rgba(7,16,20,0.84)"]}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.themeWorldCardContent}>
+              <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "D9" }]}>
+                <Feather name="users" size={19} color={colors.backgroundDeep} />
+              </View>
+              <View style={styles.themeWorldCardText}>
+                <Text style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}>
+                  {meetupT.title}
+                </Text>
+                <Text style={[styles.themeWorldHint, { color: "rgba(255,255,255,0.78)" }]} numberOfLines={2}>
+                  {meetupT.intro}
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={21} color="#FFFFFF" />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.meetupTitle, { color: colors.foreground }]}>{meetupT.title}</Text>
-              <Text style={[styles.meetupText, { color: colors.mutedForeground }]} numberOfLines={2}>
-                {meetupT.intro}
-              </Text>
-            </View>
-            <Feather name="chevron-right" size={19} color={colors.mutedForeground} />
           </Pressable>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(400)} style={styles.themeWorldsSection}>
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              {t.themeWorldsTitle}
-            </Text>
-            <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
-              {t.themeWorldsHint}
-            </Text>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.themeWorldsContent}
+          <Pressable
+            onPress={() => router.push("/themenwelten")}
+            accessibilityRole="button"
             accessibilityLabel={t.themeWorldsTitle}
+            style={[
+              styles.themeWorldCard,
+              {
+                borderColor: colors.glassBorder,
+                borderRadius: colors.radius,
+              },
+            ]}
           >
-            {ROUTE_THEME_KEYS.map((theme) => (
-              <Pressable
-                key={theme}
-                onPress={() => router.push(`/themenwelt/${theme}`)}
-                accessibilityRole="button"
-                accessibilityLabel={routeThemeLabel(theme, language)}
-                style={[
-                  styles.themeWorldCard,
-                  {
-                    backgroundColor: colors.glassBg,
-                    borderColor: colors.glassBorder,
-                    borderRadius: colors.radius,
-                  },
-                ]}
-              >
-                <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "1F" }]}>
-                  <Feather name={THEME_ICONS[theme]} size={18} color={colors.accent} />
-                </View>
-                <Text
-                  style={[styles.themeWorldLabel, { color: colors.foreground }]}
-                  numberOfLines={2}
-                >
-                  {routeThemeLabel(theme, language)}
+            <ExpoImage
+              source={THEME_WORLD_HOME_BANNER}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
+            <LinearGradient
+              colors={["rgba(7,16,20,0.08)", "rgba(7,16,20,0.82)"]}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.themeWorldCardContent}>
+              <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "D9" }]}>
+                <Feather name="compass" size={19} color={colors.backgroundDeep} />
+              </View>
+              <View style={styles.themeWorldCardText}>
+                <Text style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}>
+                  {t.themeWorldsTitle}
                 </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+                <Text style={[styles.themeWorldHint, { color: "rgba(255,255,255,0.78)" }]}>
+                  {t.themeWorldsHint}
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={21} color="#FFFFFF" />
+            </View>
+          </Pressable>
         </Animated.View>
 
         <View style={styles.section}>
@@ -499,10 +465,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
   },
+  resumeCardCompact: {
+    alignItems: "center",
+    paddingVertical: 11,
+  },
   resumeEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.5 },
   resumeName: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 4 },
   resumeHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 4 },
   resumeCtaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+  resumeCtaRowCompact: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
   resumeCta: { fontFamily: fonts.bodyBold, fontSize: 14 },
   resumeClose: { padding: 2 },
   lastHikeCard: {
@@ -535,32 +506,40 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
+    gap: 14,
     paddingHorizontal: 20,
     marginBottom: 18,
   },
   greeting: { fontFamily: fonts.body, fontSize: 14 },
   name: { fontFamily: fonts.titleBold, fontSize: 30, marginTop: 2 },
   archetype: { fontFamily: fonts.story, fontSize: 14, marginTop: 2 },
-  hero: {
-    marginHorizontal: 20,
-    padding: 18,
+  meetupCard: {
+    aspectRatio: 3,
     borderWidth: 1,
+    overflow: "hidden",
+    ...GLAS_3D,
   },
-  heroEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
-  heroTitle: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 6 },
-  heroBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
-  meetupCard: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, padding: 14 },
-  meetupIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  meetupTitle: { fontFamily: fonts.titleBold, fontSize: 18 },
-  meetupText: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
   themeWorldsSection: { marginTop: 8 },
-  themeWorldsContent: { paddingHorizontal: 20, gap: 10 },
   themeWorldCard: {
-    width: 132,
-    minHeight: 112,
+    aspectRatio: 3,
+    marginHorizontal: 20,
     borderWidth: 1,
-    padding: 12,
-    justifyContent: "space-between",
+    overflow: "hidden",
+    ...GLAS_3D,
+  },
+  themeWorldCardContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 12,
+    padding: 16,
+  },
+  themeWorldCardText: { flex: 1 },
+  themeWorldHint: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2,
   },
   themeWorldIcon: {
     width: 36,

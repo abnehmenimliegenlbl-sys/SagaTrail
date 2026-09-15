@@ -16,7 +16,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
-  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -29,12 +28,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
+import { ProfileAvatar } from "@/components/brand/ProfileAvatar";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 import { alert } from "@/lib/appAlert";
-import { getApiBaseUrl } from "@/lib/apiConfig";
 
 const WEB_TOP = 67;
 
@@ -255,17 +254,11 @@ export default function MeetupDetail() {
         <View style={[styles.people, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
           {meetup.participants.map((participant, index) => (
             <View key={`${participant.name}-${index}`} style={styles.personRow}>
-              {avatarUri(participant.avatarUrl) ? (
-                <Image source={{ uri: avatarUri(participant.avatarUrl)! }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatar, { backgroundColor: colors.accent + "20" }]}>
-                  <Text style={[styles.avatarText, { color: colors.accent }]}>
-                    {participant.name.slice(0, 1).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-              <Text style={[styles.personName, { color: colors.foreground }]}>{participant.name}</Text>
-              {participant.age ? <Text style={[styles.age, { color: colors.mutedForeground }]}>{participant.age}</Text> : null}
+              <ProfileAvatar avatarUrl={participant.avatarUrl} name={participant.name} size={36} />
+              <Text style={[styles.personName, { color: colors.foreground }]}>
+                {participant.name}
+                {participant.age ? ` · ${participant.age} ${participant.age === 1 ? "Jahr" : "Jahre"}` : ""}
+              </Text>
               {participant.name === meetup.organizerName ? (
                 <Text style={[styles.organizer, { color: colors.mutedForeground }]}>Organisator</Text>
               ) : meetup.isOrganizer && participant.userId ? (
@@ -366,11 +359,6 @@ function paceLabel(pace: string, t: ReturnType<typeof useMeetupStrings>): string
   return t.paceEasy;
 }
 
-function avatarUri(value: string | null | undefined): string | null {
-  if (!value) return null;
-  return value.startsWith("http") ? value : `${getApiBaseUrl()}api/storage${value}`;
-}
-
 const styles = StyleSheet.create({
   center: { alignItems: "center", flex: 1, justifyContent: "center", paddingHorizontal: 24 },
   error: { fontFamily: fonts.body, fontSize: 15 },
@@ -385,10 +373,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 26, marginBottom: 10 },
   people: { borderRadius: 15, borderWidth: 1, paddingHorizontal: 14 },
   personRow: { alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "rgba(255,255,255,0.12)", flexDirection: "row", gap: 10, minHeight: 58 },
-  avatar: { alignItems: "center", borderRadius: 18, height: 36, justifyContent: "center", width: 36 },
-  avatarText: { fontFamily: fonts.bodyBold, fontSize: 15 },
   personName: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 14 },
-  age: { fontFamily: fonts.mono, fontSize: 11 },
   organizer: { fontFamily: fonts.mono, fontSize: 10 },
   privacy: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 14, textAlign: "center" },
   routeLink: { alignItems: "center", borderWidth: 1, borderRadius: 10, flexDirection: "row", gap: 7, justifyContent: "center", marginTop: 10, paddingVertical: 11 },

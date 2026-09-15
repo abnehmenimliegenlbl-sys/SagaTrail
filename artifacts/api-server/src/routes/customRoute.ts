@@ -69,8 +69,16 @@ router.post("/routes/custom-drawn", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Bitte eine gezeichnete Linie mit mindestens zwei Punkten senden." });
     return;
   }
+  req.log.info(
+    { inputPoints: parsed.data.points.length },
+    "Freihand-Linie empfangen",
+  );
   try {
     const route = await buildCustomRouteFromDrawnPoints(parsed.data.points, req.log);
+    req.log.info(
+      { inputPoints: parsed.data.points.length, outputPoints: route.geometry.length },
+      "Freihand-Linie verarbeitet",
+    );
     res.json(GetCustomRouteResponse.parse(route));
   } catch (err) {
     if (err instanceof CustomRouteError) {

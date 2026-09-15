@@ -528,3 +528,31 @@ mtime_ms = 1789056746775
 storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/531a3790-0266-45b0-8564-9b1401d7786d/036d3ac7-0421-4c6f-b196-db88ad76ef56"
 storage_version_token = "1789056755669934"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4dhJLyoLubn3is-qKlQRo"
+uri = "file://artifacts/mobile/assets/images/theme-worlds/home-banner.jpg"
+type = "image"
+title = "SagaTrail Themenwelten-Banner 3:1"
+description = "Finales Banner im exakten Format 1024 × 342 Pixel; die Startseiten-Kachel verwendet ebenfalls 3:1."
+logical_id = "7790ca49-5d67-4587-ab99-0f43686ea03c"
+content_hash = "sha256:3bb54cc5cea312ad35abff76359b6f932220d8683fb0602bbcd5c9875e9150ef"
+size = 71109
+mtime_ms = 1789469716847
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/7790ca49-5d67-4587-ab99-0f43686ea03c/3cc0c0f7-de19-49b7-bfd8-027123aa1820"
+storage_version_token = "1789469790909007"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "UXayD10il3HIQYFFkzepS"
+uri = "file://artifacts/mobile/assets/images/meetup-banner.jpg"
+type = "image"
+title = "Treffpunkt-Banner mit gemischten Altersgruppen"
+description = "Finales 3:1-Banner mit jüngeren Erwachsenen, einer Familie und zwei aktiven Seniorinnen und Senioren."
+logical_id = "fef0c67f-29a5-4d27-9042-5ae809a3ff8a"
+content_hash = "sha256:ec83b13f7b5ead9f6c1807fc645a13f93d677883f8e33c651632b2f1ca4fa2d3"
+size = 85248
+mtime_ms = 1789470231591
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/fef0c67f-29a5-4d27-9042-5ae809a3ff8a/14929d16-ecdb-49d2-a22a-1d428d939058"
+storage_version_token = "1789470245182188"
+content_type = "image/jpeg"

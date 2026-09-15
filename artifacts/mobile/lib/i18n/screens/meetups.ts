@@ -40,7 +40,7 @@ export interface MeetupStrings {
 const STRINGS: StringsDict<MeetupStrings> = {
   de: {
     eyebrow: "Gemeinsam wandern",
-    title: "Treffpunkte",
+    title: "Treffpunkt",
     intro: "Finde Menschen, die dieselbe Route am gleichen Tag wandern möchten.",
     empty: "Noch keine kommenden Treffpunkte. Öffne eine Route und erstelle den ersten Termin.",
     loading: "Treffpunkte werden geladen …",
@@ -76,7 +76,7 @@ const STRINGS: StringsDict<MeetupStrings> = {
   },
   gsw: {
     eyebrow: "Zäme wandere",
-    title: "Treffpünkt",
+    title: "Treffpunkt",
     intro: "Find Lüüt, wo am gliiche Tag di gliichi Route wandere wänd.",
     empty: "No kei Treffpünkt. Mach uf ere Route de erscht Termin.",
     loading: "Treffpünkt werde glade …",
@@ -106,7 +106,7 @@ const STRINGS: StringsDict<MeetupStrings> = {
     noRoute: "Créez un rendez-vous depuis la page d’un itinéraire.", delete: "Supprimer le rendez-vous",
   },
   it: {
-    eyebrow: "Camminare insieme", title: "Ritrovi", intro: "Trova persone che vogliono percorrere lo stesso itinerario nello stesso giorno.",
+    eyebrow: "Camminare insieme", title: "Ritrovo", intro: "Trova persone che vogliono percorrere lo stesso itinerario nello stesso giorno.",
     empty: "Nessun ritrovo in programma. Apri un itinerario e crea il primo appuntamento.", loading: "Caricamento dei ritrovi …",
     error: "Impossibile caricare i ritrovi.", create: "Crea ritrovo", createTitle: "Crea ritrovo", createIntro: "Scegli quando percorrere insieme questo itinerario.",
     route: "Itinerario", date: "Data", datePlaceholder: "AAAA-MM-GG", time: "Ora di partenza", timePlaceholder: "09:00",
@@ -116,7 +116,7 @@ const STRINGS: StringsDict<MeetupStrings> = {
     invalid: "Controlla data, ora e posti.", loginRequired: "Accedi per partecipare.", full: "Completo", noRoute: "Crea un ritrovo dalla pagina di un itinerario.", delete: "Elimina ritrovo",
   },
   en: {
-    eyebrow: "Hike together", title: "Meetups", intro: "Find people who want to hike the same route on the same day.",
+    eyebrow: "Hike together", title: "Meetup", intro: "Find people who want to hike the same route on the same day.",
     empty: "No upcoming meetups yet. Open a route and create the first one.", loading: "Loading meetups …", error: "Meetups could not be loaded.",
     create: "Create meetup", createTitle: "Create a meetup", createIntro: "Choose when you would like to hike this route together.",
     route: "Route", date: "Date", datePlaceholder: "YYYY-MM-DD", time: "Start time", timePlaceholder: "09:00",
@@ -136,7 +136,7 @@ const STRINGS: StringsDict<MeetupStrings> = {
     invalid: "请检查日期、时间和名额。", loginRequired: "登录后才能参加。", full: "已满", noRoute: "请从路线详情页创建集合。", delete: "删除集合",
   },
   es: {
-    eyebrow: "Caminar juntos", title: "Encuentros", intro: "Encuentra personas que quieran hacer la misma ruta el mismo día.",
+    eyebrow: "Caminar juntos", title: "Encuentro", intro: "Encuentra personas que quieran hacer la misma ruta el mismo día.",
     empty: "Todavía no hay encuentros. Abre una ruta y crea el primero.", loading: "Cargando encuentros …", error: "No se han podido cargar los encuentros.",
     create: "Crear encuentro", createTitle: "Crear encuentro", createIntro: "Elige cuándo quieres hacer esta ruta acompañado.",
     route: "Ruta", date: "Fecha", datePlaceholder: "AAAA-MM-DD", time: "Hora de salida", timePlaceholder: "09:00",
@@ -146,7 +146,7 @@ const STRINGS: StringsDict<MeetupStrings> = {
     invalid: "Comprueba la fecha, la hora y las plazas.", loginRequired: "Inicia sesión para unirte.", full: "Completo", noRoute: "Crea un encuentro desde el detalle de una ruta.", delete: "Eliminar encuentro",
   },
   pt: {
-    eyebrow: "Caminhar juntos", title: "Encontros", intro: "Encontre pessoas que querem fazer a mesma rota no mesmo dia.",
+    eyebrow: "Caminhar juntos", title: "Encontro", intro: "Encontre pessoas que querem fazer a mesma rota no mesmo dia.",
     empty: "Ainda não há encontros. Abra uma rota e crie o primeiro.", loading: "A carregar encontros …", error: "Não foi possível carregar os encontros.",
     create: "Criar encontro", createTitle: "Criar encontro", createIntro: "Escolha quando quer fazer esta rota acompanhado.",
     route: "Rota", date: "Data", datePlaceholder: "AAAA-MM-DD", time: "Hora de partida", timePlaceholder: "09:00",
@@ -156,7 +156,7 @@ const STRINGS: StringsDict<MeetupStrings> = {
     invalid: "Verifique a data, hora e lugares.", loginRequired: "Inicie sessão para participar.", full: "Cheio", noRoute: "Crie um encontro a partir do detalhe de uma rota.", delete: "Eliminar encontro",
   },
   ru: {
-    eyebrow: "Вместе в поход", title: "Встречи", intro: "Найдите людей, которые хотят пройти тот же маршрут в тот же день.",
+    eyebrow: "Вместе в поход", title: "Встреча", intro: "Найдите людей, которые хотят пройти тот же маршрут в тот же день.",
     empty: "Предстоящих встреч пока нет. Откройте маршрут и создайте первую.", loading: "Загрузка встреч …", error: "Не удалось загрузить встречи.",
     create: "Создать встречу", createTitle: "Создать встречу", createIntro: "Выберите время совместного похода по этому маршруту.",
     route: "Маршрут", date: "Дата", datePlaceholder: "ГГГГ-ММ-ДД", time: "Время старта", timePlaceholder: "09:00",

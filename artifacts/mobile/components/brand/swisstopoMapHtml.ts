@@ -139,6 +139,9 @@ export interface SwisstopoMapProps {
   safetyPoisReady?: boolean;
   pickerMode?: boolean;
   drawMode?: boolean;
+  zoom?: number;
+  /** Behält die aktuelle Leaflet-Ansicht bei, wenn die WebView neu aufgebaut wird. */
+  preserveViewOnReload?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
   onMapDraw?: (points: { lat: number; lng: number }[]) => void;
   legend?: MapLegendLabels | null;

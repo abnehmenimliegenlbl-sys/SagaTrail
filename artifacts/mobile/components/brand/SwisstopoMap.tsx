@@ -40,21 +40,33 @@ export function SwisstopoMap({
   safetyPoisReady = true,
   pickerMode,
   drawMode,
+  zoom = 14,
+  preserveViewOnReload = false,
   onMapClick,
   onMapDraw,
   safeAreaInsetTop = 0,
   sagaPin,
 }: SwisstopoMapProps) {
   const ref = useRef<WebView>(null);
+  const lastMapViewRef = useRef<{ lat: number; lng: number; zoom: number } | null>(null);
   const [ready, setReady] = useState(false);
   const t = useMapStrings();
+  const initialView = preserveViewOnReload && lastMapViewRef.current
+    ? {
+        lat: lastMapViewRef.current.lat,
+        lng: lastMapViewRef.current.lng,
+      }
+    : center;
+  const initialZoom = preserveViewOnReload && lastMapViewRef.current
+    ? lastMapViewRef.current.zoom
+    : zoom;
 
   // HTML erzeugen — OHNE pois/partners/aerialways (die werden per inject nachgeliefert).
   const html = useMemo(
     () =>
       buildLeafletMapHtml(
         {
-          center,
+          center: initialView,
           label,
           geometry,
           waypoints,
@@ -64,6 +76,8 @@ export function SwisstopoMap({
           partners,
           pickerMode,
           drawMode,
+          zoom: initialZoom,
+          preserveViewOnReload,
           altGeometry,
           waterSources,
           parkingSpots,
@@ -102,7 +116,7 @@ export function SwisstopoMap({
       ),
     // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [center.lat, center.lng, label, geometry, waypoints, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, drawMode, safeAreaInsetTop, t]
+    [initialView.lat, initialView.lng, initialZoom, label, geometry, waypoints, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, drawMode, preserveViewOnReload, safeAreaInsetTop, t]
   );
   const webViewSource = useMemo(() => ({ html }), [html]);
 
@@ -224,6 +238,19 @@ export function SwisstopoMap({
                   Number.isFinite((point as { lng?: unknown }).lng),
               );
               onMapDraw?.(points);
+            }
+            if (
+              preserveViewOnReload &&
+              data?.type === "stt-mapview" &&
+              Number.isFinite(data.lat) &&
+              Number.isFinite(data.lng) &&
+              Number.isFinite(data.zoom)
+            ) {
+              lastMapViewRef.current = {
+                lat: data.lat,
+                lng: data.lng,
+                zoom: data.zoom,
+              };
             }
           } catch {
             // Ignoriere Nachrichten, die kein gueltiges JSON sind.

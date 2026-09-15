@@ -15,6 +15,8 @@ type LeafletMapArgs = Pick<
   | "partners"
   | "pickerMode"
    | "drawMode"
+   | "zoom"
+   | "preserveViewOnReload"
   | "altGeometry"
   | "waterSources"
   | "parkingSpots"
@@ -73,6 +75,8 @@ export function buildLeafletMapHtml(
     partners,
     pickerMode,
     drawMode,
+    zoom = 14,
+    preserveViewOnReload: _preserveViewOnReload,
     altGeometry,
     waterSources,
     parkingSpots,
@@ -296,7 +300,8 @@ export function buildLeafletMapHtml(
     var sagaPin = ${sagaData};
     var picker = ${pickerMode ? "true" : "false"};
     var drawingMode = ${drawMode ? "true" : "false"};
-    var map = L.map("map", { zoomControl: false, attributionControl: false, tap: false }).setView(center, 14);
+    var initialZoom = Number.isFinite(${zoom}) ? Math.max(1, Math.min(19, ${zoom})) : 14;
+    var map = L.map("map", { zoomControl: false, attributionControl: false, tap: false }).setView(center, initialZoom);
     // Bei einer echten Größenänderung (z. B. Rotation/Vollbild) muss Leaflet
     // sein Pixelraster neu berechnen.
     window.sttMapResize = function () {
@@ -308,6 +313,11 @@ export function buildLeafletMapHtml(
       if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) window.ReactNativeWebView.postMessage(payload);
       else if (window.parent) window.parent.postMessage(payload, "*");
     }
+    function postMapView() {
+      var current = map.getCenter();
+      post({ type: "stt-mapview", lat: current.lat, lng: current.lng, zoom: map.getZoom() });
+    }
+    map.on("moveend zoomend", postMapView);
     function icon(className, text, size) {
       return L.divIcon({ className: "", html: '<div class="' + className + '">' + (text || "") + '</div>', iconSize: size || [20, 20], iconAnchor: [(size || [20,20])[0] / 2, (size || [20,20])[1] / 2] });
     }
@@ -660,28 +670,22 @@ export function buildLeafletMapHtml(
       drawContainer.style.touchAction = "none";
       drawContainer.style.webkitUserSelect = "none";
       drawContainer.style.userSelect = "none";
-      function pointFromPointerEvent(event) {
+       function pointFromClient(clientX, clientY) {
         var rect = drawContainer.getBoundingClientRect();
-        var containerPoint = L.point(event.clientX - rect.left, event.clientY - rect.top);
+         var containerPoint = L.point(clientX - rect.left, clientY - rect.top);
         var latLng = map.containerPointToLatLng(containerPoint);
         return { lat: latLng.lat, lng: latLng.lng };
       }
-      function startDrawing(event) {
-        if (event.pointerType === "mouse" && event.buttons !== 1) return;
-        if (event.preventDefault) event.preventDefault();
-        if (drawContainer.setPointerCapture && event.pointerId !== undefined) {
-          try { drawContainer.setPointerCapture(event.pointerId); } catch (_) {}
-        }
+       function startDrawingAt(clientX, clientY) {
         drawing = true;
-        drawnPoints = [pointFromPointerEvent(event)];
+         drawnPoints = [pointFromClient(clientX, clientY)];
         drawnLine = L.polyline([[drawnPoints[0].lat, drawnPoints[0].lng]], {
           color: "#CC0000", weight: 4, opacity: .95, lineCap: "round", lineJoin: "round"
         }).addTo(map);
       }
-      function continueDrawing(event) {
+       function continueDrawingAt(clientX, clientY) {
         if (!drawing) return;
-        if (event.preventDefault) event.preventDefault();
-        var next = pointFromPointerEvent(event);
+         var next = pointFromClient(clientX, clientY);
         var previous = drawnPoints[drawnPoints.length - 1];
         if (previous && map.distance([previous.lat, previous.lng], [next.lat, next.lng]) < 8) return;
         drawnPoints.push(next);
@@ -690,6 +694,9 @@ export function buildLeafletMapHtml(
       function finishDrawing(event) {
         if (!drawing) return;
         if (event && event.preventDefault) event.preventDefault();
+         if (event && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+           continueDrawingAt(event.clientX, event.clientY);
+         }
         drawing = false;
         if (drawnPoints.length < 2) return;
         var sampled = drawnPoints;
@@ -701,19 +708,63 @@ export function buildLeafletMapHtml(
         }
         post({ type: "stt-mapdraw", points: sampled });
       }
+       function startPointerDrawing(event) {
+         if (event.pointerType === "touch") return;
+         if (event.pointerType === "mouse" && event.buttons !== 1) return;
+         if (event.preventDefault) event.preventDefault();
+         if (drawContainer.setPointerCapture && event.pointerId !== undefined) {
+           try { drawContainer.setPointerCapture(event.pointerId); } catch (_) {}
+         }
+         startDrawingAt(event.clientX, event.clientY);
+       }
+       function continuePointerDrawing(event) {
+         if (event.pointerType === "touch") return;
+         if (!drawing) return;
+         if (event.preventDefault) event.preventDefault();
+         continueDrawingAt(event.clientX, event.clientY);
+       }
+       function finishPointerDrawing(event) {
+         if (event.pointerType === "touch") return;
+         finishDrawing(event);
+       }
+       function firstTouch(event) {
+         return event.touches[0] || event.changedTouches[0];
+       }
+       function startTouchDrawing(event) {
+         var touch = firstTouch(event);
+         if (!touch) return;
+         if (event.preventDefault) event.preventDefault();
+         startDrawingAt(touch.clientX, touch.clientY);
+       }
+       function continueTouchDrawing(event) {
+         var touch = firstTouch(event);
+         if (!touch || !drawing) return;
+         if (event.preventDefault) event.preventDefault();
+         continueDrawingAt(touch.clientX, touch.clientY);
+       }
+       function finishTouchDrawing(event) {
+         var touch = firstTouch(event);
+         if (touch && drawing) continueDrawingAt(touch.clientX, touch.clientY);
+         finishDrawing();
+       }
       map.dragging.disable();
       map.scrollWheelZoom.disable();
       drawContainer.style.cursor = "crosshair";
-      drawContainer.addEventListener("pointerdown", startDrawing, { passive: false });
-      drawContainer.addEventListener("pointermove", continueDrawing, { passive: false });
-      drawContainer.addEventListener("pointerup", finishDrawing, { passive: false });
-      drawContainer.addEventListener("pointercancel", finishDrawing, { passive: false });
+       drawContainer.addEventListener("pointerdown", startPointerDrawing, { passive: false });
+       drawContainer.addEventListener("pointermove", continuePointerDrawing, { passive: false });
+       drawContainer.addEventListener("pointerup", finishPointerDrawing, { passive: false });
+       drawContainer.addEventListener("pointercancel", finishPointerDrawing, { passive: false });
+       drawContainer.addEventListener("touchstart", startTouchDrawing, { passive: false });
+       drawContainer.addEventListener("touchmove", continueTouchDrawing, { passive: false });
+       drawContainer.addEventListener("touchend", finishTouchDrawing, { passive: false });
+       drawContainer.addEventListener("touchcancel", finishTouchDrawing, { passive: false });
     } else if (picker) {
       map.getContainer().style.cursor = "crosshair";
       map.on("click", function (event) { post({ type: "stt-mapclick", lat: event.latlng.lat, lng: event.latlng.lng }); });
     }
     setTimeout(function () { window.sttMapResize(); }, 100);
     setTimeout(function () { window.sttMapResize(); }, 500);
+    setTimeout(postMapView, 120);
     htmlReady = true;
     flushPendingTileRetries();
     post({ type: "stt-html-ready" });

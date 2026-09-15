@@ -33,22 +33,41 @@ export function SwisstopoMap({
   parkingSpots,
   safetyPois,
   sagaPin: _sagaPin, // Web-Variante: Pin wird via inline-HTML baked (kein inject nötig)
+  pickerMode,
+  drawMode,
+  preserveViewOnReload = false,
+  zoom = 14,
+  onMapClick,
+  onMapDraw,
 }: SwisstopoMapProps) {
   const ref = useRef<HTMLIFrameElement>(null);
+  const lastMapViewRef = useRef<{ lat: number; lng: number; zoom: number } | null>(null);
   const [ready, setReady] = useState(false);
   const t = useMapStrings();
+  const initialView = preserveViewOnReload && lastMapViewRef.current
+    ? {
+        lat: lastMapViewRef.current.lat,
+        lng: lastMapViewRef.current.lng,
+      }
+    : center;
+  const initialZoom = preserveViewOnReload && lastMapViewRef.current
+    ? lastMapViewRef.current.zoom
+    : zoom;
   const html = useMemo(
     () =>
       buildLeafletMapHtml(
         {
-          center,
+          center: initialView,
           label,
           geometry,
+          pickerMode,
+          drawMode,
+          zoom: initialZoom,
+          preserveViewOnReload,
           offlineTiles,
           aerialways,
           pois,
           partners,
-          pickerMode: false,
           altGeometry: null,
           waterSources,
           parkingSpots,
@@ -83,7 +102,7 @@ export function SwisstopoMap({
           safetyCodes: t.legendSafetyCodes,
         },
       ),
-    [center.lat, center.lng, label, geometry, elevationProfile, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, safetyPois, t]
+    [initialView.lat, initialView.lng, initialZoom, label, geometry, elevationProfile, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, safetyPois, pickerMode, drawMode, preserveViewOnReload, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die
@@ -110,7 +129,7 @@ export function SwisstopoMap({
   // Der iframe teilt sich denselben Ursprung (srcDoc), Klicks auf POI-Marker
   // kommen daher per window.postMessage von seinem contentWindow zurueck.
   useEffect(() => {
-    if (!onPoiPress && !onPartnerPress) return;
+    if (!onPoiPress && !onPartnerPress && !onMapClick && !onMapDraw && !preserveViewOnReload) return;
     const handler = (event: MessageEvent) => {
       if (event.source !== ref.current?.contentWindow) return;
       try {
@@ -121,13 +140,43 @@ export function SwisstopoMap({
         if (data?.type === "stt-partner-press" && typeof data.id === "string") {
           onPartnerPress?.(data.id);
         }
+        if (
+          data?.type === "stt-mapclick" &&
+          typeof data.lat === "number" &&
+          typeof data.lng === "number"
+        ) {
+          onMapClick?.(data.lat, data.lng);
+        }
+        if (data?.type === "stt-mapdraw" && Array.isArray(data.points)) {
+          const points = data.points.filter(
+            (point: unknown): point is { lat: number; lng: number } =>
+              !!point &&
+              typeof point === "object" &&
+              Number.isFinite((point as { lat?: unknown }).lat) &&
+              Number.isFinite((point as { lng?: unknown }).lng),
+          );
+          onMapDraw?.(points);
+        }
+        if (
+          preserveViewOnReload &&
+          data?.type === "stt-mapview" &&
+          Number.isFinite(data.lat) &&
+          Number.isFinite(data.lng) &&
+          Number.isFinite(data.zoom)
+        ) {
+          lastMapViewRef.current = {
+            lat: data.lat,
+            lng: data.lng,
+            zoom: data.zoom,
+          };
+        }
       } catch {
         // Ignoriere Nachrichten, die kein gueltiges JSON sind.
       }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, [onPoiPress, onPartnerPress]);
+  }, [onPoiPress, onPartnerPress, onMapClick, onMapDraw, preserveViewOnReload]);
 
   return (
     <View style={[styles.wrap, { height }]}>

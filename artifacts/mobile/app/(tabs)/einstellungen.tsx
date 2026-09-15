@@ -28,6 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
+import { ProfileAvatar } from "@/components/brand/ProfileAvatar";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { AGE_TIERS, ARCHETYPES } from "@/constants/onboarding";
@@ -359,6 +360,17 @@ export default function Einstellungen() {
         <ScreenHeader eyebrow={t.eyebrow} title={t.title} />
 
         <Section title={t.sectionProfil}>
+          <View style={styles.profileSummary}>
+            <ProfileAvatar avatarUrl={profile?.avatarUrl} name={profile?.name} size={76} />
+            <View style={styles.profileSummaryText}>
+              <Text style={[styles.profileSummaryName, { color: colors.foreground }]}>
+                {profile?.name ?? "-"}
+              </Text>
+              <Text style={[styles.profileSummaryHint, { color: colors.mutedForeground }]}>
+                {t.avatarHint}
+              </Text>
+            </View>
+          </View>
           <RowButton
             label={t.nameLabel}
             value={profile?.name ?? "-"}
@@ -369,7 +381,12 @@ export default function Einstellungen() {
               setEditingName(true);
             }}
           />
-          <RowButton label="Profilbild" value={avatarUploading ? "Wird hochgeladen …" : "Auswählen"} icon="camera" onPress={() => void pickProfileAvatar()} />
+          <RowButton
+            label={t.avatarLabel}
+            value={avatarUploading ? t.avatarUploading : t.avatarSelect}
+            icon="camera"
+            onPress={() => void pickProfileAvatar()}
+          />
           <RowButton label="Geburtsdatum" value={profile?.dateOfBirth ?? "Nicht angegeben"} icon="gift" onPress={() => {
             setNameInput(profile?.name ?? "");
             setBirthInput(profile?.dateOfBirth ?? "");
@@ -926,6 +943,16 @@ function RowButton({
 
 const styles = StyleSheet.create({
   sectionTitle: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, marginBottom: 8 },
+  profileSummary: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 14,
+    marginBottom: 14,
+    paddingHorizontal: 4,
+  },
+  profileSummaryText: { flex: 1 },
+  profileSummaryName: { fontFamily: fonts.titleBold, fontSize: 20 },
+  profileSummaryHint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
   deviceCard: {
     borderWidth: 1,
     borderRadius: 16,

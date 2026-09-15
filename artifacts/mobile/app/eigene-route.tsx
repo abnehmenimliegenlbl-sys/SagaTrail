@@ -114,6 +114,7 @@ export default function EigeneRoute() {
   >(null);
   const [pickerPending, setPickerPending] = useState<{ lat: number; lng: number } | null>(null);
   const [drawnPoints, setDrawnPoints] = useState<Point[]>([]);
+  const [freehandDrawingActive, setFreehandDrawingActive] = useState(false);
   const [waypointPreview, setWaypointPreview] = useState<number[][] | null>(null);
   const [waypointPreviewLoading, setWaypointPreviewLoading] = useState(false);
   const waypointPreviewRequestRef = useRef(0);
@@ -312,6 +313,7 @@ export default function EigeneRoute() {
       lng: start?.lng ?? end?.lng ?? 7.4446,
     });
     setDrawnPoints([]);
+    setFreehandDrawingActive(false);
     setPickerPending(null);
     setPickerTarget("freehand");
   }, [start, end]);
@@ -371,6 +373,7 @@ export default function EigeneRoute() {
 
   const onMapDraw = useCallback((points: { lat: number; lng: number }[]) => {
     if (points.length < 2) return;
+    setFreehandDrawingActive(false);
     setDrawnPoints(
       points.map((point, index) => ({
         label: `Punkt ${index + 1}`,
@@ -642,8 +645,12 @@ export default function EigeneRoute() {
             <Text style={[styles.pickerHint, { color: colors.mutedForeground, paddingHorizontal: 20 }]}>
               {pickerTarget === "waypoints"
                 ? t.waypointHint
-                : pickerTarget === "freehand" || pickerTarget === "freehand-preview"
-                  ? t.drawHint
+                : pickerTarget === "freehand"
+                  ? freehandDrawingActive
+                    ? t.drawHint
+                    : t.drawSetupHint
+                  : pickerTarget === "freehand-preview"
+                    ? t.drawFinish
                   : t.pickerHint}
             </Text>
             {/* Karte */}
@@ -656,6 +663,7 @@ export default function EigeneRoute() {
                   center={pickerCenter}
                   height={pickerMapHeight}
                   pickerMode
+                  preserveViewOnReload
                   geometry={
                     pickerTarget === "waypoints"
                       ? waypointPreview ?? undefined
@@ -672,7 +680,7 @@ export default function EigeneRoute() {
                         }))
                       : undefined
                   }
-                  drawMode={pickerTarget === "freehand"}
+                  drawMode={pickerTarget === "freehand" && freehandDrawingActive}
                   onMapClick={onPickerMapClick}
                   onMapDraw={onMapDraw}
                 />
@@ -764,6 +772,7 @@ export default function EigeneRoute() {
                   <Pressable
                     onPress={() => {
                       setDrawnPoints([]);
+                      setFreehandDrawingActive(true);
                       setPickerTarget("freehand");
                     }}
                     disabled={drawnPoints.length === 0}
@@ -780,33 +789,44 @@ export default function EigeneRoute() {
                 </View>
                 <Text style={[styles.drawStatus, { color: colors.mutedForeground }]}>
                   {pickerTarget === "freehand"
-                    ? t.drawHint
+                    ? freehandDrawingActive
+                      ? t.drawHint
+                      : t.drawSetupHint
                     : t.drawFinish}
                 </Text>
-                <View style={styles.waypointActions}>
-                  <Pressable
-                    onPress={() => {
-                      setDrawnPoints([]);
-                      setPickerTarget("freehand");
-                    }}
-                    disabled={submitting}
-                    accessibilityRole="button"
-                    accessibilityLabel={t.drawClear}
-                    style={[
-                      styles.waypointUndoButton,
-                      { borderColor: colors.glassBorder, opacity: submitting ? 0.4 : 1 },
-                    ]}
-                  >
-                    <Feather name="refresh-cw" size={15} color={colors.mutedForeground} />
-                  </Pressable>
+                {pickerTarget === "freehand" && !freehandDrawingActive && drawnPoints.length === 0 ? (
                   <PrimaryButton
-                    label={submitting ? t.calculatingLabel : t.drawCalculate}
-                    onPress={onSubmitDrawn}
-                    disabled={drawnPoints.length < 2 || submitting}
-                    loading={submitting}
-                    style={{ flex: 1 }}
+                    label={t.drawStart}
+                    onPress={() => setFreehandDrawingActive(true)}
+                    disabled={submitting}
                   />
-                </View>
+                ) : (
+                  <View style={styles.waypointActions}>
+                    <Pressable
+                      onPress={() => {
+                        setDrawnPoints([]);
+                        setFreehandDrawingActive(true);
+                        setPickerTarget("freehand");
+                      }}
+                      disabled={submitting}
+                      accessibilityRole="button"
+                      accessibilityLabel={t.drawClear}
+                      style={[
+                        styles.waypointUndoButton,
+                        { borderColor: colors.glassBorder, opacity: submitting ? 0.4 : 1 },
+                      ]}
+                    >
+                      <Feather name="refresh-cw" size={15} color={colors.mutedForeground} />
+                    </Pressable>
+                    <PrimaryButton
+                      label={submitting ? t.calculatingLabel : t.drawCalculate}
+                      onPress={onSubmitDrawn}
+                      disabled={drawnPoints.length < 2 || submitting}
+                      loading={submitting}
+                      style={{ flex: 1 }}
+                    />
+                  </View>
+                )}
               </View>
             ) : (
               <View style={{ paddingHorizontal: 20, paddingBottom: 24 }}>

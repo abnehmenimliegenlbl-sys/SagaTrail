@@ -43,6 +43,8 @@ export interface CustomRouteStrings {
   drawModeLabel: string;
   drawTitle: string;
   drawHint: string;
+  drawSetupHint: string;
+  drawStart: string;
   drawFinish: string;
   drawClear: string;
   drawCalculate: string;
@@ -94,6 +96,8 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     drawModeLabel: "Freihandroute zeichnen",
     drawTitle: "Route frei zeichnen",
     drawHint: "Ziehe die gewünschte Linie auf der Karte. SagaTrail legt sie anschliessend auf echte Wanderwege.",
+    drawSetupHint: "Verschiebe oder zoome die Karte und starte danach das Zeichnen.",
+    drawStart: "Zeichnen starten",
     drawFinish: "Linie fertig",
     drawClear: "Neu zeichnen",
     drawCalculate: "Wegroute erstellen",
@@ -143,6 +147,8 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     drawModeLabel: "Freihandroute zeichne",
     drawTitle: "Route frei zeichne",
     drawHint: "Zieh d gewünschti Linie uf dr Charte. SagaTrail legt sie nachher uf echte Wanderwäg.",
+    drawSetupHint: "Verschieb oder zoome d Charte und start nachher s Zeichne.",
+    drawStart: "Zeichne starte",
     drawFinish: "Linie fertig",
     drawClear: "Neu zeichne",
     drawCalculate: "Wegroute erstelle",
@@ -192,6 +198,8 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     drawModeLabel: "Draw a route freehand",
     drawTitle: "Draw your route",
     drawHint: "Draw the route you want on the map. SagaTrail will match it to real hiking paths.",
+    drawSetupHint: "Move or zoom the map, then start drawing.",
+    drawStart: "Start drawing",
     drawFinish: "Finish line",
     drawClear: "Draw again",
     drawCalculate: "Create trail route",
@@ -241,6 +249,8 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     drawModeLabel: "Dessiner un itinéraire",
     drawTitle: "Dessiner l'itinéraire",
     drawHint: "Dessine la ligne souhaitée sur la carte. SagaTrail l'adaptera aux vrais sentiers.",
+    drawSetupHint: "Déplacez ou zoomez la carte, puis commencez à dessiner.",
+    drawStart: "Commencer à dessiner",
     drawFinish: "Terminer la ligne",
     drawClear: "Redessiner",
     drawCalculate: "Créer l'itinéraire",
@@ -290,6 +300,8 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     drawModeLabel: "Disegna un percorso a mano libera",
     drawTitle: "Disegna il percorso",
     drawHint: "Disegna la linea sulla mappa. SagaTrail la adatterà ai sentieri escursionistici reali.",
+    drawSetupHint: "Sposta o ingrandisci la mappa, poi inizia a disegnare.",
+    drawStart: "Inizia a disegnare",
     drawFinish: "Fine linea",
     drawClear: "Ridisegna",
     drawCalculate: "Crea percorso",
@@ -339,6 +351,8 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     drawModeLabel: "Dibujar ruta a mano alzada",
     drawTitle: "Dibuja tu ruta",
     drawHint: "Dibuja la línea en el mapa. SagaTrail la ajustará a caminos de senderismo reales.",
+    drawSetupHint: "Mueve o amplía el mapa y después empieza a dibujar.",
+    drawStart: "Empezar a dibujar",
     drawFinish: "Terminar línea",
     drawClear: "Dibujar de nuevo",
     drawCalculate: "Crear ruta",
@@ -388,6 +402,8 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     drawModeLabel: "Desenhar rota à mão livre",
     drawTitle: "Desenhar a rota",
     drawHint: "Desenhe a linha no mapa. O SagaTrail irá ajustá-la a trilhos pedestres reais.",
+    drawSetupHint: "Mova ou amplie o mapa e depois comece a desenhar.",
+    drawStart: "Começar a desenhar",
     drawFinish: "Terminar linha",
     drawClear: "Desenhar novamente",
     drawCalculate: "Criar rota",
@@ -437,6 +453,8 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     drawModeLabel: "手绘路线",
     drawTitle: "手绘路线",
     drawHint: "在地图上画出想走的路线。SagaTrail 会将其匹配到真实的徒步道路。",
+    drawSetupHint: "先移动或缩放地图，然后开始绘制。",
+    drawStart: "开始绘制",
     drawFinish: "完成绘制",
     drawClear: "重新绘制",
     drawCalculate: "创建徒步路线",
@@ -486,6 +504,8 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     drawModeLabel: "Нарисовать маршрут от руки",
     drawTitle: "Нарисовать маршрут",
     drawHint: "Нарисуйте линию на карте. SagaTrail привяжет её к реальным пешеходным тропам.",
+    drawSetupHint: "Сначала переместите или масштабируйте карту, затем начните рисовать.",
+    drawStart: "Начать рисование",
     drawFinish: "Завершить линию",
     drawClear: "Нарисовать заново",
     drawCalculate: "Создать маршрут",

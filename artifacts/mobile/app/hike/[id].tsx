@@ -704,6 +704,12 @@ export default function LiveHike() {
   const getTokenRef = React.useRef(clerkGetToken);
   getTokenRef.current = clerkGetToken;
   const getSafetyAuthToken = useCallback(() => getTokenRef.current(), []);
+  const confirmInterruptHike = useCallback(() => {
+    alert(t.interruptHikeConfirmTitle, t.interruptHikeConfirmMessage, [
+      { text: t.interruptHikeCancelAction, style: "cancel" },
+      { text: t.interruptHikeConfirmAction, onPress: () => router.back() },
+    ]);
+  }, [router, t]);
   const {
     profile,
     emergencyContact,
@@ -6997,7 +7003,7 @@ export default function LiveHike() {
           </Animated.View>
         )}
         <View style={styles.headRow}>
-          <BackButton accessibilityLabel={t.back} onPress={() => router.back()} />
+          <BackButton accessibilityLabel={t.back} onPress={confirmInterruptHike} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.eyebrow, { color: colors.accent }]}>
               {saga.canton.toUpperCase()} · {t.live}

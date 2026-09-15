@@ -6,6 +6,7 @@ export const ROUTE_THEME_KEYS = [
   "burgen_ruinen_alte_wege",
   "gipfel_panorama",
   "geologie_eiszeit",
+  "hoehlen_grotten",
   "wald_wildtiere",
   "alpen_landwirtschaft",
   "pilger_handelswege",
@@ -24,6 +25,7 @@ const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
     burgen_ruinen_alte_wege: "Burgen, Ruinen & alte Wege",
     gipfel_panorama: "Gipfel & Panorama",
     geologie_eiszeit: "Geologie & Eiszeit",
+    hoehlen_grotten: "Höhlen & Grotten",
     wald_wildtiere: "Wald, Wildtiere & Spuren",
     alpen_landwirtschaft: "Alpen & Landwirtschaft",
     pilger_handelswege: "Pilger- & Handelswege",
@@ -38,6 +40,7 @@ const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
     burgen_ruinen_alte_wege: "Burgä, Ruine & alti Wäg",
     gipfel_panorama: "Gipfel & Panorama",
     geologie_eiszeit: "Geologie & Iisziit",
+    hoehlen_grotten: "Höhle & Grottene",
     wald_wildtiere: "Wald, Wildtier & Spure",
     alpen_landwirtschaft: "Alpe & Landwirtschaft",
     pilger_handelswege: "Pilger- & Handelswäg",
@@ -52,6 +55,7 @@ const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
     burgen_ruinen_alte_wege: "Castles, ruins & old trails",
     gipfel_panorama: "Summits & panoramas",
     geologie_eiszeit: "Geology & Ice Age",
+    hoehlen_grotten: "Caves & grottoes",
     wald_wildtiere: "Forest, wildlife & tracks",
     alpen_landwirtschaft: "Alps & farming",
     pilger_handelswege: "Pilgrimage & trade routes",
@@ -66,6 +70,7 @@ const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
     burgen_ruinen_alte_wege: "Châteaux, ruines & anciens chemins",
     gipfel_panorama: "Sommets & panoramas",
     geologie_eiszeit: "Géologie & période glaciaire",
+    hoehlen_grotten: "Grottes & cavernes",
     wald_wildtiere: "Forêt, faune & traces",
     alpen_landwirtschaft: "Alpes & agriculture",
     pilger_handelswege: "Chemins de pèlerinage & de commerce",
@@ -80,6 +85,7 @@ const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
     burgen_ruinen_alte_wege: "Castelli, rovine & antichi sentieri",
     gipfel_panorama: "Vette & panorami",
     geologie_eiszeit: "Geologia & era glaciale",
+    hoehlen_grotten: "Grotte & caverne",
     wald_wildtiere: "Boschi, fauna & tracce",
     alpen_landwirtschaft: "Alpi & agricoltura",
     pilger_handelswege: "Vie di pellegrinaggio & commercio",
@@ -94,6 +100,7 @@ const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
     burgen_ruinen_alte_wege: "Castillos, ruinas y caminos antiguos",
     gipfel_panorama: "Cumbres y panoramas",
     geologie_eiszeit: "Geología y era glacial",
+    hoehlen_grotten: "Cuevas y grutas",
     wald_wildtiere: "Bosque, fauna y huellas",
     alpen_landwirtschaft: "Alpes y agricultura",
     pilger_handelswege: "Rutas de peregrinación y comercio",
@@ -108,6 +115,7 @@ const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
     burgen_ruinen_alte_wege: "Castelos, ruínas e caminhos antigos",
     gipfel_panorama: "Cumes e panoramas",
     geologie_eiszeit: "Geologia e era glacial",
+    hoehlen_grotten: "Grutas e cavernas",
     wald_wildtiere: "Floresta, fauna e pegadas",
     alpen_landwirtschaft: "Alpes e agricultura",
     pilger_handelswege: "Rotas de peregrinação e comércio",
@@ -122,6 +130,7 @@ const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
     burgen_ruinen_alte_wege: "城堡、遗迹与古道",
     gipfel_panorama: "山峰与全景",
     geologie_eiszeit: "地质与冰河时代",
+    hoehlen_grotten: "洞穴与岩洞",
     wald_wildtiere: "森林、野生动物与踪迹",
     alpen_landwirtschaft: "阿尔卑斯与农业",
     pilger_handelswege: "朝圣与商贸路线",
@@ -136,6 +145,7 @@ const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
     burgen_ruinen_alte_wege: "Замки, руины и старые тропы",
     gipfel_panorama: "Вершины и панорамы",
     geologie_eiszeit: "Геология и ледниковый период",
+    hoehlen_grotten: "Пещеры и гроты",
     wald_wildtiere: "Лес, животные и следы",
     alpen_landwirtschaft: "Альпы и сельское хозяйство",
     pilger_handelswege: "Паломнические и торговые пути",
@@ -194,8 +204,18 @@ export function deriveRouteThemes(
     }
     if (
       kind.startsWith("geological=") ||
-      hasKind(poi, "natural=rock", "natural=arch", "natural=cave_entrance", "natural=glacier")
+      hasKind(poi, "natural=rock", "natural=glacier")
     ) tags.add("geologie_eiszeit");
+    if (
+      hasKind(
+        poi,
+        "natural=arch",
+        "natural=cave",
+        "natural=cave_entrance",
+        "natural=rock_shelter",
+        "man_made=adit",
+      )
+    ) tags.add("hoehlen_grotten");
     if (hasKind(poi, "natural=wood", "natural=wetland", "tourism=wildlife_hide")) {
       tags.add("wald_wildtiere");
     }

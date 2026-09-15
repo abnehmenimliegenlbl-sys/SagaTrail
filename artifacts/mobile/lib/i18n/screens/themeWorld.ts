@@ -2,6 +2,8 @@ import { createUseStrings, StringsDict } from "../createStrings";
 
 export interface ThemeWorldStrings {
   eyebrow: string;
+  catalogTitle: string;
+  catalogIntro: string;
   intro: (theme: string) => string;
   loading: string;
   loadingProgress: (done: number, total: number) => string;
@@ -15,6 +17,8 @@ export interface ThemeWorldStrings {
 const THEME_WORLD_STRINGS: StringsDict<ThemeWorldStrings> = {
   de: {
     eyebrow: "Themenwelt",
+    catalogTitle: "Themenwelten",
+    catalogIntro: "Entdecke Wanderungen nach Thema – jede Welt öffnet ihre eigenen Routen.",
     intro: (theme) => `Routen aus der Themenwelt «${theme}», sortiert nach Startkanton.`,
     loading: "Passende Routen werden gesucht …",
     loadingProgress: (done, total) => `${done} von ${total} Routen geprüft`,
@@ -26,6 +30,8 @@ const THEME_WORLD_STRINGS: StringsDict<ThemeWorldStrings> = {
   },
   gsw: {
     eyebrow: "Thema-Wält",
+    catalogTitle: "Thema-Wälte",
+    catalogIntro: "Entdeck Wanderige nach Thema – jedi Wält füehrt di zu ire eigene Route.",
     intro: (theme) => `Route us de Thema-Wält «${theme}», sortiert nach Startkanton.`,
     loading: "Passendi Route werde gsuecht …",
     loadingProgress: (done, total) => `${done} vo ${total} Route prüeft`,
@@ -37,6 +43,8 @@ const THEME_WORLD_STRINGS: StringsDict<ThemeWorldStrings> = {
   },
   en: {
     eyebrow: "Theme world",
+    catalogTitle: "Theme worlds",
+    catalogIntro: "Explore hikes by theme – each world opens its own collection of routes.",
     intro: (theme) => `Routes from the “${theme}” theme world, sorted by starting canton.`,
     loading: "Looking for matching routes …",
     loadingProgress: (done, total) => `${done} of ${total} routes checked`,
@@ -48,6 +56,8 @@ const THEME_WORLD_STRINGS: StringsDict<ThemeWorldStrings> = {
   },
   fr: {
     eyebrow: "Univers thématique",
+    catalogTitle: "Univers thématiques",
+    catalogIntro: "Découvrez des randonnées par thème – chaque univers ouvre ses propres itinéraires.",
     intro: (theme) => `Itinéraires de l’univers « ${theme} », classés par canton de départ.`,
     loading: "Recherche des itinéraires correspondants …",
     loadingProgress: (done, total) => `${done} itinéraires vérifiés sur ${total}`,
@@ -59,6 +69,8 @@ const THEME_WORLD_STRINGS: StringsDict<ThemeWorldStrings> = {
   },
   it: {
     eyebrow: "Mondo tematico",
+    catalogTitle: "Mondi tematici",
+    catalogIntro: "Scopri escursioni per tema: ogni mondo apre la propria raccolta di itinerari.",
     intro: (theme) => `Itinerari del mondo «${theme}», ordinati per cantone di partenza.`,
     loading: "Ricerca degli itinerari corrispondenti …",
     loadingProgress: (done, total) => `${done} itinerari verificati su ${total}`,
@@ -70,6 +82,8 @@ const THEME_WORLD_STRINGS: StringsDict<ThemeWorldStrings> = {
   },
   es: {
     eyebrow: "Mundo temático",
+    catalogTitle: "Mundos temáticos",
+    catalogIntro: "Descubre rutas por tema; cada mundo abre su propia colección de recorridos.",
     intro: (theme) => `Rutas del mundo «${theme}», ordenadas por cantón de inicio.`,
     loading: "Buscando rutas adecuadas …",
     loadingProgress: (done, total) => `${done} de ${total} rutas comprobadas`,
@@ -81,6 +95,8 @@ const THEME_WORLD_STRINGS: StringsDict<ThemeWorldStrings> = {
   },
   pt: {
     eyebrow: "Mundo temático",
+    catalogTitle: "Mundos temáticos",
+    catalogIntro: "Descubra caminhadas por tema – cada mundo abre a sua própria coleção de rotas.",
     intro: (theme) => `Rotas do mundo «${theme}», ordenadas pelo cantão de início.`,
     loading: "A procurar rotas correspondentes …",
     loadingProgress: (done, total) => `${done} de ${total} rotas verificadas`,
@@ -92,6 +108,8 @@ const THEME_WORLD_STRINGS: StringsDict<ThemeWorldStrings> = {
   },
   zh: {
     eyebrow: "主题世界",
+    catalogTitle: "主题世界",
+    catalogIntro: "按主题探索徒步路线，每个主题世界都有自己的路线集合。",
     intro: (theme) => `来自“${theme}”主题世界的路线，按起始州排序。`,
     loading: "正在查找匹配路线……",
     loadingProgress: (done, total) => `已检查 ${done}/${total} 条路线`,
@@ -103,6 +121,8 @@ const THEME_WORLD_STRINGS: StringsDict<ThemeWorldStrings> = {
   },
   ru: {
     eyebrow: "Тематический мир",
+    catalogTitle: "Тематические миры",
+    catalogIntro: "Выбирайте походы по теме — у каждого мира своя коллекция маршрутов.",
     intro: (theme) => `Маршруты из мира «${theme}», отсортированные по кантону старта.`,
     loading: "Ищем подходящие маршруты …",
     loadingProgress: (done, total) => `Проверено маршрутов: ${done} из ${total}`,
