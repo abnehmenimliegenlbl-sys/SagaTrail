@@ -634,8 +634,9 @@ function buildOsmContext(tags: Record<string, string>): string | null {
  * Abgedeckte Kategorien:
  *  • historic=*          — Burgen, Ruinen, Denkmäler, Wegkreuze, …
  *  • tourism=attraction|viewpoint|artwork|information — Sehenswürdigkeiten, Infotafeln
- *  • natural=water|saddle|waterfall|cave_entrance|glacier|rock|arch|gorge
+ *  • natural=water|saddle|waterfall|cave|cave_entrance|rock_shelter|glacier|rock|arch|gorge
  *                        — Seen, Pässe, Wasserfälle, Höhlen, Gletscher, Schluchten
+ *  • man_made=adit       — benannte und unbenannte historische Stollen
  *  • man_made=cross|obelisk — Gipfel-/Wegkreuze (auch ohne Namen → «Wegkreuz»)
  *  • amenity=place_of_worship + chapel/shrine — Kapellen
  *  • amenity=shelter      — Alpine Unterstände / Biwakschachteln
@@ -673,6 +674,13 @@ export async function fetchHistoricPois(
     // Alpine Naturmerkmale (Gipfel werden separat ueber /routes/peaks geladen)
     `node["natural"~"^(saddle|waterfall|cave_entrance|glacier|rock|arch|spring|gorge)$"]["name"](${b});`,
     `way["natural"~"^(waterfall|glacier|cave_entrance|gorge)$"]["name"](${b});`,
+    // Höhlen, Höhleneingänge und Felsdächer auch ohne Namen — dafür wird
+    // weiter unten ein typischer Fallback-Name vergeben.
+    `node["natural"~"^(cave|cave_entrance|rock_shelter)$"](${b});`,
+    `way["natural"~"^(cave|cave_entrance|rock_shelter)$"](${b});`,
+    // Stollen können in OSM ebenfalls namenlos sein.
+    `node["man_made"="adit"](${b});`,
+    `way["man_made"="adit"](${b});`,
     // Gipfel-/Wegkreuze und Obelisken — OHNE Namen-Filter, Fallback «Wegkreuz»
     `node["man_made"~"^(cross|obelisk)$"](${b});`,
     // Kapellen und Wegkapellen
@@ -731,6 +739,10 @@ export async function fetchHistoricPois(
       else if (h === "roman_building")        name = "Römisches Gebäude";
       else if (h === "battlefield")           name = "Schlachtfeld";
       else if (am === "shelter")              name = tags.ref ? `Unterstand ${tags.ref}` : "Unterstand";
+      else if (tags.natural === "cave")       name = "Höhle";
+      else if (tags.natural === "cave_entrance") name = "Höhleneingang";
+      else if (tags.natural === "rock_shelter") name = "Felsdach";
+      else if (mm === "adit")                  name = "Stollen";
       else if (ge === "erratic")              name = "Findling";
       else if (ge === "moraine")              name = "Moräne";
       else if (ge)                            name = ge; // andere geologische Merkmale

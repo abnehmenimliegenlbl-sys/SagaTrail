@@ -28,6 +28,7 @@ const THEME_KEYS = [
   "burgen_ruinen_alte_wege",
   "gipfel_panorama",
   "geologie_eiszeit",
+  "hoehlen_grotten",
   "wald_wildtiere",
   "alpen_landwirtschaft",
   "pilger_handelswege",
@@ -157,9 +158,14 @@ function deriveThemes(pois, route) {
       tags.add("gipfel_panorama");
     }
     if (kind.startsWith("geological=") ||
-        hasKind(poi, "natural=rock", "natural=arch", "natural=cave_entrance", "natural=glacier")) {
+        hasKind(poi, "natural=rock", "natural=glacier")) {
       tags.add("geologie_eiszeit");
     }
+    if (hasKind(
+      poi,
+      "natural=arch", "natural=cave", "natural=cave_entrance",
+      "natural=rock_shelter", "man_made=adit",
+    )) tags.add("hoehlen_grotten");
     if (hasKind(poi, "natural=wood", "natural=wetland", "tourism=wildlife_hide")) {
       tags.add("wald_wildtiere");
     }

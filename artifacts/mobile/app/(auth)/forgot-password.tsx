@@ -1,4 +1,5 @@
 import { useSignIn } from "@clerk/expo/legacy";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -34,6 +35,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -149,18 +151,34 @@ export default function ForgotPasswordScreen() {
                 { color: colors.foreground, borderColor: colors.glassBorder },
               ]}
             />
-            <TextInput
-              value={newPassword}
-              onChangeText={setNewPassword}
-              placeholder={t.forgotPasswordNewPassword}
-              placeholderTextColor={colors.mutedForeground}
-              secureTextEntry
-              autoComplete="new-password"
-              style={[
-                styles.input,
-                { color: colors.foreground, borderColor: colors.glassBorder },
-              ]}
-            />
+            <View style={styles.passwordField}>
+              <TextInput
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder={t.forgotPasswordNewPassword}
+                placeholderTextColor={colors.mutedForeground}
+                secureTextEntry={!showPassword}
+                autoComplete="new-password"
+                style={[
+                  styles.input,
+                  styles.passwordInput,
+                  { color: colors.foreground, borderColor: colors.glassBorder },
+                ]}
+              />
+              <Pressable
+                onPress={() => setShowPassword((visible) => !visible)}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? t.hidePassword : t.showPassword}
+                hitSlop={10}
+                style={styles.passwordToggle}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={colors.mutedForeground}
+                />
+              </Pressable>
+            </View>
             {error && (
               <Text style={[styles.error, { color: colors.destructive }]}>
                 {error}
@@ -207,6 +225,16 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 16,
     marginBottom: 12,
+  },
+  passwordField: { position: "relative", marginBottom: 12 },
+  passwordInput: { marginBottom: 0, paddingRight: 52 },
+  passwordToggle: {
+    position: "absolute",
+    top: 0,
+    right: 12,
+    bottom: 0,
+    justifyContent: "center",
+    padding: 4,
   },
   error: { fontFamily: fonts.body, fontSize: 13, marginBottom: 8 },
   success: { fontFamily: fonts.bodyMedium, fontSize: 16, textAlign: "center", marginBottom: 16 },

@@ -52,8 +52,6 @@ export default function Entdecken() {
     language,
     activeHike,
     clearActiveHike,
-    lastHike,
-    hikeHistory,
     premium,
     freeHikeUsed,
     pendingPackRewards,
@@ -145,34 +143,6 @@ export default function Entdecken() {
               >
                 <Feather name="x" size={16} color={colors.mutedForeground} />
               </Pressable>
-            </Pressable>
-          </Animated.View>
-        )}
-
-        {lastHike && (
-          <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
-            <Pressable
-              onPress={() => router.push(`/hike-history/${encodeURIComponent(lastHike.id)}`)}
-              style={[
-                styles.lastHikeCard,
-                { backgroundColor: colors.glassBg, borderColor: colors.glassBorder, borderRadius: colors.radius },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Letzte Wanderung öffnen"
-            >
-              <View style={styles.lastHikeIcon}>
-                <Feather name="book-open" size={17} color={colors.accent} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.resumeEyebrow, { color: colors.accent }]}>LETZTE WANDERUNG</Text>
-                <Text style={[styles.resumeName, { color: colors.foreground }]} numberOfLines={1}>
-                  {lastHike.routeName}
-                </Text>
-                <Text style={[styles.resumeHint, { color: colors.mutedForeground }]}>
-                  {hikeHistory.length} Eintrag{hikeHistory.length === 1 ? "" : "e"} im Wandertagebuch
-                </Text>
-              </View>
-              <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
             </Pressable>
           </Animated.View>
         )}
@@ -476,22 +446,6 @@ const styles = StyleSheet.create({
   resumeCtaRowCompact: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
   resumeCta: { fontFamily: fonts.bodyBold, fontSize: 14 },
   resumeClose: { padding: 2 },
-  lastHikeCard: {
-    ...GLAS_3D,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderWidth: 1,
-    padding: 14,
-  },
-  lastHikeIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(216,168,78,0.12)",
-  },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",

@@ -18,6 +18,8 @@ export interface AuthStrings {
   signUpSubtitleVerify: (email: string) => string;
   emailPlaceholder: string;
   passwordPlaceholder: string;
+  showPassword: string;
+  hidePassword: string;
   codePlaceholder: string;
   signInButton: string;
   signUpButton: string;
@@ -51,6 +53,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     signUpSubtitleVerify: (email) => `Wir haben einen Code an ${email} gesendet.`,
     emailPlaceholder: "E-Mail-Adresse",
     passwordPlaceholder: "Passwort",
+    showPassword: "Passwort anzeigen",
+    hidePassword: "Passwort verbergen",
     codePlaceholder: "Bestätigungscode",
     signInButton: "Anmelden",
     signUpButton: "Registrieren",
@@ -91,6 +95,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     signUpSubtitleVerify: (email) => `Mir händ dir en Code a ${email} gschickt.`,
     emailPlaceholder: "E-Mail-Adrässe",
     passwordPlaceholder: "Passwort",
+    showPassword: "Passwort aazeige",
+    hidePassword: "Passwort verberge",
     codePlaceholder: "Bestätigungscode",
     signInButton: "Amälde",
     signUpButton: "Registriere",
@@ -131,6 +137,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     signUpSubtitleVerify: (email) => `We sent a code to ${email}.`,
     emailPlaceholder: "Email address",
     passwordPlaceholder: "Password",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     codePlaceholder: "Verification code",
     signInButton: "Sign in",
     signUpButton: "Sign up",
@@ -171,6 +179,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     signUpSubtitleVerify: (email) => `Nous avons envoyé un code à ${email}.`,
     emailPlaceholder: "Adresse e-mail",
     passwordPlaceholder: "Mot de passe",
+    showPassword: "Afficher le mot de passe",
+    hidePassword: "Masquer le mot de passe",
     codePlaceholder: "Code de vérification",
     signInButton: "Se connecter",
     signUpButton: "S'inscrire",
@@ -211,6 +221,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     signUpSubtitleVerify: (email) => `Abbiamo inviato un codice a ${email}.`,
     emailPlaceholder: "Indirizzo e-mail",
     passwordPlaceholder: "Password",
+    showPassword: "Mostra password",
+    hidePassword: "Nascondi password",
     codePlaceholder: "Codice di verifica",
     signInButton: "Accedi",
     signUpButton: "Registrati",
@@ -251,6 +263,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     signUpSubtitleVerify: (email) => `Hemos enviado un código a ${email}.`,
     emailPlaceholder: "Correo electrónico",
     passwordPlaceholder: "Contraseña",
+    showPassword: "Mostrar contraseña",
+    hidePassword: "Ocultar contraseña",
     codePlaceholder: "Código de verificación",
     signInButton: "Iniciar sesión",
     signUpButton: "Registrarse",
@@ -291,6 +305,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     signUpSubtitleVerify: (email) => `Enviamos um código para ${email}.`,
     emailPlaceholder: "Endereço de e-mail",
     passwordPlaceholder: "Senha",
+    showPassword: "Mostrar palavra-passe",
+    hidePassword: "Ocultar palavra-passe",
     codePlaceholder: "Código de verificação",
     signInButton: "Entrar",
     signUpButton: "Cadastrar",
@@ -331,6 +347,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     signUpSubtitleVerify: (email) => `我们已将验证码发送至 ${email}。`,
     emailPlaceholder: "电子邮箱",
     passwordPlaceholder: "密码",
+    showPassword: "显示密码",
+    hidePassword: "隐藏密码",
     codePlaceholder: "验证码",
     signInButton: "登录",
     signUpButton: "注册",
@@ -371,6 +389,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     signUpSubtitleVerify: (email) => `Мы отправили код на ${email}.`,
     emailPlaceholder: "Адрес электронной почты",
     passwordPlaceholder: "Пароль",
+    showPassword: "Показать пароль",
+    hidePassword: "Скрыть пароль",
     codePlaceholder: "Код подтверждения",
     signInButton: "Войти",
     signUpButton: "Зарегистрироваться",
