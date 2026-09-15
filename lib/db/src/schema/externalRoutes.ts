@@ -47,6 +47,9 @@ export const externalRoutesTable = pgTable("external_routes", {
   // für fehlende Werte konservative technische Empfehlungen ergänzen.
   // NULL bedeutet weiterhin unbekannt und darf nicht als "nein" interpretiert werden.
   familyFriendly: boolean("family_friendly"),
+  // Aus belastbaren POIs entlang der Route abgeleitete Themenwelten.
+  // Leeres Array bedeutet: geprüft, aber kein Themenbeleg gefunden.
+  themeKeys: text("theme_keys").array().notNull().default([]),
   // Legacy-Speicherfelder; nicht mehr Teil von App- oder API-Filtern.
   childFriendly: boolean("child_friendly"),
   dogsAllowed: boolean("dogs_allowed"),
