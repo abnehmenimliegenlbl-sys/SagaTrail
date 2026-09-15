@@ -57,6 +57,8 @@ export interface KantonStrings {
   importGpxReadError: string;
   premiumCta: string;
   premiumCtaBody: string;
+  moreFilters: string;
+  fewerFilters: string;
 }
 
 const KANTON_STRINGS: StringsDict<KantonStrings> = {
@@ -121,6 +123,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxReadError: "Die Datei konnte nicht gelesen werden.",
     premiumCta: "Alle Routen freischalten",
     premiumCtaBody: "Eine Route war gratis — Premium hebt die Sperre.",
+    moreFilters: "Weitere Filter",
+    fewerFilters: "Weniger Filter",
   },
   gsw: {
     eyebrow: "Schritt 2 · Filter & Suechi",
@@ -183,6 +187,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxReadError: "D'Datei het nöd chöne gläse wärde.",
     premiumCta: "Alli Route frischalte",
     premiumCtaBody: "Ei Route isch umsunst gsi — Premium hebt d'Sperri.",
+    moreFilters: "Wiiteri Filter",
+    fewerFilters: "Weniger Filter",
   },
   fr: {
     eyebrow: "Étape 2 · Filtres & Recherche",
@@ -245,6 +251,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxReadError: "Le fichier n'a pas pu être lu.",
     premiumCta: "Débloquer tous les itinéraires",
     premiumCtaBody: "Un itinéraire était gratuit — Premium lève la restriction.",
+    moreFilters: "Plus de filtres",
+    fewerFilters: "Moins de filtres",
   },
   it: {
     eyebrow: "Passo 2 · Filtri e Ricerca",
@@ -307,6 +315,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxReadError: "Il file non ha potuto essere letto.",
     premiumCta: "Sblocca tutti i percorsi",
     premiumCtaBody: "Un percorso era gratuito — Premium rimuove il blocco.",
+    moreFilters: "Altri filtri",
+    fewerFilters: "Meno filtri",
   },
   en: {
     eyebrow: "Step 2 · Filter & Search",
@@ -369,6 +379,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxReadError: "The file could not be read.",
     premiumCta: "Unlock all routes",
     premiumCtaBody: "One route was free — Premium removes the lock.",
+    moreFilters: "More filters",
+    fewerFilters: "Fewer filters",
   },
   zh: {
     eyebrow: "第 2 步 · 过滤与搜索",
@@ -430,6 +442,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxReadError: "文件无法读取。",
     premiumCta: "解锁所有路线",
     premiumCtaBody: "一条路线是免费的——高级版解除限制。",
+    moreFilters: "更多筛选",
+    fewerFilters: "更少筛选",
   },
   ru: {
     eyebrow: "Шаг 2 · Фильтр и поиск",
@@ -492,6 +506,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxReadError: "Файл не удалось прочитать.",
     premiumCta: "Разблокировать все маршруты",
     premiumCtaBody: "Один маршрут был бесплатным — Premium снимает ограничение.",
+    moreFilters: "Другие фильтры",
+    fewerFilters: "Меньше фильтров",
   },
   es: {
     eyebrow: "Paso 2 · Filtros y Búsqueda",
@@ -554,6 +570,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxReadError: "El archivo no pudo ser leído.",
     premiumCta: "Desbloquear todas las rutas",
     premiumCtaBody: "Una ruta era gratuita — Premium elimina la restricción.",
+    moreFilters: "Más filtros",
+    fewerFilters: "Menos filtros",
   },
   pt: {
     eyebrow: "Etapa 2 · Filtros e Busca",
@@ -616,6 +634,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxReadError: "O arquivo não pôde ser lido.",
     premiumCta: "Desbloquear todas as rotas",
     premiumCtaBody: "Uma rota era gratuita — Premium remove o bloqueio.",
+    moreFilters: "Mais filtros",
+    fewerFilters: "Menos filtros",
   },
 };
 

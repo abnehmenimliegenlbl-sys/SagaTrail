@@ -73,7 +73,7 @@ export default function NeuerTreffpunkt() {
         },
       });
       alert(t.createTitle, t.published, [
-        { text: "OK", onPress: () => router.replace("/treffpunkte") },
+        { text: t.ok, onPress: () => router.replace("/treffpunkte") },
       ]);
     } catch (error) {
       const message = error instanceof Error ? error.message : t.error;

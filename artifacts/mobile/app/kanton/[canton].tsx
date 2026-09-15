@@ -659,12 +659,12 @@ export default function KantonRouten() {
           <Pressable
             onPress={() => setShowAdvancedFilters((visible) => !visible)}
             accessibilityRole="button"
-            accessibilityLabel={showAdvancedFilters ? "Weniger Filter" : "Weitere Filter"}
+            accessibilityLabel={showAdvancedFilters ? t.fewerFilters : t.moreFilters}
             style={[styles.moreFiltersButton, { borderColor: colors.glassBorder }]}
           >
             <Feather name={showAdvancedFilters ? "chevron-up" : "sliders"} size={14} color={colors.accent} />
             <Text style={[styles.moreFiltersText, { color: colors.accent }]}>
-              {showAdvancedFilters ? "Weniger Filter" : "Weitere Filter"}
+              {showAdvancedFilters ? t.fewerFilters : t.moreFilters}
             </Text>
           </Pressable>
 

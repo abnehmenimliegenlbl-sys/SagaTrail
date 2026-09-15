@@ -24,6 +24,8 @@ export interface HomeStrings {
   referralRewardCta: string;
   themeWorldsTitle: string;
   themeWorldsHint: string;
+  searchCanton: string;
+  clearSearch: string;
 }
 
 const HOME_STRINGS: StringsDict<HomeStrings> = {
@@ -51,6 +53,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     referralRewardCta: "Sagenpaket wählen",
     themeWorldsTitle: "Themenwelten",
     themeWorldsHint: "Wähle dein nächstes Wandererlebnis",
+    searchCanton: "Kanton suchen",
+    clearSearch: "Suche löschen",
   },
   gsw: {
     welcomeBack: "Willkomme zrugg",
@@ -76,6 +80,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     referralRewardCta: "Sagenpaket wähle",
     themeWorldsTitle: "Thema-Wälte",
     themeWorldsHint: "Wähl dis nöchste Wandererlebnis",
+    searchCanton: "Kanton sueche",
+    clearSearch: "Suechi lösche",
   },
   en: {
     welcomeBack: "Welcome back",
@@ -101,6 +107,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     referralRewardCta: "Choose saga pack",
     themeWorldsTitle: "Theme worlds",
     themeWorldsHint: "Choose your next hiking experience",
+    searchCanton: "Search canton",
+    clearSearch: "Clear search",
   },
   fr: {
     welcomeBack: "Bon retour parmi nous",
@@ -126,6 +134,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     referralRewardCta: "Choisir un pack",
     themeWorldsTitle: "Univers thématiques",
     themeWorldsHint: "Choisis ta prochaine expérience de randonnée",
+    searchCanton: "Rechercher un canton",
+    clearSearch: "Effacer la recherche",
   },
   it: {
     welcomeBack: "Bentornato/a",
@@ -151,6 +161,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     referralRewardCta: "Scegli un pacchetto",
     themeWorldsTitle: "Mondi tematici",
     themeWorldsHint: "Scegli la tua prossima esperienza escursionistica",
+    searchCanton: "Cerca cantone",
+    clearSearch: "Cancella ricerca",
   },
   es: {
     welcomeBack: "Bienvenido/a de nuevo",
@@ -176,6 +188,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     referralRewardCta: "Elegir pack de sagas",
     themeWorldsTitle: "Mundos temáticos",
     themeWorldsHint: "Elige tu próxima experiencia de senderismo",
+    searchCanton: "Buscar cantón",
+    clearSearch: "Borrar búsqueda",
   },
   pt: {
     welcomeBack: "Bem-vindo/a de volta",
@@ -201,6 +215,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     referralRewardCta: "Escolher pacote de lendas",
     themeWorldsTitle: "Mundos temáticos",
     themeWorldsHint: "Escolha a sua próxima experiência de caminhada",
+    searchCanton: "Pesquisar cantão",
+    clearSearch: "Limpar pesquisa",
   },
   zh: {
     welcomeBack: "欢迎回来",
@@ -226,6 +242,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     referralRewardCta: "选择传说包",
     themeWorldsTitle: "主题世界",
     themeWorldsHint: "选择你的下一次徒步体验",
+    searchCanton: "搜索联邦州",
+    clearSearch: "清除搜索",
   },
   ru: {
     welcomeBack: "С возвращением",
@@ -251,6 +269,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     referralRewardCta: "Выбрать пакет саг",
     themeWorldsTitle: "Тематические миры",
     themeWorldsHint: "Выбери следующий поход",
+    searchCanton: "Найти кантон",
+    clearSearch: "Очистить поиск",
   },
 };
 

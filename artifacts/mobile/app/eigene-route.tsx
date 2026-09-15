@@ -376,13 +376,13 @@ export default function EigeneRoute() {
     setFreehandDrawingActive(false);
     setDrawnPoints(
       points.map((point, index) => ({
-        label: `Punkt ${index + 1}`,
+        label: t.waypointPoint(index + 1),
         lat: point.lat,
         lng: point.lng,
       })),
     );
     setPickerTarget("freehand-preview");
-  }, []);
+  }, [t]);
 
   const onPickerConfirm = useCallback(async () => {
     if (!pickerPending || !pickerTarget) return;

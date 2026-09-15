@@ -271,14 +271,14 @@ export default function Entdecken() {
           <TextInput
             value={cantonQuery}
             onChangeText={setCantonQuery}
-            placeholder="Kanton suchen"
+            placeholder={t.searchCanton}
             placeholderTextColor={colors.mutedForeground}
             style={[styles.searchInput, { color: colors.foreground }]}
-            accessibilityLabel="Kanton suchen"
+            accessibilityLabel={t.searchCanton}
             returnKeyType="search"
           />
           {cantonQuery.length > 0 && (
-            <Pressable onPress={() => setCantonQuery("")} hitSlop={10} accessibilityLabel="Suche löschen">
+            <Pressable onPress={() => setCantonQuery("")} hitSlop={10} accessibilityLabel={t.clearSearch}>
               <Feather name="x-circle" size={17} color={colors.mutedForeground} />
             </Pressable>
           )}

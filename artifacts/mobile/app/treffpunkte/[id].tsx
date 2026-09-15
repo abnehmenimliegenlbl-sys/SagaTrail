@@ -33,6 +33,7 @@ import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
+import { useApp } from "@/contexts/AppContext";
 import { alert } from "@/lib/appAlert";
 
 const WEB_TOP = 67;
@@ -42,6 +43,7 @@ export default function MeetupDetail() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const t = useMeetupStrings();
+  const { language } = useApp();
   const params = useLocalSearchParams<{ id?: string }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
   const query = useGetMeetup(id);
@@ -70,7 +72,7 @@ export default function MeetupDetail() {
       `DTEND:${icsDate(end)}`,
       `SUMMARY:${icsEscape(`SagaTrail: ${meetup.routeName}`)}`,
       `LOCATION:${icsEscape(`Offizieller Start der Route ${meetup.routeName}`)}`,
-      `DESCRIPTION:${icsEscape(meetup.note ?? "Gemeinsamer Treffpunkt über SagaTrail.")}`,
+       `DESCRIPTION:${icsEscape(meetup.note ?? t.calendarDescription)}`,
       "END:VEVENT",
       "END:VCALENDAR",
     ].join("\r\n");
@@ -81,13 +83,13 @@ export default function MeetupDetail() {
         await Sharing.shareAsync(uri, {
           mimeType: "text/calendar",
           UTI: "com.apple.ical.ics",
-          dialogTitle: "Treffpunkt in Kalender übernehmen",
+          dialogTitle: t.calendarDialogTitle,
         });
       } else {
         await Share.share({ message: ics });
       }
     } catch {
-      alert("Kalender", "Der Kalendertermin konnte nicht exportiert werden.");
+      alert(t.title, t.calendarExportError);
     }
   };
 
@@ -98,25 +100,25 @@ export default function MeetupDetail() {
       const link = Linking.createURL(result.path);
       await Share.share({
         title: meetup.routeName,
-        message: `${meetup.routeName}\n${formatDate(meetup.startsAt)}\n${link}`,
+        message: `${meetup.routeName}\n${formatDate(meetup.startsAt, language)}\n${link}`,
       });
     } catch {
-      alert("Treffpunkt", "Der sichere Link konnte nicht erstellt werden.");
+      alert(t.title, t.shareError);
     }
   };
 
   const reportMeetup = () => {
     if (!meetup) return;
-    alert("Treffpunkt melden", "Warum möchtest du diesen Treffpunkt melden?", [
+    alert(t.report, t.reportPrompt, [
       {
-        text: "Sicherheitsbedenken",
+        text: t.reportSafety,
         onPress: () => void submitReport("safety"),
       },
       {
-        text: "Spam oder Belästigung",
+        text: t.reportHarassment,
         onPress: () => void submitReport("harassment"),
       },
-      { text: "Abbrechen" },
+      { text: t.cancel },
     ]);
   };
 
@@ -124,15 +126,15 @@ export default function MeetupDetail() {
     if (!meetup) return;
     try {
       await report.mutateAsync({ id: meetup.id, data: { reason } });
-      alert("Meldung", "Danke. Die Meldung wurde gespeichert.");
+      alert(t.report, t.reportSuccess);
     } catch {
-      alert("Meldung", "Die Meldung konnte nicht gespeichert werden.");
+      alert(t.report, t.reportFailure);
     }
   };
 
   const deleteMeetup = () => {
     if (!meetup) return;
-    alert("Treffpunkt löschen", "Möchtest du diesen Treffpunkt wirklich löschen?", [
+    alert(t.delete, t.deletePrompt, [
       {
         text: t.delete,
         style: "destructive",
@@ -141,47 +143,47 @@ export default function MeetupDetail() {
             await deleteMeetupMutation.mutateAsync({ id: meetup.id });
             router.replace("/treffpunkte");
           } catch {
-            alert("Treffpunkt", "Der Treffpunkt konnte nicht gelöscht werden.");
+            alert(t.title, t.deleteFailure);
           }
         },
       },
-      { text: "Abbrechen", style: "cancel" },
+      { text: t.cancel, style: "cancel" },
     ]);
   };
 
   const blockMeetupOrganizer = () => {
     if (!meetup) return;
-    alert("Nutzer blockieren", "Treffpunkte dieses Organisators werden künftig ausgeblendet.", [
+    alert(t.block, t.blockPrompt, [
       {
-        text: "Blockieren",
+        text: t.blockAction,
         onPress: async () => {
           try {
             await blockOrganizer.mutateAsync({ id: meetup.id });
             router.replace("/treffpunkte");
           } catch {
-            alert("Blockieren", "Der Nutzer konnte nicht blockiert werden.");
+            alert(t.block, t.blockFailure);
           }
         },
       },
-      { text: "Abbrechen" },
+      { text: t.cancel },
     ]);
   };
 
   const removeParticipant = (userId: string, name: string) => {
     if (!meetup) return;
-    alert("Teilnehmer entfernen", `${name} aus dem Treffpunkt entfernen?`, [
+    alert(t.removeParticipant, t.removePrompt(name), [
       {
-        text: "Entfernen",
+        text: t.removeAction,
         onPress: async () => {
           try {
             await remove.mutateAsync({ id: meetup.id, userId });
             await query.refetch();
           } catch {
-            alert("Treffpunkt", "Der Teilnehmer konnte nicht entfernt werden.");
+            alert(t.title, t.removeFailure);
           }
         },
       },
-      { text: "Abbrechen" },
+      { text: t.cancel },
     ]);
   };
 
@@ -200,10 +202,10 @@ export default function MeetupDetail() {
         <View style={[styles.center, { paddingTop: insets.top + 40 }]}>
           <Feather name={isNotFound ? "calendar" : "wifi-off"} size={28} color={colors.accent} />
           <Text style={[styles.error, { color: colors.mutedForeground }]}>
-            {isNotFound ? "Dieser Treffpunkt ist nicht mehr verfügbar." : "Treffpunkt konnte nicht geladen werden."}
+            {isNotFound ? t.unavailable : t.loadDetailError}
           </Text>
           <PrimaryButton
-            label="Zu den Treffpunkten"
+            label={t.backToMeetups}
             onPress={() => router.replace("/treffpunkte")}
             style={{ marginTop: 18 }}
           />
@@ -226,7 +228,7 @@ export default function MeetupDetail() {
           <View style={[styles.icon, { backgroundColor: colors.accent + "20" }]}>
             <Feather name="calendar" size={22} color={colors.accent} />
           </View>
-          <Text style={[styles.date, { color: colors.foreground }]}>{formatDate(meetup.startsAt)}</Text>
+          <Text style={[styles.date, { color: colors.foreground }]}>{formatDate(meetup.startsAt, language)}</Text>
           <Text style={[styles.meta, { color: colors.mutedForeground }]}>
             {meetup.canton} · {meetup.participantCount}/{meetup.maxParticipants} Plätze · {paceLabel(meetup.pace, t)}
           </Text>
@@ -235,10 +237,10 @@ export default function MeetupDetail() {
         {meetup.note ? <Text style={[styles.note, { color: colors.mutedForeground }]}>{meetup.note}</Text> : null}
 
         <View style={styles.actionRow}>
-          <SmallAction icon="calendar" label="Kalender" onPress={() => void exportCalendar()} colors={colors} />
-          <SmallAction icon="share-2" label="Teilen" onPress={() => void shareMeetup()} colors={colors} />
-          <SmallAction icon="flag" label="Melden" onPress={reportMeetup} colors={colors} />
-          <SmallAction icon="slash" label="Blockieren" onPress={blockMeetupOrganizer} colors={colors} />
+           <SmallAction icon="calendar" label={t.calendar} onPress={() => void exportCalendar()} colors={colors} />
+           <SmallAction icon="share-2" label={t.share} onPress={() => void shareMeetup()} colors={colors} />
+           <SmallAction icon="flag" label={t.report} onPress={reportMeetup} colors={colors} />
+           <SmallAction icon="slash" label={t.block} onPress={blockMeetupOrganizer} colors={colors} />
           {meetup.isOrganizer ? (
             <SmallAction
               icon="trash-2"
@@ -250,17 +252,17 @@ export default function MeetupDetail() {
           ) : null}
         </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Teilnehmende</Text>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.participantsTitle}</Text>
         <View style={[styles.people, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
           {meetup.participants.map((participant, index) => (
             <View key={`${participant.name}-${index}`} style={styles.personRow}>
               <ProfileAvatar avatarUrl={participant.avatarUrl} name={participant.name} size={36} />
               <Text style={[styles.personName, { color: colors.foreground }]}>
                 {participant.name}
-                {participant.age ? ` · ${participant.age} ${participant.age === 1 ? "Jahr" : "Jahre"}` : ""}
+                {participant.age ? ` · ${t.ageLabel(participant.age)}` : ""}
               </Text>
               {participant.name === meetup.organizerName ? (
-                <Text style={[styles.organizer, { color: colors.mutedForeground }]}>Organisator</Text>
+                <Text style={[styles.organizer, { color: colors.mutedForeground }]}>{t.organizerBadge}</Text>
               ) : meetup.isOrganizer && participant.userId ? (
                 <Pressable onPress={() => removeParticipant(participant.userId!, participant.name)} hitSlop={8}>
                   <Feather name="user-minus" size={16} color={colors.destructive} />
@@ -283,7 +285,7 @@ export default function MeetupDetail() {
               }
               await query.refetch();
             } catch {
-              alert("Treffpunkt", "Die Teilnahme konnte nicht geändert werden.");
+              alert(t.title, t.participationError);
             }
           }}
           style={{ marginTop: 20 }}
@@ -296,7 +298,7 @@ export default function MeetupDetail() {
           <Text style={[styles.routeLinkText, { color: colors.accent }]}>{t.routeOpen}</Text>
         </Pressable>
         <Text style={[styles.privacy, { color: colors.mutedForeground }]}>
-          Der offizielle Routenstart ist der Treffpunkt. Private Adressen und Live-Standorte werden nicht geteilt.
+          {t.privacyNotice}
         </Text>
       </ScrollView>
     </Background>
@@ -335,8 +337,9 @@ function SmallAction({
   );
 }
 
-function formatDate(value: string): string {
-  return new Date(value).toLocaleString("de-CH", {
+function formatDate(value: string, language: string): string {
+  const locale = language === "de" || language === "gsw" ? "de-CH" : language;
+  return new Date(value).toLocaleString(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",

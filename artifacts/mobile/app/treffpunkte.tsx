@@ -57,7 +57,7 @@ export default function Treffpunkte() {
     } catch (error) {
       const message = String(error);
       alert(
-        "Treffpunkt",
+         t.title,
         message.includes("401") || message.toLowerCase().includes("auth")
           ? t.loginRequired
           : message.includes("voll")
@@ -98,7 +98,7 @@ export default function Treffpunkte() {
                 : t.error}
             </Text>
             <Pressable onPress={refresh} style={styles.retry}>
-              <Text style={[styles.retryText, { color: colors.accent }]}>Erneut laden</Text>
+              <Text style={[styles.retryText, { color: colors.accent }]}>{t.retry}</Text>
             </Pressable>
           </View>
         ) : !meetups.data?.meetups.length ? (

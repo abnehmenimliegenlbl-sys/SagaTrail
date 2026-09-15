@@ -10,12 +10,14 @@ import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
+import { useApp } from "@/contexts/AppContext";
 
 export default function SharedMeetup() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const t = useMeetupStrings();
+  const { language } = useApp();
   const params = useLocalSearchParams<{ token?: string }>();
   const token = Array.isArray(params.token) ? params.token[0] : params.token ?? "";
   const query = useGetSharedMeetup(token);
@@ -24,27 +26,27 @@ export default function SharedMeetup() {
   return (
     <Background>
       <ScrollView contentContainerStyle={{ paddingTop: Platform.OS === "web" ? 67 : insets.top + 8, paddingHorizontal: 20, paddingBottom: insets.bottom + 80 }}>
-        <ScreenHeader eyebrow={t.eyebrow} title="Geteilter Treffpunkt" onBack />
+        <ScreenHeader eyebrow={t.eyebrow} title={t.sharedTitle} onBack />
         {query.isLoading ? (
           <ActivityIndicator color={colors.accent} style={{ marginTop: 30 }} />
         ) : !meetup ? (
           <View style={[styles.empty, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
             <Feather name="link-2" size={24} color={colors.mutedForeground} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Dieser Link ist abgelaufen oder wurde widerrufen.</Text>
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.sharedExpired}</Text>
           </View>
         ) : (
           <View style={[styles.card, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
             <Feather name="users" size={25} color={colors.accent} />
             <Text style={[styles.title, { color: colors.foreground }]}>{meetup.routeName}</Text>
-            <Text style={[styles.date, { color: colors.mutedForeground }]}>{new Date(meetup.startsAt).toLocaleString("de-CH")}</Text>
+            <Text style={[styles.date, { color: colors.mutedForeground }]}>{new Date(meetup.startsAt).toLocaleString(language === "de" || language === "gsw" ? "de-CH" : language)}</Text>
             <Text style={[styles.meta, { color: colors.mutedForeground }]}>
               {meetup.canton} · {meetup.participantCount}/{meetup.maxParticipants} Plätze
             </Text>
             <Pressable onPress={() => router.push("/treffpunkte")} style={[styles.button, { backgroundColor: colors.accent }]}>
-              <Text style={styles.buttonText}>{t.title} öffnen</Text>
+              <Text style={styles.buttonText}>{t.openMeetups}</Text>
             </Pressable>
             <Text style={[styles.privacy, { color: colors.mutedForeground }]}>
-              Dieser Link zeigt nur Route, Zeit und Gruppengrösse. Teilnehmernamen und private Daten bleiben geschützt.
+              {t.sharedPrivacy}
             </Text>
           </View>
         )}
