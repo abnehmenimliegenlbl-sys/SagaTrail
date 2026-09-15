@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import {
   useBlockMeetupOrganizer,
   useCreateMeetupShare,
+  useDeleteMeetup,
   useGetMeetup,
   useJoinMeetup,
   useLeaveMeetup,
@@ -46,6 +47,7 @@ export default function MeetupDetail() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
   const query = useGetMeetup(id);
   const share = useCreateMeetupShare();
+  const deleteMeetupMutation = useDeleteMeetup();
   const report = useReportMeetup();
   const blockOrganizer = useBlockMeetupOrganizer();
   const join = useJoinMeetup();
@@ -127,6 +129,25 @@ export default function MeetupDetail() {
     } catch {
       alert("Meldung", "Die Meldung konnte nicht gespeichert werden.");
     }
+  };
+
+  const deleteMeetup = () => {
+    if (!meetup) return;
+    alert("Treffpunkt löschen", "Möchtest du diesen Treffpunkt wirklich löschen?", [
+      {
+        text: t.delete,
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteMeetupMutation.mutateAsync({ id: meetup.id });
+            router.replace("/treffpunkte");
+          } catch {
+            alert("Treffpunkt", "Der Treffpunkt konnte nicht gelöscht werden.");
+          }
+        },
+      },
+      { text: "Abbrechen", style: "cancel" },
+    ]);
   };
 
   const blockMeetupOrganizer = () => {
@@ -219,6 +240,15 @@ export default function MeetupDetail() {
           <SmallAction icon="share-2" label="Teilen" onPress={() => void shareMeetup()} colors={colors} />
           <SmallAction icon="flag" label="Melden" onPress={reportMeetup} colors={colors} />
           <SmallAction icon="slash" label="Blockieren" onPress={blockMeetupOrganizer} colors={colors} />
+          {meetup.isOrganizer ? (
+            <SmallAction
+              icon="trash-2"
+              label={t.delete}
+              onPress={deleteMeetup}
+              colors={colors}
+              destructive
+            />
+          ) : null}
         </View>
 
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Teilnehmende</Text>
@@ -285,16 +315,29 @@ function SmallAction({
   label,
   onPress,
   colors,
+  destructive = false,
 }: {
   icon: React.ComponentProps<typeof Feather>["name"];
   label: string;
   onPress: () => void;
   colors: ReturnType<typeof useColors>;
+  destructive?: boolean;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.smallAction, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
-      <Feather name={icon} size={16} color={colors.accent} />
-      <Text style={[styles.smallActionText, { color: colors.foreground }]}>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.smallAction,
+        {
+          borderColor: destructive ? colors.destructive : colors.glassBorder,
+          backgroundColor: colors.glassBg,
+        },
+      ]}
+    >
+      <Feather name={icon} size={16} color={destructive ? colors.destructive : colors.accent} />
+      <Text style={[styles.smallActionText, { color: destructive ? colors.destructive : colors.foreground }]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }

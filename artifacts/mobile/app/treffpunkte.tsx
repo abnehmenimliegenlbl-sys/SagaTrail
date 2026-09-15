@@ -82,23 +82,6 @@ export default function Treffpunkte() {
           {t.intro}
         </Text>
 
-        <Pressable
-          onPress={() => router.push("/")}
-          accessibilityRole="button"
-          style={[styles.hintCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
-        >
-          <Feather name="users" size={20} color={colors.accent} />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.hintTitle, { color: colors.foreground }]}>
-              {t.create}
-            </Text>
-            <Text style={[styles.hintText, { color: colors.mutedForeground }]}>
-              {t.noRoute}
-            </Text>
-          </View>
-          <Feather name="chevron-right" size={18} color={colors.accent} />
-        </Pressable>
-
         {meetups.isLoading ? (
           <View style={styles.loading}>
             <ActivityIndicator color={colors.accent} />
@@ -238,9 +221,6 @@ function paceLabel(pace: string, t: ReturnType<typeof useMeetupStrings>): string
 
 const styles = StyleSheet.create({
   intro: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, marginTop: 12 },
-  hintCard: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: 15, padding: 14, marginTop: 20 },
-  hintTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
-  hintText: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
   loading: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 30 },
   loadingText: { fontFamily: fonts.body, fontSize: 14 },
   empty: { alignItems: "center", borderWidth: 1, borderRadius: 16, padding: 24, marginTop: 22 },
