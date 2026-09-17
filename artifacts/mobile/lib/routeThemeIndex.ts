@@ -5,6 +5,7 @@ import { bboxAroundGeometry, filterByRouteCorridor } from "@/lib/geo";
 import {
   deriveRouteThemes,
   MAX_THEME_DISTANCE_KM,
+  ROUTE_THEME_KEYS,
   type RouteThemeKey,
 } from "@/lib/routeThemes";
 
@@ -29,6 +30,17 @@ async function loadThemePois(
 export async function getRouteThemes(route: HikingRoute): Promise<RouteThemeKey[]> {
   const cached = routeThemeCache.get(route.id);
   if (cached) return cached;
+
+  // Der Server speichert die Themenbelege zusammen mit dem Prüfzeitpunkt.
+  // Ein leeres Array ist dann ein belastbares "kein Treffer" und darf nicht
+  // durch eine teure, flüchtige Live-Suche überschrieben werden.
+  if (route.qualityCheckedAt && Array.isArray(route.themeKeys)) {
+    const themes = route.themeKeys.filter(
+      (key): key is RouteThemeKey => ROUTE_THEME_KEYS.includes(key as RouteThemeKey),
+    );
+    routeThemeCache.set(route.id, themes);
+    return themes;
+  }
 
   const geometry = route.geometry ?? [];
   const pois = await loadThemePois(

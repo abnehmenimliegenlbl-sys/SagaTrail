@@ -49,6 +49,8 @@ export interface CatalogRoute {
   description?: string | null;
   /** URL des Wikipedia-Artikels, aus dem die Beschreibung stammt. */
   descriptionSource?: string | null;
+  /** Serverseitig geprüfte Themenbelege der Route. */
+  themeKeys?: string[];
   /** Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified. */
   qualityStatus?: string;
   /** Zeitpunkt des letzten erfolgreichen Qualitätschecks. */

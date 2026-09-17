@@ -55,6 +55,7 @@ export const GetCatalogResponse = zod.object({
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
   "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
   "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
   "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
   "sources": zod.object({
@@ -210,6 +211,7 @@ export const GetCantonRoutesResponseItem = zod.object({
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
   "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
   "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
   "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
   "sources": zod.object({
@@ -655,6 +657,7 @@ export const GetCustomRouteResponse = zod.object({
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
   "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
   "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
   "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
   "sources": zod.object({
@@ -733,6 +736,7 @@ export const PlanCustomRouteResponse = zod.object({
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
   "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
   "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
   "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
   "sources": zod.object({
@@ -811,6 +815,7 @@ export const PlanDrawnRouteResponse = zod.object({
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
   "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
   "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
   "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
   "sources": zod.object({
@@ -879,6 +884,7 @@ export const ImportGpxRouteResponse = zod.object({
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
   "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
   "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
   "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
   "sources": zod.object({

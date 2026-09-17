@@ -56,6 +56,8 @@ export interface HikingRoute {
   description?: string | null;
   /** URL des Wikipedia-Artikels zur Beschreibung. */
   descriptionSource?: string | null;
+  /** Serverseitig geprüfte Themenbelege; [] bedeutet geprüft, aber kein Treffer. */
+  themeKeys?: string[];
   qualityStatus?: "verified" | "partial" | "invalid" | "unverified" | string;
   qualityCheckedAt?: Date | string | null;
   sources?: {

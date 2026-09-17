@@ -208,6 +208,7 @@ function toRoute(row: ExternalRouteRow, suitability = deriveSuitability(row)) {
     sacSource: row.sacSource,
     schweizMobilCondition: row.schweizMobilCondition,
     schweizMobilTechnique: row.schweizMobilTechnique,
+    themeKeys: row.themeKeys,
     terrain: row.terrain,
     familyFriendly: suitability.familyFriendly,
     wheelchairAccessible: suitability.wheelchairAccessible,

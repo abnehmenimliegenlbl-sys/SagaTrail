@@ -3006,6 +3006,11 @@ components:
           type: string
           nullable: true
           description: URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.
+        themeKeys:
+          type: array
+          items:
+            type: string
+          description: Serverseitig geprüfte Themenbelege der Route.
         qualityStatus:
           type: string
           description: >
