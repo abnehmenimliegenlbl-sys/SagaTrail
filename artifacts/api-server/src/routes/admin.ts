@@ -3,7 +3,7 @@ import { sendPartnerVertrag } from "../lib/partnerEmail";
 import { sendMagicLink } from "../lib/partnerWebhookHandler";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
-import { desc, eq, or, ilike, isNotNull, isNull, inArray, notInArray, ne, sql, count, and, lt } from "drizzle-orm";
+import { desc, eq, or, ilike, isNotNull, isNull, inArray, notInArray, ne, sql, count, and, gte, lt } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   db,
@@ -26,6 +26,7 @@ import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION, restoreMissingSchweizMobilGeometries, MISSING_SCHWEIZMOBIL_LWN_REFS, SCHWEIZMOBIL_WANDERLAND_SOURCE, auditSchweizMobilDifficulties, syncOfficialSchweizMobilHandicap } from "../lib/routeService";
+import { refreshCantonRouteThemes } from "../lib/routeThemeRefresh";
 import { reverseGeocode } from "../lib/geocoding";
 import { estimateMinutes } from "../lib/geo";
 import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchRouteLoopAuditOsm, fetchWikiEtappen, reverseLoopExplanation, type WikiEtappe, searchOsmRouteByFromTo, searchOsmRouteByName } from "../lib/overpass";
@@ -1288,6 +1289,94 @@ router.post("/admin/routes/warm-canton", async (req, res): Promise<void> => {
       req.log.error({ canton, err }, "Slow-warm fehlgeschlagen");
     }
   })();
+});
+
+let routeThemeRefreshRunning = false;
+let routeThemeRefreshLastResult: {
+  startedAt: string;
+  finishedAt?: string;
+  canton: string;
+  routeCount: number;
+  result?: { checked: number; updated: number; skipped: number; failed: number };
+  error?: string;
+} | null = null;
+
+// POST /admin/routes/refresh-themes – Themenbelege für vorhandene Prod-Routen
+// neu aus den POIs ableiten. Dieser Job schreibt ausschließlich theme_keys;
+// Geometrien, Namen, Sagen und sonstige Routendaten bleiben unverändert.
+router.post("/admin/routes/refresh-themes", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const parsed = z
+    .object({ canton: z.string().trim().min(1).optional() })
+    .safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: "Ungültiger Kanton" });
+    return;
+  }
+  if (routeThemeRefreshRunning) {
+    res.status(409).json({
+      error: "Themen-Refresh läuft bereits",
+      status: routeThemeRefreshLastResult,
+    });
+    return;
+  }
+
+  const { canton } = parsed.data;
+  const conditions = [gte(externalRoutesTable.geometryVersion, 1)];
+  if (canton) conditions.push(eq(externalRoutesTable.canton, canton));
+  const routes = await db
+    .select()
+    .from(externalRoutesTable)
+    .where(and(...conditions));
+
+  routeThemeRefreshRunning = true;
+  routeThemeRefreshLastResult = {
+    startedAt: new Date().toISOString(),
+    canton: canton ?? "alle",
+    routeCount: routes.length,
+  };
+  res.status(202).json({
+    ok: true,
+    canton: canton ?? "alle",
+    routeCount: routes.length,
+    message: "Themen-Refresh gestartet; der Lauf erfolgt im Hintergrund.",
+  });
+
+  void (async () => {
+    try {
+      const result = await refreshCantonRouteThemes(routes, req.log);
+      routeThemeRefreshLastResult = {
+        ...routeThemeRefreshLastResult!,
+        finishedAt: new Date().toISOString(),
+        result,
+      };
+      req.log.info(
+        { canton: canton ?? "alle", routeCount: routes.length, ...result },
+        "Manueller Prod-Themen-Refresh abgeschlossen",
+      );
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      routeThemeRefreshLastResult = {
+        ...routeThemeRefreshLastResult!,
+        finishedAt: new Date().toISOString(),
+        error,
+      };
+      req.log.error(
+        { canton: canton ?? "alle", routeCount: routes.length, err },
+        "Manueller Prod-Themen-Refresh fehlgeschlagen",
+      );
+    } finally {
+      routeThemeRefreshRunning = false;
+    }
+  })();
+});
+
+router.get("/admin/routes/refresh-themes/status", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  res.json({
+    running: routeThemeRefreshRunning,
+    status: routeThemeRefreshLastResult,
+  });
 });
 
 // POST /admin/routes/warm-all – Alle 26 Kantone sequenziell langsam laden
