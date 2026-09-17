@@ -20,5 +20,7 @@ export interface Meetup {
   organizerName: string;
   joined: boolean;
   status: MeetupStatus;
+  cancellationReason?: string | null;
+  cancelledAt?: Date | null;
   isOrganizer: boolean;
 }

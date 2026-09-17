@@ -11,6 +11,7 @@ export const profilesTable = pgTable("profiles", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   avatarUrl: text("avatar_url"),
+  bio: text("bio"),
   dateOfBirth: text("date_of_birth"),
   archetype: text("archetype").notNull(),
   homeCanton: text("home_canton").notNull(),

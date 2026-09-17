@@ -19,6 +19,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { AppState, type AppStateStatus } from "react-native";
 
 import { Achievement, HikeSession, Profile } from "@/types";
 import type { HikingRoute } from "@/constants/routes";
@@ -55,9 +56,12 @@ const KEYS = {
   uiLanguage: "sagatrail:uiLanguage",
   freieSagen: "sagatrail:freieSagen",
   themeMode: "sagatrail:themeMode",
-  groupLocationSharing: "sagatrail:groupLocationSharing",
   groupSessionCodePrefix: "sagatrail:groupSessionCode:",
 } as const;
+
+function isAuthoritativeGroupRecord(id: string): boolean {
+  return id.startsWith("group_") || id.startsWith("group_hikes_");
+}
 
 export interface EmergencyContact {
   name: string;
@@ -74,6 +78,8 @@ export type { GroupActivity, GroupMember };
 export interface ActiveHike {
   routeId: string;
   sagaId: string;
+  /** Stable identity for matching a queued/retried group start and finish. */
+  clientHikeId?: string;
   routeName: string;
   chapterIndex: number;
   chapterCount: number;
@@ -186,7 +192,7 @@ interface AppContextValue {
   kickMember: (memberId: string) => void;
   setGroupActivity: (activity: GroupActivity) => void;
   /** Sendet ein Wander-Sync-Ereignis an die Gruppe (nur als Leitung wirksam). */
-  sendGroupHikeEvent: (event: HikeSyncEvent) => void;
+  sendGroupHikeEvent: (event: HikeSyncEvent) => Promise<void>;
   setGroupRendezvous: (location: GroupLocation | null) => void;
   setGroupLocationSharingEnabled: (enabled: boolean) => void;
   clearGroupError: () => void;
@@ -241,6 +247,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     useState<LanguageCode>(DEFAULT_LANGUAGE);
   const [groupSession, setGroupSession] = useState<GroupSession | null>(null);
   const [groupLocationSharingEnabled, setGroupLocationSharingEnabledState] = useState(false);
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const [groupConnectionStatus, setGroupConnectionStatus] =
     useState<GroupConnectionStatus>("getrennt");
   const [groupError, setGroupError] = useState<GroupSocketError | null>(null);
@@ -278,6 +285,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch {
       return null;
     }
+  }, []);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", setAppState);
+    return () => subscription.remove();
   }, []);
 
   useEffect(() => {
@@ -325,6 +337,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setPersistedGroupCode(null);
         setGroupSession(null);
         setGroupHikeEvent(null);
+        setGroupLocationSharingEnabledState(false);
       },
       onKicked: () => {
         if (selfIdRef.current) {
@@ -335,6 +348,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setPersistedGroupCode(null);
         setGroupSession(null);
         setGroupHikeEvent(null);
+        setGroupLocationSharingEnabledState(false);
       },
       onError: (error) => {
         setGroupError(error);
@@ -381,7 +395,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Schleife wird fuer die Gruppensichtbarkeit eingerichtet.
   useEffect(() => {
     const own = groupSession?.members.find((m) => m.id === selfIdRef.current);
-    if (!groupLocationSharingEnabled || !own || own.activity.type !== "wandert") return;
+    if (
+      appState !== "active" ||
+      !groupLocationSharingEnabled ||
+      !own ||
+      own.activity.type !== "wandert"
+    ) return;
     const wandering = own.activity;
     let cancelled = false;
     let subscription: Location.LocationSubscription | null = null;
@@ -407,8 +426,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
       subscription?.remove();
+      groupSocketRef.current?.setActivity({ ...wandering, location: undefined });
     };
   }, [
+    appState,
     groupSession?.code,
     groupLocationSharingEnabled,
     groupSession?.members.some(
@@ -432,11 +453,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           KEYS.uiLanguage,
           KEYS.freieSagen,
           KEYS.themeMode,
-          KEYS.groupLocationSharing,
         ]);
         const map = Object.fromEntries(entries);
         if (map[KEYS.profile]) {
           const cachedProfile = JSON.parse(map[KEYS.profile]!) as Profile;
+          cachedProfile.bio ??= null;
           setProfile(cachedProfile);
           setPurchasedPacks(cachedProfile.purchasedPacks ?? []);
         }
@@ -458,9 +479,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setFreieSagen(JSON.parse(map[KEYS.freieSagen]!));
         if (map[KEYS.themeMode] === "hell" || map[KEYS.themeMode] === "dunkel") {
           setThemeModeState(map[KEYS.themeMode] as ThemeMode);
-        }
-        if (map[KEYS.groupLocationSharing]) {
-          setGroupLocationSharingEnabledState(map[KEYS.groupLocationSharing] === "true");
         }
         if (map[KEYS.uiLanguage]) {
           // Sprache wurde schon einmal festgelegt (System-Erkennung oder
@@ -547,6 +565,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const next: Profile = {
         id: serverProfile.id,
         name: serverProfile.name,
+        bio: serverProfile.bio ?? null,
         avatarUrl: serverProfile.avatarUrl ?? null,
         dateOfBirth: serverProfile.dateOfBirth ?? null,
         archetype: serverProfile.archetype,
@@ -626,25 +645,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }[],
         },
       });
-      // Das Zod-Schema des Servers haelt hikeHistory auf { id } reduziert
-      // (orval ignoriert additionalProperties:true fuer Passthrough). Um
-      // sagaId, routeName etc. nicht zu verlieren, werden lokale Eintraege
-      // bevorzugt; vom Server gemeldete neue IDs (anderes Geraet) kommen
-      // als sparse Eintraege hinzu.
-      const localById = new Map(hikeHistoryRef.current.map((h) => [h.id, h]));
-      const serverOnlyNew = (result.hikeHistory as unknown as HikeSession[]).filter(
-        (h) => !localById.has(h.id)
-      );
-      const mergedHistory = [...hikeHistoryRef.current, ...serverOnlyNew].slice(0, 200);
+      // Der Server kann vollständige Gruppenwanderungen nachliefern, auch
+      // wenn der lokale Verlauf bereits voll ist. Normale Dubletten behalten
+      // bewusst den vollständigen lokalen Datensatz; serverseitige group_*
+      // Datensätze sind dagegen autoritativ und dürfen nicht überschrieben
+      // werden.
+      const mergedHistoryById = new Map<string, HikeSession>();
+      const serverHistory = result.hikeHistory as unknown as HikeSession[];
+      for (const hike of serverHistory) {
+        mergedHistoryById.set(hike.id, hike);
+      }
+      for (const hike of hikeHistoryRef.current) {
+        const serverHike = mergedHistoryById.get(hike.id);
+        if (serverHike && isAuthoritativeGroupRecord(serverHike.id)) continue;
+        mergedHistoryById.set(hike.id, hike);
+      }
+      const mergedHistory = Array.from(mergedHistoryById.values())
+        .sort((a, b) => (b.startedAt ?? 0) - (a.startedAt ?? 0))
+        .slice(0, 200);
+      const mergedAchievementsById = new Map<string, Achievement>();
+      const serverAchievements = result.achievements as unknown as Achievement[];
+      for (const achievement of serverAchievements) {
+        mergedAchievementsById.set(achievement.id, achievement);
+      }
+      for (const achievement of achievementsRef.current) {
+        const serverAchievement = mergedAchievementsById.get(achievement.id);
+        if (serverAchievement && isAuthoritativeGroupRecord(serverAchievement.id)) continue;
+        mergedAchievementsById.set(achievement.id, achievement);
+      }
+      const mergedAchievements = Array.from(mergedAchievementsById.values());
       setHikeHistory(mergedHistory);
-      setAchievements(result.achievements as unknown as Achievement[]);
+      setAchievements(mergedAchievements);
       AsyncStorage.setItem(
         KEYS.hikeHistory,
         JSON.stringify(mergedHistory)
       ).catch(() => {});
       AsyncStorage.setItem(
         KEYS.achievements,
-        JSON.stringify(result.achievements)
+        JSON.stringify(mergedAchievements)
       ).catch(() => {});
     } catch {
       // Offline oder Server nicht erreichbar: lokaler Zustand bleibt
@@ -778,6 +816,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (result: {
       id: string;
       name: string;
+      bio?: string | null;
       avatarUrl?: string | null;
       dateOfBirth?: string | null;
       archetype: string;
@@ -799,6 +838,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const next: Profile = {
         id: result.id,
         name: result.name,
+        bio: result.bio !== undefined ? result.bio : profileRef.current?.bio ?? null,
         avatarUrl:
           result.avatarUrl !== undefined
             ? result.avatarUrl
@@ -840,6 +880,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const result = await saveMyProfileMutation({
         data: {
           name: next.name,
+          bio: next.bio,
           dateOfBirth: next.dateOfBirth ?? null,
           archetype: next.archetype,
           ...(next.homeCanton ? { homeCanton: next.homeCanton } : {}),
@@ -857,11 +898,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = useCallback(
     async (patch: Partial<Omit<Profile, "id">>) => {
-      if (!profile) return;
-      const merged = { ...profile, ...patch };
+      const currentProfile = profileRef.current;
+      if (!currentProfile) return;
+      const merged = { ...currentProfile, ...patch };
       const result = await saveMyProfileMutation({
         data: {
           name: merged.name,
+          bio: merged.bio,
           dateOfBirth: merged.dateOfBirth ?? null,
           archetype: merged.archetype,
           ...(merged.homeCanton ? { homeCanton: merged.homeCanton } : {}),
@@ -874,7 +917,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
       await applyServerProfile(result);
     },
-    [profile, saveMyProfileMutation, applyServerProfile]
+    [saveMyProfileMutation, applyServerProfile]
   );
 
   const uploadProfileAvatar = useCallback(async (localUri: string) => {
@@ -1176,6 +1219,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setHikeHistory([]);
     setActiveHike(null);
     setGroupSession(null);
+    setGroupLocationSharingEnabledState(false);
     setPersistedGroupCode(null);
     setGroupError(null);
     setSavedSagaIds([]);
@@ -1257,6 +1301,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const leaveGroupSession = useCallback(() => {
+    const own = groupSession?.members.find((m) => m.id === selfIdRef.current);
+    if (own?.activity.type === "wandert" && own.location) {
+      groupSocketRef.current?.setActivity({ ...own.activity, location: undefined });
+    }
+    setGroupLocationSharingEnabledState(false);
     groupSocketRef.current?.leave();
     if (selfIdRef.current) {
       void AsyncStorage.removeItem(
@@ -1267,7 +1316,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setGroupSession(null);
     setGroupError(null);
     setGroupHikeEvent(null);
-  }, []);
+  }, [groupSession]);
 
   const kickMember = useCallback((memberId: string) => {
     groupSocketRef.current?.kick(memberId);
@@ -1283,7 +1332,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setGroupLocationSharingEnabled = useCallback((enabled: boolean) => {
     setGroupLocationSharingEnabledState(enabled);
-    AsyncStorage.setItem(KEYS.groupLocationSharing, enabled ? "true" : "false").catch(() => {});
     if (!enabled) {
       const own = groupSession?.members.find((m) => m.id === selfIdRef.current);
       if (own?.activity.type === "wandert") {
@@ -1295,7 +1343,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Wander-Sync-Ereignis an die Gruppe senden — nur sinnvoll als Leitung;
   // der Server weist Ereignisse von Nicht-Leitern ohnehin ab.
   const sendGroupHikeEvent = useCallback((event: HikeSyncEvent) => {
-    groupSocketRef.current?.sendHikeEvent(event);
+    return groupSocketRef.current?.sendHikeEvent(event) ?? Promise.resolve();
   }, []);
 
   const clearGroupError = useCallback(() => setGroupError(null), []);

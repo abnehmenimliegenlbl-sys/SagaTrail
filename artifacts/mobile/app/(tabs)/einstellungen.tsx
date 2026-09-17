@@ -173,6 +173,7 @@ export default function Einstellungen() {
   const [previewUnavailable, setPreviewUnavailable] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(profile?.name ?? "");
+  const [bioInput, setBioInput] = useState(profile?.bio ?? "");
   const [birthInput, setBirthInput] = useState(profile?.dateOfBirth ?? "");
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -206,6 +207,7 @@ export default function Einstellungen() {
     try {
       await updateProfile({
         name: nameInput.trim(),
+        bio: bioInput.trim() || null,
         dateOfBirth: normalizedBirthDate,
       });
       setEditingName(false);
@@ -214,7 +216,7 @@ export default function Einstellungen() {
     } finally {
       setProfileSaving(false);
     }
-  }, [birthInput, nameInput, updateProfile]);
+  }, [bioInput, birthInput, nameInput, updateProfile]);
 
   // Vorschau-Sound (KI-Stimme via expo-audio); Generation-Zaehler verhindert,
   // dass eine langsame alte Anfrage eine neuere Vorschau ueberschreibt.
@@ -377,6 +379,18 @@ export default function Einstellungen() {
             icon="edit-2"
             onPress={() => {
               setNameInput(profile?.name ?? "");
+              setBioInput(profile?.bio ?? "");
+              setBirthInput(profile?.dateOfBirth ?? "");
+              setEditingName(true);
+            }}
+          />
+          <RowButton
+            label={t.bioLabel}
+            value={profile?.bio || "-"}
+            icon="edit-2"
+            onPress={() => {
+              setNameInput(profile?.name ?? "");
+              setBioInput(profile?.bio ?? "");
               setBirthInput(profile?.dateOfBirth ?? "");
               setEditingName(true);
             }}
@@ -389,6 +403,7 @@ export default function Einstellungen() {
           />
           <RowButton label="Geburtsdatum" value={profile?.dateOfBirth ?? "Nicht angegeben"} icon="gift" onPress={() => {
             setNameInput(profile?.name ?? "");
+            setBioInput(profile?.bio ?? "");
             setBirthInput(profile?.dateOfBirth ?? "");
             setEditingName(true);
           }} />
@@ -853,6 +868,20 @@ export default function Einstellungen() {
                 void saveCommunityProfile();
               }}
             />
+            <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>
+              {t.bioLabel} · {t.bioHint}
+            </Text>
+            <TextInput
+              value={bioInput}
+              onChangeText={setBioInput}
+              placeholder={t.bioPlaceholder}
+              placeholderTextColor={colors.mutedForeground}
+              maxLength={160}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+              style={[styles.modalInput, styles.bioModalInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
+            />
             <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>Geburtsdatum (TT.MM.JJJJ oder JJJJ-MM-TT)</Text>
             <TextInput
               value={birthInput}
@@ -1074,6 +1103,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 20,
   },
+  bioModalInput: { minHeight: 84, marginTop: 8 },
   modalButtons: {
     flexDirection: "row",
     gap: 12,

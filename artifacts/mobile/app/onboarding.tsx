@@ -56,6 +56,7 @@ export default function Onboarding() {
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [archetype, setArchetype] = useState<Archetype | null>(null);
@@ -109,6 +110,7 @@ export default function Onboarding() {
       try {
         await saveProfile({
           name: name.trim(),
+          bio: bio.trim() || null,
           dateOfBirth: normalizeBirthDate(dateOfBirth),
           archetype,
           language,
@@ -180,6 +182,31 @@ export default function Onboarding() {
                 },
               ]}
             />
+            <Text style={[styles.label, { color: colors.foreground }]}>
+              {t.bioLabel}
+            </Text>
+            <TextInput
+              value={bio}
+              onChangeText={setBio}
+              placeholder={t.bioPlaceholder}
+              placeholderTextColor={colors.mutedForeground}
+              maxLength={160}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+              style={[
+                styles.input,
+                styles.bioInput,
+                {
+                  color: colors.foreground,
+                  borderColor: colors.glassBorder,
+                  borderRadius: colors.radius,
+                },
+              ]}
+            />
+            <Text style={[styles.hint, styles.bioHint, { color: colors.mutedForeground }]}>
+              {t.bioHint}
+            </Text>
             <Pressable
               onPress={async () => {
                 const result = await ImagePicker.launchImageLibraryAsync({
@@ -516,6 +543,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 17,
   },
+  bioInput: { minHeight: 88 },
+  bioHint: { alignSelf: "flex-start", marginBottom: 0, marginTop: 7 },
   photoButton: { alignItems: "center", borderWidth: 1, borderRadius: 12, flexDirection: "row", gap: 8, marginTop: 14, padding: 13 },
   photoButtonText: { fontFamily: fonts.bodyBold, fontSize: 13 },
   stepEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2 },

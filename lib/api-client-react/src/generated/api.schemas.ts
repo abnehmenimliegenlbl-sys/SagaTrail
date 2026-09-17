@@ -50,10 +50,28 @@ export interface Meetup {
   organizerName: string;
   joined: boolean;
   status: MeetupStatus;
+  cancellationReason?: string | null;
+  cancelledAt?: string | null;
   isOrganizer: boolean;
 }
 
+export type MeetupParticipantAttendanceStatus = typeof MeetupParticipantAttendanceStatus[keyof typeof MeetupParticipantAttendanceStatus];
+
+
+export const MeetupParticipantAttendanceStatus = {
+  confirmed: 'confirmed',
+  delayed: 'delayed',
+  arrived: 'arrived',
+} as const;
+
+export type MeetupParticipantGroupAchievementsItem = {
+  id: string;
+  threshold: number;
+  title: string;
+};
+
 export interface MeetupParticipant {
+  /** Nur für authentifizierte, bereits beigetretene Teilnehmer sichtbar. */
   userId?: string;
   avatarUrl?: string | null;
   /**
@@ -63,6 +81,60 @@ export interface MeetupParticipant {
   age?: number | null;
   name: string;
   joinedAt: string;
+  /** @maxLength 160 */
+  bio?: string | null;
+  attendanceStatus?: MeetupParticipantAttendanceStatus;
+  delayMinutes?: number | null;
+  statusUpdatedAt?: string;
+  /**
+     * Server-verifizierter Gruppenrang für Mitwandernde; nur für Teilnehmende oder den Organisator sichtbar.
+     * @minimum 0
+     * @maximum 9
+     */
+  rankLevel?: number;
+  /** Nur für Teilnehmende oder den Organisator sichtbar. */
+  groupAchievements?: MeetupParticipantGroupAchievementsItem[];
+}
+
+export interface CancelMeetupRequest {
+  /**
+     * @minLength 3
+     * @maxLength 300
+     */
+  reason: string;
+}
+
+export type MeetupAttendanceRequestStatus = typeof MeetupAttendanceRequestStatus[keyof typeof MeetupAttendanceRequestStatus];
+
+
+export const MeetupAttendanceRequestStatus = {
+  confirmed: 'confirmed',
+  delayed: 'delayed',
+  arrived: 'arrived',
+} as const;
+
+export interface MeetupAttendanceRequest {
+  status: MeetupAttendanceRequestStatus;
+  /**
+     * @minimum 5
+     * @maximum 180
+     */
+  delayMinutes?: number | null;
+}
+
+export type MeetupAttendanceResponseAttendanceStatus = typeof MeetupAttendanceResponseAttendanceStatus[keyof typeof MeetupAttendanceResponseAttendanceStatus];
+
+
+export const MeetupAttendanceResponseAttendanceStatus = {
+  confirmed: 'confirmed',
+  delayed: 'delayed',
+  arrived: 'arrived',
+} as const;
+
+export interface MeetupAttendanceResponse {
+  attendanceStatus: MeetupAttendanceResponseAttendanceStatus;
+  delayMinutes: number | null;
+  statusUpdatedAt: string;
 }
 
 export type MeetupDetail = Meetup & {
@@ -382,6 +454,8 @@ export interface Profile {
   /** Clerk-Benutzer-ID */
   id: string;
   name: string;
+  /** @maxLength 160 */
+  bio?: string | null;
   /** Privater Objektpfad des Profilbilds */
   avatarUrl?: string | null;
   /** Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben */
@@ -425,6 +499,8 @@ export const ProfileInputAgeTier = {
 export interface ProfileInput {
   /** @minLength 2 */
   name: string;
+  /** @maxLength 160 */
+  bio?: string | null;
   dateOfBirth?: string | null;
   archetype: ProfileInputArchetype;
   /** @minLength 1 */

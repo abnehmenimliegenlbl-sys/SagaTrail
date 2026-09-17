@@ -180,6 +180,10 @@ const COMPASS_ANTIQUE_FONT = Platform.select({
   default: "serif",
 });
 
+function createClientHikeId(): string {
+  return `hike_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
+}
+
 type SpeakOptions = {
   interrupt?: boolean;
   allowDuringStartup?: boolean;
@@ -757,6 +761,16 @@ export default function LiveHike() {
   const resumeRouteRef = useRef<HikingRoute | null>(
     isResume && activeHike && activeHike.sagaId === id ? (activeHike.route ?? null) : null,
   );
+  const clientHikeIdRef = useRef<string | null>(null);
+  const groupHikeStartedRef = useRef(false);
+  const groupHikeFinishedRef = useRef(false);
+  const ensureClientHikeId = useCallback(() => {
+    if (clientHikeIdRef.current) return clientHikeIdRef.current;
+    const persistedId =
+      isResume && activeHike?.sagaId === id ? activeHike.clientHikeId?.trim() : undefined;
+    clientHikeIdRef.current = persistedId || createClientHikeId();
+    return clientHikeIdRef.current;
+  }, [activeHike?.clientHikeId, activeHike?.sagaId, id, isResume]);
   const { getSaga, getRoute, getRouteBySaga, loadCantonRoutes } = useCatalog();
   const {
     resolveStory,
@@ -2272,7 +2286,13 @@ export default function LiveHike() {
   // Meldet den Wander-Status an eine aktive Gruppensitzung, damit andere
   // Mitglieder live sehen, wenn jemand die gemeinsame Wanderung startet.
   useEffect(() => {
-    if (!startGateConfirmedRef.current || !groupSession || !saga || preparing) return;
+    if (
+      !startGateConfirmedRef.current ||
+      !groupSession ||
+      !saga ||
+      preparing ||
+      groupHikeStartedRef.current
+    ) return;
     setGroupActivity({
       type: "wandert",
       sagaTitle: localizedSagaTitle,
@@ -2283,17 +2303,19 @@ export default function LiveHike() {
     // Die Leitung kuendigt den Start der gemeinsamen Wanderung an, damit
     // Mitglieder direkt auf dieselbe Route einsteigen koennen.
     if (groupSession.isLeader && route) {
+      groupHikeStartedRef.current = true;
       sendGroupHikeEvent({
         kind: "start",
         sagaId: saga.id,
         routeId: route.id,
         routeName: route.name,
+        clientHikeId: ensureClientHikeId(),
       });
     }
     return () => {
       setGroupActivity({ type: "idle" });
     };
-  }, [groupSession?.code, groupSession?.isLeader, saga, route, preparing, localizedSagaTitle, setGroupActivity, sendGroupHikeEvent, startGateConfirmed]);
+  }, [groupSession?.code, groupSession?.isLeader, saga, route, preparing, localizedSagaTitle, setGroupActivity, sendGroupHikeEvent, startGateConfirmed, ensureClientHikeId]);
 
   // Leitung: Kapitelwechsel an die Gruppe senden, damit Mitglieder synchron
   // dieselbe Stelle der Sage hoeren. Aendert sich die Mitgliederliste
@@ -5218,6 +5240,7 @@ export default function LiveHike() {
     saveActiveHike({
       routeId: route?.id ?? "",
       sagaId: saga.id,
+      clientHikeId: ensureClientHikeId(),
       routeName: route?.name ?? localizedSagaTitle,
       chapterIndex: currentIndex,
       chapterCount: chapters.length,
@@ -5227,7 +5250,7 @@ export default function LiveHike() {
       route: route ?? undefined,
       activeGeometry: acceptedRouteGeometry ?? undefined,
     });
-  }, [currentIndex, preparing, finished, chapters.length, saga, route, localizedSagaTitle, acceptedRouteGeometry, saveActiveHike, startGateConfirmed]);
+  }, [currentIndex, preparing, finished, chapters.length, saga, route, localizedSagaTitle, acceptedRouteGeometry, saveActiveHike, startGateConfirmed, ensureClientHikeId]);
 
   // Refs spiegeln den aktuellen Erzaehlzustand, damit der POI-Effekt unten
   // NICHT bei jeder Kapitel-/Sprechzustandsaenderung neu laeuft (und dabei
@@ -6735,6 +6758,17 @@ export default function LiveHike() {
     await cancelNarration();
     hapticSuccess();
     if (!saga) return;
+    if (
+      groupHikeStartedRef.current &&
+      groupSession?.isLeader &&
+      !groupHikeFinishedRef.current
+    ) {
+      groupHikeFinishedRef.current = true;
+      sendGroupHikeEvent({
+        kind: "finish",
+        clientHikeId: ensureClientHikeId(),
+      });
+    }
     const session: HikeSession = {
       id: `h_${Date.now()}`,
       sagaId: saga.id,
@@ -6782,7 +6816,7 @@ export default function LiveHike() {
         // Review-Anfrage ist best-effort — Fehler still ignorieren
       }
     }, 1500);
-  }, [saga, route, localizedSagaTitle, navigationGeometry, distance, ascentM, sac, steps, hikePhotos, recognitionEntries, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
+  }, [saga, route, localizedSagaTitle, navigationGeometry, distance, ascentM, sac, steps, hikePhotos, recognitionEntries, saveHike, addAchievement, clearActiveHike, router, cancelNarration, groupSession?.isLeader, sendGroupHikeEvent, ensureClientHikeId]);
 
   // Erlaubt den Abschluss, auch wenn die Route noch nicht ganz zurueckgelegt
   // wurde — damit Nutzer trotzdem zum Album und zum Social-Media-Posting

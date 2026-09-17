@@ -1,6 +1,13 @@
 import type { WebSocket } from "ws";
-import { eq, gt, lt } from "drizzle-orm";
-import { db, groupSessionsTable } from "@workspace/db";
+import { and, eq, gt, isNull, isNotNull, lt, sql } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import {
+  db,
+  groupHikesTable,
+  groupHikeCompletionsTable,
+  groupSessionsTable,
+  profilesTable,
+} from "@workspace/db";
 import { logger } from "./logger";
 
 /**
@@ -33,14 +40,27 @@ export interface GroupLocation {
 }
 
 export type HikeSyncEvent =
-  | { kind: "start"; sagaId: string; routeId: string; routeName: string }
+  | {
+      kind: "start";
+      sagaId: string;
+      routeId: string;
+      routeName: string;
+      clientHikeId?: string;
+    }
   | { kind: "chapter"; index: number }
   | { kind: "decision"; chapterIndex: number; optionIndex: number }
-  | { kind: "finish" };
+  | { kind: "finish"; clientHikeId?: string };
 
 export interface GroupHikeState {
   event: HikeSyncEvent;
   updatedAt: number;
+  /** Server-generated and immutable for the lifetime of this group hike. */
+  groupHikeId?: string;
+  clientHikeId?: string;
+  eligibleUserIds?: string[];
+  startedAt?: number;
+  startEvent?: Extract<HikeSyncEvent, { kind: "start" }>;
+  completedAt?: number;
 }
 
 export interface GroupMemberInfo {
@@ -83,9 +103,12 @@ interface PersistedMember {
 
 const rooms = new Map<string, Room>();
 const persistenceTails = new Map<string, Promise<void>>();
+const hikeEventTails = new Map<string, Promise<unknown>>();
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const FINISH_RECONCILIATION_INTERVAL_MS = 30_000;
 let loadPromise: Promise<void> | null = null;
 let cleanupTimer: ReturnType<typeof setInterval> | null = null;
+let finishReconciliationTimer: ReturnType<typeof setInterval> | null = null;
 
 function randomCode(): string {
   let code = "";
@@ -182,6 +205,18 @@ function queuePersistence(code: string, operation: () => Promise<void>): Promise
       if (persistenceTails.get(code) === next) persistenceTails.delete(code);
     });
   persistenceTails.set(code, next);
+  return next;
+}
+
+function queueHikeEvent<T>(code: string, operation: () => Promise<T>): Promise<T> {
+  const previous = hikeEventTails.get(code) ?? Promise.resolve();
+  const next = previous
+    .catch(() => undefined)
+    .then(operation)
+    .finally(() => {
+      if (hikeEventTails.get(code) === next) hikeEventTails.delete(code);
+    });
+  hikeEventTails.set(code, next);
   return next;
 }
 
@@ -338,6 +373,7 @@ export function initializeGroupSessions(): Promise<void> {
         const room = restoreRoom(row);
         if (room) rooms.set(room.code, room);
       }
+      await synchronizeCompletedRoomStates();
       logger.info({ count: rooms.size }, "Persistente Gruppensitzungen geladen");
     } catch (err) {
       logger.error({ err }, "Persistente Gruppensitzungen konnten nicht geladen werden");
@@ -346,6 +382,11 @@ export function initializeGroupSessions(): Promise<void> {
       void removeExpiredRooms();
     }, CLEANUP_INTERVAL_MS);
     cleanupTimer.unref?.();
+    void reconcilePendingGroupHikes();
+    finishReconciliationTimer = setInterval(() => {
+      void reconcilePendingGroupHikes();
+    }, FINISH_RECONCILIATION_INTERVAL_MS);
+    finishReconciliationTimer.unref?.();
   })();
   return loadPromise;
 }
@@ -531,7 +572,7 @@ export async function setRendezvous(
 }
 
 export type HikeEventResult =
-  | { ok: true }
+  | { ok: true; broadcastEvent?: HikeSyncEvent; finishAck?: string | null }
   | { ok: false; reason: "not_leader" | "not_found" };
 
 export async function broadcastHikeEvent(
@@ -540,14 +581,476 @@ export async function broadcastHikeEvent(
 ): Promise<HikeEventResult> {
   const room = findRoomByUser(senderId);
   if (!room) return { ok: false, reason: "not_found" };
-  if (room.leaderId !== senderId) return { ok: false, reason: "not_leader" };
-  room.lastHikeState = { event, updatedAt: Date.now() };
-  for (const member of room.members.values()) {
-    if (member.userId === senderId) continue;
-    send(member.ws, { type: "hike", code: room.code, event });
+  return queueHikeEvent(room.code, async () => {
+    // Re-check inside the per-room queue: a concurrent leave/kick or leader
+    // change must not turn an old WebSocket message into a valid hike event.
+    const currentRoom = rooms.get(room.code);
+    if (!currentRoom) return { ok: false, reason: "not_found" as const };
+    if (currentRoom.leaderId !== senderId) {
+      return { ok: false, reason: "not_leader" as const };
+    }
+
+    const previous = currentRoom.lastHikeState;
+    if (event.kind === "start") {
+      // An active hike cannot be replaced.  A client id makes retries
+      // explicitly idempotent; legacy starts remain one-hike-per-room.
+      if (previous?.groupHikeId && !previous.completedAt) {
+        return { ok: true as const };
+      }
+      if (previous?.completedAt) {
+        const matchingReplay = previous.clientHikeId
+          ? event.clientHikeId === previous.clientHikeId
+          : event.clientHikeId === undefined;
+        if (matchingReplay) {
+          return {
+            ok: true as const,
+            finishAck: previous.clientHikeId ?? null,
+          };
+        }
+        if (!previous.clientHikeId) return { ok: true as const };
+      }
+      const startedAt = Date.now();
+      const headerResult = await createGroupHikeHeader(currentRoom, senderId, event, startedAt);
+      if (headerResult.status === "blocked" || !headerResult.header) {
+        return { ok: true as const };
+      }
+      const header = headerResult.header;
+      if (headerResult.status === "conflict") {
+        if (header.completedAt) {
+          return {
+            ok: true as const,
+            finishAck: header.clientHikeId,
+          };
+        }
+        const reconstructed = groupHikeStateFromHeader(header);
+        currentRoom.lastHikeState = reconstructed;
+        for (const member of currentRoom.members.values()) {
+          if (member.userId === senderId) continue;
+          send(member.ws, {
+            type: "hike",
+            code: currentRoom.code,
+            event: reconstructed.event,
+          });
+        }
+        await persistRoom(currentRoom);
+        return { ok: true as const, broadcastEvent: reconstructed.event };
+      }
+      currentRoom.lastHikeState = {
+        event,
+        updatedAt: startedAt,
+        groupHikeId: header.groupHikeId,
+        ...(header.clientHikeId ? { clientHikeId: header.clientHikeId } : {}),
+        eligibleUserIds: header.eligibleUserIds,
+        startedAt,
+        startEvent: event,
+      };
+    } else {
+      // Ignore a finish without a server-issued start id.  Chapter/decision
+      // events remain compatible with older clients but cannot create a hike.
+      if (event.kind === "finish") {
+        if (!previous?.groupHikeId) {
+          if (event.clientHikeId && await completedGroupHikeExists(currentRoom.code, event.clientHikeId)) {
+            return { ok: true as const, finishAck: event.clientHikeId };
+          }
+          return { ok: true as const };
+        }
+        if (previous.completedAt) {
+          const matchingReplay = previous.clientHikeId
+            ? event.clientHikeId === previous.clientHikeId
+            : event.clientHikeId === undefined;
+          if (matchingReplay) {
+            return { ok: true as const, finishAck: previous.clientHikeId ?? null };
+          }
+          if (event.clientHikeId && await completedGroupHikeExists(currentRoom.code, event.clientHikeId)) {
+            return { ok: true as const, finishAck: event.clientHikeId };
+          }
+          return { ok: true as const };
+        }
+        if (
+          previous.clientHikeId
+            ? event.clientHikeId !== previous.clientHikeId
+            : event.clientHikeId !== undefined
+        ) {
+          if (event.clientHikeId && await completedGroupHikeExists(currentRoom.code, event.clientHikeId)) {
+            return { ok: true as const, finishAck: event.clientHikeId };
+          }
+          return { ok: true as const };
+        }
+        const completedAt = Date.now();
+        await requestGroupHikeFinish(previous.groupHikeId, completedAt);
+        const completed = await completeGroupHike(previous.groupHikeId);
+        if (!completed) return { ok: true as const };
+        currentRoom.lastHikeState = {
+          ...previous,
+          event,
+          updatedAt: completedAt,
+          completedAt,
+        };
+        for (const member of currentRoom.members.values()) {
+          if (member.userId === senderId) continue;
+          send(member.ws, { type: "hike", code: currentRoom.code, event });
+        }
+        await persistRoom(currentRoom);
+        return {
+          ok: true as const,
+          finishAck: previous.clientHikeId ?? null,
+        };
+      } else {
+        if (previous?.completedAt) return { ok: true as const };
+        currentRoom.lastHikeState = {
+          event,
+          updatedAt: Date.now(),
+          ...(previous?.groupHikeId ? {
+            groupHikeId: previous.groupHikeId,
+            clientHikeId: previous.clientHikeId,
+            eligibleUserIds: previous.eligibleUserIds,
+            startedAt: previous.startedAt,
+            startEvent: previous.startEvent,
+          } : {}),
+        };
+      }
+    }
+
+    for (const member of currentRoom.members.values()) {
+      if (member.userId === senderId) continue;
+      send(member.ws, { type: "hike", code: currentRoom.code, event });
+    }
+    await persistRoom(currentRoom);
+    return { ok: true as const };
+  });
+}
+
+const GROUP_HIKE_MILESTONES = [1, 3, 5, 10, 15, 20] as const;
+
+function groupHikeIdempotencyKey(
+  roomCode: string,
+  leaderId: string,
+  clientHikeId?: string,
+): string {
+  const roomPart = encodeURIComponent(roomCode);
+  const leaderPart = encodeURIComponent(leaderId);
+  return clientHikeId
+    ? `group_hike:${roomPart}:${leaderPart}:client:${encodeURIComponent(clientHikeId)}`
+    : `group_hike:${roomPart}:${leaderPart}:legacy`;
+}
+
+type GroupHikeHeader = typeof groupHikesTable.$inferSelect;
+
+async function createGroupHikeHeader(
+  room: Room,
+  leaderId: string,
+  event: Extract<HikeSyncEvent, { kind: "start" }>,
+  startedAtMs: number,
+): Promise<
+  | { status: "inserted" | "conflict"; header: GroupHikeHeader }
+  | { status: "blocked"; header: null }
+> {
+  const eligibleUserIds = [
+    ...new Set([...room.members.keys(), room.leaderId]),
+  ];
+  const startedAt = new Date(startedAtMs);
+  const idempotencyKey = groupHikeIdempotencyKey(
+    room.code,
+    leaderId,
+    event.clientHikeId,
+  );
+
+  return db.transaction(async (tx) => {
+    // A room that has completed a legacy hike is intentionally permanently
+    // single-hike: modern clients cannot bypass that legacy key.
+    if (event.clientHikeId) {
+      const [legacyCompleted] = await tx
+        .select({ groupHikeId: groupHikesTable.groupHikeId })
+        .from(groupHikesTable)
+        .where(
+          and(
+            eq(groupHikesTable.roomCode, room.code),
+            isNull(groupHikesTable.clientHikeId),
+            isNotNull(groupHikesTable.completedAt),
+          ),
+        )
+        .limit(1);
+      if (legacyCompleted) return { status: "blocked" as const, header: null };
+    }
+
+    const [header] = await tx
+      .insert(groupHikesTable)
+      .values({
+        groupHikeId: randomUUID(),
+        roomCode: room.code,
+        leaderId,
+        clientHikeId: event.clientHikeId ?? null,
+        sagaId: event.sagaId,
+        routeId: event.routeId,
+        routeName: event.routeName,
+        idempotencyKey,
+        eligibleUserIds,
+        startedAt,
+      })
+      .onConflictDoNothing({ target: groupHikesTable.idempotencyKey })
+      .returning();
+    if (header) return { status: "inserted", header };
+
+    const [existing] = await tx
+      .select()
+      .from(groupHikesTable)
+      .where(eq(groupHikesTable.idempotencyKey, idempotencyKey))
+      .limit(1);
+    return existing
+      ? { status: "conflict", header: existing }
+      : { status: "blocked", header: null };
+  });
+}
+
+function groupHikeStateFromHeader(header: GroupHikeHeader): GroupHikeState {
+  const startedAt = header.startedAt.getTime();
+  const event: Extract<HikeSyncEvent, { kind: "start" }> = {
+    kind: "start",
+    sagaId: header.sagaId ?? `group_${header.groupHikeId}`,
+    routeId: header.routeId ?? `group_${header.groupHikeId}`,
+    routeName: header.routeName ?? "Gruppenwanderung",
+    ...(header.clientHikeId ? { clientHikeId: header.clientHikeId } : {}),
+  };
+  return {
+    event,
+    updatedAt: header.completedAt?.getTime() ?? startedAt,
+    groupHikeId: header.groupHikeId,
+    ...(header.clientHikeId ? { clientHikeId: header.clientHikeId } : {}),
+    eligibleUserIds: [...header.eligibleUserIds].sort(),
+    startedAt,
+    startEvent: event,
+    ...(header.completedAt ? { completedAt: header.completedAt.getTime() } : {}),
+  };
+}
+
+async function requestGroupHikeFinish(groupHikeId: string, requestedAtMs: number): Promise<void> {
+  await db
+    .update(groupHikesTable)
+    .set({ finishRequestedAt: new Date(requestedAtMs) })
+    .where(
+      and(
+        eq(groupHikesTable.groupHikeId, groupHikeId),
+        isNull(groupHikesTable.completedAt),
+        isNull(groupHikesTable.finishRequestedAt),
+      ),
+    );
+}
+
+async function completedGroupHikeExists(roomCode: string, clientHikeId: string): Promise<boolean> {
+  const [header] = await db
+    .select({ groupHikeId: groupHikesTable.groupHikeId })
+    .from(groupHikesTable)
+    .where(
+      and(
+        eq(groupHikesTable.roomCode, roomCode),
+        eq(groupHikesTable.clientHikeId, clientHikeId),
+        isNotNull(groupHikesTable.completedAt),
+      ),
+    )
+    .limit(1);
+  return !!header;
+}
+
+function groupMilestoneTitle(threshold: number): string {
+  return `${threshold}. Gruppenwanderung`;
+}
+
+function dedupeProfileItems(value: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const result: Array<Record<string, unknown>> = [];
+  for (const item of value) {
+    if (typeof item !== "object" || item === null) continue;
+    const entry = item as Record<string, unknown>;
+    if (typeof entry.id !== "string" || seen.has(entry.id)) continue;
+    seen.add(entry.id);
+    result.push(entry);
   }
-  await persistRoom(room);
-  return { ok: true };
+  return result;
+}
+
+async function reconcilePendingGroupHikes(): Promise<void> {
+  let headers: Array<{ groupHikeId: string }> = [];
+  try {
+    headers = await db
+      .select({ groupHikeId: groupHikesTable.groupHikeId })
+      .from(groupHikesTable)
+      .where(
+        and(
+          isNotNull(groupHikesTable.finishRequestedAt),
+          isNull(groupHikesTable.completedAt),
+        ),
+      )
+      .limit(100);
+  } catch (err) {
+    logger.warn({ err }, "Ausstehende Gruppenwanderungs-Abschlüsse konnten nicht geladen werden");
+    return;
+  }
+
+  for (const header of headers) {
+    try {
+      await completeGroupHike(header.groupHikeId);
+    } catch (err) {
+      // Leave the header claimable; the next interval retries the complete
+      // transaction, including profile reconciliation.
+      logger.warn(
+        { err, groupHikeId: header.groupHikeId },
+        "Ausstehender Gruppenwanderungs-Abschluss konnte nicht verarbeitet werden",
+      );
+    }
+  }
+  await synchronizeCompletedRoomStates();
+}
+
+async function synchronizeCompletedRoomStates(): Promise<void> {
+  try {
+    const completedHeaders = await db
+      .select({
+        groupHikeId: groupHikesTable.groupHikeId,
+        clientHikeId: groupHikesTable.clientHikeId,
+        completedAt: groupHikesTable.completedAt,
+      })
+      .from(groupHikesTable)
+      .where(isNotNull(groupHikesTable.completedAt));
+    for (const header of completedHeaders) {
+      if (!header.completedAt) continue;
+      for (const room of rooms.values()) {
+        const state = room.lastHikeState;
+        if (!state || state.groupHikeId !== header.groupHikeId || state.completedAt) continue;
+        const completedAt = header.completedAt.getTime();
+        room.lastHikeState = {
+          ...state,
+          event: {
+            kind: "finish",
+            ...(header.clientHikeId ? { clientHikeId: header.clientHikeId } : {}),
+          },
+          updatedAt: completedAt,
+          completedAt,
+        };
+        await persistRoom(room);
+      }
+    }
+  } catch (err) {
+    logger.warn({ err }, "Abgeschlossene Gruppenwanderungs-Zustaende konnten nicht synchronisiert werden");
+  }
+}
+
+/**
+ * The header completion update, completion ledger, and each profile update
+ * share one transaction.  Durable header ownership, rather than a client
+ * counter or event replay, determines which profiles are reconciled.
+ */
+async function completeGroupHike(groupHikeId: string): Promise<boolean> {
+  const completedAt = new Date();
+  return db.transaction(async (tx) => {
+    const [header] = await tx
+      .update(groupHikesTable)
+      .set({ completedAt })
+      .where(
+        and(
+          eq(groupHikesTable.groupHikeId, groupHikeId),
+          isNull(groupHikesTable.completedAt),
+        ),
+      )
+      .returning({
+        eligibleUserIds: groupHikesTable.eligibleUserIds,
+        startedAt: groupHikesTable.startedAt,
+        roomCode: groupHikesTable.roomCode,
+        sagaId: groupHikesTable.sagaId,
+        routeId: groupHikesTable.routeId,
+        routeName: groupHikesTable.routeName,
+      });
+    // The header update is the durable replay gate.  Only its winner may
+    // write completion rows or profile progress.
+    if (!header) {
+      const [completed] = await tx
+        .select({ completedAt: groupHikesTable.completedAt })
+        .from(groupHikesTable)
+        .where(eq(groupHikesTable.groupHikeId, groupHikeId))
+        .limit(1);
+      return !!completed?.completedAt;
+    }
+    const userIds = [...new Set(header.eligibleUserIds)];
+    userIds.sort();
+    const startedAt = header.startedAt.getTime();
+    const inserted = await tx
+      .insert(groupHikeCompletionsTable)
+      .values(
+        userIds.map((userId) => ({
+          groupHikeId,
+          userId,
+          roomCode: header.roomCode,
+          completedAt,
+        })),
+      )
+      .onConflictDoNothing()
+      .returning({ userId: groupHikeCompletionsTable.userId });
+
+    for (const { userId } of inserted.sort((a, b) => a.userId.localeCompare(b.userId))) {
+      const [profile] = await tx
+        .select({
+          hikeHistory: profilesTable.hikeHistory,
+          achievements: profilesTable.achievements,
+        })
+        .from(profilesTable)
+        .where(eq(profilesTable.id, userId))
+        .for("update")
+        .limit(1);
+      if (!profile) continue;
+
+      const history = dedupeProfileItems(profile.hikeHistory);
+      if (!history.some((entry) => entry && entry.id === `group_${groupHikeId}`)) {
+        history.push({
+          id: `group_${groupHikeId}`,
+          sagaId: header.sagaId ?? `group_${groupHikeId}`,
+          ...(header.routeId ? { routeId: header.routeId } : {}),
+          routeName: header.routeName ?? "Gruppenwanderung",
+          distanceKm: 0,
+          ascentM: 0,
+          sacScale: "unknown",
+          startedAt,
+          chapters: [],
+          visitedPlaceIds: [],
+        });
+      }
+      history.sort((a, b) => Number(b?.startedAt ?? 0) - Number(a?.startedAt ?? 0));
+
+      const [completionCount] = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(groupHikeCompletionsTable)
+        .where(eq(groupHikeCompletionsTable.userId, userId));
+      const achievedCount = Number(completionCount?.count ?? 0);
+      const achievements = dedupeProfileItems(profile.achievements);
+      const achievementIds = new Set(
+        achievements
+          .filter((entry) => entry && typeof entry.id === "string")
+          .map((entry) => entry.id as string),
+      );
+      for (const threshold of GROUP_HIKE_MILESTONES) {
+        const id = `group_hikes_${threshold}`;
+        if (achievedCount >= threshold && !achievementIds.has(id)) {
+          achievements.push({
+            id,
+            sagaTitle: groupMilestoneTitle(threshold),
+            unlockedAt: completedAt.getTime(),
+          });
+          achievementIds.add(id);
+        }
+      }
+
+      await tx
+        .update(profilesTable)
+        .set({
+          // This mirrors /me/progress/sync's server semantics, but never
+          // replaces an existing history object with a client-shaped one.
+          hikeHistory: history.slice(0, 200),
+          achievements,
+          updatedAt: completedAt,
+        })
+        .where(eq(profilesTable.id, userId));
+    }
+    return true;
+  });
 }
 
 export function notifyJoined(room: Room, ws: WebSocket): void {

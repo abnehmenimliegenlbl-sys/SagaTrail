@@ -24,6 +24,7 @@ import type {
   AnalyzeObjectRequest,
   AnalyzeObjectResponse,
   AvalancheBulletin,
+  CancelMeetupRequest,
   CatalogResponse,
   CatalogRoute,
   CatalogSaga,
@@ -59,6 +60,8 @@ import type {
   HealthStatus,
   Meetup,
   MeetupActionResponse,
+  MeetupAttendanceRequest,
+  MeetupAttendanceResponse,
   MeetupDetail,
   MeetupJoinResponse,
   MeetupListResponse,
@@ -3817,6 +3820,77 @@ export const useDeleteMeetup = <TError = ErrorType<void>,
       return useMutation(getDeleteMeetupMutationOptions(options));
     }
 
+export const getCancelMeetupUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/cancel`
+}
+
+/**
+ * @summary Eigenen Treffpunkt absagen
+ */
+export const cancelMeetup = async (id: string,
+    cancelMeetupRequest: CancelMeetupRequest, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getCancelMeetupUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(cancelMeetupRequest)
+  }
+);}
+
+
+
+
+export const getCancelMeetupMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelMeetup>>, TError,{id: string;data: BodyType<CancelMeetupRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelMeetup>>, TError,{id: string;data: BodyType<CancelMeetupRequest>}, TContext> => {
+
+const mutationKey = ['cancelMeetup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelMeetup>>, {id: string;data: BodyType<CancelMeetupRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  cancelMeetup(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelMeetupMutationResult = NonNullable<Awaited<ReturnType<typeof cancelMeetup>>>
+    export type CancelMeetupMutationBody = BodyType<CancelMeetupRequest>
+    export type CancelMeetupMutationError = ErrorType<void>
+
+    /**
+ * @summary Eigenen Treffpunkt absagen
+ */
+export const useCancelMeetup = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelMeetup>>, TError,{id: string;data: BodyType<CancelMeetupRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof cancelMeetup>>,
+        TError,
+        {id: string;data: BodyType<CancelMeetupRequest>},
+        TContext
+      > => {
+      return useMutation(getCancelMeetupMutationOptions(options));
+    }
+
 export const getJoinMeetupUrl = (id: string,) => {
 
 
@@ -3955,6 +4029,77 @@ export const useLeaveMeetup = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getLeaveMeetupMutationOptions(options));
+    }
+
+export const getUpdateMeetupAttendanceUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/attendance`
+}
+
+/**
+ * @summary Eigenen Anwesenheitsstatus aktualisieren
+ */
+export const updateMeetupAttendance = async (id: string,
+    meetupAttendanceRequest: MeetupAttendanceRequest, options?: RequestInit): Promise<MeetupAttendanceResponse> => {
+
+  return customFetch<MeetupAttendanceResponse>(getUpdateMeetupAttendanceUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(meetupAttendanceRequest)
+  }
+);}
+
+
+
+
+export const getUpdateMeetupAttendanceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMeetupAttendance>>, TError,{id: string;data: BodyType<MeetupAttendanceRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMeetupAttendance>>, TError,{id: string;data: BodyType<MeetupAttendanceRequest>}, TContext> => {
+
+const mutationKey = ['updateMeetupAttendance'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMeetupAttendance>>, {id: string;data: BodyType<MeetupAttendanceRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateMeetupAttendance(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMeetupAttendanceMutationResult = NonNullable<Awaited<ReturnType<typeof updateMeetupAttendance>>>
+    export type UpdateMeetupAttendanceMutationBody = BodyType<MeetupAttendanceRequest>
+    export type UpdateMeetupAttendanceMutationError = ErrorType<void>
+
+    /**
+ * @summary Eigenen Anwesenheitsstatus aktualisieren
+ */
+export const useUpdateMeetupAttendance = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMeetupAttendance>>, TError,{id: string;data: BodyType<MeetupAttendanceRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateMeetupAttendance>>,
+        TError,
+        {id: string;data: BodyType<MeetupAttendanceRequest>},
+        TContext
+      > => {
+      return useMutation(getUpdateMeetupAttendanceMutationOptions(options));
     }
 
 export const getCreateMeetupShareUrl = (id: string,) => {

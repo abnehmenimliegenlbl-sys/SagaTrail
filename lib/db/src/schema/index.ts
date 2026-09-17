@@ -21,6 +21,8 @@ export * from "./referrals";
 export * from "./androidBetaTesters";
 export * from "./objectRecognitionUsage";
 export * from "./groupSessions";
+export * from "./groupHikes";
+export * from "./groupHikeCompletions";
 export * from "./meetups";
 export * from "./safetyShares";
 export * from "./mediaContacts";

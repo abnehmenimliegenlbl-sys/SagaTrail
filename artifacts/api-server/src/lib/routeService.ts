@@ -34,6 +34,7 @@ import { istPoiBildPassend } from "./poiImageCheck";
 import { assessSac, deriveSacFromSwissTlm3d } from "./swisstopoHiking";
 import { getCachedRoutePhoto } from "./commonsPhoto";
 import { reverseGeocode } from "./geocoding";
+import { refreshCantonRouteThemes } from "./routeThemeRefresh";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -1677,6 +1678,18 @@ export function startDailyCantonSync(): void {
       // enrichAndStore holt nur fehlende oder abgelaufene Eintraege nach.
       const routes = await getCantonRoutes(canton, log);
       log.info({ canton, count: routes.length }, "Taeglich-Kanton-Sync abgeschlossen");
+      try {
+        const themeResult = await refreshCantonRouteThemes(routes, log);
+        log.info(
+          { canton, routeCount: routes.length, ...themeResult },
+          "Taeglicher POI-Themen-Sync abgeschlossen",
+        );
+      } catch (themeErr) {
+        log.warn(
+          { canton, err: themeErr },
+          "Taeglicher POI-Themen-Sync fehlgeschlagen",
+        );
+      }
     } catch (err) {
       log.warn({ canton, err }, "Taeglich-Kanton-Sync fehlgeschlagen");
     }

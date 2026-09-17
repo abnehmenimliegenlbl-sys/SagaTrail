@@ -799,12 +799,15 @@ export const GetRouteSagaResponse = zod.object({
  * Liefert das Profil des authentifizierten Nutzers. 404, wenn nach dem Onboarding noch kein Profil angelegt wurde.
  * @summary Eigenes Profil laden
  */
+export const getMyProfileResponseBioMax = 160;
+
 export const getMyProfileResponseNavAnnouncementsEnabledDefault = true;
 export const getMyProfileResponsePendingPackRewardsDefault = 0;
 
 export const GetMyProfileResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(getMyProfileResponseBioMax).nullish(),
   "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
   "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
@@ -826,6 +829,8 @@ export const GetMyProfileResponse = zod.object({
  */
 export const saveMyProfileBodyNameMin = 2;
 
+export const saveMyProfileBodyBioMax = 160;
+
 
 export const saveMyProfileBodyLanguageMin = 2;
 
@@ -833,6 +838,7 @@ export const saveMyProfileBodyNavAnnouncementsEnabledDefault = true;
 
 export const SaveMyProfileBody = zod.object({
   "name": zod.string().min(saveMyProfileBodyNameMin),
+  "bio": zod.string().max(saveMyProfileBodyBioMax).nullish(),
   "dateOfBirth": zod.coerce.date().nullish(),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
   "homeCanton": zod.string().min(1).optional(),
@@ -841,12 +847,15 @@ export const SaveMyProfileBody = zod.object({
   "navAnnouncementsEnabled": zod.boolean().default(saveMyProfileBodyNavAnnouncementsEnabledDefault).describe('Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.')
 })
 
+export const saveMyProfileResponseBioMax = 160;
+
 export const saveMyProfileResponseNavAnnouncementsEnabledDefault = true;
 export const saveMyProfileResponsePendingPackRewardsDefault = 0;
 
 export const SaveMyProfileResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(saveMyProfileResponseBioMax).nullish(),
   "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
   "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
@@ -865,12 +874,15 @@ export const SaveMyProfileResponse = zod.object({
 /**
  * @summary Eigenes Profilbild hochladen
  */
+export const uploadMyAvatarResponseBioMax = 160;
+
 export const uploadMyAvatarResponseNavAnnouncementsEnabledDefault = true;
 export const uploadMyAvatarResponsePendingPackRewardsDefault = 0;
 
 export const UploadMyAvatarResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(uploadMyAvatarResponseBioMax).nullish(),
   "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
   "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
@@ -894,12 +906,15 @@ export const UpdateMyPremiumBody = zod.object({
   "premium": zod.boolean()
 })
 
+export const updateMyPremiumResponseBioMax = 160;
+
 export const updateMyPremiumResponseNavAnnouncementsEnabledDefault = true;
 export const updateMyPremiumResponsePendingPackRewardsDefault = 0;
 
 export const UpdateMyPremiumResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(updateMyPremiumResponseBioMax).nullish(),
   "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
   "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
@@ -919,12 +934,15 @@ export const UpdateMyPremiumResponse = zod.object({
  * Prueft serverseitig bei RevenueCat, ob der authentifizierte Nutzer (Customer-ID = Nutzer-ID) ein aktives "premium"-Entitlement besitzt, und setzt das Premium-Flag entsprechend. Nur Upgrades werden uebernommen; ein fehlendes Entitlement fuehrt NICHT zum Entzug (Downgrade bleibt Self-Service ueber PATCH /me/premium).
  * @summary Premium-Status verifiziert mit RevenueCat abgleichen
  */
+export const syncMyPremiumResponseBioMax = 160;
+
 export const syncMyPremiumResponseNavAnnouncementsEnabledDefault = true;
 export const syncMyPremiumResponsePendingPackRewardsDefault = 0;
 
 export const SyncMyPremiumResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(syncMyPremiumResponseBioMax).nullish(),
   "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
   "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
@@ -985,12 +1003,15 @@ export const ClaimKantonspackResponse = zod.object({
  * Markiert die einmalige kostenlose Wanderung des authentifizierten Nutzers als verbraucht. Wird beim Start der ersten Wanderung aufgerufen (nicht-Premium-Nutzer).
  * @summary Kostenlose Wanderung verbrauchen
  */
+export const consumeMyFreeHikeResponseBioMax = 160;
+
 export const consumeMyFreeHikeResponseNavAnnouncementsEnabledDefault = true;
 export const consumeMyFreeHikeResponsePendingPackRewardsDefault = 0;
 
 export const ConsumeMyFreeHikeResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(consumeMyFreeHikeResponseBioMax).nullish(),
   "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
   "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
@@ -1040,12 +1061,15 @@ export const ClaimPackRewardBody = zod.object({
   "packSlug": zod.string().min(1)
 })
 
+export const claimPackRewardResponseBioMax = 160;
+
 export const claimPackRewardResponseNavAnnouncementsEnabledDefault = true;
 export const claimPackRewardResponsePendingPackRewardsDefault = 0;
 
 export const ClaimPackRewardResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(claimPackRewardResponseBioMax).nullish(),
   "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
   "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
@@ -1379,6 +1403,8 @@ export const GetMeetupsResponse = zod.object({
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'cancelled']),
+  "cancellationReason": zod.string().nullish(),
+  "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
 }))
 })
@@ -1419,6 +1445,8 @@ export const CreateMeetupResponse = zod.object({
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'cancelled']),
+  "cancellationReason": zod.string().nullish(),
+  "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
 })
 
@@ -1432,6 +1460,11 @@ export const GetMeetupParams = zod.object({
 
 export const getMeetupResponseTwoParticipantsItemAgeMin = 13;
 export const getMeetupResponseTwoParticipantsItemAgeMax = 120;
+
+export const getMeetupResponseTwoParticipantsItemBioMax = 160;
+
+export const getMeetupResponseTwoParticipantsItemRankLevelMin = 0;
+export const getMeetupResponseTwoParticipantsItemRankLevelMax = 9;
 
 
 
@@ -1448,14 +1481,26 @@ export const GetMeetupResponse = zod.object({
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'cancelled']),
+  "cancellationReason": zod.string().nullish(),
+  "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
 }).and(zod.object({
   "participants": zod.array(zod.object({
-  "userId": zod.string().optional(),
+  "userId": zod.string().optional().describe('Nur für authentifizierte, bereits beigetretene Teilnehmer sichtbar.'),
   "avatarUrl": zod.string().nullish(),
   "age": zod.number().min(getMeetupResponseTwoParticipantsItemAgeMin).max(getMeetupResponseTwoParticipantsItemAgeMax).nullish(),
   "name": zod.string(),
-  "joinedAt": zod.coerce.date()
+  "joinedAt": zod.coerce.date(),
+  "bio": zod.string().max(getMeetupResponseTwoParticipantsItemBioMax).nullish(),
+  "attendanceStatus": zod.enum(['confirmed', 'delayed', 'arrived']).optional(),
+  "delayMinutes": zod.number().nullish(),
+  "statusUpdatedAt": zod.coerce.date().optional(),
+  "rankLevel": zod.number().min(getMeetupResponseTwoParticipantsItemRankLevelMin).max(getMeetupResponseTwoParticipantsItemRankLevelMax).optional().describe('Server-verifizierter Gruppenrang für Mitwandernde; nur für Teilnehmende oder den Organisator sichtbar.'),
+  "groupAchievements": zod.array(zod.object({
+  "id": zod.string(),
+  "threshold": zod.number(),
+  "title": zod.string()
+})).optional().describe('Nur für Teilnehmende oder den Organisator sichtbar.')
 }))
 }))
 
@@ -1468,6 +1513,25 @@ export const DeleteMeetupParams = zod.object({
 })
 
 export const DeleteMeetupResponse = zod.void()
+
+
+/**
+ * @summary Eigenen Treffpunkt absagen
+ */
+export const CancelMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const cancelMeetupBodyReasonMin = 3;
+export const cancelMeetupBodyReasonMax = 300;
+
+
+
+export const CancelMeetupBody = zod.object({
+  "reason": zod.string().min(cancelMeetupBodyReasonMin).max(cancelMeetupBodyReasonMax)
+})
+
+export const CancelMeetupResponse = zod.void()
 
 
 /**
@@ -1491,6 +1555,30 @@ export const LeaveMeetupParams = zod.object({
 
 export const LeaveMeetupResponse = zod.object({
   "joined": zod.boolean()
+})
+
+
+/**
+ * @summary Eigenen Anwesenheitsstatus aktualisieren
+ */
+export const UpdateMeetupAttendanceParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateMeetupAttendanceBodyDelayMinutesMin = 5;
+export const updateMeetupAttendanceBodyDelayMinutesMax = 180;
+
+
+
+export const UpdateMeetupAttendanceBody = zod.object({
+  "status": zod.enum(['confirmed', 'delayed', 'arrived']),
+  "delayMinutes": zod.number().min(updateMeetupAttendanceBodyDelayMinutesMin).max(updateMeetupAttendanceBodyDelayMinutesMax).nullish()
+})
+
+export const UpdateMeetupAttendanceResponse = zod.object({
+  "attendanceStatus": zod.enum(['confirmed', 'delayed', 'arrived']),
+  "delayMinutes": zod.number().nullable(),
+  "statusUpdatedAt": zod.coerce.date()
 })
 
 

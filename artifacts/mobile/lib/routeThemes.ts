@@ -19,6 +19,26 @@ export const ROUTE_THEME_KEYS = [
 
 export type RouteThemeKey = (typeof ROUTE_THEME_KEYS)[number];
 
+export const THEME_MAX_DISTANCE_KM: Record<RouteThemeKey, number> = {
+  wasserwege: 0.2,
+  burgen_ruinen_alte_wege: 0.2,
+  gipfel_panorama: 2,
+  geologie_eiszeit: 2,
+  hoehlen_grotten: 0.5,
+  wald_wildtiere: 2,
+  alpen_landwirtschaft: 0.5,
+  pilger_handelswege: 0.1,
+  industriekultur: 0.2,
+  familien_entdecker: 1,
+  nacht_sterne: 2,
+  flora_jahreszeiten: 2,
+  bahn_seilbahn: 0.2,
+};
+
+export const MAX_THEME_DISTANCE_KM = Math.max(
+  ...Object.values(THEME_MAX_DISTANCE_KM),
+);
+
 const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
   de: {
     wasserwege: "Wasserwege",
@@ -165,18 +185,63 @@ function hasKind(poi: Poi, ...kinds: string[]): boolean {
   return kinds.some((kind) => poi.kind === kind);
 }
 
+function distanceToSegmentKm(
+  point: { lat: number; lng: number },
+  a: number[],
+  b: number[],
+): number {
+  const radius = 6371;
+  const radians = Math.PI / 180;
+  const cosLat = Math.cos(point.lat * radians);
+  const ax = (a[1]! - point.lng) * radians * cosLat * radius;
+  const ay = (a[0]! - point.lat) * radians * radius;
+  const bx = (b[1]! - point.lng) * radians * cosLat * radius;
+  const by = (b[0]! - point.lat) * radians * radius;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const length2 = dx * dx + dy * dy;
+  const t =
+    length2 === 0
+      ? 0
+      : Math.max(0, Math.min(1, -(ax * dx + ay * dy) / length2));
+  return Math.hypot(ax + t * dx, ay + t * dy);
+}
+
+function distanceToRouteKm(poi: Poi, geometry: number[][]): number {
+  if (geometry.length < 2) return Infinity;
+  let nearest = Infinity;
+  for (let index = 1; index < geometry.length; index += 1) {
+    nearest = Math.min(
+      nearest,
+      distanceToSegmentKm(
+        { lat: poi.lat, lng: poi.lng },
+        geometry[index - 1]!,
+        geometry[index]!,
+      ),
+    );
+  }
+  return nearest;
+}
+
 /**
  * Erzeugt sichtbare Themen aus den tatsächlich gefundenen Routen-POIs.
  * Kategorien ohne belastbaren POI-Beleg werden absichtlich nicht geraten.
  */
 export function deriveRouteThemes(
   pois: readonly Poi[],
-  route: Pick<HikingRoute, "familyFriendly">,
+  route: Pick<HikingRoute, "familyFriendly" | "geometry">,
 ): RouteThemeKey[] {
   const tags = new Set<RouteThemeKey>();
+  const geometry = route.geometry ?? [];
   for (const poi of pois) {
     const kind = poi.kind ?? "";
-    if (
+    const distanceKm = distanceToRouteKm(poi, geometry);
+    const addIfNear = (theme: RouteThemeKey, matches: boolean) => {
+      if (matches && distanceKm <= THEME_MAX_DISTANCE_KM[theme]) {
+        tags.add(theme);
+      }
+    };
+    addIfNear("wasserwege", (
       kind === "natural=water" ||
       kind === "natural=waterfall" ||
       kind === "natural=spring" ||
@@ -184,8 +249,8 @@ export function deriveRouteThemes(
       kind === "waterway=waterfall" ||
       kind === "waterway=river" ||
       kind === "waterway=stream"
-    ) tags.add("wasserwege");
-    if (
+    ));
+    addIfNear("burgen_ruinen_alte_wege", (
       kind.startsWith("historic=") &&
       [
         "historic=castle",
@@ -198,15 +263,17 @@ export function deriveRouteThemes(
         "historic=battlefield",
         "historic=bridge",
       ].includes(kind)
-    ) tags.add("burgen_ruinen_alte_wege");
-    if (hasKind(poi, "natural=peak", "natural=saddle", "tourism=viewpoint")) {
-      tags.add("gipfel_panorama");
-    }
-    if (
+    ));
+    addIfNear(
+      "gipfel_panorama",
+      hasKind(poi, "natural=peak", "natural=saddle", "tourism=viewpoint"),
+    );
+    addIfNear(
+      "geologie_eiszeit",
       kind.startsWith("geological=") ||
       hasKind(poi, "natural=rock", "natural=glacier")
-    ) tags.add("geologie_eiszeit");
-    if (
+    );
+    addIfNear("hoehlen_grotten", (
       hasKind(
         poi,
         "natural=arch",
@@ -215,11 +282,12 @@ export function deriveRouteThemes(
         "natural=rock_shelter",
         "man_made=adit",
       )
-    ) tags.add("hoehlen_grotten");
-    if (hasKind(poi, "natural=wood", "natural=wetland", "tourism=wildlife_hide")) {
-      tags.add("wald_wildtiere");
-    }
-    if (
+    ));
+    addIfNear(
+      "wald_wildtiere",
+      hasKind(poi, "natural=wood", "natural=wetland", "tourism=wildlife_hide"),
+    );
+    addIfNear("alpen_landwirtschaft", (
       hasKind(
         poi,
         "tourism=alpine_hut",
@@ -229,8 +297,8 @@ export function deriveRouteThemes(
         "landuse=meadow",
         "landuse=pasture",
       )
-    ) tags.add("alpen_landwirtschaft");
-    if (
+    ));
+    addIfNear("pilger_handelswege", (
       hasKind(
         poi,
         "route=pilgrimage",
@@ -240,17 +308,21 @@ export function deriveRouteThemes(
         "historic=milestone",
         "historic=boundary_stone",
       )
-    ) tags.add("pilger_handelswege");
-    if (
+    ));
+    addIfNear("industriekultur", (
       kind.startsWith("man_made=") &&
       ["man_made=watermill", "man_made=windmill", "man_made=works", "man_made=quarry"].includes(kind)
-    ) tags.add("industriekultur");
-    if (
-      route.familyFriendly === true ||
-      hasKind(poi, "amenity=playground", "amenity=picnic_site", "amenity=toilets")
-    ) tags.add("familien_entdecker");
-    if (hasKind(poi, "amenity=observatory", "tourism=observatory")) tags.add("nacht_sterne");
-    if (
+    ));
+    addIfNear(
+      "familien_entdecker",
+      hasKind(poi, "amenity=playground", "amenity=picnic_site", "amenity=toilets"),
+    );
+    if (route.familyFriendly === true) tags.add("familien_entdecker");
+    addIfNear(
+      "nacht_sterne",
+      hasKind(poi, "amenity=observatory", "tourism=observatory"),
+    );
+    addIfNear("flora_jahreszeiten", (
       hasKind(
         poi,
         "natural=tree",
@@ -259,8 +331,8 @@ export function deriveRouteThemes(
         "landuse=vineyard",
         "natural=heath",
       )
-    ) tags.add("flora_jahreszeiten");
-    if (
+    ));
+    addIfNear("bahn_seilbahn", (
       hasKind(
         poi,
         "railway=station",
@@ -270,7 +342,7 @@ export function deriveRouteThemes(
         "aerialway=station",
         "amenity=ferry_terminal",
       )
-    ) tags.add("bahn_seilbahn");
+    ));
   }
   return ROUTE_THEME_KEYS.filter((key) => tags.has(key));
 }

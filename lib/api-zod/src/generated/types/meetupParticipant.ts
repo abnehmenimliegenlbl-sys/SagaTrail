@@ -5,8 +5,11 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { MeetupParticipantAttendanceStatus } from './meetupParticipantAttendanceStatus';
+import type { MeetupParticipantGroupAchievementsItem } from './meetupParticipantGroupAchievementsItem';
 
 export interface MeetupParticipant {
+  /** Nur für authentifizierte, bereits beigetretene Teilnehmer sichtbar. */
   userId?: string;
   avatarUrl?: string | null;
   /**
@@ -16,4 +19,17 @@ export interface MeetupParticipant {
   age?: number | null;
   name: string;
   joinedAt: Date;
+  /** @maxLength 160 */
+  bio?: string | null;
+  attendanceStatus?: MeetupParticipantAttendanceStatus;
+  delayMinutes?: number | null;
+  statusUpdatedAt?: Date;
+  /**
+     * Server-verifizierter Gruppenrang für Mitwandernde; nur für Teilnehmende oder den Organisator sichtbar.
+     * @minimum 0
+     * @maximum 9
+     */
+  rankLevel?: number;
+  /** Nur für Teilnehmende oder den Organisator sichtbar. */
+  groupAchievements?: MeetupParticipantGroupAchievementsItem[];
 }

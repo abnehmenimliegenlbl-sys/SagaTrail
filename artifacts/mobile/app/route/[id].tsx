@@ -358,8 +358,8 @@ export default function Routenplanung() {
   // undefined = lädt, null = nichts gefunden, WikiSummary = fertig
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
   const routeThemes = useMemo(
-    () => deriveRouteThemes(poisDetails, route ?? { familyFriendly: null }),
-    [poisDetails, route?.familyFriendly],
+    () => deriveRouteThemes(poisDetails, route ?? { familyFriendly: null, geometry: [] }),
+    [poisDetails, route?.familyFriendly, route?.geometry],
   );
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   // Vollbild-Karte: Zustand + Signal zum Schliessen von aussen (POI-Tap im
