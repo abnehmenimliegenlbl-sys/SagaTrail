@@ -36,6 +36,7 @@ export default function Gruppe() {
   const {
     premium,
     groupSession,
+    groupHikeEvent,
     groupConnectionStatus,
     groupError,
     createGroupSession,
@@ -62,6 +63,25 @@ export default function Gruppe() {
     const order = { kinder: 0, jugendliche: 1, erwachsene: 2 } as Record<string, number>;
     return order[m.ageTier] < order[acc] ? m.ageTier : acc;
   }, "erwachsene" as string);
+
+  // Der Start der Leitung ist die einzige verbindliche Quelle fuer Sage und
+  // Route. Die Aktivitaet der Leitung bleibt als Vorschau sichtbar, bis das
+  // signierte/validierte Start-Ereignis eingetroffen ist.
+  const canonicalStart =
+    groupHikeEvent?.event.kind === "start" ? groupHikeEvent.event : null;
+  const leader = groupSession?.members.find((member) => member.isLeader);
+  const plannedStart =
+    canonicalStart ??
+    (leader?.activity.type === "wandert" &&
+    leader.activity.sagaId &&
+    leader.activity.routeId
+      ? {
+          kind: "start" as const,
+          sagaId: leader.activity.sagaId,
+          routeId: leader.activity.routeId,
+          routeName: leader.activity.sagaTitle,
+        }
+      : null);
 
   const buzz = () => hapticSelection();
 
@@ -266,6 +286,41 @@ export default function Gruppe() {
                   {groupSession.rendezvous.lng.toFixed(5)}
                 </Text>
               )}
+              {plannedStart && !groupSession.isLeader ? (
+                <View
+                  style={[
+                    styles.planBox,
+                    {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.primary + "12",
+                    },
+                  ]}
+                >
+                  <Feather name="navigation" size={18} color={colors.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.planTitle, { color: colors.foreground }]}>
+                      {t.activityWandering(plannedStart.routeName)}
+                    </Text>
+                    <Text style={[styles.planBody, { color: colors.mutedForeground }]}>
+                      {t.joinHikeButton}
+                    </Text>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t.joinHikeButton}
+                    onPress={() =>
+                      router.push(
+                        `/hike/${encodeURIComponent(plannedStart.sagaId)}?routeId=${encodeURIComponent(plannedStart.routeId)}`,
+                      )
+                    }
+                    style={[styles.joinHikeBtn, { borderColor: colors.primary }]}
+                  >
+                    <Text style={[styles.joinHikeText, { color: colors.primary }]}>
+                      {t.joinHikeButton}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
               {groupSession.isLeader && (
                 <PrimaryButton
                   variant="secondary"
@@ -335,25 +390,17 @@ export default function Gruppe() {
                        : (t.locationUnavailable ?? "No GPS location shared")}
                    </Text>
                 </View>
-                {!groupSession.isLeader &&
-                  m.isLeader &&
-                  m.activity.type === "wandert" &&
-                  m.activity.sagaId != null && (
+                 {!groupSession.isLeader &&
+                   m.isLeader &&
+                   plannedStart &&
+                   (
                     <Pressable
                       onPress={() => {
                         // Mitwandern: dieselbe Sage/Route wie die Leitung
                         // oeffnen — Kapitel und Entscheidungen folgen dann
                         // live der Gruppenleitung.
-                        const a = m.activity as {
-                          sagaId?: string;
-                          routeId?: string;
-                        };
-                        if (!a.sagaId) return;
-                        const routeParam = a.routeId
-                          ? `?routeId=${encodeURIComponent(a.routeId)}`
-                          : "";
                         router.push(
-                          `/hike/${encodeURIComponent(a.sagaId)}${routeParam}`,
+                           `/hike/${encodeURIComponent(plannedStart.sagaId)}?routeId=${encodeURIComponent(plannedStart.routeId)}`,
                         );
                       }}
                       hitSlop={10}
@@ -471,6 +518,18 @@ const styles = StyleSheet.create({
   locationConsent: { flexDirection: "row", alignItems: "flex-start", gap: 10, width: "100%", borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 12 },
   locationConsentTitle: { fontFamily: fonts.bodyBold, fontSize: 13 },
   locationConsentBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  planBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 14,
+  },
+  planTitle: { fontFamily: fonts.titleBold, fontSize: 14, flex: 1 },
+  planBody: { fontFamily: fonts.body, fontSize: 12, marginTop: 3 },
   rendezvous: { fontFamily: fonts.mono, fontSize: 11, marginTop: 10 },
   joinHikeBtn: {
     borderWidth: 1,

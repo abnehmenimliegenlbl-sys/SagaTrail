@@ -1046,6 +1046,17 @@ export default function LiveHike() {
     setStartAudioReleased(true);
   }, []);
   const confirmStartAtTrailhead = useCallback(() => {
+    // Mitglieder dürfen erst starten, nachdem der Server den verbindlichen
+    // Start der Leitung mit Sage und Route geliefert hat. So kann niemand
+    // versehentlich dieselbe Gruppe auf einer anderen Sage beginnen.
+    if (
+      groupSession &&
+      !groupSession.isLeader &&
+      groupHikeEvent?.event.kind !== "start"
+    ) {
+      startGateShownRef.current = false;
+      return;
+    }
     if (!isResume || startTimeRef.current === 0) {
       startTimeRef.current = Date.now();
     }
@@ -1059,7 +1070,7 @@ export default function LiveHike() {
     setStartReached(true);
     setOffRoutePos(null);
     releaseStartAudio();
-  }, [isResume, releaseStartAudio]);
+  }, [groupHikeEvent, groupSession, isResume, releaseStartAudio]);
   const chooseStartRoute = useCallback((mode: "start" | "fastest", position: LatLng) => {
     startChoicePendingRef.current = true;
     autoFollowRecalcStartedRef.current = false;
@@ -1199,6 +1210,28 @@ export default function LiveHike() {
   const inGruppe = !!groupSession;
   const istGruppenleitung = groupSession?.isLeader ?? false;
   const folgtGruppenleitung = inGruppe && !istGruppenleitung;
+  const canonicalGroupStart =
+    folgtGruppenleitung && groupHikeEvent?.event.kind === "start"
+      ? groupHikeEvent.event
+      : null;
+  const groupPlanRedirectRef = useRef<string>("");
+
+  // Mitglieder dürfen keine eigene Sage/Route starten. Sobald die Leitung
+  // den kanonischen Start sendet, wird ein falsch geöffneter Bildschirm
+  // automatisch auf exakt dieselbe Sage und Route umgeleitet.
+  useEffect(() => {
+    if (!canonicalGroupStart) return;
+    const routeMatches =
+      canonicalGroupStart.sagaId === id &&
+      (canonicalGroupStart.routeId === routeId || canonicalGroupStart.routeId === route?.id);
+    if (routeMatches) return;
+    const redirectKey = `${canonicalGroupStart.sagaId}:${canonicalGroupStart.routeId}`;
+    if (groupPlanRedirectRef.current === redirectKey) return;
+    groupPlanRedirectRef.current = redirectKey;
+    router.replace(
+      `/hike/${encodeURIComponent(canonicalGroupStart.sagaId)}?routeId=${encodeURIComponent(canonicalGroupStart.routeId)}`,
+    );
+  }, [canonicalGroupStart, id, route?.id, routeId, router]);
   useEffect(() => {
     return () => {
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
