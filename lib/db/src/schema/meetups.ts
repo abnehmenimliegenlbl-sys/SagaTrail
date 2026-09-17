@@ -35,8 +35,25 @@ export const meetupParticipantsTable = pgTable(
   (table) => [primaryKey({ columns: [table.meetupId, table.userId] })],
 );
 
+export const meetupMessagesTable = pgTable(
+  "meetup_messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    meetupId: uuid("meetup_id").notNull().references(() => meetupsTable.id, { onDelete: "cascade" }),
+    senderUserId: text("sender_user_id").notNull(),
+    senderName: text("sender_name").notNull(),
+    messageText: text("message_text").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("meetup_messages_meetup_created_idx").on(table.meetupId, table.createdAt),
+    check("meetup_messages_text_length_check", sql`char_length(${table.messageText}) between 1 and 500`),
+  ],
+);
+
 export type MeetupRow = typeof meetupsTable.$inferSelect;
 export type MeetupParticipantRow = typeof meetupParticipantsTable.$inferSelect;
+export type MeetupMessageRow = typeof meetupMessagesTable.$inferSelect;
 
 export const meetupRemindersTable = pgTable(
   "meetup_reminders",
