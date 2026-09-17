@@ -7095,6 +7095,20 @@ export default function LiveHike() {
   const gpsAgeSec = lastLocationAtRef.current > 0
     ? Math.max(0, Math.round((locationNow - lastLocationAtRef.current) / 1000))
     : null;
+  const observerRouteDistanceM = useMemo(() => {
+    if (
+      !livePos ||
+      !navigationGeometry ||
+      navigationGeometry.length < 2 ||
+      !hasFreshGps
+    ) {
+      return null;
+    }
+    const match = fortschrittAufRoute(livePos, navigationGeometry);
+    return match && Number.isFinite(match.distKm)
+      ? Math.round(match.distKm * 1000)
+      : null;
+  }, [hasFreshGps, livePos, navigationGeometry]);
 
   return (
     <Background>
@@ -7642,7 +7656,10 @@ export default function LiveHike() {
           // Fortschritt verwenden — nach einer Start-Umleitung ist das die
           // kombinierte navigationGeometry und nicht mehr route.geometry.
           routeGeometry={navigationGeometry}
-          observerPosition={livePos}
+           observerPosition={hasFreshGps ? livePos : null}
+           observerAccuracyM={livePosAccuracy}
+           observerFixAgeMs={gpsAgeSec != null ? gpsAgeSec * 1000 : null}
+           observerRouteDistanceM={observerRouteDistanceM}
           heading={compassHeading}
           nextTurn={nextArTurn}
           observerElevationM={hasFreshGps ? liveAltitude : null}

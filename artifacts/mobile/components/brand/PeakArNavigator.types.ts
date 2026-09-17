@@ -9,6 +9,9 @@ export interface PeakArNavigatorProps {
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
   observerPosition?: LatLng | null;
+  observerAccuracyM?: number | null;
+  observerFixAgeMs?: number | null;
+  observerRouteDistanceM?: number | null;
   compassReady?: boolean;
   routeGeometry?: readonly number[][] | null;
   mapLayer?: "topo" | "sat";

@@ -144,7 +144,7 @@ export interface LocalTerrainMesh {
   triangleIndices: TerrainTriangle[];
 }
 
-const AR_WORLD_SCALE = 0.04;
+export const AR_WORLD_SCALE = 0.04;
 const MIN_RAY_DISTANCE_M = 12;
 const MAX_OCCLUSION_GAP_DEG = 8;
 const OCCLUSION_MARGIN_DEG = 0.5;

@@ -38,6 +38,9 @@ interface PeakCameraOverlayProps {
   terrainModel?: LocalTerrainModel | null;
   routeGeometry?: readonly number[][] | null;
   observerPosition?: LatLng | null;
+  observerAccuracyM?: number | null;
+  observerFixAgeMs?: number | null;
+  observerRouteDistanceM?: number | null;
   heading: number | null;
   nextTurn?: {
     direction: "left" | "right";
@@ -59,6 +62,9 @@ export function PeakCameraOverlay({
   terrainModel = null,
   routeGeometry = null,
   observerPosition = null,
+  observerAccuracyM = null,
+  observerFixAgeMs = null,
+  observerRouteDistanceM = null,
   heading,
   nextTurn = null,
   observerElevationM = null,
@@ -85,6 +91,9 @@ export function PeakCameraOverlay({
     trackingState,
     peakCount: arPeaks.length,
     heading,
+    observerAccuracyM,
+    observerFixAgeMs,
+    observerRouteDistanceM,
   });
   arStateRef.current = {
     visible,
@@ -92,6 +101,9 @@ export function PeakCameraOverlay({
     trackingState,
     peakCount: arPeaks.length,
     heading,
+    observerAccuracyM,
+    observerFixAgeMs,
+    observerRouteDistanceM,
   };
   const handleArError = useCallback(() => {
     const state = arStateRef.current;
@@ -173,6 +185,9 @@ export function PeakCameraOverlay({
       terrainProfilePointCount: terrainProfile?.length ?? 0,
       hasTerrainModel: Boolean(terrainModel),
       observerPosition,
+      observerAccuracyM,
+      observerFixAgeMs,
+      observerRouteDistanceM,
     });
   }, [
     arCandidates.length,
@@ -181,6 +196,9 @@ export function PeakCameraOverlay({
     heading,
     nextTurn,
     observerPosition,
+    observerAccuracyM,
+    observerFixAgeMs,
+    observerRouteDistanceM,
     peaks.length,
     routeGuidanceReady,
     routeGeometry?.length,
@@ -383,6 +401,9 @@ export function PeakCameraOverlay({
             peaks={arPeaks}
              showPeaks={showPeaks}
              compassReady={heading != null}
+             observerAccuracyM={observerAccuracyM}
+             observerFixAgeMs={observerFixAgeMs}
+             observerRouteDistanceM={observerRouteDistanceM}
             terrainProfile={terrainProfile}
             terrainModel={terrainModel}
             routeGeometry={routeGeometry}

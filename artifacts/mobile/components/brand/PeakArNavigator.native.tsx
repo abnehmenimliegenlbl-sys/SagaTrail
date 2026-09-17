@@ -32,6 +32,7 @@ import {
   buildLocalTerrainMesh,
   buildLocalMapRouteLines,
   arWorldOffsetForPosition,
+  AR_WORLD_SCALE,
   routeGeometryMaxDistanceM,
   routeGeometryAheadOfPosition,
   routeOriginForAR,
@@ -73,6 +74,16 @@ function peakArPositionSummary(position: LatLng | null | undefined) {
         lng: Number.isFinite(position.lng) ? Number(position.lng.toFixed(6)) : null,
       }
     : null;
+}
+
+function peakArWorldOffsetSummary(offset: TerrainVertex) {
+  const eastM = offset[0] / AR_WORLD_SCALE;
+  const northM = -offset[2] / AR_WORLD_SCALE;
+  return {
+    eastM: Number(eastM.toFixed(1)),
+    northM: Number(northM.toFixed(1)),
+    distanceM: Number(Math.hypot(eastM, northM).toFixed(1)),
+  };
 }
 
 const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
@@ -214,6 +225,9 @@ interface PeakArSceneAppProps {
   showPeaks?: boolean;
   trackingReady?: boolean;
   compassReady?: boolean;
+  observerAccuracyM?: number | null;
+  observerFixAgeMs?: number | null;
+  observerRouteDistanceM?: number | null;
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
   routeGeometry?: readonly number[][] | null;
@@ -958,6 +972,9 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     showPeaks = true,
     trackingReady = false,
     compassReady = false,
+    observerAccuracyM = null,
+    observerFixAgeMs = null,
+    observerRouteDistanceM = null,
     terrainProfile = null,
     terrainModel = null,
     routeGeometry = null,
@@ -1011,11 +1028,18 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
       terrainModelRadiusM: terrainModel?.radiusM ?? null,
       routeOriginPosition: peakArPositionSummary(routeOriginPosition),
       observerPosition: peakArPositionSummary(observerPosition),
+      observerAccuracyM,
+      observerFixAgeMs,
+      observerRouteDistanceM,
       observerElevationM,
       worldOffset: worldOffset.map((value) => Number(value.toFixed(3))),
+      worldOffsetMeters: peakArWorldOffsetSummary(worldOffset),
     });
   }, [
     observerElevationM,
+    observerAccuracyM,
+    observerFixAgeMs,
+    observerRouteDistanceM,
     observerPosition,
     peaks,
     routeGeometry,
@@ -1241,6 +1265,9 @@ export function PeakArNavigator({
   terrainModel = null,
   routeGeometry = null,
   observerPosition = null,
+  observerAccuracyM = null,
+  observerFixAgeMs = null,
+  observerRouteDistanceM = null,
   compassReady = false,
   mapLayer = "topo",
   observerElevationM = null,
@@ -1276,6 +1303,9 @@ export function PeakArNavigator({
       terrainProfilePointCount: terrainProfile?.length ?? 0,
       hasTerrainModel: Boolean(terrainModel),
       observerPosition: peakArPositionSummary(observerPosition),
+      observerAccuracyM,
+      observerFixAgeMs,
+      observerRouteDistanceM,
       observerElevationM,
       mapLayer,
       showPeaks,
@@ -1299,6 +1329,9 @@ export function PeakArNavigator({
       hasTerrainModel: Boolean(terrainModel),
       terrainModelRadiusM: terrainModel?.radiusM ?? null,
       observerPosition: peakArPositionSummary(observerPosition),
+      observerAccuracyM,
+      observerFixAgeMs,
+      observerRouteDistanceM,
       observerElevationM,
       selectedPeakId,
       mapLayer,
@@ -1312,6 +1345,9 @@ export function PeakArNavigator({
     showPeaks,
     trackingReady,
     observerElevationM,
+    observerAccuracyM,
+    observerFixAgeMs,
+    observerRouteDistanceM,
     observerPosition,
     peaks,
     routeGeometry,
@@ -1497,6 +1533,9 @@ export function PeakArNavigator({
       terrainProfile,
       terrainModel,
       compassReady,
+      observerAccuracyM,
+      observerFixAgeMs,
+      observerRouteDistanceM,
       routeGeometry,
       routeOriginPosition: worldOriginPosition ?? observerPosition,
       observerPosition,
@@ -1510,6 +1549,9 @@ export function PeakArNavigator({
     [
       onError,
       observerElevationM,
+      observerAccuracyM,
+      observerFixAgeMs,
+      observerRouteDistanceM,
       onPeakPress,
       peaks,
       terrainProfile,
