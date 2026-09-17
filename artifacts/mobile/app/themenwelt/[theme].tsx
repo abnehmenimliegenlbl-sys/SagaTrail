@@ -5,6 +5,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-n
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
+import { RouteCard } from "@/components/RouteCard";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { CANTONS } from "@/constants/onboarding";
 import { fonts } from "@/constants/typography";
@@ -209,29 +210,15 @@ export default function ThemenweltRoute() {
                     {strings.startCanton}
                   </Text>
                 </View>
-                {cantonRoutes.map(({ route }) => (
-                  <Pressable
+                {cantonRoutes.map(({ route }, index) => (
+                  <RouteCard
                     key={route.id}
+                    route={route}
+                    index={index}
+                    locked={false}
                     onPress={() => router.push(`/route/${route.id}`)}
-                    accessibilityRole="button"
-                    accessibilityLabel={route.name}
-                    style={[
-                      styles.routeCard,
-                      { backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
-                    ]}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.routeName, { color: colors.foreground }]}>{route.name}</Text>
-                      <Text style={[styles.routeMeta, { color: colors.mutedForeground }]}>
-                        {strings.routeMeta(
-                          route.distanceKm.toFixed(1),
-                          Math.round(route.ascentM).toString(),
-                          route.sac,
-                        )}
-                      </Text>
-                    </View>
-                    <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-                  </Pressable>
+                    kanton={canton}
+                  />
                 ))}
               </View>
             ))}
@@ -261,17 +248,6 @@ const styles = StyleSheet.create({
   cantonHeading: { flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 8 },
   cantonTitle: { fontFamily: fonts.titleBold, fontSize: 19 },
   cantonMeta: { fontFamily: fonts.mono, fontSize: 10, marginLeft: "auto", textTransform: "uppercase" },
-  routeCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 9,
-  },
-  routeName: { fontFamily: fonts.bodyBold, fontSize: 15, lineHeight: 20 },
-  routeMeta: { fontFamily: fonts.mono, fontSize: 11, marginTop: 5 },
   empty: { alignItems: "center", gap: 12, paddingVertical: 50 },
   emptyTitle: { fontFamily: fonts.titleBold, fontSize: 18, textAlign: "center" },
 });
