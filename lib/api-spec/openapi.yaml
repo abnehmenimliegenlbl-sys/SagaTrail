@@ -3006,6 +3006,18 @@ components:
           type: string
           nullable: true
           description: URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.
+        qualityStatus:
+          type: string
+          description: >
+            Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid
+            oder unverified.
+        qualityCheckedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Zeitpunkt des letzten erfolgreichen Qualitätschecks.
+        sources:
+          $ref: "#/components/schemas/RouteDataSources"
       required:
         - id
         - sagaId
@@ -3021,6 +3033,30 @@ components:
         - terrain
         - coordinates
         - featured
+    RouteDataSource:
+      type: object
+      properties:
+        label:
+          type: string
+        url:
+          type: string
+          format: uri
+          nullable: true
+      required: [label, url]
+    RouteDataSources:
+      type: object
+      properties:
+        route:
+          $ref: "#/components/schemas/RouteDataSource"
+        geometry:
+          $ref: "#/components/schemas/RouteDataSource"
+        distance:
+          $ref: "#/components/schemas/RouteDataSource"
+        ascent:
+          $ref: "#/components/schemas/RouteDataSource"
+        difficulty:
+          $ref: "#/components/schemas/RouteDataSource"
+      required: [route, geometry, distance, ascent, difficulty]
     Aerialway:
       type: object
       description: >
@@ -3179,6 +3215,18 @@ components:
           type: string
           nullable: true
           description: "Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt."
+        source:
+          type: string
+          description: "Primärquelle des POIs."
+        sourceUrl:
+          type: string
+          format: uri
+          description: "Direkter Nachweis des OSM-Objekts."
+        checkedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Zeitpunkt des erfolgreichen Quellenabrufs."
       required:
         - id
         - name

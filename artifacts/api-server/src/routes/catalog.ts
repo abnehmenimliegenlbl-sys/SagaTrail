@@ -16,7 +16,44 @@ function toRoute(row: CatalogRouteRow & {
   sacSource?: string | null;
   schweizMobilCondition?: string | null;
   schweizMobilTechnique?: string | null;
+  source?: string | null;
+  ref?: string | null;
+  qualityStatus?: string | null;
+  qualityCheckedAt?: Date | null;
+  distanceTagKm?: number | null;
+  familyFriendly?: boolean | null;
+  wheelchairAccessible?: boolean | null;
+  technicalDifficulty?: string | null;
 }) {
+  const relationId = row.id.startsWith("osm-") ? row.id.slice(4) : null;
+  const isSchweizMobil = row.source?.toLowerCase().includes("schweizmobil") ?? false;
+  const routeSource = isSchweizMobil
+    ? { label: "SchweizMobil Wanderland", url: "https://schweizmobil.ch" }
+    : {
+        label: "OpenStreetMap",
+        url: relationId
+          ? `https://www.openstreetmap.org/relation/${relationId}`
+          : "https://www.openstreetmap.org",
+      };
+  const qualitySources = {
+    route: routeSource,
+    geometry: isSchweizMobil
+      ? { label: "SchweizMobil Wanderland-Geometrie", url: "https://schweizmobil.ch" }
+      : routeSource,
+    distance:
+      row.distanceTagKm != null
+        ? { label: "OpenStreetMap-Routen-Tag", url: routeSource.url }
+        : { label: "Aus der gespeicherten Geometrie berechnet", url: null },
+    ascent: { label: "swisstopo-Höhenprofil", url: "https://www.swisstopo.admin.ch" },
+    difficulty:
+      row.sacSource === "osm_exact"
+        ? { label: "OpenStreetMap-SAC-Tag", url: routeSource.url }
+        : row.sacSource === "swisstopo_derived"
+          ? { label: "swisstopo-Ableitung", url: "https://www.swisstopo.admin.ch" }
+          : row.schweizMobilCondition || row.schweizMobilTechnique
+            ? { label: "SchweizMobil-Kategorien", url: "https://schweizmobil.ch" }
+            : { label: "Quelle nicht bestätigt", url: null },
+  };
   return {
     id: row.id,
     sagaId: row.sagaId,
@@ -29,6 +66,9 @@ function toRoute(row: CatalogRouteRow & {
     sacSource: row.sacSource ?? null,
     schweizMobilCondition: row.schweizMobilCondition ?? null,
     schweizMobilTechnique: row.schweizMobilTechnique ?? null,
+    qualityStatus: row.qualityStatus ?? "unverified",
+    qualityCheckedAt: row.qualityCheckedAt ?? null,
+    sources: qualitySources,
     terrain: row.terrain,
     coordinates: { lat: row.lat, lng: row.lng },
     featured: row.featured,
@@ -91,6 +131,14 @@ router.get("/catalog", async (_req, res): Promise<void> => {
         sacSource: externalRoutesTable.sacSource,
         schweizMobilCondition: externalRoutesTable.schweizMobilCondition,
         schweizMobilTechnique: externalRoutesTable.schweizMobilTechnique,
+        source: externalRoutesTable.source,
+        ref: externalRoutesTable.ref,
+        distanceTagKm: externalRoutesTable.distanceTagKm,
+        familyFriendly: externalRoutesTable.familyFriendly,
+        wheelchairAccessible: externalRoutesTable.wheelchairAccessible,
+        technicalDifficulty: externalRoutesTable.technicalDifficulty,
+        qualityStatus: externalRoutesTable.qualityStatus,
+        qualityCheckedAt: externalRoutesTable.qualityCheckedAt,
       })
       .from(catalogRoutesTable)
       .leftJoin(externalRoutesTable, eq(catalogRoutesTable.id, externalRoutesTable.id)),

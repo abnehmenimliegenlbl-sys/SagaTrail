@@ -153,3 +153,4 @@
 - [Watch battery strategy](sagatrail-watch-battery-strategy.md) — iPhone owns GPS; Watch HR workout must not request outdoor location, and routine live snapshots stay at 15 s.
 - [Treffpunkt vs. Gruppenwanderung](sagatrail-meetup-group-separation.md) — public meetup attendance/safety and private synchronized group hiking must remain separate systems.
 - [Treffpunkt-Nachrichtenhistorie](sagatrail-meetup-message-history.md) — echte Nachrichten einmal speichern; Push-Outbox pro Empfänger verteilen und Limits nur auf Historieneinträge anwenden.
+- [Route quality provenance](sagatrail-route-quality-provenance.md) — route APIs expose check status/date and independent source links; successful POI refresh replaces evidence, failures preserve it.

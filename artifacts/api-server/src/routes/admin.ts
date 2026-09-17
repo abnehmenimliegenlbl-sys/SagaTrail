@@ -1301,9 +1301,11 @@ let routeThemeRefreshLastResult: {
   error?: string;
 } | null = null;
 
-// POST /admin/routes/refresh-themes – Themenbelege für vorhandene Prod-Routen
-// neu aus den POIs ableiten. Dieser Job schreibt ausschließlich theme_keys;
-// Geometrien, Namen, Sagen und sonstige Routendaten bleiben unverändert.
+// POST /admin/routes/refresh-themes – Themenbelege und Qualitätsstand für
+// vorhandene Routen neu aus den Quellen ableiten. Geometrien, Namen, Sagen und
+// sonstige Routendaten bleiben unverändert. Bei erfolgreichem POI-Abruf wird
+// der routebezogene Belegbestand ersetzt, damit verschwundene POIs automatisch
+// nicht weiter als Themenbeleg sichtbar bleiben.
 router.post("/admin/routes/refresh-themes", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const parsed = z

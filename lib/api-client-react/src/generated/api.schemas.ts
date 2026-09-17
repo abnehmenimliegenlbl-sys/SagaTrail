@@ -622,6 +622,19 @@ export const CatalogRouteSeason = {
   nur_sommer: 'nur_sommer',
 } as const;
 
+export interface RouteDataSource {
+  label: string;
+  url: string | null;
+}
+
+export interface RouteDataSources {
+  route: RouteDataSource;
+  geometry: RouteDataSource;
+  distance: RouteDataSource;
+  ascent: RouteDataSource;
+  difficulty: RouteDataSource;
+}
+
 export interface CatalogRoute {
   id: string;
   sagaId: string;
@@ -662,6 +675,11 @@ export interface CatalogRoute {
   description?: string | null;
   /** URL des Wikipedia-Artikels, aus dem die Beschreibung stammt. */
   descriptionSource?: string | null;
+  /** Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified. */
+  qualityStatus?: string;
+  /** Zeitpunkt des letzten erfolgreichen Qualitätschecks. */
+  qualityCheckedAt?: string | null;
+  sources?: RouteDataSources;
 }
 
 /**
@@ -761,6 +779,12 @@ export interface Poi {
   wikidataTag?: string | null;
   /** Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt. */
   osmContext?: string | null;
+  /** Primärquelle des POIs. */
+  source?: string;
+  /** Direkter Nachweis des OSM-Objekts. */
+  sourceUrl?: string;
+  /** Zeitpunkt des erfolgreichen Quellenabrufs. */
+  checkedAt?: string | null;
 }
 
 /**

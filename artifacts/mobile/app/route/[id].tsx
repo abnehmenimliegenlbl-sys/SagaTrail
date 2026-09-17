@@ -76,6 +76,7 @@ import { Saga } from "@/types";
 import { hapticMedium, hapticSelection } from "@/lib/haptics";
 import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
 import { deriveRouteThemes, routeThemeLabel } from "@/lib/routeThemes";
+import { formatQualityDate, routeQualityLabels } from "@/lib/routeQualityLabels";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 
 const WEB_TOP = 67;
@@ -145,12 +146,19 @@ export default function Routenplanung() {
   const hasPremiumAccess = premium || isSubscribed || isElite;
   const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, sagas } = useCatalog();
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
+  const qualityT = routeQualityLabels(language);
 
   // Ein vollständiges Offline-Paket enthält einen Routensnapshot. Der
   // Katalog darf online-only bleiben; nach einem Kaltstart kommt die Detail-
   // ansicht trotzdem ohne Netz wieder hoch.
   const offlineRecord = getRecord(id);
   const route = getRoute(id) ?? offlineRecord?.routeSnapshot;
+  const qualityDate = formatQualityDate(route?.qualityCheckedAt, language);
+  const qualityStatusText =
+    route?.qualityStatus === "verified" ? qualityT.verified :
+    route?.qualityStatus === "partial" ? qualityT.partial :
+    route?.qualityStatus === "invalid" ? qualityT.invalid :
+    qualityT.unverified;
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   // Routentyp aus der Geometrie ableiten: liegen Start und Ziel nahe
@@ -1112,6 +1120,48 @@ export default function Routenplanung() {
           <StatTile icon="clock"       label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`}         unit="h"  />
           <StatTile icon="shield"      label={t.sacScale} value={meta.sac}                                     unit=""   />
         </Animated.View>
+
+        <View style={[styles.qualityCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+          <View style={styles.qualityHeader}>
+            <Feather
+              name={route?.qualityStatus === "invalid" ? "alert-triangle" : "check-circle"}
+              size={16}
+              color={route?.qualityStatus === "invalid" ? colors.accent : colors.mutedForeground}
+            />
+            <Text style={[styles.qualityTitle, { color: colors.foreground }]}>
+              {qualityT.title}
+            </Text>
+          </View>
+          <Text style={[styles.qualityStatus, { color: colors.mutedForeground }]}>
+            {qualityDate ? qualityT.checkedAt(qualityDate) : qualityStatusText}
+          </Text>
+          {qualityDate && (
+            <Text style={[styles.qualityStatus, { color: colors.mutedForeground }]}>
+              {qualityStatusText}
+            </Text>
+          )}
+          {!!route?.sources && (
+            <View style={styles.qualitySources}>
+              {Object.entries(route.sources).map(([key, source]) => (
+                <Pressable
+                  key={key}
+                  disabled={!source.url}
+                  onPress={() => source.url && void Linking.openURL(source.url)}
+                  accessibilityRole={source.url ? "link" : undefined}
+                  style={styles.qualitySourceRow}
+                >
+                  <Text style={[styles.qualitySourceKind, { color: colors.mutedForeground }]}>
+                    {key}
+                  </Text>
+                  <Text style={[styles.qualitySourceLabel, { color: colors.foreground }]}>
+                    {source.label}
+                  </Text>
+                  {!!source.url && <Feather name="external-link" size={12} color={colors.accent} />}
+                </Pressable>
+              ))}
+            </View>
+          )}
+        </View>
 
         {routeThemes.length > 0 && (
           <View style={styles.routeThemes} accessibilityLabel="Themen dieser Route">
@@ -2178,6 +2228,22 @@ export default function Routenplanung() {
                   {selectedPoiWiki.extract}
                 </Text>
               )}
+              {!!selectedPoi.source && (
+                <Pressable
+                  disabled={!selectedPoi.sourceUrl}
+                  onPress={() => selectedPoi.sourceUrl && void Linking.openURL(selectedPoi.sourceUrl)}
+                  accessibilityRole={selectedPoi.sourceUrl ? "link" : undefined}
+                  style={styles.poiSourceRow}
+                >
+                  <Feather name="database" size={13} color={colors.mutedForeground} />
+                  <Text style={[styles.poiSourceText, { color: colors.mutedForeground }]}>
+                    {selectedPoi.source}
+                    {formatQualityDate(selectedPoi.checkedAt, language)
+                      ? ` · ${qualityT.checkedAt(formatQualityDate(selectedPoi.checkedAt, language)!)}` : ""}
+                  </Text>
+                  {!!selectedPoi.sourceUrl && <Feather name="external-link" size={12} color={colors.accent} />}
+                </Pressable>
+              )}
             </Glass>
           </Pressable>
         </Pressable>
@@ -2354,6 +2420,16 @@ const styles = StyleSheet.create({
   poiRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   poiTitle: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
   poiSummary: { fontFamily: fonts.story, fontSize: 18, marginTop: 8, lineHeight: 28 },
+  poiSourceRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 14 },
+  poiSourceText: { flex: 1, fontFamily: fonts.mono, fontSize: 11, lineHeight: 16 },
+  qualityCard: { marginTop: 14, borderWidth: 1, borderRadius: 14, padding: 14 },
+  qualityHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  qualityTitle: { fontFamily: fonts.bodyBold, fontSize: 14 },
+  qualityStatus: { fontFamily: fonts.mono, fontSize: 11, marginTop: 6, lineHeight: 16 },
+  qualitySources: { marginTop: 10, gap: 7 },
+  qualitySourceRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  qualitySourceKind: { width: 74, fontFamily: fonts.mono, fontSize: 10, textTransform: "uppercase" },
+  qualitySourceLabel: { flex: 1, fontFamily: fonts.body, fontSize: 12 },
   poiModalImage: { width: "100%", height: 200, borderRadius: 10, marginBottom: 12 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   retryChip: {

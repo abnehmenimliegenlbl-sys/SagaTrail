@@ -537,7 +537,14 @@ async function refreshPoisBackground(
     // Keine Batch-Anreicherung mehr — Wiki/Commons wird on-demand beim Oeffnen
     // des POI geladen. Das eliminiert Rate-Limiting durch hunderte parallele
     // Wikimedia-Requests und macht den Karten-Load sofort.
-    const entries = deduplicatePois(raw.map((p) => ({ ...p, wiki: null })));
+    const checkedAt = new Date();
+    const entries = deduplicatePois(raw.map((p) => ({
+      ...p,
+      wiki: null,
+      source: "OpenStreetMap",
+      sourceUrl: `https://www.openstreetmap.org/${p.id}`,
+      checkedAt,
+    })));
     if (poiCache.size >= POI_CACHE_MAX) { const k = poiCache.keys().next().value; if (k !== undefined) poiCache.delete(k); }
     poiCache.set(key, { at: Date.now(), entries });
     log.info(
@@ -608,7 +615,14 @@ export async function getPeakPois(
       : undefined;
     pending = schedulePeakFetch(async () => {
       const raw = await fetchPeakPois(bbox, log, queryAround);
-      return raw.map((poi) => ({ ...poi, wiki: null }));
+      const checkedAt = new Date();
+      return raw.map((poi) => ({
+        ...poi,
+        wiki: null,
+        source: "OpenStreetMap",
+        sourceUrl: `https://www.openstreetmap.org/${poi.id}`,
+        checkedAt,
+      }));
     });
     peakFetchInFlight.set(key, pending);
     void pending.then(

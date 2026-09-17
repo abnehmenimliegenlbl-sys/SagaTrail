@@ -14,6 +14,11 @@ import { LatLng } from "../types";
  */
 export type RouteSeason = "ganzjaehrig" | "eher_sommer" | "nur_sommer";
 
+export interface RouteDataSource {
+  label: string;
+  url: string | null;
+}
+
 export interface HikingRoute {
   id: string;
   sagaId: string;
@@ -51,6 +56,15 @@ export interface HikingRoute {
   description?: string | null;
   /** URL des Wikipedia-Artikels zur Beschreibung. */
   descriptionSource?: string | null;
+  qualityStatus?: "verified" | "partial" | "invalid" | "unverified" | string;
+  qualityCheckedAt?: Date | string | null;
+  sources?: {
+    route: RouteDataSource;
+    geometry: RouteDataSource;
+    distance: RouteDataSource;
+    ascent: RouteDataSource;
+    difficulty: RouteDataSource;
+  };
 }
 
 /** Kanton mit der Anzahl aktuell bekannter Routen (nur als Vorschau). */

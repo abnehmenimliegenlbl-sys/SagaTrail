@@ -50,6 +50,11 @@ export const externalRoutesTable = pgTable("external_routes", {
   // Aus belastbaren POIs entlang der Route abgeleitete Themenwelten.
   // Leeres Array bedeutet: geprüft, aber kein Themenbeleg gefunden.
   themeKeys: text("theme_keys").array().notNull().default([]),
+  // Letzter erfolgreicher Qualitätscheck der gespeicherten Route.
+  qualityCheckedAt: timestamp("quality_checked_at", { withTimezone: true }),
+  // verified = Geometrie/Metriken plausibel, partial = Daten vorhanden aber
+  // mindestens eine Quelle fehlt, invalid = nicht vertrauenswürdig.
+  qualityStatus: text("quality_status").notNull().default("unverified"),
   // Legacy-Speicherfelder; nicht mehr Teil von App- oder API-Filtern.
   childFriendly: boolean("child_friendly"),
   dogsAllowed: boolean("dogs_allowed"),

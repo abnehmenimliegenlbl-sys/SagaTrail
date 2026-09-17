@@ -98,6 +98,8 @@ export * from './profileInputAgeTier';
 export * from './profileInputArchetype';
 export * from './progressSyncInput';
 export * from './progressSyncResponse';
+export * from './routeDataSource';
+export * from './routeDataSources';
 export * from './routePhoto';
 export * from './routeSurfacePoint';
 export * from './routeSurfacesResponse';

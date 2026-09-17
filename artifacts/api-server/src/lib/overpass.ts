@@ -583,6 +583,10 @@ export interface RawPoi {
   /** Kuratierter Kontext aus OSM-Tags (note, description, inscription, alt_name …)
    *  als formatierter String fuer den Claude-Prompt — enthaelt keine erfundenen Daten. */
   osmContext: string | null;
+  /** Provenienz wird nach einem erfolgreichen Fetch am Cache-Eintrag ergänzt. */
+  source?: string;
+  sourceUrl?: string;
+  checkedAt?: Date;
 }
 
 interface OverpassPoiElement {

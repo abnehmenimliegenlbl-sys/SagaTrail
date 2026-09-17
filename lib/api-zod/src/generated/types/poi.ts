@@ -26,4 +26,10 @@ export interface Poi {
   wikidataTag?: string | null;
   /** Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt. */
   osmContext?: string | null;
+  /** Primärquelle des POIs. */
+  source?: string;
+  /** Direkter Nachweis des OSM-Objekts. */
+  sourceUrl?: string;
+  /** Zeitpunkt des erfolgreichen Quellenabrufs. */
+  checkedAt?: Date | null;
 }

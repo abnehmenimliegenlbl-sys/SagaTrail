@@ -4,6 +4,7 @@ export * from "./catalogRoutes";
 export * from "./catalogSagas";
 export * from "./stories";
 export * from "./externalRoutes";
+export * from "./routePoiEvidence";
 export * from "./routeSagas";
 export * from "./cantonFetches";
 export * from "./profiles";

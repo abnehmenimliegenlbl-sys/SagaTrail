@@ -3,9 +3,11 @@ import { and, eq, gte } from "drizzle-orm";
 import {
   db,
   externalRoutesTable,
+  routePoiEvidenceTable,
   type ExternalRouteRow,
 } from "@workspace/db";
 import { fetchHistoricPois, type RawPoi } from "./overpass";
+import { assessRouteQuality } from "./routeQuality";
 
 export const THEME_MAX_DISTANCE_KM = {
   wasserwege: 0.2,
@@ -292,25 +294,77 @@ export async function refreshCantonRouteThemes(
 
   for (const route of routes) {
     const geometry = asGeometry(route.geometry);
+    const quality = assessRouteQuality(route);
+    const checkedAt = new Date();
     const bbox = routeBbox(geometry);
     if (!bbox) {
+      // An invalid geometry must not keep old theme evidence alive. The route
+      // is still marked so the UI can explain why its metrics are untrusted.
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(routePoiEvidenceTable)
+          .where(eq(routePoiEvidenceTable.routeId, route.id));
+        await tx
+          .update(externalRoutesTable)
+          .set({
+            themeKeys: [],
+            qualityCheckedAt: checkedAt,
+            qualityStatus: quality.status,
+          })
+          .where(
+            and(
+              eq(externalRoutesTable.id, route.id),
+              gte(externalRoutesTable.geometryVersion, 1),
+            ),
+          );
+      });
       skipped += 1;
       continue;
     }
     checked += 1;
     try {
       const pois = await loadPois(bbox);
-      const themes = deriveThemes(nearbyPois(pois, geometry), route.familyFriendly);
-      await db
-        .update(externalRoutesTable)
-        .set({ themeKeys: themes })
-        .where(
-          and(
-            eq(externalRoutesTable.id, route.id),
-            gte(externalRoutesTable.geometryVersion, 1),
-          ),
-        )
-        .execute();
+      const nearby = nearbyPois(pois, geometry);
+      const themes = deriveThemes(nearby, route.familyFriendly);
+      const evidence = nearby.flatMap(({ poi, distanceKm }) =>
+        deriveThemes([{ poi, distanceKm }], null).map((themeKey) => ({
+          id: `${route.id}:${poi.id}:${themeKey}`,
+          routeId: route.id,
+          poiId: poi.id,
+          themeKey,
+          name: poi.name,
+          kind: poi.kind,
+          lat: poi.lat,
+          lng: poi.lng,
+          distanceKm,
+          source: "OpenStreetMap",
+          sourceUrl: `https://www.openstreetmap.org/${poi.id}`,
+          lastSeenAt: new Date(),
+        })),
+      );
+      await db.transaction(async (tx) => {
+        // A successful source response is authoritative for this route. Any
+        // POI missing from it is removed instead of being shown indefinitely.
+        await tx
+          .delete(routePoiEvidenceTable)
+          .where(eq(routePoiEvidenceTable.routeId, route.id));
+        if (evidence.length > 0) {
+          await tx.insert(routePoiEvidenceTable).values(evidence);
+        }
+        await tx
+          .update(externalRoutesTable)
+          .set({
+            themeKeys: themes,
+            qualityCheckedAt: checkedAt,
+            qualityStatus: quality.status,
+          })
+          .where(
+            and(
+              eq(externalRoutesTable.id, route.id),
+              gte(externalRoutesTable.geometryVersion, 1),
+            ),
+          );
+      });
       updated += 1;
     } catch (err) {
       failed += 1;

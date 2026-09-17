@@ -54,7 +54,31 @@ export const GetCatalogResponse = zod.object({
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
-  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
 })),
   "sagas": zod.array(zod.object({
   "id": zod.string(),
@@ -185,7 +209,31 @@ export const GetCantonRoutesResponseItem = zod.object({
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
-  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
 })
 export const GetCantonRoutesResponse = zod.array(GetCantonRoutesResponseItem)
 
@@ -236,7 +284,10 @@ export const GetPoisResponseItem = zod.object({
 }).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).'),
   "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
   "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.'),
-  "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.')
+  "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.'),
+  "source": zod.string().optional().describe('Primärquelle des POIs.'),
+  "sourceUrl": zod.string().url().optional().describe('Direkter Nachweis des OSM-Objekts.'),
+  "checkedAt": zod.coerce.date().nullish().describe('Zeitpunkt des erfolgreichen Quellenabrufs.')
 }).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
 export const GetPoisResponse = zod.array(GetPoisResponseItem)
 
@@ -275,7 +326,10 @@ export const GetPeakPoisResponseItem = zod.object({
 }).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).'),
   "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
   "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.'),
-  "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.')
+  "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.'),
+  "source": zod.string().optional().describe('Primärquelle des POIs.'),
+  "sourceUrl": zod.string().url().optional().describe('Direkter Nachweis des OSM-Objekts.'),
+  "checkedAt": zod.coerce.date().nullish().describe('Zeitpunkt des erfolgreichen Quellenabrufs.')
 }).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
 export const GetPeakPoisResponse = zod.array(GetPeakPoisResponseItem)
 
@@ -600,7 +654,31 @@ export const GetCustomRouteResponse = zod.object({
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
-  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
 })
 
 
@@ -654,7 +732,31 @@ export const PlanCustomRouteResponse = zod.object({
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
-  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
 })
 
 
@@ -708,7 +810,31 @@ export const PlanDrawnRouteResponse = zod.object({
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
-  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
 })
 
 
@@ -752,7 +878,31 @@ export const ImportGpxRouteResponse = zod.object({
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
-  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
 })
 
 
