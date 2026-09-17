@@ -762,6 +762,10 @@ export default function LiveHike() {
     isResume && activeHike && activeHike.sagaId === id ? (activeHike.route ?? null) : null,
   );
   const clientHikeIdRef = useRef<string | null>(null);
+  // Bleibt über alle Diagnoseereignisse dieser Screen-Instanz konstant.
+  // Zusammen mit clientHikeId unterscheidet das Remounts von normalen
+  // Re-Renders und von einer fortgesetzten Wanderung.
+  const hikeDebugInstanceIdRef = useRef<string>(createClientHikeId());
   const groupHikeStartedRef = useRef(false);
   const groupHikeFinishedRef = useRef(false);
   const ensureClientHikeId = useCallback(() => {
@@ -1801,6 +1805,14 @@ export default function LiveHike() {
   const decisionTriggerCountRef = useRef<Map<number, number>>(new Map());
   const decisionPromptCountRef = useRef<Map<number, number>>(new Map());
   const decisionDebugSequenceRef = useRef(0);
+  const storyLoadGenerationRef = useRef(0);
+  const storySetupInputsRef = useRef<{
+    saga: unknown;
+    profile: unknown;
+    premium: boolean;
+    storyLanguage: string;
+    resolveStory: unknown;
+  } | null>(null);
   const promptedDecisionRef = useRef<number>(-1);
   /** Wird synchron gesetzt, sobald eine Antwort angenommen wurde. Dadurch
    *  kann derselbe Entscheidungspunkt auch bei einem verspäteten Render,
@@ -1808,11 +1820,35 @@ export default function LiveHike() {
   const resolvedDecisionIndexRef = useRef<number | null>(null);
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
+  const decisionDebugSnapshot = useCallback((chapterIndex = currentIndexRef.current) => ({
+    hikeDebugInstanceId: hikeDebugInstanceIdRef.current,
+    clientHikeId: clientHikeIdRef.current,
+    sagaId: saga?.id ?? id,
+    routeId: route?.id ?? routeId ?? null,
+    appState: AppState.currentState,
+    storyLoadGeneration: storyLoadGenerationRef.current,
+    refs: {
+      currentIndex: currentIndexRef.current,
+      chapterIndex,
+      awaitingDecision: awaitingDecisionRef.current,
+      decisionFeedbackPending: decisionFeedbackPendingRef.current,
+      resolvedDecisionIndex: resolvedDecisionIndexRef.current,
+      promptedDecision: promptedDecisionRef.current,
+      lastDecisionTriggered: lastDecisionTriggeredRef.current,
+      triggerCount: decisionTriggerCountRef.current.get(chapterIndex) ?? 0,
+      promptCount: decisionPromptCountRef.current.get(chapterIndex) ?? 0,
+    },
+    narrationQueue: narrationQueueRef.current.map((item) => ({
+      kind: item.kind ?? null,
+      chapterIndex: item.chapterIndex ?? null,
+    })),
+  }), [id, route?.id, routeId, saga?.id]);
   const logDecisionFlow = useCallback(
     (event: string, chapterIndex: number, details: Record<string, unknown> = {}) => {
       const chapterDecision = decisionsRef.current[chapterIndex]?.decision;
       const chapter = decisionsRef.current[chapterIndex];
       decisionFlowLog(event, {
+        ...decisionDebugSnapshot(chapterIndex),
         localSequence: ++decisionDebugSequenceRef.current,
         chapterIndex,
         currentIndex: currentIndexRef.current,
@@ -1825,8 +1861,19 @@ export default function LiveHike() {
         ...details,
       });
     },
-    [],
+    [decisionDebugSnapshot],
   );
+  useEffect(() => {
+    logDecisionFlow("screen_instance_mounted", currentIndexRef.current, {
+      runtime: getRuntimeDiagnostics(),
+      isResume,
+    });
+    return () => {
+      logDecisionFlow("screen_instance_unmounted", currentIndexRef.current, {
+        runtime: getRuntimeDiagnostics(),
+      });
+    };
+  }, [isResume, logDecisionFlow]);
   const triggerDecision = useCallback(
     (chapterIndex: number, reason: string) => {
       const triggerCount = (decisionTriggerCountRef.current.get(chapterIndex) ?? 0) + 1;
@@ -2261,6 +2308,31 @@ export default function LiveHike() {
   useEffect(() => {
     if (!saga || !profile) return;
     let cancelled = false;
+    let completed = false;
+    const previousInputs = storySetupInputsRef.current;
+    const dependencyChanges = previousInputs
+      ? {
+          sagaReferenceChanged: previousInputs.saga !== saga,
+          profileReferenceChanged: previousInputs.profile !== profile,
+          premiumChanged: previousInputs.premium !== premium,
+          storyLanguageChanged: previousInputs.storyLanguage !== storyLanguage,
+          resolveStoryReferenceChanged: previousInputs.resolveStory !== resolveStory,
+        }
+      : { initial: true };
+    const storyLoadGeneration = ++storyLoadGenerationRef.current;
+    storySetupInputsRef.current = {
+      saga,
+      profile,
+      premium,
+      storyLanguage,
+      resolveStory,
+    };
+    logDecisionFlow("story_setup_started", currentIndexRef.current, {
+      storyLoadGeneration,
+      dependencyChanges,
+      preparingBefore: preparing,
+      isResume,
+    });
     setPreparing(true);
     poiStoryClaimsRef.current = [];
     narratedPoiIdRef.current = null;
@@ -2268,6 +2340,11 @@ export default function LiveHike() {
     (async () => {
       const { chapters: story } = await resolveStory(saga, profile, premium);
       if (cancelled) return;
+      logDecisionFlow("story_state_reset", currentIndexRef.current, {
+        storyLoadGeneration,
+        loadedChapterCount: story.length,
+        previousState: decisionDebugSnapshot(currentIndexRef.current),
+      });
       setChapters(story);
       decisionsRef.current = story;
       decisionTriggerCountRef.current.clear();
@@ -2294,15 +2371,28 @@ export default function LiveHike() {
       narratedThroughRef.current = resumeAt != null && resumeAt > 0 ? resumeAt - 1 : -1;
       setFinished(false);
       setPreparing(false);
-      logDecisionFlow("story_loaded", resumeAt ?? 0, {
+      completed = true;
+      logDecisionFlow("story_loaded", currentIndexRef.current, {
+        storyLoadGeneration,
         chapterCount: story.length,
         resumeAt: resumeAt ?? null,
+        resetRefs: true,
       });
     })();
     return () => {
       cancelled = true;
+      logDecisionFlow("story_setup_cleanup", currentIndexRef.current, {
+        storyLoadGeneration,
+        completed,
+      });
     };
-  }, [saga, profile, premium, storyLanguage, resolveStory]);
+  }, [
+    saga,
+    profile,
+    premium,
+    storyLanguage,
+    resolveStory,
+  ]);
 
   // Die einmalige kostenlose Wanderung wird genau dann verbraucht, wenn ein
   // nicht-Premium-Nutzer hier tatsaechlich eine Wanderung startet (Story ist
@@ -4671,12 +4761,34 @@ export default function LiveHike() {
           displayTitle: opts?.displayTitle,
         };
         enqueueNarrationItem(narrationQueueRef.current, entry);
+        if (opts?.kind === "decisionPrompt" || opts?.kind === "feedback") {
+          storyAudioLog("narration_queued", {
+            ...decisionDebugSnapshot(opts.chapterIndex ?? currentIndexRef.current),
+            kind: opts.kind,
+            chapterIndex: opts.chapterIndex ?? null,
+            queueLength: narrationQueueRef.current.length,
+            queueAfter: narrationQueueRef.current.map((item) => ({
+              kind: item.kind ?? null,
+              chapterIndex: item.chapterIndex ?? null,
+            })),
+          });
+        }
       };
       const hasActiveAudio =
         speakingRef.current ||
         narrationSoundRef.current !== null ||
         turnSoundRef.current !== null ||
         navInterruptingRef.current;
+      if (opts?.kind === "decisionPrompt" || opts?.kind === "feedback") {
+        storyAudioLog("narration_requested", {
+          ...decisionDebugSnapshot(opts.chapterIndex ?? currentIndexRef.current),
+          kind: opts.kind,
+          chapterIndex: opts.chapterIndex ?? null,
+          hasActiveAudio,
+          speakingRef: speakingRef.current,
+          narrationSoundActive: narrationSoundRef.current !== null,
+        });
+      }
       // NAV-INTERRUPT: Navigationsanweisung unterbricht sofort und setzt die
       // laufende Erzaehlung danach an derselben Stelle fort.
       if (opts?.navInterrupt) {
@@ -4922,6 +5034,7 @@ export default function LiveHike() {
         }
         narrationSoundRef.current = sound;
         storyAudioLog("narration player started", {
+          ...decisionDebugSnapshot(activeChapterIndex ?? currentIndexRef.current),
           kind: activeKind,
           chapterIndex: activeChapterIndex,
           generation: gen,
@@ -4947,6 +5060,7 @@ export default function LiveHike() {
           }
           void teardownNarrationSound(sound);
           storyAudioLog("narration player finished", {
+            ...decisionDebugSnapshot(activeChapterIndex ?? currentIndexRef.current),
             kind: activeKind,
             chapterIndex: activeChapterIndex,
             generation: gen,
@@ -5111,7 +5225,15 @@ export default function LiveHike() {
         }
       }
     },
-    [narrationLabel, profile?.language, retryChapterAfterPlaybackFailure, stopTurnAudio, teardownNarrationSound, updateNowPlaying]
+    [
+      decisionDebugSnapshot,
+      narrationLabel,
+      profile?.language,
+      retryChapterAfterPlaybackFailure,
+      stopTurnAudio,
+      teardownNarrationSound,
+      updateNowPlaying,
+    ]
   );
   speakRef.current = speak;
 
@@ -6195,11 +6317,20 @@ export default function LiveHike() {
           item.chapterIndex === decisionIndex
         ),
     );
+    logDecisionFlow("decision_prompt_queue_filtered", decisionIndex, {
+      queueAfter: narrationQueueRef.current.map((item) => ({
+        kind: item.kind ?? null,
+        chapterIndex: item.chapterIndex ?? null,
+      })),
+    });
     // Sofort synchronisieren: Die Sprach-Erkennung kann den Treffer melden,
     // bevor der React-State neu gerendert wurde. Ohne diesen Ref-Abschluss
     // kann der Entscheidungs-Prompt in diesem Zwischenfenster nochmals
     // starten und die Audio-Session bleibt im Aufnahme-Modus.
     awaitingDecisionRef.current = false;
+    logDecisionFlow("feedback_wait_started", decisionIndex, {
+      reason: "stop_voice_before_ack",
+    });
     hapticMedium();
     const gewaehlt = chapters[decisionIndex]?.decision?.options[optionIndex]?.label;
     if (gewaehlt) {
@@ -6248,6 +6379,9 @@ export default function LiveHike() {
       // nach diesem Render. Auch dieser Pfad muss die PlayAndRecord-Session
       // freigeben, sonst bleibt der folgende Text auf iOS dauerhaft leiser.
       await stopVoiceDecisionRef.current();
+      logDecisionFlow("feedback_wait_completed", decisionIndex, {
+        reason: "stop_voice_before_ack",
+      });
       const speakDecisionFeedback = () => {
         const speaker = speakRef.current;
         if (!speaker) {
@@ -6266,6 +6400,12 @@ export default function LiveHike() {
       };
       const speaker = speakRef.current;
       if (speaker) {
+        logDecisionFlow("feedback_ack_requested", decisionIndex, {
+          queueBefore: narrationQueueRef.current.map((item) => ({
+            kind: item.kind ?? null,
+            chapterIndex: item.chapterIndex ?? null,
+          })),
+        });
         void speaker(
           ackPack.decisionAck,
           speakDecisionFeedback,
@@ -6339,7 +6479,11 @@ export default function LiveHike() {
     }
     const promptCount = previousPromptCount + 1;
     decisionPromptCountRef.current.set(currentIndex, promptCount);
-    logDecisionFlow("prompt_started", currentIndex, { promptCount });
+    logDecisionFlow("prompt_started", currentIndex, {
+      promptCount,
+      storyLoadGeneration: storyLoadGenerationRef.current,
+      promptState: decisionDebugSnapshot(currentIndex),
+    });
     speakRef.current?.(pack.buildDecisionPrompt(opts, question), undefined, {
       kind: "decisionPrompt",
       chapterIndex: currentIndex,
@@ -6395,7 +6539,10 @@ export default function LiveHike() {
       !folgtGruppenleitung,
     resolveLang(storyLanguage),
     decisionOptions,
-    (optionIndex) => chooseOption(optionIndex, "voice")
+    (optionIndex) => chooseOption(optionIndex, "voice"),
+    (event, details) => {
+      logDecisionFlow(`voice_${event}`, currentIndexRef.current, details);
+    },
   );
   stopVoiceDecisionRef.current = stopVoiceDecision;
 
