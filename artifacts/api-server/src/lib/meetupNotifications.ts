@@ -12,7 +12,7 @@ import { logger } from "./logger";
 
 type ReminderKind = "day_before" | "soon";
 type MeetupPushData = {
-  type: "meetup_reminder" | "meetup_cancelled" | "meetup_delayed";
+  type: "meetup_reminder" | "meetup_cancelled" | "meetup_delayed" | "meetup_started" | "meetup_completed" | "meetup_message";
   meetupId: string;
 };
 
@@ -131,6 +131,32 @@ function delayedText(language: string, routeName: string, delayMinutes: number, 
   return { title: "Verspätung beim Treffpunkt", body: `${routeName}: ungefähr ${delayMinutes} Minuten später${suffix}` };
 }
 
+function lifecycleText(language: string, routeName: string, type: "meetup_started" | "meetup_completed") {
+  const started = type === "meetup_started";
+  const texts: Record<string, { title: string; body: string }> = {
+    de: started ? { title: "Wanderung gestartet", body: `${routeName} hat begonnen` } : { title: "Wanderung abgeschlossen", body: `${routeName} ist abgeschlossen` },
+    gsw: started ? { title: "Wanderig isch los", body: `${routeName} het aagfange` } : { title: "Wanderig fertig", body: `${routeName} isch abgschlosse` },
+    fr: started ? { title: "Randonnée commencée", body: `${routeName} a commencé` } : { title: "Randonnée terminée", body: `${routeName} est terminée` },
+    it: started ? { title: "Escursione iniziata", body: `${routeName} è iniziata` } : { title: "Escursione completata", body: `${routeName} è terminata` },
+    en: started ? { title: "Hike started", body: `${routeName} has started` } : { title: "Hike completed", body: `${routeName} is complete` },
+    zh: started ? { title: "徒步已开始", body: `${routeName} 已开始` } : { title: "徒步已完成", body: `${routeName} 已完成` },
+    es: started ? { title: "Caminata iniciada", body: `${routeName} ha comenzado` } : { title: "Caminata completada", body: `${routeName} ha terminado` },
+    pt: started ? { title: "Caminhada iniciada", body: `${routeName} começou` } : { title: "Caminhada concluída", body: `${routeName} foi concluída` },
+    ru: started ? { title: "Поход начался", body: `${routeName} начался` } : { title: "Поход завершён", body: `${routeName} завершён` },
+  };
+  return texts[language] ?? texts.de;
+}
+
+function messageText(language: string, routeName: string, text: string, actorName: string | null) {
+  const sender = actorName ? ` (${actorName})` : "";
+  const titles: Record<string, string> = {
+    de: "Neue Nachricht zur Wanderung", gsw: "Neui Nachricht zur Wanderig", fr: "Nouveau message de randonnée",
+    it: "Nuovo messaggio sull'escursione", en: "New hike message", zh: "徒步新消息",
+    es: "Nuevo mensaje de la caminata", pt: "Nova mensagem da caminhada", ru: "Новое сообщение о походе",
+  };
+  return { title: titles[language] ?? titles.de, body: `${routeName}: ${text}${sender}` };
+}
+
 async function claimNextOutboxRow(now: Date) {
   return db.transaction(async (tx) => {
     const [row] = await tx
@@ -201,15 +227,20 @@ async function deliverOutboxRow(row: OutboxRow): Promise<void> {
     await markOutboxSent(row.id);
     return;
   }
-  if (row.type !== "meetup_cancelled" && row.type !== "meetup_delayed") {
+  if (!["meetup_cancelled", "meetup_delayed", "meetup_started", "meetup_completed", "meetup_message"].includes(row.type)) {
     await markOutboxSent(row.id);
     logger.warn({ meetupId: row.meetupId, outboxId: row.id, type: row.type }, "Unbekannter Treffpunkt-Outbox-Typ verworfen");
     return;
   }
+  const language = context.language ?? "de";
   const data: MeetupPushData = { type: row.type as MeetupPushData["type"], meetupId: row.meetupId };
   const message = row.type === "meetup_cancelled"
-    ? cancelledText(context.language ?? "de", context.routeName, row.cancellationReason ?? "Treffpunkt abgesagt", row.actorName)
-    : delayedText(context.language ?? "de", context.routeName, row.delayMinutes ?? 5, row.actorName);
+    ? cancelledText(language, context.routeName, row.cancellationReason ?? "Treffpunkt abgesagt", row.actorName)
+    : row.type === "meetup_delayed"
+      ? delayedText(language, context.routeName, row.delayMinutes ?? 5, row.actorName)
+      : row.type === "meetup_message"
+        ? messageText(language, context.routeName, row.messageText ?? "", row.actorName)
+        : lifecycleText(language, context.routeName, row.type);
   try {
     await sendPush(context.pushToken, message.title, message.body, data);
     await markOutboxSent(row.id);

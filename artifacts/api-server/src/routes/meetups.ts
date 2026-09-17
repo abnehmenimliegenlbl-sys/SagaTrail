@@ -66,6 +66,9 @@ const ReportMeetupSchema = z.object({
 const CancelMeetupSchema = z.object({
   reason: z.string().trim().min(3).max(300),
 });
+const MeetupMessageSchema = z.object({
+  messageText: z.string().trim().min(1).max(500),
+});
 const MeetupAttendanceSchema = z.object({
   status: z.enum(["confirmed", "delayed", "arrived"]),
   delayMinutes: z.number().int().min(5).max(180).nullable().optional(),
@@ -205,6 +208,110 @@ async function cancelMeetupForOrganizer(
     return "ok";
   });
 }
+
+async function transitionMeetup(
+  meetupId: string,
+  userId: string,
+  from: "scheduled" | "in_progress",
+  to: "in_progress" | "completed",
+): Promise<"ok" | "not_found" | "forbidden" | "invalid"> {
+  return db.transaction(async (tx) => {
+    const [meetup] = await tx.select({
+      organizerId: meetupsTable.organizerId,
+      status: meetupsTable.status,
+    }).from(meetupsTable).where(eq(meetupsTable.id, meetupId)).for("update").limit(1);
+    if (!meetup) return "not_found";
+    if (meetup.organizerId !== userId) return "forbidden";
+    if (meetup.status === to) return "ok";
+    if (meetup.status !== from) return "invalid";
+    const now = new Date();
+    await tx.update(meetupsTable).set({ status: to, updatedAt: now }).where(eq(meetupsTable.id, meetupId));
+    const [actor] = await tx.select({ name: profilesTable.name }).from(profilesTable)
+      .where(eq(profilesTable.id, userId)).limit(1);
+    const participants = await tx.select({ userId: meetupParticipantsTable.userId })
+      .from(meetupParticipantsTable).where(eq(meetupParticipantsTable.meetupId, meetupId));
+    const recipients = participants.map(({ userId: recipientUserId }) => recipientUserId).filter((id) => id !== userId);
+    if (recipients.length) {
+      await tx.insert(meetupNotificationOutboxTable).values(recipients.map((recipientUserId) => ({
+        meetupId, recipientUserId, type: to === "in_progress" ? "meetup_started" : "meetup_completed",
+        dedupeKey: `${meetupId}:${recipientUserId}:${to}`,
+        actorName: actor?.name ?? null, actorUserId: userId,
+      }))).onConflictDoNothing();
+    }
+    return "ok";
+  });
+}
+
+router.post("/meetups/:id/start", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const result = await transitionMeetup(String(req.params.id), userId, "scheduled", "in_progress");
+  if (result === "not_found") { res.status(404).json({ error: "Treffpunkt nicht gefunden" }); return; }
+  if (result === "forbidden") { res.status(403).json({ error: "Nur der Organisator darf den Treffpunkt starten" }); return; }
+  if (result === "invalid") { res.status(409).json({ error: "Dieser Treffpunkt kann nicht mehr gestartet werden" }); return; }
+  res.json({ status: "in_progress" });
+});
+
+router.post("/meetups/:id/complete", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const result = await transitionMeetup(String(req.params.id), userId, "in_progress", "completed");
+  if (result === "not_found") { res.status(404).json({ error: "Treffpunkt nicht gefunden" }); return; }
+  if (result === "forbidden") { res.status(403).json({ error: "Nur der Organisator darf den Treffpunkt abschliessen" }); return; }
+  if (result === "invalid") { res.status(409).json({ error: "Dieser Treffpunkt kann nicht abgeschlossen werden" }); return; }
+  res.json({ status: "completed" });
+});
+
+router.post("/meetups/:id/messages", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const parsed = MeetupMessageSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: "Nachricht muss 1 bis 500 Zeichen enthalten" }); return; }
+  const meetupId = String(req.params.id);
+  const result = await db.transaction(async (tx) => {
+    const [meetup] = await tx.select({
+      organizerId: meetupsTable.organizerId, status: meetupsTable.status,
+    }).from(meetupsTable).where(eq(meetupsTable.id, meetupId)).for("update").limit(1);
+    if (!meetup) return "not_found" as const;
+    if (meetup.status === "completed" || meetup.status === "cancelled") return "closed" as const;
+    const [membership] = await tx.select({ userId: meetupParticipantsTable.userId })
+      .from(meetupParticipantsTable).where(and(eq(meetupParticipantsTable.meetupId, meetupId), eq(meetupParticipantsTable.userId, userId))).limit(1);
+    const organizer = meetup.organizerId === userId;
+    if (!organizer && !membership) return "forbidden" as const;
+    if (!organizer && meetup.status !== "in_progress") return "not_started" as const;
+    const cutoff = new Date(Date.now() - 30_000);
+    const [recent] = await tx.select({ id: meetupNotificationOutboxTable.id })
+      .from(meetupNotificationOutboxTable).where(and(
+        eq(meetupNotificationOutboxTable.meetupId, meetupId),
+        eq(meetupNotificationOutboxTable.type, "meetup_message"),
+        eq(meetupNotificationOutboxTable.actorUserId, userId),
+        gte(meetupNotificationOutboxTable.createdAt, cutoff),
+      )).limit(1);
+    if (recent) return "rate_limited" as const;
+    const [{ count }] = await tx.select({ count: sql<number>`count(*)::int` })
+      .from(meetupNotificationOutboxTable).where(and(
+        eq(meetupNotificationOutboxTable.meetupId, meetupId),
+        eq(meetupNotificationOutboxTable.type, "meetup_message"),
+      ));
+    if (Number(count) >= 30) return "limit" as const;
+    const participants = await tx.select({ userId: meetupParticipantsTable.userId })
+      .from(meetupParticipantsTable).where(eq(meetupParticipantsTable.meetupId, meetupId));
+    const [actor] = await tx.select({ name: profilesTable.name }).from(profilesTable).where(eq(profilesTable.id, userId)).limit(1);
+    const recipients = participants.map(({ userId: id }) => id).filter((id) => id !== userId);
+    if (recipients.length) await tx.insert(meetupNotificationOutboxTable).values(recipients.map((recipientUserId) => ({
+      meetupId, recipientUserId, type: "meetup_message", dedupeKey: `${meetupId}:${userId}:${Date.now()}:${recipientUserId}`,
+      actorName: actor?.name ?? null, actorUserId: userId, messageText: parsed.data.messageText,
+    }))).execute();
+    return "ok" as const;
+  });
+  if (result === "not_found") { res.status(404).json({ error: "Treffpunkt nicht gefunden" }); return; }
+  if (result === "forbidden") { res.status(403).json({ error: "Nur Mitglieder dürfen Nachrichten senden" }); return; }
+  if (result === "not_started") { res.status(409).json({ error: "Teilnehmer dürfen erst während der Wanderung schreiben" }); return; }
+  if (result === "closed") { res.status(409).json({ error: "Dieser Treffpunkt ist beendet" }); return; }
+  if (result === "rate_limited") { res.status(429).json({ error: "Bitte warte 30 Sekunden bis zur nächsten Nachricht" }); return; }
+  if (result === "limit") { res.status(429).json({ error: "Für diesen Treffpunkt sind maximal 30 Nachrichten erlaubt" }); return; }
+  res.status(201).json({ sent: true });
+});
 
 router.get("/meetups", async (req, res): Promise<void> => {
   const currentUserId = getAuth(req)?.userId ?? null;

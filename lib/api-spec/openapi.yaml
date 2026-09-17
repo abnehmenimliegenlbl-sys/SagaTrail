@@ -1770,6 +1770,79 @@ paths:
           description: Anmeldung erforderlich
         "404":
           description: Treffpunkt nicht gefunden oder nicht berechtigt
+  /meetups/{id}/start:
+    post:
+      operationId: startMeetup
+      tags: [meetups]
+      summary: Treffpunkt starten
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Treffpunkt gestartet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetupLifecycleResponse" }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Nur der Organisator darf starten }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Ungültiger Treffpunktstatus }
+  /meetups/{id}/complete:
+    post:
+      operationId: completeMeetup
+      tags: [meetups]
+      summary: Treffpunkt abschliessen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Treffpunkt abgeschlossen
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetupLifecycleResponse" }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Nur der Organisator darf abschliessen }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Ungültiger Treffpunktstatus }
+  /meetups/{id}/messages:
+    post:
+      operationId: sendMeetupMessage
+      tags: [meetups]
+      summary: Nachricht an Treffpunktteilnehmer senden
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetupMessageRequest" }
+      responses:
+        "201":
+          description: Nachricht in die Zustellung eingereiht
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetupMessageResponse" }
+        "400": { description: Ungültiger Nachrichtentext }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Kein Treffpunktmitglied }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Treffpunkt beendet oder noch nicht gestartet }
+        "429": { description: Nachrichtenlimit erreicht }
   /meetups/{id}/join:
     post:
       operationId: joinMeetup
@@ -2062,6 +2135,27 @@ components:
           type: string
           nullable: true
           maxLength: 500
+    MeetupLifecycleResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [in_progress, completed]
+    MeetupMessageRequest:
+      type: object
+      required: [messageText]
+      properties:
+        messageText:
+          type: string
+          minLength: 1
+          maxLength: 500
+    MeetupMessageResponse:
+      type: object
+      required: [sent]
+      properties:
+        sent:
+          type: boolean
     Meetup:
       type: object
       required: [id, routeId, routeName, canton, startsAt, maxParticipants, participantCount, pace, organizerName, joined, status, isOrganizer]

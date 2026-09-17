@@ -1,4 +1,4 @@
-import { check, integer, pgTable, primaryKey, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { check, index, integer, pgTable, primaryKey, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 export const meetupsTable = pgTable("meetups", {
@@ -18,7 +18,9 @@ export const meetupsTable = pgTable("meetups", {
   shareExpiresAt: timestamp("share_expires_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  check("meetups_status_check", sql`${table.status} in ('scheduled', 'in_progress', 'completed', 'cancelled')`),
+]);
 
 export const meetupParticipantsTable = pgTable(
   "meetup_participants",
@@ -56,6 +58,8 @@ export const meetupNotificationOutboxTable = pgTable(
     type: text("type").notNull(),
     dedupeKey: text("dedupe_key").notNull(),
     actorName: text("actor_name"),
+    actorUserId: text("actor_user_id"),
+    messageText: text("message_text"),
     delayMinutes: integer("delay_minutes"),
     cancellationReason: text("cancellation_reason"),
     attempts: integer("attempts").notNull().default(0),
@@ -65,9 +69,11 @@ export const meetupNotificationOutboxTable = pgTable(
   },
   (table) => [
     unique("meetup_notification_outbox_dedupe_key_unique").on(table.dedupeKey),
+    index("meetup_notification_outbox_meetup_type_created_idx").on(table.meetupId, table.type, table.createdAt),
+    index("meetup_notification_outbox_meetup_actor_created_idx").on(table.meetupId, table.actorUserId, table.createdAt),
     check(
       "meetup_notification_outbox_type_check",
-      sql`${table.type} in ('meetup_cancelled', 'meetup_delayed')`,
+      sql`${table.type} in ('meetup_cancelled', 'meetup_delayed', 'meetup_started', 'meetup_completed', 'meetup_message')`,
     ),
   ],
 );
