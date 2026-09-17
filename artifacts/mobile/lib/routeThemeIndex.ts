@@ -1,4 +1,4 @@
-import { getPois } from "@workspace/api-client-react";
+import { getPois, type Poi } from "@workspace/api-client-react";
 
 import type { HikingRoute } from "@/constants/routes";
 import { bboxAroundGeometry, filterByRouteCorridor } from "@/lib/geo";
@@ -27,7 +27,19 @@ async function loadThemePois(
   return getPois(bbox);
 }
 
-export async function getRouteThemes(route: HikingRoute): Promise<RouteThemeKey[]> {
+function themesFromPois(route: HikingRoute, pois: Poi[]): RouteThemeKey[] {
+  const geometry = route.geometry ?? [];
+  const nearbyPois =
+    geometry.length > 1
+      ? filterByRouteCorridor(pois, geometry, MAX_THEME_DISTANCE_KM)
+      : pois;
+  return deriveRouteThemes(nearbyPois, route);
+}
+
+export function getRouteThemesFromPois(
+  route: HikingRoute,
+  pois: Poi[],
+): RouteThemeKey[] {
   const cached = routeThemeCache.get(route.id);
   if (cached) return cached;
 
@@ -42,15 +54,47 @@ export async function getRouteThemes(route: HikingRoute): Promise<RouteThemeKey[
     return themes;
   }
 
+  const themes = themesFromPois(route, pois);
+  routeThemeCache.set(route.id, themes);
+  return themes;
+}
+
+/** Einzelrouten-Rückfall für den normalen Kantonsfilter. */
+export async function getRouteThemes(route: HikingRoute): Promise<RouteThemeKey[]> {
+  const cached = routeThemeCache.get(route.id);
+  if (cached) return cached;
   const geometry = route.geometry ?? [];
   const pois = await loadThemePois(
     bboxAroundGeometry(geometry, route.coordinates, MAX_THEME_DISTANCE_KM),
   );
-  const nearbyPois =
-    geometry.length > 1
-      ? filterByRouteCorridor(pois, geometry, MAX_THEME_DISTANCE_KM)
-      : pois;
-  const themes = deriveRouteThemes(nearbyPois, route);
-  routeThemeCache.set(route.id, themes);
-  return themes;
+  return getRouteThemesFromPois(route, pois);
+}
+
+/**
+ * Holt die POIs für mehrere Routen mit einer gemeinsamen Bounding Box.
+ * Die alte Variante hat für jede Route eine eigene Overpass-Abfrage ausgelöst.
+ */
+export async function loadThemePoisForRoutes(
+  routes: HikingRoute[],
+): Promise<Poi[]> {
+  const points = routes.flatMap((route) =>
+    route.geometry && route.geometry.length > 1
+      ? route.geometry.map(([lat, lng]) => ({ lat, lng }))
+      : [route.coordinates],
+  );
+  if (points.length === 0) return [];
+  const center = points.reduce(
+    (sum, point) => ({ lat: sum.lat + point.lat, lng: sum.lng + point.lng }),
+    { lat: 0, lng: 0 },
+  );
+  center.lat /= points.length;
+  center.lng /= points.length;
+  const pois = await loadThemePois(
+    bboxAroundGeometry(
+      points.map((point) => [point.lat, point.lng]),
+      center,
+      MAX_THEME_DISTANCE_KM,
+    ),
+  );
+  return pois;
 }

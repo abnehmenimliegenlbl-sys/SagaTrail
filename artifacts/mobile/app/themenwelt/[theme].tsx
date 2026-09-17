@@ -20,7 +20,10 @@ import {
   routeThemeLabel,
   type RouteThemeKey,
 } from "@/lib/routeThemes";
-import { getRouteThemes } from "@/lib/routeThemeIndex";
+import {
+  getRouteThemesFromPois,
+  loadThemePoisForRoutes,
+} from "@/lib/routeThemeIndex";
 
 const WEB_TOP = 67;
 const WORKERS = 4;
@@ -82,28 +85,38 @@ export default function ThemenweltRoute() {
       .then(async () => {
         if (cancelled) return;
         setTotal(candidates.length);
-        let routeCursor = 0;
         const found: ThemedRoute[] = [];
+        const byCanton = new Map<string, ThemedRoute[]>();
+        for (const candidate of candidates) {
+          const group = byCanton.get(candidate.canton) ?? [];
+          group.push(candidate);
+          byCanton.set(candidate.canton, group);
+        }
+        const cantonGroups = [...byCanton.values()];
+        let groupCursor = 0;
 
-        const checkRoute = async (): Promise<void> => {
-          const candidate = candidates[routeCursor++];
-          if (!candidate) return;
+        const checkCanton = async (): Promise<void> => {
+          const group = cantonGroups[groupCursor++];
+          if (!group) return;
           try {
-            const themes = await getRouteThemes(candidate.route);
-            if (themes.includes(theme)) {
-              found.push(candidate);
-              if (!cancelled) setMatches([...found]);
+            // Eine POI-Abfrage pro Kanton statt eine Abfrage pro Route.
+            const pois = await loadThemePoisForRoutes(group.map(({ route }) => route));
+            for (const candidate of group) {
+              const themes = getRouteThemesFromPois(candidate.route, pois);
+              if (themes.includes(theme)) {
+                found.push(candidate);
+                if (!cancelled) setMatches([...found]);
+              }
+              if (!cancelled) setChecked((count) => count + 1);
             }
           } catch {
             if (!cancelled) setLoadError(true);
-          } finally {
-            if (!cancelled) setChecked((count) => count + 1);
           }
-          if (!cancelled) await checkRoute();
+          if (!cancelled) await checkCanton();
         };
 
         await Promise.all(
-          Array.from({ length: Math.min(WORKERS, candidates.length) }, () => checkRoute()),
+          Array.from({ length: Math.min(WORKERS, cantonGroups.length) }, () => checkCanton()),
         );
       })
       .catch(() => {
