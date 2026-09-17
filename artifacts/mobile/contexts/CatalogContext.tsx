@@ -94,6 +94,11 @@ export interface RouteSearchFilter {
   wheelchairAccessible?: boolean;
 }
 
+function sacLevel(sac: string | null | undefined): number | null {
+  const match = /T\s*([1-6])/i.exec(sac ?? "");
+  return match ? Number(match[1]) : null;
+}
+
 function filterCachedRoutes(routes: HikingRoute[], filter?: RouteSearchFilter): HikingRoute[] {
   if (!filter) return routes;
   const inRange = (value: number | null | undefined, min?: number, max?: number) =>
@@ -102,14 +107,15 @@ function filterCachedRoutes(routes: HikingRoute[], filter?: RouteSearchFilter): 
   let result = routes.filter((r) =>
     inRange(r.distanceKm, filter.distMin, filter.distMax) &&
     inRange(r.ascentM, filter.ascMin, filter.ascMax) &&
-    inRange(r.sac ? Number.parseFloat(r.sac.replace(",", ".")) : null, filter.diffMin, filter.diffMax)
+    inRange(sacLevel(r.sac), filter.diffMin, filter.diffMax)
   );
   if (filter.familyFriendly) result = result.filter((r) => r.familyFriendly === true);
   if (filter.wheelchairAccessible) result = result.filter((r) => r.wheelchairAccessible === true);
   if (filter.ganzjaehrigNur) {
     result = result.filter((r) =>
       (r.maxElevationM ?? 0) < 1800 &&
-      (!r.sac || Number.parseFloat(r.sac.replace(",", ".")) <= 3)
+      sacLevel(r.sac) != null &&
+      sacLevel(r.sac)! <= 3
     );
   }
   if (filter.nearLat != null && filter.nearLng != null) {
