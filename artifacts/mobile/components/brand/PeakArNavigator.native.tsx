@@ -1036,7 +1036,13 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
             // Keep occluded markers in the native tree. Only their opacity
             // changes, avoiding the iOS 26 removeReactSubview crash. Empty
             // slots stay mounted as invisible nodes when new data arrives.
-            opacity={peak && terrainVisibility !== "occluded" ? 1 : 0}
+            opacity={
+              peak == null || terrainVisibility === "occluded"
+                ? 0
+                : terrainVisibility === "unknown"
+                  ? 0.72
+                  : 1
+            }
             transformBehaviors="billboard"
             renderingOrder={100}
             onClick={
@@ -1150,6 +1156,23 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
               width={0.82}
               height={0.22}
               color={PEAK_WHITE}
+              maxLines={1}
+              textClipMode="ClipToBounds"
+              textLineBreakMode="None"
+              style={{
+                fontSize: 12,
+                fontWeight: "700",
+                textAlign: "center",
+                textAlignVertical: "center",
+              }}
+            />
+            <ViroText
+              text={peak && terrainVisibility === "unknown" ? "?" : ""}
+              position={[0, 3.42, 0.075]}
+              rotation={[0, 0, -90]}
+              width={0.28}
+              height={0.22}
+              color={PEAK_RED}
               maxLines={1}
               textClipMode="ClipToBounds"
               textLineBreakMode="None"

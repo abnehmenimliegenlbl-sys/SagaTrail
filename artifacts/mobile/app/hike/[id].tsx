@@ -5872,18 +5872,28 @@ export default function LiveHike() {
   ]);
 
   const panoramaPois = useMemo(
-    () => [
-      ...displayedPois,
-      ...panoramaOnlinePois,
-      ...(offlinePanorama?.peaks ?? []).map((peak) => ({
-        id: peak.id,
-        name: peak.name,
-        kind: "natural=peak",
-        lat: peak.lat,
-        lng: peak.lng,
-        elevation: peak.elevationM,
-      })),
-    ],
+    () => {
+      // Das Offline-Paket ist die versionierte Quelle. Live-/allgemeine POIs
+      // dürfen denselben Gipfel nur ergänzen, nie dessen Höhe überschreiben.
+      const merged = new Map<
+        string,
+        (typeof displayedPois)[number]
+      >();
+      for (const peak of offlinePanorama?.peaks ?? []) {
+        merged.set(peak.id, {
+          id: peak.id,
+          name: peak.name,
+          kind: "natural=peak",
+          lat: peak.lat,
+          lng: peak.lng,
+          elevation: peak.elevationM,
+        });
+      }
+      for (const poi of [...displayedPois, ...panoramaOnlinePois]) {
+        if (!merged.has(poi.id)) merged.set(poi.id, poi);
+      }
+      return Array.from(merged.values());
+    },
     [displayedPois, panoramaOnlinePois, offlinePanorama],
   );
   const panoramaPeaks = useMemo(
@@ -7698,7 +7708,6 @@ export default function LiveHike() {
             </Glass>
           </Animated.View>
         )}
-
 
 
         {/* Story-Bereich */}

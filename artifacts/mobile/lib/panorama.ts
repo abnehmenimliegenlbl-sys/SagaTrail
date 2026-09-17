@@ -72,6 +72,15 @@ export interface PanoramaGipfelDatensatz {
   lat: number;
   lng: number;
   elevationM: number | null;
+  /** Herkunft der Höhe; null bleibt ausdrücklich unbekannt. */
+  elevationSource: "osm.ele" | "unknown";
+}
+
+export interface PanoramaOfflineAbdeckung {
+  /** Radius der gespeicherten, benannten Gipfel um den Routen-Korridor. */
+  peakCorridorKm: number;
+  /** Radius des gespeicherten observer-zentrierten DTM-Modells. */
+  terrainRadiusM: number | null;
 }
 
 export function selectPanoramaPeaks(
@@ -118,6 +127,9 @@ export function selectPanoramaPeaks(
 export interface OfflinePanoramaDatenbank {
   version: number;
   source: string;
+  elevationSource: "OpenStreetMap ele tag";
+  visibilitySource: "SwissTopo DTM radial profiles";
+  coverage: PanoramaOfflineAbdeckung;
   downloadedAt: number;
   peaks: PanoramaGipfelDatensatz[];
   /** Optionales SwissTopo-Routenprofil für die lokale 3D-Terrainansicht. */
@@ -130,9 +142,9 @@ export interface OfflinePanoramaDatenbank {
 // Winkelverteilung dominieren, obwohl sie für das Gelände direkt vor dem
 // Wanderer nicht repräsentativ sind.
 export const PANORAMA_ROUTE_CORRIDOR_KM = 5;
-export const PANORAMA_OFFLINE_VERSION = 4;
+export const PANORAMA_OFFLINE_VERSION = 5;
 export const PANORAMA_OFFLINE_SOURCE =
-  "OpenStreetMap natural=peak via Overpass; Höhe aus OSM ele; SwissTopo route and local terrain; 20 km route corridor";
+  "OpenStreetMap natural=peak via Overpass; SwissTopo DTM; 5 km Routen-Korridor";
 
 interface GipfelPoi {
   id: string;
@@ -180,6 +192,10 @@ export function createOfflinePanoramaDatenbank(
       lat: poi.lat,
       lng: poi.lng,
       elevationM: finiteNumber(poi.elevation ?? poi.elevationM),
+      elevationSource:
+        finiteNumber(poi.elevation ?? poi.elevationM) == null
+          ? "unknown"
+          : "osm.ele",
     });
   }
   const validTerrainProfile = (terrainProfile ?? [])
@@ -194,6 +210,15 @@ export function createOfflinePanoramaDatenbank(
   return {
     version: PANORAMA_OFFLINE_VERSION,
     source: PANORAMA_OFFLINE_SOURCE,
+    elevationSource: "OpenStreetMap ele tag",
+    visibilitySource: "SwissTopo DTM radial profiles",
+    coverage: {
+      peakCorridorKm: PANORAMA_ROUTE_CORRIDOR_KM,
+      terrainRadiusM:
+        terrainModel && isLocalTerrainModel(terrainModel)
+          ? terrainModel.radiusM
+          : null,
+    },
     downloadedAt,
     peaks,
     ...(validTerrainProfile.length >= 2
@@ -210,12 +235,51 @@ export function isOfflinePanoramaDatenbank(
 ): value is OfflinePanoramaDatenbank {
   if (!value || typeof value !== "object") return false;
   const data = value as Partial<OfflinePanoramaDatenbank>;
+  const coverage = data.coverage;
   return (
     data.version === PANORAMA_OFFLINE_VERSION &&
     data.source === PANORAMA_OFFLINE_SOURCE &&
+    data.elevationSource === "OpenStreetMap ele tag" &&
+    data.visibilitySource === "SwissTopo DTM radial profiles" &&
+    !!coverage &&
+    typeof coverage === "object" &&
+    coverage.peakCorridorKm === PANORAMA_ROUTE_CORRIDOR_KM &&
+    (coverage.terrainRadiusM === null ||
+      (typeof coverage.terrainRadiusM === "number" &&
+        Number.isFinite(coverage.terrainRadiusM) &&
+        coverage.terrainRadiusM > 0)) &&
     typeof data.downloadedAt === "number" &&
+    Number.isFinite(data.downloadedAt) &&
     Array.isArray(data.peaks) &&
-    (data.terrainProfile === undefined || Array.isArray(data.terrainProfile)) &&
+    data.peaks.every(
+      (peak) =>
+        !!peak &&
+        typeof peak.id === "string" &&
+        peak.id.length > 0 &&
+        typeof peak.name === "string" &&
+        peak.name.trim().length > 0 &&
+        typeof peak.lat === "number" &&
+        Number.isFinite(peak.lat) &&
+        typeof peak.lng === "number" &&
+        Number.isFinite(peak.lng) &&
+        (peak.elevationM === null ||
+          (typeof peak.elevationM === "number" &&
+            Number.isFinite(peak.elevationM))) &&
+        (peak.elevationSource === "osm.ele" ||
+          peak.elevationSource === "unknown") &&
+        ((peak.elevationM == null && peak.elevationSource === "unknown") ||
+          (peak.elevationM != null && peak.elevationSource === "osm.ele")),
+    ) &&
+    (data.terrainProfile === undefined ||
+      (Array.isArray(data.terrainProfile) &&
+        data.terrainProfile.every(
+          (point) =>
+            !!point &&
+            typeof point.distanceKm === "number" &&
+            Number.isFinite(point.distanceKm) &&
+            typeof point.altM === "number" &&
+            Number.isFinite(point.altM),
+        ))) &&
     (data.terrainModel === undefined || isLocalTerrainModel(data.terrainModel))
   );
 }

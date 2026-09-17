@@ -74,7 +74,7 @@ const storyKeyPrefix = "sagatrail:story:v5:";
 const MIN_STORY_CHAPTERS = 8;
 const MIN_SERVER_STORY_CHAPTERS = 8;
 const poisKeyPrefix = "sagatrail:pois:v1:";
-const panoramaKeyPrefix = "sagatrail:panorama:v3:";
+const panoramaKeyPrefix = "sagatrail:panorama:v4:";
 
 export interface DownloadRecord {
   sagaId: string;
@@ -323,6 +323,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       // 3. POIs laden, Detail und Story fuer jeden POI vorladen.
       let hasPois = false;
       let poisFailed = false;
+      let panoramaFailed = false;
       let panoramaDatabase: OfflinePanoramaDatenbank | null = null;
       const center = route.coordinates ?? saga.coordinates ?? null;
       if (center) {
@@ -348,17 +349,22 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
               terrainProfile,
               terrainModel,
             );
+            // Ohne gespeichertes DTM bleiben Gipfel zwar auffindbar, die
+            // Verdeckung ist offline aber nicht belastbar. Das Paket wird
+            // deshalb sichtbar als unvollständig markiert.
+            panoramaFailed = panoramaDatabase.coverage.terrainRadiusM == null;
           } catch {
-            panoramaDatabase = createOfflinePanoramaDatenbank(
-              pois,
-              terrainProfile,
-              terrainModel,
-            );
+            // Allgemeine POIs sind keine verlässliche Gipfelquelle. Eine
+            // fehlende Peak-Abfrage darf deshalb nicht stillschweigend durch
+            // einen gemischten POI-Bestand ersetzt werden.
+            panoramaFailed = true;
           }
-          await AsyncStorage.setItem(
-            panoramaKey(route.id),
-            JSON.stringify(panoramaDatabase),
-          ).catch(() => {});
+          if (panoramaDatabase) {
+            await AsyncStorage.setItem(
+              panoramaKey(route.id),
+              JSON.stringify(panoramaDatabase),
+            ).catch(() => {});
+          }
           if (pois.length > 0) {
             await AsyncStorage.setItem(poisKey(route.id), JSON.stringify(pois)).catch(() => {});
             hasPois = true;
@@ -405,7 +411,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         } catch {
           poisFailed = true;
         }
-        phaseStatus.pois = poisFailed ? "failed" : "complete";
+        phaseStatus.pois = poisFailed || panoramaFailed ? "failed" : "complete";
       }
 
       // 4. Kartenkacheln laden — gesamte Route wenn Geometrie vorhanden,
@@ -463,7 +469,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         failedPhase: Object.entries(phaseStatus).find(([, status]) => status !== "complete")?.[0] as DownloadPhase | undefined,
         routeSnapshot: route,
         sagaSnapshot: saga,
-        offlinePackageVersion: 5,
+        offlinePackageVersion: 6,
         emergencyNumbers: ["1414", "144", "117", "112"],
       };
       await persist({ [saga.id]: record });
@@ -537,7 +543,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       // Tile-Dateien aus älteren Paketen stammen noch aus der CARTO-Zeit.
       // Nicht als swisstopo-Kacheln anzeigen — erst nach einem neuen Download
       // mit der aktuellen Paketversion wieder aktivieren.
-      if (downloads[sagaId]?.offlinePackageVersion !== 5) return Promise.resolve({});
+      if (downloads[sagaId]?.offlinePackageVersion !== 6) return Promise.resolve({});
       return loadTilesBase64(sagaId);
     },
     [downloads]
