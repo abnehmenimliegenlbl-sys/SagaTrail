@@ -53,6 +53,15 @@ export interface MeetupMessageResponse {
   sent: boolean;
 }
 
+export interface MeetupMessage {
+  id: string;
+  senderUserId: string;
+  senderName: string;
+  /** @maxLength 500 */
+  messageText: string;
+  createdAt: string;
+}
+
 export type MeetupStatus = typeof MeetupStatus[keyof typeof MeetupStatus];
 
 
@@ -165,6 +174,8 @@ export interface MeetupAttendanceResponse {
 
 export type MeetupDetail = Meetup & {
   participants: MeetupParticipant[];
+  /** Nachrichten sind nur für den Organisator und eingeschriebene Teilnehmende sichtbar. */
+  messages: MeetupMessage[];
 };
 
 export interface MeetupListResponse {

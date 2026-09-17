@@ -6,8 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Meetup } from './meetup';
+import type { MeetupMessage } from './meetupMessage';
 import type { MeetupParticipant } from './meetupParticipant';
 
 export type MeetupDetail = Meetup & {
   participants: MeetupParticipant[];
+  /** Nachrichten sind nur für den Organisator und eingeschriebene Teilnehmende sichtbar. */
+  messages: MeetupMessage[];
 };

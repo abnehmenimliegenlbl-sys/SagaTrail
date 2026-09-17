@@ -152,3 +152,4 @@
 - [Watch turn-distance rounding](sagatrail-watch-turn-distance-rounding.md) — show turn distances as km/100 m, 10 m, or 5 m based on range, including the complication.
 - [Watch battery strategy](sagatrail-watch-battery-strategy.md) — iPhone owns GPS; Watch HR workout must not request outdoor location, and routine live snapshots stay at 15 s.
 - [Treffpunkt vs. Gruppenwanderung](sagatrail-meetup-group-separation.md) — public meetup attendance/safety and private synchronized group hiking must remain separate systems.
+- [Treffpunkt-Nachrichtenhistorie](sagatrail-meetup-message-history.md) — echte Nachrichten einmal speichern; Push-Outbox pro Empfänger verteilen und Limits nur auf Historieneinträge anwenden.

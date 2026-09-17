@@ -68,6 +68,7 @@ export * from './meetupJoinResponse';
 export * from './meetupLifecycleResponse';
 export * from './meetupLifecycleResponseStatus';
 export * from './meetupListResponse';
+export * from './meetupMessage';
 export * from './meetupMessageRequest';
 export * from './meetupMessageResponse';
 export * from './meetupParticipant';

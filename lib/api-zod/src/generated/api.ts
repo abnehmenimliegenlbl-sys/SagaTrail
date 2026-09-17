@@ -1466,6 +1466,8 @@ export const getMeetupResponseTwoParticipantsItemBioMax = 160;
 export const getMeetupResponseTwoParticipantsItemRankLevelMin = 0;
 export const getMeetupResponseTwoParticipantsItemRankLevelMax = 9;
 
+export const getMeetupResponseTwoMessagesItemMessageTextMax = 500;
+
 
 
 export const GetMeetupResponse = zod.object({
@@ -1501,7 +1503,14 @@ export const GetMeetupResponse = zod.object({
   "threshold": zod.number(),
   "title": zod.string()
 })).optional().describe('Nur für Teilnehmende oder den Organisator sichtbar.')
-}))
+})),
+  "messages": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "senderUserId": zod.string(),
+  "senderName": zod.string(),
+  "messageText": zod.string().max(getMeetupResponseTwoMessagesItemMessageTextMax),
+  "createdAt": zod.coerce.date()
+})).describe('Nachrichten sind nur für den Organisator und eingeschriebene Teilnehmende sichtbar.')
 }))
 
 

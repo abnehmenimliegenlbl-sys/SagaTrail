@@ -8,6 +8,7 @@ import {
   db,
   groupHikeCompletionsTable,
   meetupBlocksTable,
+  meetupMessagesTable,
   meetupNotificationOutboxTable,
   meetupParticipantsTable,
   meetupReportsTable,
@@ -280,26 +281,29 @@ router.post("/meetups/:id/messages", async (req, res): Promise<void> => {
     if (!organizer && !membership) return "forbidden" as const;
     if (!organizer && meetup.status !== "in_progress") return "not_started" as const;
     const cutoff = new Date(Date.now() - 30_000);
-    const [recent] = await tx.select({ id: meetupNotificationOutboxTable.id })
-      .from(meetupNotificationOutboxTable).where(and(
-        eq(meetupNotificationOutboxTable.meetupId, meetupId),
-        eq(meetupNotificationOutboxTable.type, "meetup_message"),
-        eq(meetupNotificationOutboxTable.actorUserId, userId),
-        gte(meetupNotificationOutboxTable.createdAt, cutoff),
+    const [recent] = await tx.select({ id: meetupMessagesTable.id })
+      .from(meetupMessagesTable).where(and(
+        eq(meetupMessagesTable.meetupId, meetupId),
+        eq(meetupMessagesTable.senderUserId, userId),
+        gte(meetupMessagesTable.createdAt, cutoff),
       )).limit(1);
     if (recent) return "rate_limited" as const;
     const [{ count }] = await tx.select({ count: sql<number>`count(*)::int` })
-      .from(meetupNotificationOutboxTable).where(and(
-        eq(meetupNotificationOutboxTable.meetupId, meetupId),
-        eq(meetupNotificationOutboxTable.type, "meetup_message"),
-      ));
+      .from(meetupMessagesTable)
+      .where(eq(meetupMessagesTable.meetupId, meetupId));
     if (Number(count) >= 30) return "limit" as const;
     const participants = await tx.select({ userId: meetupParticipantsTable.userId })
       .from(meetupParticipantsTable).where(eq(meetupParticipantsTable.meetupId, meetupId));
     const [actor] = await tx.select({ name: profilesTable.name }).from(profilesTable).where(eq(profilesTable.id, userId)).limit(1);
+    const [message] = await tx.insert(meetupMessagesTable).values({
+      meetupId,
+      senderUserId: userId,
+      senderName: actor?.name ?? "SagaTrail-Wanderer",
+      messageText: parsed.data.messageText,
+    }).returning({ id: meetupMessagesTable.id });
     const recipients = participants.map(({ userId: id }) => id).filter((id) => id !== userId);
     if (recipients.length) await tx.insert(meetupNotificationOutboxTable).values(recipients.map((recipientUserId) => ({
-      meetupId, recipientUserId, type: "meetup_message", dedupeKey: `${meetupId}:${userId}:${Date.now()}:${recipientUserId}`,
+      meetupId, recipientUserId, type: "meetup_message", dedupeKey: `${meetupId}:${message.id}:${recipientUserId}`,
       actorName: actor?.name ?? null, actorUserId: userId, messageText: parsed.data.messageText,
     }))).execute();
     return "ok" as const;
@@ -435,6 +439,21 @@ router.get("/meetups/:id", async (req, res): Promise<void> => {
   const joined = Boolean(currentUserId && participants.some((participant) => participant.userId === currentUserId));
   const canViewRank = joined || currentUserId === row.organizerId;
   const canViewParticipantBio = joined || currentUserId === row.organizerId;
+  const canViewMessages = canViewParticipantBio;
+  const messages = canViewMessages
+    ? await db
+        .select({
+          id: meetupMessagesTable.id,
+          senderUserId: meetupMessagesTable.senderUserId,
+          senderName: meetupMessagesTable.senderName,
+          messageText: meetupMessagesTable.messageText,
+          createdAt: meetupMessagesTable.createdAt,
+        })
+        .from(meetupMessagesTable)
+        .where(eq(meetupMessagesTable.meetupId, row.id))
+        .orderBy(asc(meetupMessagesTable.createdAt))
+        .limit(100)
+    : [];
   const groupCounts = new Map<string, number>();
   if (canViewRank && participants.length) {
     const completionCounts = await db
@@ -481,6 +500,13 @@ router.get("/meetups/:id", async (req, res): Promise<void> => {
               groupAchievements: groupAchievements(groupCounts.get(participant.userId) ?? 0),
            }
          : {}),
+    })),
+    messages: messages.map((message) => ({
+      id: message.id,
+      senderUserId: message.senderUserId,
+      senderName: message.senderName,
+      messageText: message.messageText,
+      createdAt: message.createdAt.toISOString(),
     })),
   });
 });
@@ -544,7 +570,9 @@ router.post("/meetups/:id/join", async (req, res): Promise<void> => {
       .for("update")
       .limit(1);
     if (!meetup) return { error: "not_found" as const };
-    if (meetup.status !== "scheduled") return { error: "not_scheduled" as const };
+    if (meetup.status !== "scheduled" && meetup.status !== "in_progress") {
+      return { error: "not_scheduled" as const };
+    }
     const [blocked] = await tx
       .select({ blockedUserId: meetupBlocksTable.blockedUserId })
       .from(meetupBlocksTable)

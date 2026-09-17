@@ -2156,6 +2156,23 @@ components:
       properties:
         sent:
           type: boolean
+    MeetupMessage:
+      type: object
+      required: [id, senderUserId, senderName, messageText, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        senderUserId:
+          type: string
+        senderName:
+          type: string
+        messageText:
+          type: string
+          maxLength: 500
+        createdAt:
+          type: string
+          format: date-time
     Meetup:
       type: object
       required: [id, routeId, routeName, canton, startsAt, maxParticipants, participantCount, pace, organizerName, joined, status, isOrganizer]
@@ -2285,12 +2302,17 @@ components:
       allOf:
         - $ref: "#/components/schemas/Meetup"
         - type: object
-          required: [participants]
+          required: [participants, messages]
           properties:
             participants:
               type: array
               items:
                 $ref: "#/components/schemas/MeetupParticipant"
+            messages:
+              type: array
+              description: Nachrichten sind nur für den Organisator und eingeschriebene Teilnehmende sichtbar.
+              items:
+                $ref: "#/components/schemas/MeetupMessage"
     MeetupListResponse:
       type: object
       required: [meetups]

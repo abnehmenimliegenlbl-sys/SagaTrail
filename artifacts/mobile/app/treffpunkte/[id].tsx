@@ -208,6 +208,7 @@ export default function MeetupDetail() {
         data: { messageText: trimmed },
       });
       setMessageText("");
+      await query.refetch();
       alert(flow.messageTitle, flow.messageSent);
     } catch {
       alert(flow.messageTitle, flow.messageFailure);
@@ -295,6 +296,7 @@ export default function MeetupDetail() {
   const canSendMessage = meetup.isOrganizer
     ? isScheduled || isInProgress
     : meetup.joined && isInProgress;
+  const canViewMessages = meetup.joined || meetup.isOrganizer;
   const startsAtMs = new Date(meetup.startsAt).getTime();
   const attendanceWindowOpen =
     Date.now() >= startsAtMs - 3 * 60 * 60_000 &&
@@ -430,7 +432,7 @@ export default function MeetupDetail() {
           ))}
         </View>
 
-        {meetup.joined && isScheduled ? (
+        {meetup.joined && (isScheduled || isInProgress) ? (
           <>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{flow.myStatus}</Text>
             {attendanceWindowOpen && !attendanceIsFinal ? (
@@ -518,25 +520,51 @@ export default function MeetupDetail() {
           </View>
         ) : null}
 
-        {canSendMessage ? (
+        {canViewMessages && (meetup.messages.length > 0 || canSendMessage) ? (
           <View style={[styles.messageCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
             <Text style={[styles.cardTitle, { color: colors.foreground }]}>{flow.messageTitle}</Text>
-            <TextInput
-              value={messageText}
-              onChangeText={setMessageText}
-              placeholder={flow.messagePlaceholder}
-              placeholderTextColor={colors.mutedForeground}
-              multiline
-              maxLength={500}
-              style={[styles.messageInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
-            />
-            <PrimaryButton
-              label={flow.messageSend}
-              variant="secondary"
-              disabled={!messageText.trim()}
-              loading={sendMessageMutation.isPending}
-              onPress={() => void sendMessage()}
-            />
+            {meetup.messages.length > 0 ? (
+              <View style={styles.messageList}>
+                {meetup.messages.map((message) => (
+                  <View
+                    key={message.id}
+                    style={[
+                      styles.messageRow,
+                      {
+                        backgroundColor:
+                          message.senderUserId === profile?.id ? colors.accent + "18" : colors.glassBgStrong,
+                        borderColor: colors.glassBorder,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.messageMeta, { color: colors.mutedForeground }]}>
+                      {message.senderName} · {formatTime(message.createdAt, language)}
+                    </Text>
+                    <Text style={[styles.messageBody, { color: colors.foreground }]}>{message.messageText}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {canSendMessage ? (
+              <>
+                <TextInput
+                  value={messageText}
+                  onChangeText={setMessageText}
+                  placeholder={flow.messagePlaceholder}
+                  placeholderTextColor={colors.mutedForeground}
+                  multiline
+                  maxLength={500}
+                  style={[styles.messageInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
+                />
+                <PrimaryButton
+                  label={flow.messageSend}
+                  variant="secondary"
+                  disabled={!messageText.trim()}
+                  loading={sendMessageMutation.isPending}
+                  onPress={() => void sendMessage()}
+                />
+              </>
+            ) : null}
           </View>
         ) : null}
 
@@ -729,6 +757,14 @@ function formatDate(value: string, language: string): string {
   });
 }
 
+function formatTime(value: string, language: string): string {
+  const locale = language === "de" || language === "gsw" ? "de-CH" : language;
+  return new Date(value).toLocaleTimeString(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function icsDate(date: Date): string {
   return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
 }
@@ -785,6 +821,10 @@ const styles = StyleSheet.create({
   statusCard: { alignItems: "flex-start", borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 10, marginTop: 16, padding: 14 },
   lifecycleCard: { borderRadius: 15, borderWidth: 1, marginTop: 22, padding: 15 },
   messageCard: { borderRadius: 15, borderWidth: 1, marginTop: 22, padding: 15 },
+  messageList: { gap: 8, marginTop: 12 },
+  messageRow: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 8 },
+  messageMeta: { fontFamily: fonts.mono, fontSize: 10 },
+  messageBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 19, marginTop: 3 },
   messageInput: { borderRadius: 10, borderWidth: 1, fontFamily: fonts.body, fontSize: 14, marginVertical: 12, minHeight: 70, padding: 11, textAlignVertical: "top" },
   safetyCard: { alignItems: "flex-start", borderRadius: 15, borderWidth: 1, flexDirection: "row", gap: 11, marginTop: 22, padding: 15 },
   emergencyRow: { flexDirection: "row", gap: 8, marginTop: 12 },
