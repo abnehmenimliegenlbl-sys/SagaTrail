@@ -5,14 +5,19 @@ import type { LatLng } from "@/types";
 
 export interface PeakArNavigatorProps {
   peaks: readonly PanoramaGipfel[];
+  showPeaks?: boolean;
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
   observerPosition?: LatLng | null;
+  compassReady?: boolean;
   routeGeometry?: readonly number[][] | null;
   mapLayer?: "topo" | "sat";
   heading?: number | null;
   observerElevationM?: number | null;
   selectedPeakId?: string | null;
   onPeakPress?: (peakId: string) => void;
+  onTrackingStateChange?: (
+    state: "initializing" | "ready" | "limited" | "unavailable",
+  ) => void;
   onError?: () => void;
 }

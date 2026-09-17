@@ -69,6 +69,10 @@ export function PeakCameraOverlay({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [arEnabled, setArEnabled] = useState(true);
+  const [showPeaks, setShowPeaks] = useState(true);
+  const [trackingState, setTrackingState] = useState<
+    "initializing" | "ready" | "limited" | "unavailable"
+  >("initializing");
   const [capturing, setCapturing] = useState(false);
   const [contentMounted, setContentMounted] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
@@ -78,12 +82,14 @@ export function PeakCameraOverlay({
   const arStateRef = useRef({
     visible,
     arEnabled,
+    trackingState,
     peakCount: arPeaks.length,
     heading,
   });
   arStateRef.current = {
     visible,
     arEnabled,
+    trackingState,
     peakCount: arPeaks.length,
     heading,
   };
@@ -94,12 +100,14 @@ export function PeakCameraOverlay({
     });
     setContentMounted(false);
     setArEnabled(false);
+    setShowPeaks(false);
+    setTrackingState("unavailable");
     setArPeaks([]);
     onClose();
   }, [onClose]);
 
   const visiblePeaks =
-    heading == null
+    !showPeaks || heading == null
       ? []
       : peaks
           .filter((peak) => peak.relativeBearingDeg != null)
@@ -109,19 +117,45 @@ export function PeakCameraOverlay({
       peak.relativeBearingDeg != null &&
       Math.abs(peak.relativeBearingDeg) <= 18,
   );
-  const selectablePeaks = arEnabled ? arPeaks : visiblePeaks;
+  const selectablePeaks = showPeaks
+    ? arEnabled
+      ? arPeaks
+      : visiblePeaks
+    : [];
   const targetPeak =
     selectablePeaks.find((peak) => peak.id === selectedPeakId) ??
     focusedPeak ??
     selectablePeaks[0];
   const status =
     visiblePeaks.length > 0 ? `${strings.detected}: ${targetPeak?.name ?? ""}` : strings.noPeaks;
+  const routeGuidanceReady =
+    observerPosition != null &&
+    heading != null &&
+    trackingState === "ready";
+  const routePauseReason =
+    observerPosition == null
+      ? strings.noGps
+      : heading == null
+        ? strings.needCompass
+        : strings.arUnavailable;
+  const handleTrackingStateChange = useCallback(
+    (state: "initializing" | "ready" | "limited" | "unavailable") => {
+      setTrackingState(state);
+      peakCameraLog("AR tracking quality changed", {
+        state,
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     peakCameraLog("camera overlay lifecycle", {
       visible,
       contentMounted,
       arEnabled,
+      showPeaks,
+      trackingState,
+      routeGuidanceReady,
       peakCount: peaks.length,
       arCandidateCount: arCandidates.length,
       visiblePeakCount: visiblePeaks.length,
@@ -148,11 +182,14 @@ export function PeakCameraOverlay({
     nextTurn,
     observerPosition,
     peaks.length,
+    routeGuidanceReady,
     routeGeometry?.length,
     selectedPeakId,
+    showPeaks,
     targetPeak?.id,
     terrainModel,
     terrainProfile?.length,
+    trackingState,
     visible,
     visiblePeaks.length,
   ]);
@@ -162,6 +199,8 @@ export function PeakCameraOverlay({
       peakCameraLog("camera overlay hidden; clearing AR state");
       setContentMounted(false);
       setArEnabled(false);
+      setShowPeaks(false);
+      setTrackingState("initializing");
       setArPeaks([]);
       setSelectedPeakId(null);
     } else {
@@ -171,6 +210,8 @@ export function PeakCameraOverlay({
         heading,
       });
       setArEnabled(true);
+      setShowPeaks(true);
+      setTrackingState("initializing");
       setArPeaks(arCandidates);
     }
     // New candidates may update the fixed native marker slots while the
@@ -215,6 +256,8 @@ export function PeakCameraOverlay({
     // modal. This avoids tearing down Viro during the UIKit transition.
     setContentMounted(false);
     setArEnabled(false);
+    setShowPeaks(false);
+    setTrackingState("unavailable");
     setArPeaks([]);
     onClose();
   };
@@ -324,6 +367,8 @@ export function PeakCameraOverlay({
          // replace/remove nodes while the AR session is running.
          setArPeaks(arCandidates);
          setArEnabled(true);
+          setShowPeaks(true);
+          setTrackingState("initializing");
          setContentMounted(true);
        }}
       onRequestClose={closeCamera}
@@ -336,6 +381,8 @@ export function PeakCameraOverlay({
         {contentMounted && (
           <PeakArNavigator
             peaks={arPeaks}
+             showPeaks={showPeaks}
+             compassReady={heading != null}
             terrainProfile={terrainProfile}
             terrainModel={terrainModel}
             routeGeometry={routeGeometry}
@@ -344,6 +391,7 @@ export function PeakCameraOverlay({
             observerElevationM={observerElevationM}
             selectedPeakId={selectedPeakId}
             onPeakPress={handlePeakPress}
+             onTrackingStateChange={handleTrackingStateChange}
             onError={handleArError}
           />
         )}
@@ -453,6 +501,30 @@ export function PeakCameraOverlay({
                 </Text>
               </View>
             )}
+            <Pressable
+              onPress={() => {
+                hapticSelection();
+                setShowPeaks((current) => !current);
+              }}
+              style={[
+                styles.peakToggle,
+                {
+                  backgroundColor: showPeaks
+                    ? colors.glassBgStrong
+                    : colors.destructive,
+                  borderColor: showPeaks ? colors.glassBorder : colors.destructive,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={strings.detected}
+              accessibilityState={{ selected: showPeaks }}
+            >
+              <Feather
+                name="triangle"
+                size={12}
+                color={showPeaks ? colors.tint : colors.primaryForeground}
+              />
+            </Pressable>
             <CloseButton
               onPress={() => {
                 hapticSelection();
@@ -463,7 +535,30 @@ export function PeakCameraOverlay({
             />
           </View>
         </View>
-        {nextTurn && (
+        {!routeGuidanceReady && contentMounted && (
+          <View
+            style={[
+              styles.routePausedHint,
+              {
+                backgroundColor: colors.glassBgStrong,
+                borderColor: colors.destructive,
+              },
+            ]}
+          >
+            <Feather name="pause-circle" size={18} color={colors.destructive} />
+            <View style={styles.routePausedCopy}>
+              <Text style={[styles.routePausedTitle, { color: colors.photoScrimText }]}>
+                {routePauseReason}
+              </Text>
+              <Text style={[styles.routePausedDetail, { color: colors.photoScrimMuted }]}>
+                {trackingState === "ready"
+                  ? strings.needCompass
+                  : strings.arUnavailable}
+              </Text>
+            </View>
+          </View>
+        )}
+        {routeGuidanceReady && nextTurn && (
           <View
             style={[
               styles.turnHint,
@@ -495,7 +590,7 @@ export function PeakCameraOverlay({
             color={colors.photoScrimText}
           />
           <Text style={[styles.status, { color: colors.photoScrimText }]} numberOfLines={2}>
-            {targetPeak ? `${strings.detected}: ${targetPeak.name}` : status}
+            {targetPeak && showPeaks ? `${strings.detected}: ${targetPeak.name}` : status}
           </Text>
           <View style={styles.captureArea}>
             <Pressable
@@ -559,6 +654,31 @@ const styles = StyleSheet.create({
   turnHintLabel: {
     fontFamily: fonts.body,
     fontSize: 13,
+    fontWeight: "700",
+  },
+  routePausedHint: {
+    position: "absolute",
+    top: 112,
+    left: 18,
+    right: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderRadius: 14,
+  },
+  routePausedCopy: { flex: 1, gap: 2 },
+  routePausedTitle: {
+    fontFamily: fonts.titleBold,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+  routePausedDetail: {
+    fontFamily: fonts.body,
+    fontSize: 12,
     fontWeight: "700",
   },
   scanLineTop: {
@@ -634,6 +754,14 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   fullscreenHeadingBadgeText: { fontFamily: fonts.monoBold, fontSize: 11 },
+  peakToggle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   arButton: {
     height: 42,
     flexDirection: "row",

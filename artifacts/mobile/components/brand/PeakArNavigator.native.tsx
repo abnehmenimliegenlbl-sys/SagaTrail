@@ -102,6 +102,7 @@ const AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M = 300;
 // local DTM elevation differences lift it above/below the plane.
 const AR_ROUTE_GROUND_OFFSET = -1.25;
 const MAX_AR_PEAK_SLOTS = 40;
+const MAX_VISIBLE_AR_PEAKS = 6;
 const MAX_AR_ROUTE_SEGMENT_SLOTS = 96;
 const MAX_AR_ROUTE_DIRECTION_ARROWS = 24;
 const AR_ROUTE_TURN_THRESHOLD_DEGREES = 25;
@@ -210,6 +211,9 @@ interface PeakArSceneProps {
 
 interface PeakArSceneAppProps {
   peaks: readonly PanoramaGipfel[];
+  showPeaks?: boolean;
+  trackingReady?: boolean;
+  compassReady?: boolean;
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
   routeGeometry?: readonly number[][] | null;
@@ -480,30 +484,46 @@ function TerrainHologram({
   routeOriginPosition,
   observerPosition,
   terrainProfile,
+  trackingReady,
+  compassReady,
 }: {
   model: LocalTerrainModel | null | undefined;
   routeGeometry: readonly number[][] | null | undefined;
   routeOriginPosition: LatLng | null | undefined;
   observerPosition: LatLng | null | undefined;
   terrainProfile: readonly TerrainProfilePoint[] | null | undefined;
+  trackingReady: boolean;
+  compassReady: boolean;
 }) {
+  const routeProjectionReady =
+    trackingReady && compassReady && observerPosition != null;
   const visibleRouteGeometry = useMemo(
     () =>
-      routeGeometryAheadOfPosition(
-        routeGeometry,
-        routeOriginPosition,
-        observerPosition,
-      ) ?? routeGeometry,
-    [routeGeometry, routeOriginPosition, observerPosition],
+      routeProjectionReady
+        ? routeGeometryAheadOfPosition(
+            routeGeometry,
+            routeOriginPosition,
+            observerPosition,
+          ) ?? routeGeometry
+        : null,
+    [
+      routeGeometry,
+      routeOriginPosition,
+      observerPosition,
+      routeProjectionReady,
+    ],
   );
-  const routeCenter = observerPosition ?? routeOriginPosition;
+  const routeCenter = routeProjectionReady ? observerPosition : null;
   const worldOffset = useMemo(
     () => arWorldOffsetForPosition(routeOriginPosition ?? observerPosition, observerPosition),
     [observerPosition, routeOriginPosition],
   );
   const maxRouteDistanceM = useMemo(
-    () => routeGeometryMaxDistanceM(routeGeometry, routeCenter),
-    [routeCenter, routeGeometry],
+    () =>
+      routeProjectionReady
+        ? routeGeometryMaxDistanceM(routeGeometry, routeCenter)
+        : 0,
+    [routeCenter, routeGeometry, routeProjectionReady],
   );
   const routeSegments = useMemo<TerrainRouteSegment[]>(
     () =>
@@ -529,11 +549,13 @@ function TerrainHologram({
       terrainProfile,
       maxRouteDistanceM,
       worldOffset,
+      routeProjectionReady,
     ],
   );
   const destinationPosition = useMemo(
-    () =>
-      buildGeographicTerrainRouteDestination(
+    () => {
+      if (!routeProjectionReady) return null;
+      return buildGeographicTerrainRouteDestination(
         model,
         routeGeometry,
         routeCenter,
@@ -544,8 +566,16 @@ function TerrainHologram({
           maxRouteDistanceM,
           worldOffset,
         },
-      ),
-    [model, routeGeometry, routeCenter, maxRouteDistanceM, worldOffset],
+      );
+    },
+    [
+      model,
+      routeGeometry,
+      routeCenter,
+      maxRouteDistanceM,
+      worldOffset,
+      routeProjectionReady,
+    ],
   );
   const routeDirectionArrows = useMemo(
     () => buildRouteDirectionArrows(routeSegments),
@@ -563,6 +593,8 @@ function TerrainHologram({
       terrainRadiusM: AR_ROUTE_TERRAIN_RADIUS_M,
       nearRouteRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
       destinationVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
+      routeProjectionReady,
+      trackingReady,
       hasDestination: destinationPosition != null,
       routeOriginPosition: peakArPositionSummary(routeOriginPosition),
       observerPosition: peakArPositionSummary(observerPosition),
@@ -578,12 +610,15 @@ function TerrainHologram({
     routeOriginPosition,
     observerPosition,
     worldOffset,
+    routeProjectionReady,
+    trackingReady,
   ]);
 
   // Keep the native route node tree mounted while the moving GPS fix causes
   // the visible near-field to be recomputed. Removing all route children in
   // that transition can make Viro lose the AR overlay on iOS.
   if (
+    !routeProjectionReady &&
     routeGeometry == null &&
     routeSegments.length === 0 &&
     destinationPosition == null
@@ -920,6 +955,9 @@ function finishFlagScale(
 function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
   const {
     peaks = [],
+    showPeaks = true,
+    trackingReady = false,
+    compassReady = false,
     terrainProfile = null,
     terrainModel = null,
     routeGeometry = null,
@@ -1010,9 +1048,13 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
         routeOriginPosition={routeOriginPosition}
         observerPosition={observerPosition}
         terrainProfile={terrainProfile}
+        trackingReady={trackingReady}
+        compassReady={compassReady}
       />
       {Array.from({ length: MAX_AR_PEAK_SLOTS }, (_, slotIndex) => {
-        const peak = peaks[slotIndex] ?? null;
+        const peak = showPeaks && slotIndex < MAX_VISIBLE_AR_PEAKS
+          ? peaks[slotIndex] ?? null
+          : null;
         const position: [number, number, number] = peak
           ? peakPosition(peak) ?? [0, -1000, 0]
           : [0, -1000, 0];
@@ -1040,8 +1082,10 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
               peak == null || terrainVisibility === "occluded"
                 ? 0
                 : terrainVisibility === "unknown"
-                  ? 0.72
-                  : 1
+                  ? 0.6
+                  : isSelected
+                    ? 0.94
+                    : 0.72
             }
             transformBehaviors="billboard"
             renderingOrder={100}
@@ -1192,14 +1236,17 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 
 export function PeakArNavigator({
   peaks,
+  showPeaks = true,
   terrainProfile = null,
   terrainModel = null,
   routeGeometry = null,
   observerPosition = null,
+  compassReady = false,
   mapLayer = "topo",
   observerElevationM = null,
   selectedPeakId = null,
   onPeakPress,
+  onTrackingStateChange,
   onError,
 }: PeakArNavigatorProps) {
   const [supportState, setSupportState] = useState<
@@ -1212,6 +1259,7 @@ export function PeakArNavigator({
   // visible trail.
   const [worldOriginPosition, setWorldOriginPosition] =
     useState<LatLng | null>(null);
+  const [trackingReady, setTrackingReady] = useState(false);
   const navigatorRef = useRef<{
     _resetARSession?: (resetTracking: boolean, removeAnchors: boolean) => void;
   } | null>(null);
@@ -1230,6 +1278,9 @@ export function PeakArNavigator({
       observerPosition: peakArPositionSummary(observerPosition),
       observerElevationM,
       mapLayer,
+      showPeaks,
+      trackingReady,
+      compassReady,
     });
     return () => {
       clearTrackingResetTimer();
@@ -1251,11 +1302,15 @@ export function PeakArNavigator({
       observerElevationM,
       selectedPeakId,
       mapLayer,
+      compassReady,
       supportState,
       worldOriginPosition: peakArPositionSummary(worldOriginPosition),
     });
   }, [
     mapLayer,
+    compassReady,
+    showPeaks,
+    trackingReady,
     observerElevationM,
     observerPosition,
     peaks,
@@ -1292,8 +1347,16 @@ export function PeakArNavigator({
         trackingReasonRef.current !== reason;
       trackingStateRef.current = state;
       trackingReasonRef.current = reason;
+      const nextTrackingState =
+        state === ViroTrackingStateConstants.TRACKING_NORMAL
+          ? "ready"
+          : state === ViroTrackingStateConstants.TRACKING_LIMITED
+            ? "limited"
+            : "unavailable";
+      setTrackingReady(nextTrackingState === "ready");
 
       if (changed) {
+        onTrackingStateChange?.(nextTrackingState);
         peakArLog("tracking state changed", {
           state,
           reason,
@@ -1361,10 +1424,11 @@ export function PeakArNavigator({
         });
       }, delayMs);
     },
-    [clearTrackingResetTimer],
+    [clearTrackingResetTimer, onTrackingStateChange],
   );
 
   useEffect(() => {
+    onTrackingStateChange?.("initializing");
     peakArLog("AR support check started");
     let cancelled = false;
 
@@ -1408,7 +1472,7 @@ export function PeakArNavigator({
       cancelled = true;
       peakArLog("AR support check cancelled");
     };
-  }, [onError]);
+  }, [onError, onTrackingStateChange]);
 
   useEffect(() => {
     peakArLog("AR support state changed", {
@@ -1428,8 +1492,11 @@ export function PeakArNavigator({
   const viroAppProps = useMemo<PeakArSceneAppProps>(
     () => ({
       peaks,
+      showPeaks,
+      trackingReady,
       terrainProfile,
       terrainModel,
+      compassReady,
       routeGeometry,
       routeOriginPosition: worldOriginPosition ?? observerPosition,
       observerPosition,
@@ -1450,7 +1517,10 @@ export function PeakArNavigator({
       observerPosition,
       worldOriginPosition,
       mapLayer,
+      compassReady,
       selectedPeakId,
+      showPeaks,
+      trackingReady,
       terrainModel,
       handleTrackingUpdated,
     ],
