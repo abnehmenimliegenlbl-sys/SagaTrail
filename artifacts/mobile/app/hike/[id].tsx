@@ -781,6 +781,7 @@ export default function LiveHike() {
     loadOfflineTiles,
     loadOfflinePois,
     loadOfflinePanorama,
+    loadOfflineSafety,
     isDownloaded,
     getRecord,
   } = useDownloads();
@@ -1117,6 +1118,14 @@ export default function LiveHike() {
     followingRecalcRef.current = false;
     const geom = routeGeomRef.current;
     if (!geom || geom.length < 2) return;
+    // Ohne Netz bleibt die ursprüngliche Geometrie autoritativ. Die lokale
+    // Projektion und der Richtungszeiger zeigen den Weg zurück; eine
+    // serverseitige Neuberechnung darf den Offline-Hike nicht blockieren.
+    if (isOffline) {
+      setIsRecalculating(false);
+      setRecalcFailed(false);
+      return;
+    }
     // Ziel: naechster sinnvoller Punkt auf der Restroute.
     // fortschrittAufRoute liefert den naechsten Segment-Index; von dort aus
     // navigieren wir ein Stueck vorwaerts (mind. 10% der Geometrie), sodass
@@ -1179,7 +1188,7 @@ export default function LiveHike() {
       }
     })();
     return () => controller.abort();
-  }, [chooseStartRoute, offRoutePos, startRecalcChoice, startReached, t]);
+  }, [chooseStartRoute, isOffline, offRoutePos, startRecalcChoice, startReached, t]);
 
   const [speaking, setSpeaking] = useState(false);
   const [nowPlaying, setNowPlaying] = useState<NowPlayingNarration | null>(null);
@@ -2789,6 +2798,16 @@ export default function LiveHike() {
       return;
     }
     let cancelled = false;
+    loadOfflineSafety(route?.id ?? "").then((cached) => {
+      if (!cancelled && cached) {
+        setWaterSources(filterByRouteCorridor(cached.waterSources, geometry, 0.75));
+      }
+    });
+    if (isOffline) {
+      return () => {
+        cancelled = true;
+      };
+    }
     const base = getApiBaseUrl() ?? "";
     fetch(`${base}/api/trinkwasser?lat=${center.lat}&lng=${center.lng}&radius=8000`)
       .then((r) => r.json())
@@ -2801,7 +2820,7 @@ export default function LiveHike() {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [navigationGeometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+  }, [navigationGeometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng, isOffline, loadOfflineSafety]);
 
   // Toiletten und Sicherheitsinfrastruktur als sachliche Kartenebene laden.
   // Diese POIs werden absichtlich nicht in den Erzähl-/Wikipedia-Flow gegeben.
@@ -2817,6 +2836,16 @@ export default function LiveHike() {
       return;
     }
     let cancelled = false;
+    loadOfflineSafety(route?.id ?? "").then((cached) => {
+      if (!cancelled && cached) {
+        setSafetyPois(filterByRouteCorridor(cached.safetyPois, geometry, 0.75));
+      }
+    });
+    if (isOffline) {
+      return () => {
+        cancelled = true;
+      };
+    }
     const base = getApiBaseUrl() ?? "";
     fetch(`${base}/api/safety-pois?lat=${center.lat}&lng=${center.lng}&radius=10000`)
       .then((r) => r.ok ? r.json() : Promise.reject())
@@ -2836,13 +2865,23 @@ export default function LiveHike() {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [navigationGeometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+  }, [navigationGeometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng, isOffline, loadOfflineSafety]);
 
   // Parkplätze am Start- und Endpunkt der Route laden (je 800 m Radius).
   useEffect(() => {
     const geom = navigationGeometry;
     if (!geom || geom.length < 2) return;
     let cancelled = false;
+    loadOfflineSafety(route?.id ?? "").then((cached) => {
+      if (!cancelled && cached) {
+        setParkingSpots(cached.parkingSpots);
+      }
+    });
+    if (isOffline) {
+      return () => {
+        cancelled = true;
+      };
+    }
     const base = getApiBaseUrl() ?? "";
     const startPt = { lat: geom[0][0], lng: geom[0][1] };
     const endPt   = { lat: geom[geom.length - 1][0], lng: geom[geom.length - 1][1] };
@@ -2868,7 +2907,7 @@ export default function LiveHike() {
         setParkingSpots(merged);
       });
     return () => { cancelled = true; };
-  }, [navigationGeometry]);
+  }, [navigationGeometry, route?.id, isOffline, loadOfflineSafety]);
 
   // Zwischenziele entlang der Route berechnen: Partner (Prio) + POIs,
   // max. 3, innerhalb 100 m Routenabstand.
@@ -2901,6 +2940,7 @@ export default function LiveHike() {
   // So bleibt das Panorama auch dann nachvollziehbar, wenn andere POIs fehlen.
   useEffect(() => {
     setTerrainModel(null);
+    setTerrainProfileGeometry(null);
     if (!route?.id || !saga || !isDownloaded(saga.id)) {
       setOfflinePanorama(null);
       return;
@@ -2919,6 +2959,7 @@ export default function LiveHike() {
           data.terrainProfile.length >= 2
         ) {
           setTerrainProfile(data.terrainProfile);
+          setTerrainProfileGeometry(route.geometry ?? null);
         }
       }
     });
@@ -2931,6 +2972,8 @@ export default function LiveHike() {
     saga,
     isDownloaded,
     loadOfflinePanorama,
+    route?.geometry,
+    loadOfflineSafety,
   ]);
 
   // routeGeomRef wird synchron gehalten damit handleFix (leere Deps)
