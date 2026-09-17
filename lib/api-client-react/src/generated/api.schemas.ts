@@ -29,11 +29,37 @@ export interface CreateMeetupRequest {
   note?: string | null;
 }
 
+export type MeetupLifecycleResponseStatus = typeof MeetupLifecycleResponseStatus[keyof typeof MeetupLifecycleResponseStatus];
+
+
+export const MeetupLifecycleResponseStatus = {
+  in_progress: 'in_progress',
+  completed: 'completed',
+} as const;
+
+export interface MeetupLifecycleResponse {
+  status: MeetupLifecycleResponseStatus;
+}
+
+export interface MeetupMessageRequest {
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  messageText: string;
+}
+
+export interface MeetupMessageResponse {
+  sent: boolean;
+}
+
 export type MeetupStatus = typeof MeetupStatus[keyof typeof MeetupStatus];
 
 
 export const MeetupStatus = {
   scheduled: 'scheduled',
+  in_progress: 'in_progress',
+  completed: 'completed',
   cancelled: 'cancelled',
 } as const;
 

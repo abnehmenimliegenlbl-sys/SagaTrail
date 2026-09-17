@@ -240,7 +240,7 @@ async function deliverOutboxRow(row: OutboxRow): Promise<void> {
       ? delayedText(language, context.routeName, row.delayMinutes ?? 5, row.actorName)
       : row.type === "meetup_message"
         ? messageText(language, context.routeName, row.messageText ?? "", row.actorName)
-        : lifecycleText(language, context.routeName, row.type);
+        : lifecycleText(language, context.routeName, row.type as "meetup_started" | "meetup_completed");
   try {
     await sendPush(context.pushToken, message.title, message.body, data);
     await markOutboxSent(row.id);

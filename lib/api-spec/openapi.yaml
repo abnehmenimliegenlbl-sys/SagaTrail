@@ -2187,7 +2187,7 @@ components:
           type: boolean
         status:
           type: string
-          enum: [scheduled, cancelled]
+          enum: [scheduled, in_progress, completed, cancelled]
         cancellationReason:
           type: string
           nullable: true

@@ -1402,7 +1402,7 @@ export const GetMeetupsResponse = zod.object({
   "note": zod.string().nullish(),
   "organizerName": zod.string(),
   "joined": zod.boolean(),
-  "status": zod.enum(['scheduled', 'cancelled']),
+  "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
   "cancellationReason": zod.string().nullish(),
   "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
@@ -1444,7 +1444,7 @@ export const CreateMeetupResponse = zod.object({
   "note": zod.string().nullish(),
   "organizerName": zod.string(),
   "joined": zod.boolean(),
-  "status": zod.enum(['scheduled', 'cancelled']),
+  "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
   "cancellationReason": zod.string().nullish(),
   "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
@@ -1480,7 +1480,7 @@ export const GetMeetupResponse = zod.object({
   "note": zod.string().nullish(),
   "organizerName": zod.string(),
   "joined": zod.boolean(),
-  "status": zod.enum(['scheduled', 'cancelled']),
+  "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
   "cancellationReason": zod.string().nullish(),
   "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
@@ -1532,6 +1532,50 @@ export const CancelMeetupBody = zod.object({
 })
 
 export const CancelMeetupResponse = zod.void()
+
+
+/**
+ * @summary Treffpunkt starten
+ */
+export const StartMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const StartMeetupResponse = zod.object({
+  "status": zod.enum(['in_progress', 'completed'])
+})
+
+
+/**
+ * @summary Treffpunkt abschliessen
+ */
+export const CompleteMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const CompleteMeetupResponse = zod.object({
+  "status": zod.enum(['in_progress', 'completed'])
+})
+
+
+/**
+ * @summary Nachricht an Treffpunktteilnehmer senden
+ */
+export const SendMeetupMessageParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const sendMeetupMessageBodyMessageTextMax = 500;
+
+
+
+export const SendMeetupMessageBody = zod.object({
+  "messageText": zod.string().min(1).max(sendMeetupMessageBodyMessageTextMax)
+})
+
+export const SendMeetupMessageResponse = zod.object({
+  "sent": zod.boolean()
+})
 
 
 /**

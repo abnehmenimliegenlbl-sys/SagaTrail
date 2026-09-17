@@ -2,12 +2,15 @@ import { Feather } from "@expo/vector-icons";
 import {
   useBlockMeetupOrganizer,
   useCancelMeetup,
+  useCompleteMeetup,
   useCreateMeetupShare,
   useGetMeetup,
   useJoinMeetup,
   useLeaveMeetup,
   useRemoveMeetupParticipant,
   useReportMeetup,
+  useSendMeetupMessage,
+  useStartMeetup,
   useUpdateMeetupAttendance,
   type MeetupParticipant,
 } from "@workspace/api-client-react";
@@ -55,6 +58,9 @@ export default function MeetupDetail() {
   const query = useGetMeetup(id);
   const share = useCreateMeetupShare();
   const cancelMeetupMutation = useCancelMeetup();
+  const startMeetupMutation = useStartMeetup();
+  const completeMeetupMutation = useCompleteMeetup();
+  const sendMessageMutation = useSendMeetupMessage();
   const attendance = useUpdateMeetupAttendance();
   const report = useReportMeetup();
   const blockOrganizer = useBlockMeetupOrganizer();
@@ -63,6 +69,7 @@ export default function MeetupDetail() {
   const remove = useRemoveMeetupParticipant();
   const meetup = query.data;
   const [cancellationReason, setCancellationReason] = useState("");
+  const [messageText, setMessageText] = useState("");
   const isNotFound = query.error instanceof Error && "status" in query.error && query.error.status === 404;
 
   const exportCalendar = async () => {
@@ -170,6 +177,43 @@ export default function MeetupDetail() {
     }
   };
 
+  const startMeetup = async () => {
+    if (!meetup) return;
+    try {
+      await startMeetupMutation.mutateAsync({ id: meetup.id });
+      await query.refetch();
+      alert(flow.startTitle, flow.startSuccess);
+    } catch {
+      alert(flow.startTitle, flow.startFailure);
+    }
+  };
+
+  const completeMeetup = async () => {
+    if (!meetup) return;
+    try {
+      await completeMeetupMutation.mutateAsync({ id: meetup.id });
+      await query.refetch();
+      alert(flow.completeTitle, flow.completeSuccess);
+    } catch {
+      alert(flow.completeTitle, flow.completeFailure);
+    }
+  };
+
+  const sendMessage = async () => {
+    const trimmed = messageText.trim();
+    if (!meetup || !trimmed) return;
+    try {
+      await sendMessageMutation.mutateAsync({
+        id: meetup.id,
+        data: { messageText: trimmed },
+      });
+      setMessageText("");
+      alert(flow.messageTitle, flow.messageSent);
+    } catch {
+      alert(flow.messageTitle, flow.messageFailure);
+    }
+  };
+
   const chooseDelay = () => {
     alert(flow.delayTitle, flow.delayPrompt, [
       { text: flow.minutes(10), onPress: () => void updateAttendance("delayed", 10) },
@@ -245,6 +289,12 @@ export default function MeetupDetail() {
     (participant) => participant.userId && participant.userId === profile?.id,
   );
   const isScheduled = meetup.status === "scheduled";
+  const isInProgress = meetup.status === "in_progress";
+  const isCompleted = meetup.status === "completed";
+  const isCancelled = meetup.status === "cancelled";
+  const canSendMessage = meetup.isOrganizer
+    ? isScheduled || isInProgress
+    : meetup.joined && isInProgress;
   const startsAtMs = new Date(meetup.startsAt).getTime();
   const attendanceWindowOpen =
     Date.now() >= startsAtMs - 3 * 60 * 60_000 &&
@@ -271,13 +321,27 @@ export default function MeetupDetail() {
           </Text>
         </View>
 
-        {!isScheduled ? (
+        {isCancelled ? (
           <View style={[styles.cancelledCard, { backgroundColor: colors.destructive + "14", borderColor: colors.destructive }]}>
             <Feather name="x-circle" size={20} color={colors.destructive} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.cardTitle, { color: colors.destructive }]}>{flow.cancelled}</Text>
               <Text style={[styles.cardBody, { color: colors.foreground }]}>
                 {meetup.cancellationReason || flow.noCancellationReason}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
+        {!isScheduled && !isCancelled ? (
+          <View style={[styles.statusCard, { backgroundColor: colors.accent + "14", borderColor: colors.accent }]}>
+            <Feather name={isCompleted ? "check-circle" : "play-circle"} size={20} color={colors.accent} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.cardTitle, { color: colors.accent }]}>
+                {isCompleted ? flow.completed : flow.inProgress}
+              </Text>
+              <Text style={[styles.cardBody, { color: colors.foreground }]}>
+                {isCompleted ? flow.completeSuccess : flow.startSuccess}
               </Text>
             </View>
           </View>
@@ -423,6 +487,57 @@ export default function MeetupDetail() {
             }}
             style={{ marginTop: 20 }}
           />
+        ) : null}
+
+        {meetup.isOrganizer && (isScheduled || isInProgress) ? (
+          <View style={[styles.lifecycleCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
+            <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+              {isScheduled ? flow.startTitle : flow.completeTitle}
+            </Text>
+            <Text style={[styles.cardBody, { color: colors.mutedForeground }]}>
+              {isScheduled ? flow.startBody : flow.completeBody}
+            </Text>
+            <PrimaryButton
+              label={isScheduled ? flow.startAction : flow.completeAction}
+              variant={isScheduled ? "primary" : "secondary"}
+              loading={startMeetupMutation.isPending || completeMeetupMutation.isPending}
+              onPress={() => {
+                alert(
+                  isScheduled ? flow.startTitle : flow.completeTitle,
+                  isScheduled ? flow.startBody : flow.completeBody,
+                  [
+                    {
+                      text: isScheduled ? flow.startAction : flow.completeAction,
+                      onPress: () => void (isScheduled ? startMeetup() : completeMeetup()),
+                    },
+                    { text: t.cancel },
+                  ],
+                );
+              }}
+            />
+          </View>
+        ) : null}
+
+        {canSendMessage ? (
+          <View style={[styles.messageCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
+            <Text style={[styles.cardTitle, { color: colors.foreground }]}>{flow.messageTitle}</Text>
+            <TextInput
+              value={messageText}
+              onChangeText={setMessageText}
+              placeholder={flow.messagePlaceholder}
+              placeholderTextColor={colors.mutedForeground}
+              multiline
+              maxLength={500}
+              style={[styles.messageInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
+            />
+            <PrimaryButton
+              label={flow.messageSend}
+              variant="secondary"
+              disabled={!messageText.trim()}
+              loading={sendMessageMutation.isPending}
+              onPress={() => void sendMessage()}
+            />
+          </View>
         ) : null}
 
         {meetup.isOrganizer && isScheduled ? (
@@ -667,6 +782,10 @@ const styles = StyleSheet.create({
   statusHint: { fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 8 },
   cancelCard: { borderRadius: 15, borderWidth: 1, marginTop: 22, padding: 15 },
   reasonInput: { borderRadius: 10, borderWidth: 1, fontFamily: fonts.body, fontSize: 14, marginVertical: 12, minHeight: 70, padding: 11, textAlignVertical: "top" },
+  statusCard: { alignItems: "flex-start", borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 10, marginTop: 16, padding: 14 },
+  lifecycleCard: { borderRadius: 15, borderWidth: 1, marginTop: 22, padding: 15 },
+  messageCard: { borderRadius: 15, borderWidth: 1, marginTop: 22, padding: 15 },
+  messageInput: { borderRadius: 10, borderWidth: 1, fontFamily: fonts.body, fontSize: 14, marginVertical: 12, minHeight: 70, padding: 11, textAlignVertical: "top" },
   safetyCard: { alignItems: "flex-start", borderRadius: 15, borderWidth: 1, flexDirection: "row", gap: 11, marginTop: 22, padding: 15 },
   emergencyRow: { flexDirection: "row", gap: 8, marginTop: 12 },
   emergencyButton: { borderRadius: 9, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
@@ -695,6 +814,23 @@ type FlowCopy = {
   cancelledFailure: string;
   safetyTitle: string;
   safetyBody: string;
+  inProgress: string;
+  completed: string;
+  startTitle: string;
+  startBody: string;
+  startAction: string;
+  startSuccess: string;
+  startFailure: string;
+  completeTitle: string;
+  completeBody: string;
+  completeAction: string;
+  completeSuccess: string;
+  completeFailure: string;
+  messageTitle: string;
+  messagePlaceholder: string;
+  messageSend: string;
+  messageSent: string;
+  messageFailure: string;
 };
 
 const FLOW_COPY: Record<string, FlowCopy> = {
@@ -708,6 +844,13 @@ const FLOW_COPY: Record<string, FlowCopy> = {
     cancelAction: "Treffpunkt absagen", cancelled: "Treffpunkt abgesagt", noCancellationReason: "Kein Grund angegeben.",
     cancelledSuccess: "Die Absage ist gespeichert. Die Teilnehmenden werden informiert.", cancelledFailure: "Der Treffpunkt konnte nicht abgesagt werden.",
     safetyTitle: "Sicherheit", safetyBody: "Bei Gefahr direkt Hilfe rufen. Treffpunkte teilen keine Live-Standorte.",
+    inProgress: "Wanderung läuft", completed: "Wanderung abgeschlossen",
+    startTitle: "Treffpunkt starten", startBody: "Damit beginnt die gemeinsame Wanderung. Alle Teilnehmenden werden informiert.",
+    startAction: "Wanderung starten", startSuccess: "Die Wanderung ist gestartet.", startFailure: "Der Treffpunkt konnte nicht gestartet werden.",
+    completeTitle: "Wanderung abschliessen", completeBody: "Damit wird der Treffpunkt beendet. Weitere Nachrichten sind danach nicht mehr möglich.",
+    completeAction: "Wanderung abschliessen", completeSuccess: "Die Wanderung ist abgeschlossen.", completeFailure: "Der Treffpunkt konnte nicht abgeschlossen werden.",
+    messageTitle: "Nachricht an die Gruppe", messagePlaceholder: "Nachricht für die anderen Teilnehmenden …",
+    messageSend: "Nachricht senden", messageSent: "Die Nachricht wurde an die Gruppe gesendet.", messageFailure: "Die Nachricht konnte nicht gesendet werden.",
   },
   gsw: {
     confirmed: "Debii", arrived: "Aacho", delayed: (m) => `${m} Min. spöter`,
@@ -719,6 +862,13 @@ const FLOW_COPY: Record<string, FlowCopy> = {
     cancelAction: "Treffpunkt absäge", cancelled: "Treffpunkt abgseit", noCancellationReason: "Kei Grund agäh.",
     cancelledSuccess: "D Absag isch gspeicheret. D Teilnehmende werded informiert.", cancelledFailure: "De Treffpunkt het nöd chönne abgseit werde.",
     safetyTitle: "Sicherheit", safetyBody: "Bi Gfahr direkt Hilf rüefe. Treffpünkt teiled kei Live-Standört.",
+    inProgress: "Wanderig lauft", completed: "Wanderig fertig",
+    startTitle: "Treffpunkt starte", startBody: "Damit fangt d gemeinsame Wanderig aa. Alli Teilnehmendi werde informiert.",
+    startAction: "Wanderig starte", startSuccess: "D Wanderig isch gstartet.", startFailure: "De Treffpunkt het nöd chönne gstartet werde.",
+    completeTitle: "Wanderig abschlüsse", completeBody: "Damit wird de Treffpunkt beendet. Nachher sind kei Nachricht meh möglich.",
+    completeAction: "Wanderig abschlüsse", completeSuccess: "D Wanderig isch fertig.", completeFailure: "De Treffpunkt het nöd chönne abgeschlosse werde.",
+    messageTitle: "Nachricht a d Gruppe", messagePlaceholder: "Nachricht für d andere Teilnehmendi …",
+    messageSend: "Nachricht sende", messageSent: "D Nachricht isch a d Gruppe gsendet worde.", messageFailure: "D Nachricht het nöd chönne gsendet werde.",
   },
   fr: {
     confirmed: "Confirmé", arrived: "Arrivé", delayed: (m) => `${m} min de retard`,
@@ -730,6 +880,13 @@ const FLOW_COPY: Record<string, FlowCopy> = {
     cancelAction: "Annuler le rendez-vous", cancelled: "Rendez-vous annulé", noCancellationReason: "Aucun motif indiqué.",
     cancelledSuccess: "L’annulation est enregistrée. Les participants seront informés.", cancelledFailure: "Impossible d’annuler le rendez-vous.",
     safetyTitle: "Sécurité", safetyBody: "En cas de danger, appelez directement les secours. Aucun suivi en direct n’est partagé.",
+    inProgress: "Randonnée en cours", completed: "Randonnée terminée",
+    startTitle: "Démarrer le rendez-vous", startBody: "La randonnée commune commence. Tous les participants seront informés.",
+    startAction: "Démarrer la randonnée", startSuccess: "La randonnée a commencé.", startFailure: "Impossible de démarrer le rendez-vous.",
+    completeTitle: "Terminer la randonnée", completeBody: "Le rendez-vous sera terminé et les nouveaux messages seront désactivés.",
+    completeAction: "Terminer la randonnée", completeSuccess: "La randonnée est terminée.", completeFailure: "Impossible de terminer le rendez-vous.",
+    messageTitle: "Message au groupe", messagePlaceholder: "Message pour les autres participants …",
+    messageSend: "Envoyer le message", messageSent: "Le message a été envoyé au groupe.", messageFailure: "Impossible d’envoyer le message.",
   },
   it: {
     confirmed: "Confermato", arrived: "Arrivato", delayed: (m) => `${m} min di ritardo`,
@@ -741,6 +898,13 @@ const FLOW_COPY: Record<string, FlowCopy> = {
     cancelAction: "Annulla ritrovo", cancelled: "Ritrovo annullato", noCancellationReason: "Nessun motivo indicato.",
     cancelledSuccess: "L’annullamento è salvato. I partecipanti saranno informati.", cancelledFailure: "Impossibile annullare il ritrovo.",
     safetyTitle: "Sicurezza", safetyBody: "In caso di pericolo chiama subito i soccorsi. Nessuna posizione live viene condivisa.",
+    inProgress: "Escursione in corso", completed: "Escursione completata",
+    startTitle: "Avvia ritrovo", startBody: "Inizia l’escursione comune. Tutti i partecipanti saranno informati.",
+    startAction: "Avvia escursione", startSuccess: "L’escursione è iniziata.", startFailure: "Impossibile avviare il ritrovo.",
+    completeTitle: "Completa escursione", completeBody: "Il ritrovo verrà concluso e non saranno più possibili nuovi messaggi.",
+    completeAction: "Completa escursione", completeSuccess: "L’escursione è completata.", completeFailure: "Impossibile completare il ritrovo.",
+    messageTitle: "Messaggio al gruppo", messagePlaceholder: "Messaggio per gli altri partecipanti …",
+    messageSend: "Invia messaggio", messageSent: "Il messaggio è stato inviato al gruppo.", messageFailure: "Impossibile inviare il messaggio.",
   },
   en: {
     confirmed: "Confirmed", arrived: "Arrived", delayed: (m) => `${m} min late`,
@@ -752,6 +916,13 @@ const FLOW_COPY: Record<string, FlowCopy> = {
     cancelAction: "Cancel meetup", cancelled: "Meetup cancelled", noCancellationReason: "No reason provided.",
     cancelledSuccess: "The cancellation is saved. Participants will be notified.", cancelledFailure: "The meetup could not be cancelled.",
     safetyTitle: "Safety", safetyBody: "Call for help immediately in an emergency. Meetups do not share live locations.",
+    inProgress: "Hike in progress", completed: "Hike completed",
+    startTitle: "Start meetup", startBody: "This starts the group hike. All participants will be notified.",
+    startAction: "Start hike", startSuccess: "The hike has started.", startFailure: "The meetup could not be started.",
+    completeTitle: "Complete hike", completeBody: "This ends the meetup. New messages will no longer be possible.",
+    completeAction: "Complete hike", completeSuccess: "The hike is complete.", completeFailure: "The meetup could not be completed.",
+    messageTitle: "Message the group", messagePlaceholder: "Message for the other participants …",
+    messageSend: "Send message", messageSent: "The message was sent to the group.", messageFailure: "The message could not be sent.",
   },
   zh: {
     confirmed: "已确认", arrived: "已到达", delayed: (m) => `迟到 ${m} 分钟`,
@@ -762,6 +933,13 @@ const FLOW_COPY: Record<string, FlowCopy> = {
     cancelPlaceholder: "取消原因", cancelAction: "取消集合", cancelled: "集合已取消", noCancellationReason: "未提供原因。",
     cancelledSuccess: "取消已保存，参与者将收到通知。", cancelledFailure: "无法取消集合。",
     safetyTitle: "安全", safetyBody: "遇到危险请立即呼救。集合不会共享实时位置。",
+    inProgress: "徒步进行中", completed: "徒步已完成",
+    startTitle: "开始集合", startBody: "共同徒步现在开始。所有参与者都会收到通知。",
+    startAction: "开始徒步", startSuccess: "徒步已开始。", startFailure: "无法开始集合。",
+    completeTitle: "完成徒步", completeBody: "集合将结束，之后不能再发送新消息。",
+    completeAction: "完成徒步", completeSuccess: "徒步已完成。", completeFailure: "无法完成集合。",
+    messageTitle: "给小组发消息", messagePlaceholder: "给其他参与者的消息 …",
+    messageSend: "发送消息", messageSent: "消息已发送给小组。", messageFailure: "无法发送消息。",
   },
   es: {
     confirmed: "Confirmado", arrived: "He llegado", delayed: (m) => `${m} min tarde`,
@@ -773,6 +951,13 @@ const FLOW_COPY: Record<string, FlowCopy> = {
     cancelAction: "Cancelar encuentro", cancelled: "Encuentro cancelado", noCancellationReason: "Sin motivo indicado.",
     cancelledSuccess: "La cancelación está guardada. Se informará a los participantes.", cancelledFailure: "No se ha podido cancelar el encuentro.",
     safetyTitle: "Seguridad", safetyBody: "En caso de peligro llama directamente a emergencias. No se comparten ubicaciones en directo.",
+    inProgress: "Caminata en curso", completed: "Caminata completada",
+    startTitle: "Iniciar encuentro", startBody: "Así comienza la caminata conjunta. Se avisará a todos los participantes.",
+    startAction: "Iniciar caminata", startSuccess: "La caminata ha comenzado.", startFailure: "No se ha podido iniciar el encuentro.",
+    completeTitle: "Completar caminata", completeBody: "El encuentro terminará y ya no se podrán enviar mensajes nuevos.",
+    completeAction: "Completar caminata", completeSuccess: "La caminata ha terminado.", completeFailure: "No se ha podido completar el encuentro.",
+    messageTitle: "Mensaje al grupo", messagePlaceholder: "Mensaje para los demás participantes …",
+    messageSend: "Enviar mensaje", messageSent: "El mensaje se ha enviado al grupo.", messageFailure: "No se ha podido enviar el mensaje.",
   },
   pt: {
     confirmed: "Confirmado", arrived: "Cheguei", delayed: (m) => `${m} min atrasado`,
@@ -784,6 +969,13 @@ const FLOW_COPY: Record<string, FlowCopy> = {
     cancelAction: "Cancelar encontro", cancelled: "Encontro cancelado", noCancellationReason: "Nenhum motivo indicado.",
     cancelledSuccess: "O cancelamento foi guardado. Os participantes serão informados.", cancelledFailure: "Não foi possível cancelar o encontro.",
     safetyTitle: "Segurança", safetyBody: "Em caso de perigo, ligue diretamente para a emergência. Não são partilhadas localizações em direto.",
+    inProgress: "Caminhada em curso", completed: "Caminhada concluída",
+    startTitle: "Iniciar encontro", startBody: "A caminhada conjunta começa agora. Todos os participantes serão informados.",
+    startAction: "Iniciar caminhada", startSuccess: "A caminhada começou.", startFailure: "Não foi possível iniciar o encontro.",
+    completeTitle: "Concluir caminhada", completeBody: "O encontro será concluído e não serão possíveis novas mensagens.",
+    completeAction: "Concluir caminhada", completeSuccess: "A caminhada foi concluída.", completeFailure: "Não foi possível concluir o encontro.",
+    messageTitle: "Mensagem para o grupo", messagePlaceholder: "Mensagem para os outros participantes …",
+    messageSend: "Enviar mensagem", messageSent: "A mensagem foi enviada ao grupo.", messageFailure: "Não foi possível enviar a mensagem.",
   },
   ru: {
     confirmed: "Подтверждено", arrived: "Прибыл", delayed: (m) => `Опоздание ${m} мин`,
@@ -795,5 +987,12 @@ const FLOW_COPY: Record<string, FlowCopy> = {
     cancelAction: "Отменить встречу", cancelled: "Встреча отменена", noCancellationReason: "Причина не указана.",
     cancelledSuccess: "Отмена сохранена. Участники получат уведомление.", cancelledFailure: "Не удалось отменить встречу.",
     safetyTitle: "Безопасность", safetyBody: "При опасности немедленно вызовите помощь. Геопозиция в реальном времени не передаётся.",
+    inProgress: "Поход идёт", completed: "Поход завершён",
+    startTitle: "Начать встречу", startBody: "Совместный поход начинается. Все участники получат уведомление.",
+    startAction: "Начать поход", startSuccess: "Поход начался.", startFailure: "Не удалось начать встречу.",
+    completeTitle: "Завершить поход", completeBody: "Встреча завершится, и новые сообщения больше нельзя будет отправлять.",
+    completeAction: "Завершить поход", completeSuccess: "Поход завершён.", completeFailure: "Не удалось завершить встречу.",
+    messageTitle: "Сообщение группе", messagePlaceholder: "Сообщение для других участников …",
+    messageSend: "Отправить сообщение", messageSent: "Сообщение отправлено группе.", messageFailure: "Не удалось отправить сообщение.",
   },
 };

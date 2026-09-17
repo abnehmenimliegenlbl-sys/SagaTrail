@@ -6,12 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type MeetupStatus = typeof MeetupStatus[keyof typeof MeetupStatus];
+export type MeetupLifecycleResponseStatus = typeof MeetupLifecycleResponseStatus[keyof typeof MeetupLifecycleResponseStatus];
 
 
-export const MeetupStatus = {
-  scheduled: 'scheduled',
+export const MeetupLifecycleResponseStatus = {
   in_progress: 'in_progress',
   completed: 'completed',
-  cancelled: 'cancelled',
 } as const;

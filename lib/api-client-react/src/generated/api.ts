@@ -64,7 +64,10 @@ import type {
   MeetupAttendanceResponse,
   MeetupDetail,
   MeetupJoinResponse,
+  MeetupLifecycleResponse,
   MeetupListResponse,
+  MeetupMessageRequest,
+  MeetupMessageResponse,
   MeetupReportRequest,
   MeetupShareResponse,
   NarrationInput,
@@ -3889,6 +3892,217 @@ export const useCancelMeetup = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCancelMeetupMutationOptions(options));
+    }
+
+export const getStartMeetupUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/start`
+}
+
+/**
+ * @summary Treffpunkt starten
+ */
+export const startMeetup = async (id: string, options?: RequestInit): Promise<MeetupLifecycleResponse> => {
+
+  return customFetch<MeetupLifecycleResponse>(getStartMeetupUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getStartMeetupMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startMeetup>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startMeetup>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['startMeetup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startMeetup>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  startMeetup(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartMeetupMutationResult = NonNullable<Awaited<ReturnType<typeof startMeetup>>>
+
+    export type StartMeetupMutationError = ErrorType<void>
+
+    /**
+ * @summary Treffpunkt starten
+ */
+export const useStartMeetup = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startMeetup>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startMeetup>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getStartMeetupMutationOptions(options));
+    }
+
+export const getCompleteMeetupUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/complete`
+}
+
+/**
+ * @summary Treffpunkt abschliessen
+ */
+export const completeMeetup = async (id: string, options?: RequestInit): Promise<MeetupLifecycleResponse> => {
+
+  return customFetch<MeetupLifecycleResponse>(getCompleteMeetupUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCompleteMeetupMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeMeetup>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeMeetup>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['completeMeetup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeMeetup>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  completeMeetup(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteMeetupMutationResult = NonNullable<Awaited<ReturnType<typeof completeMeetup>>>
+
+    export type CompleteMeetupMutationError = ErrorType<void>
+
+    /**
+ * @summary Treffpunkt abschliessen
+ */
+export const useCompleteMeetup = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeMeetup>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof completeMeetup>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getCompleteMeetupMutationOptions(options));
+    }
+
+export const getSendMeetupMessageUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/messages`
+}
+
+/**
+ * @summary Nachricht an Treffpunktteilnehmer senden
+ */
+export const sendMeetupMessage = async (id: string,
+    meetupMessageRequest: MeetupMessageRequest, options?: RequestInit): Promise<MeetupMessageResponse> => {
+
+  return customFetch<MeetupMessageResponse>(getSendMeetupMessageUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(meetupMessageRequest)
+  }
+);}
+
+
+
+
+export const getSendMeetupMessageMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendMeetupMessage>>, TError,{id: string;data: BodyType<MeetupMessageRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendMeetupMessage>>, TError,{id: string;data: BodyType<MeetupMessageRequest>}, TContext> => {
+
+const mutationKey = ['sendMeetupMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendMeetupMessage>>, {id: string;data: BodyType<MeetupMessageRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  sendMeetupMessage(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendMeetupMessageMutationResult = NonNullable<Awaited<ReturnType<typeof sendMeetupMessage>>>
+    export type SendMeetupMessageMutationBody = BodyType<MeetupMessageRequest>
+    export type SendMeetupMessageMutationError = ErrorType<void>
+
+    /**
+ * @summary Nachricht an Treffpunktteilnehmer senden
+ */
+export const useSendMeetupMessage = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendMeetupMessage>>, TError,{id: string;data: BodyType<MeetupMessageRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof sendMeetupMessage>>,
+        TError,
+        {id: string;data: BodyType<MeetupMessageRequest>},
+        TContext
+      > => {
+      return useMutation(getSendMeetupMessageMutationOptions(options));
     }
 
 export const getJoinMeetupUrl = (id: string,) => {
