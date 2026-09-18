@@ -43,10 +43,12 @@ export function getRouteThemesFromPois(
   const cached = routeThemeCache.get(route.id);
   if (cached) return cached;
 
-  // Der Server speichert die Themenbelege zusammen mit dem Prüfzeitpunkt.
-  // Ein leeres Array ist dann ein belastbares "kein Treffer" und darf nicht
-  // durch eine teure, flüchtige Live-Suche überschrieben werden.
-  if (route.qualityCheckedAt && Array.isArray(route.themeKeys)) {
+  // Die Routen-Endpunkte liefern die geprüften Themenbelege. Ein leeres Array
+  // ist ein belastbares "kein Treffer" und darf nicht durch eine teure,
+  // flüchtige Live-Suche überschrieben werden. qualityCheckedAt ist nicht in
+  // jedem Routen-Endpunkt Teil der Antwort, daher ist themeKeys selbst das
+  // maßgebliche Vorhandensein-Signal.
+  if (Array.isArray(route.themeKeys)) {
     const themes = route.themeKeys.filter(
       (key): key is RouteThemeKey => ROUTE_THEME_KEYS.includes(key as RouteThemeKey),
     );
@@ -77,7 +79,13 @@ export async function getRouteThemes(route: HikingRoute): Promise<RouteThemeKey[
 export async function loadThemePoisForRoutes(
   routes: HikingRoute[],
 ): Promise<Poi[]> {
-  const points = routes.flatMap((route) =>
+  // Bereits serverseitig geprüfte Routen brauchen keine Live-POI-Abfrage.
+  // Neben der unnötigen Last war eine fehlgeschlagene Sammelabfrage sonst
+  // ausreichend, um alle Themenrouten eines Kantons zu verwerfen.
+  const routesNeedingPois = routes.filter((route) => !Array.isArray(route.themeKeys));
+  if (routesNeedingPois.length === 0) return [];
+
+  const points = routesNeedingPois.flatMap((route) =>
     route.geometry && route.geometry.length > 1
       ? route.geometry.map(([lat, lng]) => ({ lat, lng }))
       : [route.coordinates],
