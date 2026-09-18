@@ -85,6 +85,8 @@ export function PeakCameraOverlay({
   const [arPeaks, setArPeaks] = useState<readonly PanoramaGipfel[]>([]);
   const lockPulse = useRef(new Animated.Value(0)).current;
   const cameraFrameRef = useRef<View>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const arStateRef = useRef({
     visible,
     arEnabled,
@@ -115,8 +117,8 @@ export function PeakCameraOverlay({
     setShowPeaks(false);
     setTrackingState("unavailable");
     setArPeaks([]);
-    onClose();
-  }, [onClose]);
+    onCloseRef.current();
+  }, []);
 
   const visiblePeaks =
     !showPeaks || heading == null
@@ -129,17 +131,22 @@ export function PeakCameraOverlay({
       peak.relativeBearingDeg != null &&
       Math.abs(peak.relativeBearingDeg) <= 18,
   );
-  const selectablePeaks = showPeaks
-    ? arEnabled
-      ? arPeaks
-      : visiblePeaks
+  const trackingOverlayReady = trackingState === "ready";
+  const selectablePeaks = trackingOverlayReady
+    ? showPeaks
+      ? arEnabled
+        ? arPeaks
+        : visiblePeaks
+      : []
     : [];
   const targetPeak =
     selectablePeaks.find((peak) => peak.id === selectedPeakId) ??
-    focusedPeak ??
+    (trackingOverlayReady ? focusedPeak : undefined) ??
     selectablePeaks[0];
   const status =
-    visiblePeaks.length > 0 ? `${strings.detected}: ${targetPeak?.name ?? ""}` : strings.noPeaks;
+    trackingOverlayReady && visiblePeaks.length > 0
+      ? `${strings.detected}: ${targetPeak?.name ?? ""}`
+      : strings.noPeaks;
   const routeGuidanceReady =
     observerPosition != null &&
     heading != null &&
@@ -149,7 +156,19 @@ export function PeakCameraOverlay({
       ? strings.noGps
       : heading == null
         ? strings.needCompass
-        : strings.arUnavailable;
+        : trackingState === "initializing"
+          ? strings.arTrackingStarting
+          : trackingState === "limited"
+            ? strings.arTrackingLimited
+            : strings.arUnavailable;
+  const routePauseDetail =
+    observerPosition == null
+      ? strings.noGps
+      : heading == null
+        ? strings.needCompass
+        : trackingState === "unavailable"
+          ? strings.arUnavailable
+          : strings.arTrackingPaused;
   const handleTrackingStateChange = useCallback(
     (state: "initializing" | "ready" | "limited" | "unavailable") => {
       setTrackingState(state);
@@ -456,6 +475,7 @@ export function PeakCameraOverlay({
         )}
         {contentMounted &&
           !arEnabled &&
+          trackingOverlayReady &&
           visiblePeaks.map((peak, index) => (
             <Pressable
               key={peak.id}
@@ -572,9 +592,7 @@ export function PeakCameraOverlay({
                 {routePauseReason}
               </Text>
               <Text style={[styles.routePausedDetail, { color: colors.photoScrimMuted }]}>
-                {trackingState === "ready"
-                  ? strings.needCompass
-                  : strings.arUnavailable}
+                {routePauseDetail}
               </Text>
             </View>
           </View>

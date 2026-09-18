@@ -595,6 +595,7 @@ function TerrainHologram({
     () => buildRouteDirectionArrows(routeSegments),
     [routeSegments],
   );
+  const canRenderRoute = routeProjectionReady && trackingReady;
 
   useEffect(() => {
     peakArLog("route overlay recomputed", {
@@ -667,7 +668,7 @@ function TerrainHologram({
                 ? TERRAIN_ROUTE_MATERIALS[segment.band]
                 : TERRAIN_ROUTE_MATERIALS.green
             }
-            opacity={segment ? 0.62 : 0}
+            opacity={segment && canRenderRoute ? 0.62 : 0}
             renderingOrder={24}
             viroTag={`terrain-route-line-slot-${index}`}
           />
@@ -682,7 +683,7 @@ function TerrainHologram({
             key={`terrain-route-direction-arrow-slot-${index}`}
             position={[
               position[0],
-              arrow
+              arrow && canRenderRoute
                 ? AR_ROUTE_GROUND_OFFSET +
                   position[1] +
                   AR_ROUTE_ARROW_ELEVATION
@@ -692,7 +693,7 @@ function TerrainHologram({
             rotation={[0, arrow?.rotationY ?? 0, 0]}
             transformBehaviors="billboard"
             renderingOrder={28}
-            opacity={arrow ? 0.94 : 0}
+            opacity={arrow && canRenderRoute ? 0.94 : 0}
             viroTag={`terrain-route-direction-arrow-slot-${index}`}
           >
             <ViroPolyline
@@ -776,9 +777,11 @@ function TerrainHologram({
 function TerrainSurface({
   model,
   worldOffset,
+  trackingReady,
 }: {
   model: LocalTerrainModel | null | undefined;
   worldOffset: [number, number, number];
+  trackingReady: boolean;
 }) {
   const [textureMaterial, setTextureMaterial] = useState<string | null>(null);
   const mesh = useMemo<LocalTerrainMesh | null>(
@@ -867,7 +870,9 @@ function TerrainSurface({
       texcoords={mesh.texcoords}
       triangleIndices={mesh.triangleIndices}
       materials={textureMaterial ?? TERRAIN_SURFACE_MATERIAL}
-      opacity={textureMaterial ? 0.92 : 0.32}
+      // Never show a floating terrain graphic before ARKit has delivered a
+      // stable tracking state. A camera image alone is not an anchor.
+      opacity={trackingReady ? (textureMaterial ? 0.92 : 0.32) : 0}
       position={[
         worldOffset[0],
         AR_ROUTE_GROUND_OFFSET + worldOffset[1],
@@ -991,6 +996,16 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     routeOriginPosition ?? observerPosition,
     observerPosition,
   );
+  const handleNativeTrackingUpdated = useCallback(
+    (state: ViroTrackingState, reason: ViroTrackingReason) => {
+      peakArLog("native tracking callback received", {
+        state,
+        reason,
+      });
+      onTrackingUpdated?.(state, reason);
+    },
+    [onTrackingUpdated],
+  );
 
   useEffect(() => {
     peakArLog("Viro scene mounted", {
@@ -1061,11 +1076,15 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
         });
         onError?.();
       }}
-      onTrackingUpdated={onTrackingUpdated}
+      onTrackingUpdated={handleNativeTrackingUpdated}
     >
       {/* The model is observer-centred and uses geographic bearings. With
           GravityAndHeading, heading 0 is the stable geographic Viro frame. */}
-      <TerrainSurface model={terrainModel} worldOffset={worldOffset} />
+      <TerrainSurface
+        model={terrainModel}
+        worldOffset={worldOffset}
+        trackingReady={trackingReady}
+      />
       <TerrainHologram
         model={terrainModel}
         routeGeometry={routeGeometry}
@@ -1076,7 +1095,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
         compassReady={compassReady}
       />
       {Array.from({ length: MAX_AR_PEAK_SLOTS }, (_, slotIndex) => {
-        const peak = showPeaks && slotIndex < MAX_VISIBLE_AR_PEAKS
+          const peak = trackingReady && showPeaks && slotIndex < MAX_VISIBLE_AR_PEAKS
           ? peaks[slotIndex] ?? null
           : null;
         const position: [number, number, number] = peak
@@ -1114,7 +1133,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
             transformBehaviors="billboard"
             renderingOrder={100}
             onClick={
-              peak
+              peak && trackingReady
                 ? () => {
                     peakArLog("peak marker pressed", {
                       peakId: peak.id,
@@ -1142,53 +1161,53 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
               shadowCastingBitMask={0}
             />
             {/* Thin pointer: its lower edge is the exact summit target. */}
-            <ViroBox
-              position={[0, 0.2, 0]}
-              width={0.035}
-              height={0.4}
-              length={0.035}
+              <ViroBox
+                position={[0, 0.14, 0]}
+                width={0.025}
+                height={0.28}
+                length={0.025}
               materials={PEAK_RED_MATERIAL}
               shadowCastingBitMask={0}
             />
 
-            {/* Red outer capsule, lifted above the pointer. */}
+            {/* Compact pin: the old tall capsule obscured the camera view. */}
             <ViroBox
-              position={[0, 1.93, 0]}
-              width={0.4}
-              height={2.6}
-              length={0.08}
+              position={[0, 0.62, 0]}
+              width={0.26}
+              height={0.78}
+              length={0.06}
               materials={PEAK_RED_MATERIAL}
               shadowCastingBitMask={0}
             />
             <ViroSphere
-              position={[0, 0.63, 0]}
-              radius={0.2}
+              position={[0, 0.23, 0]}
+              radius={0.13}
               widthSegmentCount={12}
               heightSegmentCount={8}
               materials={PEAK_RED_MATERIAL}
               shadowCastingBitMask={0}
             />
             <ViroSphere
-              position={[0, 3.23, 0]}
-              radius={0.2}
+              position={[0, 1.01, 0]}
+              radius={0.13}
               widthSegmentCount={12}
               heightSegmentCount={8}
               materials={PEAK_RED_MATERIAL}
               shadowCastingBitMask={0}
             />
 
-            {/* White inset body leaves a narrow red outline and red height cap. */}
+            {/* White inset keeps the pin readable against bright terrain. */}
             <ViroBox
-              position={[0, 1.72, 0.015]}
-              width={0.36}
-              height={2.12}
-              length={0.09}
+              position={[0, 0.61, 0.015]}
+              width={0.22}
+              height={0.62}
+              length={0.07}
               materials={PEAK_WHITE_MATERIAL}
               shadowCastingBitMask={0}
             />
             <ViroSphere
-              position={[0, 0.66, 0.015]}
-              radius={0.18}
+              position={[0, 0.28, 0.015]}
+              radius={0.11}
               widthSegmentCount={12}
               heightSegmentCount={8}
               materials={PEAK_WHITE_MATERIAL}
@@ -1197,10 +1216,9 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 
             <ViroText
               text={peak?.name.toUpperCase() ?? ""}
-              position={[0, 1.72, 0.075]}
-              rotation={[0, 0, -90]}
-              width={1.92}
-              height={0.26}
+              position={[0, 1.27, 0.075]}
+              width={2.2}
+              height={0.24}
               color={PEAK_RED}
               maxLines={1}
               textClipMode="ClipToBounds"
@@ -1219,10 +1237,9 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
                   ? "—"
                   : `${Math.round(peak.elevationM)}m`
               }
-              position={[0, 3.12, 0.075]}
-              rotation={[0, 0, -90]}
-              width={0.82}
-              height={0.22}
+              position={[0, 1.06, 0.075]}
+              width={0.68}
+              height={0.18}
               color={PEAK_WHITE}
               maxLines={1}
               textClipMode="ClipToBounds"
@@ -1236,10 +1253,9 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
             />
             <ViroText
               text={peak && terrainVisibility === "unknown" ? "?" : ""}
-              position={[0, 3.42, 0.075]}
-              rotation={[0, 0, -90]}
-              width={0.28}
-              height={0.22}
+              position={[0, 1.23, 0.075]}
+              width={0.18}
+              height={0.18}
               color={PEAK_RED}
               maxLines={1}
               textClipMode="ClipToBounds"
@@ -1568,6 +1584,19 @@ export function PeakArNavigator({
     ],
   );
 
+  const handleNavigatorRef = useCallback((instance: unknown) => {
+    navigatorRef.current = instance as typeof navigatorRef.current;
+    peakArLog(
+      instance
+        ? "Viro navigator ref attached"
+        : "Viro navigator ref detached",
+      {
+        supportState,
+        peakCount: peaks.length,
+      },
+    );
+  }, [peaks.length, supportState]);
+
   // Do not create the native Viro surface until ARKit/ARCore has confirmed
   // that this device can run it. Unsupported devices otherwise fail during
   // native camera-session creation, before Viro can report onError.
@@ -1575,13 +1604,7 @@ export function PeakArNavigator({
 
   return (
     <ViroARSceneNavigator
-      ref={(instance) => {
-        navigatorRef.current = instance as typeof navigatorRef.current;
-        peakArLog(instance ? "Viro navigator ref attached" : "Viro navigator ref detached", {
-          supportState,
-          peakCount: peaks.length,
-        });
-      }}
+      ref={handleNavigatorRef}
       style={StyleSheet.absoluteFill}
       initialScene={initialScene}
       viroAppProps={viroAppProps}

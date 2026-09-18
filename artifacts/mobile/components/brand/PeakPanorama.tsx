@@ -59,6 +59,9 @@ export interface PeakPanoramaStrings {
   capture: string;
   cameraPermission: string;
   arUnavailable: string;
+  arTrackingStarting: string;
+  arTrackingLimited: string;
+  arTrackingPaused: string;
   heightUnknown: string;
   terrainModel: string;
   terrainModelDetail: (radius: string) => string;
