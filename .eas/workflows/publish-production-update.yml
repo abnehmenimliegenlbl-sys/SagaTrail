@@ -9,14 +9,12 @@ defaults:
     pnpm: 10.26.1
 
 jobs:
-  verify_ota_source:
-    name: Verify OTA source integrity
-    steps:
-      - name: Verify committed mobile source files
-        run: node artifacts/mobile/scripts/verify-ota-source-integrity.mjs
   publish_production_update:
     name: Publish production OTA update
-    needs: [verify_ota_source]
     type: update
+    hooks:
+      before_install_node_modules:
+        - name: Verify committed mobile source files
+          run: node scripts/verify-ota-source-integrity.mjs
     params:
       branch: production
