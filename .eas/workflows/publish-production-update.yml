@@ -5,6 +5,8 @@ on:
     branches: ['main']
 
 defaults:
+  tools:
+    pnpm: 10.26.1
   run:
     working_directory: ./artifacts/mobile
 
