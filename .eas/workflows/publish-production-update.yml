@@ -13,7 +13,7 @@ jobs:
     name: Publish production OTA update
     type: update
     hooks:
-      before_install_node_modules:
+      before_update:
         - name: Verify committed mobile source files
           run: node scripts/verify-ota-source-integrity.mjs
     params:
