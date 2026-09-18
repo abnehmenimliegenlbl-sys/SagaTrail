@@ -41,3 +41,9 @@ telling the user to restart the app.
 **Why:** Device logs showed the embedded update ID, `isUpdateAvailable: true`, and an incomplete download while new feature behavior was being tested.
 
 **How to apply:** Log the running update ID. Auto-reload when `useUpdates().isUpdatePending` becomes true, and give future production binaries a short nonzero fallback timeout. Do not call an OTA fix active until runtime logs show its update ID.
+
+**GitHub transfer constraint:** Large files uploaded through the GitHub integration must be read as direct filesystem bytes and encoded inside the integration request; do not pipe base64 through shell output.
+
+**Why:** The workspace shell-output path can silently truncate output around the 64 KB range. A seemingly successful Git tree commit can therefore store only a tail fragment, causing a later remote Metro export to fail with an unrelated syntax error.
+
+**How to apply:** For files larger than roughly 64 KB, use the Node filesystem inside the integration call, create the blob with `encoding: "base64"`, and verify the remote byte length or leading bytes before starting the OTA workflow.
