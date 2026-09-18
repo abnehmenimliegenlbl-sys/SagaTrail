@@ -11,6 +11,7 @@ import { Platform } from "react-native";
 export function getRuntimeDiagnostics() {
   return {
     platform: Platform.OS,
+    osVersion: String(Platform.Version),
     nativeApplicationVersion: Application.nativeApplicationVersion ?? null,
     nativeBuildVersion: Application.nativeBuildVersion ?? null,
     expoConfigVersion: Constants.expoConfig?.version ?? null,

@@ -68,12 +68,7 @@ function peakArErrorSummary(error: unknown): Record<string, unknown> {
 }
 
 function peakArPositionSummary(position: LatLng | null | undefined) {
-  return position
-    ? {
-        lat: Number.isFinite(position.lat) ? Number(position.lat.toFixed(6)) : null,
-        lng: Number.isFinite(position.lng) ? Number(position.lng.toFixed(6)) : null,
-      }
-    : null;
+  return position ? { available: true } : null;
 }
 
 function peakArWorldOffsetSummary(offset: TerrainVertex) {
@@ -138,6 +133,15 @@ const FINISH_FLAG_CENTER_Y =
   FINISH_FLAG_POLE_HEIGHT - FINISH_FLAG_HEIGHT / 2;
 const MIN_FINISH_FLAG_WIDTH_PX = 30;
 const ESTIMATED_CAMERA_HORIZONTAL_FOV_RAD = (60 * Math.PI) / 180;
+const NATIVE_TRACKING_LOG_INTERVAL_MS = 1500;
+const NATIVE_TRACKING_STARTUP_TIMEOUT_MS = 9000;
+
+let peakArSessionSequence = 0;
+
+function createPeakArSessionId(): string {
+  peakArSessionSequence += 1;
+  return `ar-${Date.now()}-${peakArSessionSequence}`;
+}
 
 ViroMaterials.createMaterials({
   [PEAK_RED_MATERIAL]: {
@@ -221,6 +225,9 @@ interface PeakArSceneProps {
 }
 
 interface PeakArSceneAppProps {
+  debugSessionId?: string;
+  onSceneMounted?: () => number;
+  onSceneUnmounted?: () => number;
   peaks: readonly PanoramaGipfel[];
   showPeaks?: boolean;
   trackingReady?: boolean;
@@ -973,6 +980,9 @@ function finishFlagScale(
 
 function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
   const {
+    debugSessionId = "unknown",
+    onSceneMounted,
+    onSceneUnmounted,
     peaks = [],
     showPeaks = true,
     trackingReady = false,
@@ -996,26 +1006,81 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     routeOriginPosition ?? observerPosition,
     observerPosition,
   );
+  const trackingCallbackCountRef = useRef(0);
+  const firstTrackingCallbackAtRef = useRef<number | null>(null);
+  const firstReadyAtRef = useRef<number | null>(null);
+  const sceneMountedAtRef = useRef(Date.now());
+  const lastNativeTrackingLogAtRef = useRef(0);
+  const previousNativeStateRef = useRef<ViroTrackingState | null>(null);
+  const previousNativeReasonRef = useRef<ViroTrackingReason | null>(null);
+  const viroErrorCountRef = useRef(0);
   const handleNativeTrackingUpdated = useCallback(
     (state: ViroTrackingState, reason: ViroTrackingReason) => {
-      peakArLog("native tracking callback received", {
-        state,
-        reason,
-      });
+      const now = Date.now();
+      trackingCallbackCountRef.current += 1;
+      if (firstTrackingCallbackAtRef.current == null) {
+        firstTrackingCallbackAtRef.current = now;
+      }
+      if (
+        state === ViroTrackingStateConstants.TRACKING_NORMAL &&
+        firstReadyAtRef.current == null
+      ) {
+        firstReadyAtRef.current = now;
+      }
+      const stateChanged =
+        previousNativeStateRef.current !== state ||
+        previousNativeReasonRef.current !== reason;
+      const shouldLog =
+        stateChanged ||
+        now - lastNativeTrackingLogAtRef.current >=
+          NATIVE_TRACKING_LOG_INTERVAL_MS;
+      if (shouldLog) {
+        lastNativeTrackingLogAtRef.current = now;
+        peakArLog("native tracking callback received", {
+          sessionId: debugSessionId,
+          state,
+          reason,
+          callbackCount: trackingCallbackCountRef.current,
+          firstCallbackLatencyMs:
+            firstTrackingCallbackAtRef.current == null
+              ? null
+              : firstTrackingCallbackAtRef.current - sceneMountedAtRef.current,
+          readyLatencyMs:
+            firstReadyAtRef.current == null
+              ? null
+              : firstReadyAtRef.current - sceneMountedAtRef.current,
+          throttled: !stateChanged,
+        });
+      }
+      previousNativeStateRef.current = state;
+      previousNativeReasonRef.current = reason;
       onTrackingUpdated?.(state, reason);
     },
-    [onTrackingUpdated],
+    [debugSessionId, onTrackingUpdated],
   );
 
   useEffect(() => {
+    const sceneMountCount = onSceneMounted?.() ?? null;
+    const sceneMountedAt = Date.now();
+    sceneMountedAtRef.current = sceneMountedAt;
     peakArLog("Viro scene mounted", {
+      sessionId: debugSessionId,
+      sceneMountCount,
       hasNavigatorProps: Boolean(sceneNavigator?.viroAppProps),
       runtime: getRuntimeDiagnostics(),
     });
     return () => {
-      peakArLog("Viro scene unmounted");
+      const sceneUnmountCount = onSceneUnmounted?.() ?? null;
+      peakArLog("Viro scene unmounted", {
+        sessionId: debugSessionId,
+        sceneMountCount,
+        sceneUnmountCount,
+        sceneLifetimeMs: Date.now() - sceneMountedAt,
+        nativeTrackingCallbackCount: trackingCallbackCountRef.current,
+        viroErrorCount: viroErrorCountRef.current,
+      });
     };
-  }, []);
+  }, [debugSessionId, onSceneMounted, onSceneUnmounted]);
 
   useEffect(() => {
     let validPeakCount = 0;
@@ -1068,7 +1133,11 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
   return (
     <ViroARScene
       onError={() => {
+        viroErrorCountRef.current += 1;
         peakArLog("Viro scene error", {
+          sessionId: debugSessionId,
+          viroErrorCount: viroErrorCountRef.current,
+          nativeTrackingCallbackCount: trackingCallbackCountRef.current,
           peakCount: peaks.length,
           routePointCount: routeGeometry?.length ?? 0,
           hasTerrainModel: Boolean(terrainModel),
@@ -1292,6 +1361,26 @@ export function PeakArNavigator({
   onTrackingStateChange,
   onError,
 }: PeakArNavigatorProps) {
+  const sessionIdRef = useRef<string | null>(null);
+  if (sessionIdRef.current == null) {
+    sessionIdRef.current = createPeakArSessionId();
+  }
+  const sessionId = sessionIdRef.current;
+  const navigatorMountedAtRef = useRef(Date.now());
+  const navigatorMountCountRef = useRef(0);
+  const sceneMountCountRef = useRef(0);
+  const sceneUnmountCountRef = useRef(0);
+  const supportCheckCountRef = useRef(0);
+  const nativeTrackingCallbackCountRef = useRef(0);
+  const firstNativeTrackingCallbackAtRef = useRef<number | null>(null);
+  const firstReadyAtRef = useRef<number | null>(null);
+  const startupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navigatorRefEventCountRef = useRef(0);
+  const supportStateRef = useRef<"checking" | "supported" | "unsupported">(
+    "checking",
+  );
+  const peakCountRef = useRef(peaks.length);
+  peakCountRef.current = peaks.length;
   const [supportState, setSupportState] = useState<
     "checking" | "supported" | "unsupported"
   >("checking");
@@ -1310,9 +1399,48 @@ export function PeakArNavigator({
   const trackingReasonRef = useRef<ViroTrackingReason | null>(null);
   const trackingResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTrackingResetAtRef = useRef(0);
+  supportStateRef.current = supportState;
+
+  const clearStartupTimeout = useCallback(() => {
+    if (startupTimeoutRef.current) {
+      clearTimeout(startupTimeoutRef.current);
+      startupTimeoutRef.current = null;
+    }
+  }, []);
+
+  const clearTrackingResetTimer = useCallback(() => {
+    if (trackingResetTimerRef.current) {
+      clearTimeout(trackingResetTimerRef.current);
+      trackingResetTimerRef.current = null;
+    }
+  }, []);
+
+  const handleSceneMounted = useCallback(() => {
+    sceneMountCountRef.current += 1;
+    peakArLog("Viro scene mount counted", {
+      sessionId,
+      sceneMountCount: sceneMountCountRef.current,
+      navigatorMountCount: navigatorMountCountRef.current,
+    });
+    return sceneMountCountRef.current;
+  }, [sessionId]);
+
+  const handleSceneUnmounted = useCallback(() => {
+    sceneUnmountCountRef.current += 1;
+    peakArLog("Viro scene unmount counted", {
+      sessionId,
+      sceneUnmountCount: sceneUnmountCountRef.current,
+      nativeTrackingCallbackCount: nativeTrackingCallbackCountRef.current,
+    });
+    return sceneUnmountCountRef.current;
+  }, [sessionId]);
 
   useEffect(() => {
+    navigatorMountCountRef.current += 1;
     peakArLog("AR navigator mounted", {
+      sessionId,
+      navigatorMountCount: navigatorMountCountRef.current,
+      navigatorMountedAt: new Date(navigatorMountedAtRef.current).toISOString(),
       runtime: getRuntimeDiagnostics(),
       peakCount: peaks.length,
       routePointCount: routeGeometry?.length ?? 0,
@@ -1330,12 +1458,20 @@ export function PeakArNavigator({
     });
     return () => {
       clearTrackingResetTimer();
+      clearStartupTimeout();
       peakArLog("AR navigator unmounted", {
+        sessionId,
+        navigatorMountCount: navigatorMountCountRef.current,
+        navigatorLifetimeMs: Date.now() - navigatorMountedAtRef.current,
+        supportCheckCount: supportCheckCountRef.current,
+        sceneMountCount: sceneMountCountRef.current,
+        sceneUnmountCount: sceneUnmountCountRef.current,
+        nativeTrackingCallbackCount: nativeTrackingCallbackCountRef.current,
         lastTrackingState: trackingStateRef.current,
         lastTrackingReason: trackingReasonRef.current,
       });
     };
-  }, []);
+  }, [clearStartupTimeout, clearTrackingResetTimer, sessionId]);
 
   useEffect(() => {
     peakArLog("AR navigator props updated", {
@@ -1353,6 +1489,12 @@ export function PeakArNavigator({
       mapLayer,
       compassReady,
       supportState,
+      sessionId,
+      navigatorMountCount: navigatorMountCountRef.current,
+      sceneMountCount: sceneMountCountRef.current,
+      sceneUnmountCount: sceneUnmountCountRef.current,
+      supportCheckCount: supportCheckCountRef.current,
+      nativeTrackingCallbackCount: nativeTrackingCallbackCountRef.current,
       worldOriginPosition: peakArPositionSummary(worldOriginPosition),
     });
   }, [
@@ -1385,15 +1527,20 @@ export function PeakArNavigator({
     });
   }, [observerPosition, routeGeometry, worldOriginPosition]);
 
-  const clearTrackingResetTimer = useCallback(() => {
-    if (trackingResetTimerRef.current) {
-      clearTimeout(trackingResetTimerRef.current);
-      trackingResetTimerRef.current = null;
-    }
-  }, []);
-
   const handleTrackingUpdated = useCallback(
     (state: ViroTrackingState, reason: ViroTrackingReason) => {
+      const now = Date.now();
+      nativeTrackingCallbackCountRef.current += 1;
+      if (firstNativeTrackingCallbackAtRef.current == null) {
+        firstNativeTrackingCallbackAtRef.current = now;
+      }
+      if (
+        state === ViroTrackingStateConstants.TRACKING_NORMAL &&
+        firstReadyAtRef.current == null
+      ) {
+        firstReadyAtRef.current = now;
+      }
+      clearStartupTimeout();
       const changed =
         trackingStateRef.current !== state ||
         trackingReasonRef.current !== reason;
@@ -1410,8 +1557,19 @@ export function PeakArNavigator({
       if (changed) {
         onTrackingStateChange?.(nextTrackingState);
         peakArLog("tracking state changed", {
+          sessionId,
           state,
           reason,
+          callbackCount: nativeTrackingCallbackCountRef.current,
+          firstCallbackLatencyMs:
+            firstNativeTrackingCallbackAtRef.current == null
+              ? null
+              : firstNativeTrackingCallbackAtRef.current -
+                navigatorMountedAtRef.current,
+          readyLatencyMs:
+            firstReadyAtRef.current == null
+              ? null
+              : firstReadyAtRef.current - navigatorMountedAtRef.current,
           needsRecovery:
             state === ViroTrackingStateConstants.TRACKING_UNAVAILABLE ||
             (state === ViroTrackingStateConstants.TRACKING_LIMITED &&
@@ -1476,23 +1634,36 @@ export function PeakArNavigator({
         });
       }, delayMs);
     },
-    [clearTrackingResetTimer, onTrackingStateChange],
+    [clearStartupTimeout, clearTrackingResetTimer, onTrackingStateChange, sessionId],
   );
 
   useEffect(() => {
+    supportCheckCountRef.current += 1;
+    const supportCheckNumber = supportCheckCountRef.current;
+    const supportCheckStartedAt = Date.now();
     onTrackingStateChange?.("initializing");
-    peakArLog("AR support check started");
+    peakArLog("AR support check started", {
+      sessionId,
+      supportCheckCount: supportCheckNumber,
+    });
     let cancelled = false;
 
     isARSupportedOnDevice()
       .then(({ isARSupported }) => {
+        const durationMs = Date.now() - supportCheckStartedAt;
         if (cancelled) {
           peakArLog("AR support result ignored after unmount", {
+            sessionId,
+            supportCheckCount: supportCheckNumber,
+            durationMs,
             isARSupported,
           });
           return;
         }
         peakArLog("AR support check completed", {
+          sessionId,
+          supportCheckCount: supportCheckNumber,
+          durationMs,
           isARSupported,
         });
         if (isARSupported) {
@@ -1506,13 +1677,20 @@ export function PeakArNavigator({
         }
       })
       .catch((error) => {
+        const durationMs = Date.now() - supportCheckStartedAt;
         if (cancelled) {
           peakArLog("AR support check error ignored after unmount", {
+            sessionId,
+            supportCheckCount: supportCheckNumber,
+            durationMs,
             error: peakArErrorSummary(error),
           });
           return;
         }
         peakArLog("AR support check failed", {
+          sessionId,
+          supportCheckCount: supportCheckNumber,
+          durationMs,
           error: peakArErrorSummary(error),
           runtime: getRuntimeDiagnostics(),
         });
@@ -1522,16 +1700,54 @@ export function PeakArNavigator({
 
     return () => {
       cancelled = true;
-      peakArLog("AR support check cancelled");
+      peakArLog("AR support check cancelled", {
+        sessionId,
+        supportCheckCount: supportCheckNumber,
+        durationMs: Date.now() - supportCheckStartedAt,
+      });
     };
-  }, [onError, onTrackingStateChange]);
+  }, [onError, onTrackingStateChange, sessionId]);
+
+  useEffect(() => {
+    if (supportState !== "supported") {
+      clearStartupTimeout();
+      return;
+    }
+    const startedAt = Date.now();
+    peakArLog("native tracking startup watchdog started", {
+      sessionId,
+      timeoutMs: NATIVE_TRACKING_STARTUP_TIMEOUT_MS,
+      supportCheckCount: supportCheckCountRef.current,
+    });
+    startupTimeoutRef.current = setTimeout(() => {
+      startupTimeoutRef.current = null;
+      if (nativeTrackingCallbackCountRef.current > 0) return;
+      peakArLog("native tracking startup timeout", {
+        sessionId,
+        timeoutMs: NATIVE_TRACKING_STARTUP_TIMEOUT_MS,
+        elapsedMs: Date.now() - startedAt,
+        supportState: supportStateRef.current,
+        navigatorRefAttached: Boolean(navigatorRef.current),
+        navigatorRefEventCount: navigatorRefEventCountRef.current,
+        navigatorMountCount: navigatorMountCountRef.current,
+        sceneMountCount: sceneMountCountRef.current,
+        sceneUnmountCount: sceneUnmountCountRef.current,
+        nativeTrackingCallbackCount: nativeTrackingCallbackCountRef.current,
+        runtime: getRuntimeDiagnostics(),
+      });
+    }, NATIVE_TRACKING_STARTUP_TIMEOUT_MS);
+    return clearStartupTimeout;
+  }, [clearStartupTimeout, sessionId, supportState]);
 
   useEffect(() => {
     peakArLog("AR support state changed", {
+      sessionId,
       supportState,
       hasNavigatorRef: Boolean(navigatorRef.current),
+      supportCheckCount: supportCheckCountRef.current,
+      nativeTrackingCallbackCount: nativeTrackingCallbackCountRef.current,
     });
-  }, [supportState]);
+  }, [sessionId, supportState]);
 
   const initialScene = useMemo(
     () => ({
@@ -1544,6 +1760,9 @@ export function PeakArNavigator({
   const viroAppProps = useMemo<PeakArSceneAppProps>(
     () => ({
       peaks,
+      debugSessionId: sessionId,
+      onSceneMounted: handleSceneMounted,
+      onSceneUnmounted: handleSceneUnmounted,
       showPeaks,
       trackingReady,
       terrainProfile,
@@ -1581,21 +1800,29 @@ export function PeakArNavigator({
       trackingReady,
       terrainModel,
       handleTrackingUpdated,
+      handleSceneMounted,
+      handleSceneUnmounted,
+      sessionId,
     ],
   );
 
   const handleNavigatorRef = useCallback((instance: unknown) => {
+    navigatorRefEventCountRef.current += 1;
     navigatorRef.current = instance as typeof navigatorRef.current;
     peakArLog(
       instance
         ? "Viro navigator ref attached"
         : "Viro navigator ref detached",
       {
-        supportState,
-        peakCount: peaks.length,
+        sessionId,
+        supportState: supportStateRef.current,
+        peakCount: peakCountRef.current,
+        navigatorRefEventCount: navigatorRefEventCountRef.current,
+        navigatorMountCount: navigatorMountCountRef.current,
+        sceneMountCount: sceneMountCountRef.current,
       },
     );
-  }, [peaks.length, supportState]);
+  }, [sessionId]);
 
   // Do not create the native Viro surface until ARKit/ARCore has confirmed
   // that this device can run it. Unsupported devices otherwise fail during

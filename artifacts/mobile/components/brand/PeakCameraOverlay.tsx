@@ -203,7 +203,7 @@ export function PeakCameraOverlay({
       routePointCount: routeGeometry?.length ?? 0,
       terrainProfilePointCount: terrainProfile?.length ?? 0,
       hasTerrainModel: Boolean(terrainModel),
-      observerPosition,
+       hasObserverPosition: observerPosition != null,
       observerAccuracyM,
       observerFixAgeMs,
       observerRouteDistanceM,
