@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { GetCantonRoutesResponse } from "@workspace/api-zod";
 import { db, externalRoutesTable, type ExternalRouteRow } from "@workspace/db";
-import { sql } from "drizzle-orm";
+import { and, isNotNull, sql } from "drizzle-orm";
 import { loadCachedRoutes, loadOfficialSchweizMobilDifficulties } from "../lib/routeService";
 import { deriveSeason } from "../lib/season";
 import { haversineM } from "../lib/geo";
@@ -210,6 +210,8 @@ export function toRoute(row: ExternalRouteRow, suitability = deriveSuitability(r
     schweizMobilCondition: row.schweizMobilCondition,
     schweizMobilTechnique: row.schweizMobilTechnique,
     themeKeys: row.themeKeys,
+    qualityStatus: row.qualityStatus,
+    qualityCheckedAt: row.qualityCheckedAt,
     terrain: row.terrain,
     familyFriendly: suitability.familyFriendly,
     wheelchairAccessible: suitability.wheelchairAccessible,
@@ -413,7 +415,12 @@ router.get("/themes/:theme/routes", async (req, res): Promise<void> => {
     const rows = await db
       .select()
       .from(externalRoutesTable)
-      .where(sql`${externalRoutesTable.themeKeys} @> ARRAY[${theme}]::text[]`);
+      .where(
+        and(
+          sql`${externalRoutesTable.themeKeys} @> ARRAY[${theme}]::text[]`,
+          isNotNull(externalRoutesTable.qualityCheckedAt),
+        ),
+      );
     rows.sort(byRelevance);
     res.json(GetCantonRoutesResponse.parse(rows.map((row) => toRoute(row))));
   } catch (err) {

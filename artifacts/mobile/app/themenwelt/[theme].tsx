@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { getThemeRoutes } from "@workspace/api-client-react";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -7,7 +8,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Background } from "@/components/brand/Background";
 import { RouteCard } from "@/components/RouteCard";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
-import { CANTONS } from "@/constants/onboarding";
 import { fonts } from "@/constants/typography";
 import { HikingRoute } from "@/constants/routes";
 import { useApp } from "@/contexts/AppContext";
@@ -21,13 +21,8 @@ import {
   routeThemeLabel,
   type RouteThemeKey,
 } from "@/lib/routeThemes";
-import {
-  getRouteThemesFromPois,
-  loadThemePoisForRoutes,
-} from "@/lib/routeThemeIndex";
 
 const WEB_TOP = 67;
-const WORKERS = 4;
 
 interface ThemedRoute {
   route: HikingRoute;
@@ -39,7 +34,7 @@ export default function ThemenweltRoute() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { language } = useApp();
-  const { ready, loadCantonRoutes } = useCatalog();
+  const { ready, addCustomRoute } = useCatalog();
   const strings = useThemeWorldStrings();
   const { theme: rawTheme } = useLocalSearchParams<{ theme?: string }>();
   const theme = decodeURIComponent(Array.isArray(rawTheme) ? rawTheme[0] ?? "" : rawTheme ?? "") as RouteThemeKey;
@@ -62,63 +57,16 @@ export default function ThemenweltRoute() {
     setTotal(0);
     setLoadError(false);
 
-    const cantonNames = [...CANTONS].sort((a, b) => a.localeCompare(b, "de"));
-    let cantonCursor = 0;
-    const candidates: ThemedRoute[] = [];
-
-    const loadCanton = async (): Promise<void> => {
-      const canton = cantonNames[cantonCursor++];
-      if (!canton) return;
-      try {
-        const result = await loadCantonRoutes(canton, {});
-        if (!cancelled) {
-          for (const route of result.routes) {
-            candidates.push({ route, canton: route.canton ?? canton });
-          }
-        }
-      } catch {
-        if (!cancelled) setLoadError(true);
-      }
-      if (!cancelled) await loadCanton();
-    };
-
-    Promise.all(Array.from({ length: Math.min(WORKERS, cantonNames.length) }, () => loadCanton()))
-      .then(async () => {
+    getThemeRoutes(theme)
+      .then((routes) => {
         if (cancelled) return;
-        setTotal(candidates.length);
-        const found: ThemedRoute[] = [];
-        const byCanton = new Map<string, ThemedRoute[]>();
-        for (const candidate of candidates) {
-          const group = byCanton.get(candidate.canton) ?? [];
-          group.push(candidate);
-          byCanton.set(candidate.canton, group);
-        }
-        const cantonGroups = [...byCanton.values()];
-        let groupCursor = 0;
-
-        const checkCanton = async (): Promise<void> => {
-          const group = cantonGroups[groupCursor++];
-          if (!group) return;
-          try {
-            // Eine POI-Abfrage pro Kanton statt eine Abfrage pro Route.
-            const pois = await loadThemePoisForRoutes(group.map(({ route }) => route));
-            for (const candidate of group) {
-              const themes = getRouteThemesFromPois(candidate.route, pois);
-              if (themes.includes(theme)) {
-                found.push(candidate);
-                if (!cancelled) setMatches([...found]);
-              }
-              if (!cancelled) setChecked((count) => count + 1);
-            }
-          } catch {
-            if (!cancelled) setLoadError(true);
-          }
-          if (!cancelled) await checkCanton();
-        };
-
-        await Promise.all(
-          Array.from({ length: Math.min(WORKERS, cantonGroups.length) }, () => checkCanton()),
-        );
+        const themedRoutes = (routes as HikingRoute[]).map((route) => ({
+          route,
+          canton: route.canton ?? route.region,
+        }));
+        setTotal(themedRoutes.length);
+        setChecked(themedRoutes.length);
+        setMatches(themedRoutes);
       })
       .catch(() => {
         if (!cancelled) setLoadError(true);
@@ -130,7 +78,7 @@ export default function ThemenweltRoute() {
     return () => {
       cancelled = true;
     };
-  }, [loadCantonRoutes, ready, theme, validTheme]);
+  }, [ready, theme, validTheme]);
 
   const groupedMatches = useMemo(() => {
     const groups = new Map<string, ThemedRoute[]>();
@@ -216,7 +164,10 @@ export default function ThemenweltRoute() {
                     route={route}
                     index={index}
                     locked={false}
-                    onPress={() => router.push(`/route/${route.id}`)}
+                    onPress={() => {
+                      addCustomRoute(route);
+                      router.push(`/route/${route.id}`);
+                    }}
                     kanton={canton}
                   />
                 ))}

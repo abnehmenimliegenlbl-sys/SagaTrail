@@ -4,12 +4,14 @@ import {
   getRouteConditions,
   getTransportStationboard,
   getWeather,
+  searchPlaces,
+  type GeocodePlace,
   type TrailConditionReport,
   type TransportStationboard,
   type WeatherReport,
 } from "@workspace/api-client-react";
 import { Stack, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -17,6 +19,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -71,6 +74,11 @@ type Copy = {
   nearbySearch: string;
   nearbyLocating: string;
   nearbyDenied: string;
+  placeOptional: string;
+  placePlaceholder: string;
+  placeSearching: string;
+  placeNoResults: string;
+  placeSelected: (place: string) => string;
   interests: string;
   find: string;
   searching: string;
@@ -114,6 +122,11 @@ const COPY_DE: Copy = {
   nearbySearch: "Nach meiner GPS-Position suchen",
   nearbyLocating: "Standort wird ermittelt …",
   nearbyDenied: "Standort nicht verfügbar – erlaube den Zugriff für die Suche in deiner Nähe.",
+  placeOptional: "Oder einen Ort eingeben (optional)",
+  placePlaceholder: "Ort, Gemeinde oder Region",
+  placeSearching: "Orte werden gesucht …",
+  placeNoResults: "Kein passender Ort gefunden",
+  placeSelected: (place) => `Suche nahe ${place}`,
   interests: "Was möchtest du unterwegs sehen?",
   find: "Beste Route für heute finden",
   searching: "Route, Wetter, Bedingungen und Anreise werden verglichen …",
@@ -180,6 +193,11 @@ const COPY_EN: Copy = {
   nearbySearch: "Search near my GPS position",
   nearbyLocating: "Getting your location …",
   nearbyDenied: "Location unavailable – allow access to search near you.",
+  placeOptional: "Or enter a place (optional)",
+  placePlaceholder: "Town, municipality or region",
+  placeSearching: "Searching places …",
+  placeNoResults: "No matching place found",
+  placeSelected: (place) => `Searching near ${place}`,
   interests: "What would you like to see?",
   find: "Find my best route today",
   searching: "Comparing routes, weather, conditions and transport …",
@@ -258,6 +276,12 @@ export default function Empfehlung() {
   const [nearbySearch, setNearbySearch] = useState(true);
   const [nearbyLocating, setNearbyLocating] = useState(false);
   const [nearbyDenied, setNearbyDenied] = useState(false);
+  const [placeQuery, setPlaceQuery] = useState("");
+  const [selectedPlace, setSelectedPlace] = useState<GeocodePlace | null>(null);
+  const [placeSuggestions, setPlaceSuggestions] = useState<GeocodePlace[]>([]);
+  const [placeSearching, setPlaceSearching] = useState(false);
+  const placeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const placeRequestId = useRef(0);
   const [interests, setInterests] = useState<RouteThemeKey[]>(["wasserwege"]);
   const [recommendations, setRecommendations] = useState<ScoredRoute[]>([]);
   const [loading, setLoading] = useState(false);
@@ -308,6 +332,32 @@ export default function Empfehlung() {
   useEffect(() => {
     void locateNearby();
   }, [locateNearby]);
+
+  useEffect(() => {
+    if (placeDebounceRef.current) clearTimeout(placeDebounceRef.current);
+    if (nearbySearch || placeQuery.trim().length < 2) {
+      setPlaceSuggestions([]);
+      setPlaceSearching(false);
+      return;
+    }
+    const requestId = ++placeRequestId.current;
+    setPlaceSearching(true);
+    placeDebounceRef.current = setTimeout(() => {
+      void searchPlaces({ q: placeQuery.trim() })
+        .then((results) => {
+          if (placeRequestId.current === requestId) setPlaceSuggestions(results);
+        })
+        .catch(() => {
+          if (placeRequestId.current === requestId) setPlaceSuggestions([]);
+        })
+        .finally(() => {
+          if (placeRequestId.current === requestId) setPlaceSearching(false);
+        });
+    }, 350);
+    return () => {
+      if (placeDebounceRef.current) clearTimeout(placeDebounceRef.current);
+    };
+  }, [nearbySearch, placeQuery]);
 
   const toggleNearbySearch = async () => {
     if (nearbySearch) {
@@ -425,9 +475,74 @@ export default function Empfehlung() {
         <View style={[styles.cantonHint, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
           <Feather name="map-pin" size={15} color={colors.accent} />
           <Text style={[styles.cantonText, { color: colors.mutedForeground }]}>
-            {nearbyPosition ? copy.locationScope : copy.allCantons}
+            {nearbySearch && nearbyPosition
+              ? copy.locationScope
+              : selectedPlace
+                ? copy.placeSelected(selectedPlace.label)
+                : copy.allCantons}
           </Text>
         </View>
+        {!nearbySearch && (
+          <View style={styles.placeSearch}>
+            <Text style={[styles.placeLabel, { color: colors.foreground }]}>{copy.placeOptional}</Text>
+            <View
+              style={[
+                styles.placeInputWrap,
+                { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+              ]}
+            >
+              <Feather name="search" size={15} color={colors.mutedForeground} />
+              <TextInput
+                value={placeQuery}
+                onChangeText={(value) => {
+                  setPlaceQuery(value);
+                  setSelectedPlace(null);
+                }}
+                placeholder={copy.placePlaceholder}
+                placeholderTextColor={colors.mutedForeground}
+                style={[styles.placeInput, { color: colors.foreground }]}
+                returnKeyType="search"
+                accessibilityLabel={copy.placeOptional}
+              />
+              {placeSearching && <ActivityIndicator size="small" color={colors.accent} />}
+            </View>
+            {(placeSearching || placeSuggestions.length > 0 ||
+              (placeQuery.trim().length >= 2 && !selectedPlace)) && (
+              <View style={[styles.placeSuggestions, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+                {placeSearching ? (
+                  <Text style={[styles.placeSuggestionText, { color: colors.mutedForeground }]}>
+                    {copy.placeSearching}
+                  </Text>
+                ) : placeSuggestions.length === 0 ? (
+                  <Text style={[styles.placeSuggestionText, { color: colors.mutedForeground }]}>
+                    {copy.placeNoResults}
+                  </Text>
+                ) : (
+                  placeSuggestions.map((place, index) => (
+                    <Pressable
+                      key={`${place.lat}-${place.lng}-${index}`}
+                      onPress={() => {
+                        setSelectedPlace(place);
+                        setPlaceQuery(place.label);
+                        setPlaceSuggestions([]);
+                        setNearbyPosition({ lat: place.lat, lng: place.lng });
+                      }}
+                      style={[
+                        styles.placeSuggestionRow,
+                        index > 0 && { borderTopWidth: 1, borderTopColor: colors.glassBorder },
+                      ]}
+                    >
+                      <Feather name="map-pin" size={14} color={colors.accent} />
+                      <Text style={[styles.placeSuggestionText, { color: colors.foreground }]} numberOfLines={2}>
+                        {place.label}
+                      </Text>
+                    </Pressable>
+                  ))
+                )}
+              </View>
+            )}
+          </View>
+        )}
 
         <Section title={copy.time} colors={colors}>
           <ChoiceRow
@@ -674,6 +789,21 @@ const styles = StyleSheet.create({
   toggleRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 },
   toggleText: { fontFamily: fonts.body, fontSize: 12, flex: 1 },
   nearbyDenied: { fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 7, marginLeft: 26 },
+  placeSearch: { marginTop: 12 },
+  placeLabel: { fontFamily: fonts.bodyBold, fontSize: 12, marginBottom: 7 },
+  placeInputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 11,
+    minHeight: 44,
+  },
+  placeInput: { flex: 1, fontFamily: fonts.body, fontSize: 14, minHeight: 40 },
+  placeSuggestions: { borderWidth: 1, borderRadius: 12, marginTop: 6, overflow: "hidden" },
+  placeSuggestionRow: { flexDirection: "row", alignItems: "center", gap: 8, padding: 11 },
+  placeSuggestionText: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, flex: 1 },
   statusCard: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 16 },
   statusText: { fontFamily: fonts.body, fontSize: 12, flex: 1 },
   error: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, marginTop: 16 },

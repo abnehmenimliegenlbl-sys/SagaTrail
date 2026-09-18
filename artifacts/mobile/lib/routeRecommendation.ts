@@ -182,9 +182,14 @@ export function scoreRoute(
     }
   }
 
-  const matches = preferences.interests.filter((interest) =>
-    route.themeKeys?.includes(interest),
-  );
+  const themeEvidenceConfirmed =
+    Boolean(route.qualityCheckedAt) &&
+    (route.qualityStatus === undefined ||
+      route.qualityStatus === "verified" ||
+      route.qualityStatus === "partial");
+  const matches = themeEvidenceConfirmed
+    ? preferences.interests.filter((interest) => route.themeKeys?.includes(interest))
+    : [];
   if (preferences.interests.length > 0) {
     if (matches.length > 0) {
       score += Math.min(28, matches.length * 14);

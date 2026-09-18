@@ -35,7 +35,10 @@ async function loadThemePois(
 function hasServerThemeEvidence(route: HikingRoute): boolean {
   return (
     Array.isArray(route.themeKeys) &&
-    (route.themeKeys.length > 0 || Boolean(route.qualityCheckedAt))
+    Boolean(route.qualityCheckedAt) &&
+    (route.qualityStatus === undefined ||
+      route.qualityStatus === "verified" ||
+      route.qualityStatus === "partial")
   );
 }
 

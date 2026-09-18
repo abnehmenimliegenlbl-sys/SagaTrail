@@ -75,7 +75,12 @@ import { sagaLokalisierung, allCantonSagasSorted, SagaWithMeta, SagaProximityCat
 import { Saga } from "@/types";
 import { hapticMedium, hapticSelection } from "@/lib/haptics";
 import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
-import { deriveRouteThemes, routeThemeLabel } from "@/lib/routeThemes";
+import {
+  deriveRouteThemes,
+  ROUTE_THEME_KEYS,
+  routeThemeLabel,
+  type RouteThemeKey,
+} from "@/lib/routeThemes";
 import { formatQualityDate, routeQualityLabels } from "@/lib/routeQualityLabels";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 
@@ -366,8 +371,23 @@ export default function Routenplanung() {
   // undefined = lädt, null = nichts gefunden, WikiSummary = fertig
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
   const routeThemes = useMemo(
-    () => deriveRouteThemes(poisDetails, route ?? { familyFriendly: null, geometry: [] }),
-    [poisDetails, route?.familyFriendly, route?.geometry],
+    () => {
+      const serverThemes = (route?.themeKeys ?? []).filter(
+        (theme): theme is RouteThemeKey =>
+          ROUTE_THEME_KEYS.includes(theme as RouteThemeKey),
+      );
+      // A quality check with an empty array is authoritative too: it means
+      // the server checked the route and found no matching theme. Only fall
+      // back to locally loaded POIs for legacy snapshots without evidence.
+      if (route?.qualityCheckedAt) {
+        return serverThemes;
+      }
+      return deriveRouteThemes(
+        poisDetails,
+        route ?? { familyFriendly: null, geometry: [] },
+      );
+    },
+    [poisDetails, route?.familyFriendly, route?.geometry, route?.qualityCheckedAt, route?.themeKeys],
   );
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   // Vollbild-Karte: Zustand + Signal zum Schliessen von aussen (POI-Tap im

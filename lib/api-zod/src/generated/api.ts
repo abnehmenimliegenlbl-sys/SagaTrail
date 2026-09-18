@@ -260,6 +260,72 @@ export const GetAerialwaysResponse = zod.array(GetAerialwaysResponseItem)
 
 
 /**
+ * Liefert die Routen einer Themenwelt direkt aus den serverseitig geprüften Themenbelegen. Die Abfrage erfolgt kantonsübergreifend in einer Datenbankabfrage.
+ * @summary Serverseitig geprüfte Routen einer Themenwelt
+ */
+export const GetThemeRoutesParams = zod.object({
+  "theme": zod.enum(['wasserwege', 'burgen_ruinen_alte_wege', 'gipfel_panorama', 'geologie_eiszeit', 'hoehlen_grotten', 'wald_wildtiere', 'alpen_landwirtschaft', 'pilger_handelswege', 'industriekultur', 'familien_entdecker', 'nacht_sterne', 'flora_jahreszeiten', 'bahn_seilbahn'])
+})
+
+export const GetThemeRoutesResponseItem = zod.object({
+  "id": zod.string(),
+  "sagaId": zod.string(),
+  "name": zod.string(),
+  "region": zod.string(),
+  "distanceKm": zod.number().describe('Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation).'),
+  "distanceTagKm": zod.number().describe('Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt.'),
+  "ascentM": zod.number(),
+  "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
+  "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
+  "minutes": zod.number(),
+  "sac": zod.string(),
+  "sacSource": zod.string().nullish().describe('Herkunft des SAC-Werts; osm_exact ist ein exakter OSM-Tag, swisstopo_derived eine amtliche Ableitung, unknown unbekannt.'),
+  "schweizMobilCondition": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Kondition (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
+  "schweizMobilTechnique": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
+  "terrain": zod.string(),
+  "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
+  "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
+  "technicalDifficulty": zod.string().nullish(),
+  "coordinates": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
+  "featured": zod.boolean(),
+  "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
+  "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
+})
+export const GetThemeRoutesResponse = zod.array(GetThemeRoutesResponseItem)
+
+
+/**
  * Liefert historische und touristische Orte (OpenStreetMap historic=*\/tourism=attraction|viewpoint) innerhalb einer Bounding Box. Orte mit einer verknuepften Wikipedia-/Wikidata-Referenz werden live mit einer kurzen Zusammenfassung angereichert (CC BY-SA, mit Quellenangabe).
  * @summary Points of Interest mit Wikipedia-Anreicherung in einem Kartenausschnitt
  */

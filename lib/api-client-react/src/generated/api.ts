@@ -530,6 +530,84 @@ export function useGetAerialways<TData = Awaited<ReturnType<typeof getAerialways
 
 
 
+export const getGetThemeRoutesUrl = (theme: 'wasserwege' | 'burgen_ruinen_alte_wege' | 'gipfel_panorama' | 'geologie_eiszeit' | 'hoehlen_grotten' | 'wald_wildtiere' | 'alpen_landwirtschaft' | 'pilger_handelswege' | 'industriekultur' | 'familien_entdecker' | 'nacht_sterne' | 'flora_jahreszeiten' | 'bahn_seilbahn',) => {
+
+
+
+
+  return `/api/themes/${theme}/routes`
+}
+
+/**
+ * Liefert die Routen einer Themenwelt direkt aus den serverseitig geprüften Themenbelegen. Die Abfrage erfolgt kantonsübergreifend in einer Datenbankabfrage.
+ * @summary Serverseitig geprüfte Routen einer Themenwelt
+ */
+export const getThemeRoutes = async (theme: 'wasserwege' | 'burgen_ruinen_alte_wege' | 'gipfel_panorama' | 'geologie_eiszeit' | 'hoehlen_grotten' | 'wald_wildtiere' | 'alpen_landwirtschaft' | 'pilger_handelswege' | 'industriekultur' | 'familien_entdecker' | 'nacht_sterne' | 'flora_jahreszeiten' | 'bahn_seilbahn', options?: RequestInit): Promise<CatalogRoute[]> => {
+
+  return customFetch<CatalogRoute[]>(getGetThemeRoutesUrl(theme),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetThemeRoutesQueryKey = (theme: 'wasserwege' | 'burgen_ruinen_alte_wege' | 'gipfel_panorama' | 'geologie_eiszeit' | 'hoehlen_grotten' | 'wald_wildtiere' | 'alpen_landwirtschaft' | 'pilger_handelswege' | 'industriekultur' | 'familien_entdecker' | 'nacht_sterne' | 'flora_jahreszeiten' | 'bahn_seilbahn',) => {
+    return [
+    `/api/themes/${theme}/routes`
+    ] as const;
+    }
+
+
+export const getGetThemeRoutesQueryOptions = <TData = Awaited<ReturnType<typeof getThemeRoutes>>, TError = ErrorType<ErrorResponse>>(theme: 'wasserwege' | 'burgen_ruinen_alte_wege' | 'gipfel_panorama' | 'geologie_eiszeit' | 'hoehlen_grotten' | 'wald_wildtiere' | 'alpen_landwirtschaft' | 'pilger_handelswege' | 'industriekultur' | 'familien_entdecker' | 'nacht_sterne' | 'flora_jahreszeiten' | 'bahn_seilbahn', options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getThemeRoutes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetThemeRoutesQueryKey(theme);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getThemeRoutes>>> = ({ signal }) => getThemeRoutes(theme, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: theme !== null && theme !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getThemeRoutes>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetThemeRoutesQueryResult = NonNullable<Awaited<ReturnType<typeof getThemeRoutes>>>
+export type GetThemeRoutesQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Serverseitig geprüfte Routen einer Themenwelt
+ */
+
+export function useGetThemeRoutes<TData = Awaited<ReturnType<typeof getThemeRoutes>>, TError = ErrorType<ErrorResponse>>(
+ theme: 'wasserwege' | 'burgen_ruinen_alte_wege' | 'gipfel_panorama' | 'geologie_eiszeit' | 'hoehlen_grotten' | 'wald_wildtiere' | 'alpen_landwirtschaft' | 'pilger_handelswege' | 'industriekultur' | 'familien_entdecker' | 'nacht_sterne' | 'flora_jahreszeiten' | 'bahn_seilbahn', options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getThemeRoutes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetThemeRoutesQueryOptions(theme,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetPoisUrl = (params: GetPoisParams,) => {
   const normalizedParams = new URLSearchParams();
 
