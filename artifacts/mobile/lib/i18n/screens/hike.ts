@@ -1,4 +1,946 @@
-"Le GPS indique ~80 m à l'écart du sentier",
+import { createUseStrings, StringsDict } from "../createStrings";
+
+export interface HikeStrings {
+  notAvailable: string;
+  callSosManually: (num: string) => string;
+  hikeNotFound: string;
+  back: string;
+  noLocationAccess: string;
+  locationDeniedHint: string;
+  gpsSignalLostTitle: string;
+  gpsSignalLostHint: string;
+  allow: string;
+  walkToStartTitle: string;
+  walkToStartHint: (distance: string, direction: string) => string;
+  walkToStartSpoken: (distance: string, direction: string) => string;
+  compassDirections: [string, string, string, string, string, string, string, string];
+  compass: string;
+  compassUnavailable: string;
+  panorama: string;
+  panoramaHint: string;
+  panoramaNeedCompass: string;
+  panoramaNoGps: string;
+  panoramaNoPeaks: string;
+  panoramaDetected: string;
+  panoramaDistance: (distance: string) => string;
+  camera: string;
+  cameraOff: string;
+  cameraPermission: string;
+  arUnavailable: string;
+  arTrackingStarting: string;
+  arTrackingLimited: string;
+  arTrackingPaused: string;
+  panoramaOfflineData: string;
+  panoramaOnlineData: string;
+  panoramaHeightUnknown: string;
+  panoramaDrag: string;
+  panoramaElevationAngle: (angle: string) => string;
+  panoramaTerrainModel: string;
+  panoramaTerrainModelDetail: (radius: string) => string;
+  coordinates: string;
+  place: string;
+  altitude: string;
+  altitudeUnit: string;
+  live: string;
+  discoveredNearby: string;
+  metricDistance: string;
+  metricHeight: string;
+  metricTimeLeft: string;
+  metricSac: string;
+  metricSteps: string;
+  metricRemaining: string;
+  unitKm: string;
+  unitHm: string;
+  unitMin: string;
+  preparingText: string;
+  chapterMark: (current: number, total: number) => string;
+  pause: string;
+  readAloud: string;
+  repeatChapter: string;
+  turnNotifTitle: string;
+  chapterNotif: (n: number) => string;
+  turnNotifLeft: string;
+  turnNotifRight: string;
+  surfaceChangeTitle: string;
+  terrainAdvance: (direction: "up" | "down", leadDistance: string, sectionDistance: string, gradePct: number) => string;
+  terrainProgress: (direction: "up" | "down", remainingDistance: string, gradePct: number) => string;
+  terrainEnd: (direction: "up" | "down") => string;
+  terrainWarning: (direction: "up" | "down", gradePct: number, sectionDistance: string) => string;
+  terrainWarningTitle: string;
+  milestoneTitle: string;
+  poiNearby: string;
+  partnerNearby: string;
+  poiNotifBody: string;
+  perception: string;
+  finishHike: string;
+  finishEarlyButton: string;
+  finishEarlyConfirmTitle: string;
+  finishEarlyConfirmMessage: string;
+  finishEarlyConfirmAction: string;
+  finishEarlyCancelAction: string;
+  interruptHikeConfirmTitle: string;
+  interruptHikeConfirmMessage: string;
+  interruptHikeConfirmAction: string;
+  interruptHikeCancelAction: string;
+  sos: string;
+  emergency: string;
+  emergencySub: string;
+  regaTitle: string;
+  regaSub: string;
+  euroEmergencyTitle: string;
+  euroEmergencySub: string;
+  sendLocationToContact: string;
+  smsNotAvailable: string;
+  emergencySmsBody: (coords: string, name?: string) => string;
+  safetyCheckinButton: string;
+  safetyCheckinTitle: string;
+  safetyCheckinExplanation: string;
+  safetyCheckinChooseDuration: string;
+  safetyCheckinMinutes: string;
+  safetyCheckinStart: string;
+  safetyCheckinConfirm: string;
+  safetyCheckinActive: string;
+  safetyCheckinOverdue: string;
+  safetyCheckinNoGps: string;
+  safetyCheckinNoContact: string;
+  safetyCheckinMessage: string;
+  safetyCheckinExternalShare: string;
+  safetyCheckinExternalShareActive: string;
+  safetyCheckinShareFailed: string;
+  safetyCheckinLoadFailed: string;
+  safetyCheckinEndFailed: string;
+  safetyCheckinStartFailed: string;
+  safetyCheckinLocalOnly: string;
+  safetyCheckinShareWhatsApp: string;
+  safetyCheckinShareSms: string;
+  safetyCheckinWhatsappUnavailable: string;
+  watchPulseTitle: string;
+  watchPulseWaiting: string;
+  unknown: string;
+  close: string;
+  narrationUnavailable: string;
+  backgroundNotificationTitle: string;
+  backgroundNotificationBody: string;
+  poiDetailEyebrow: string;
+  poiStoryLoading: string;
+  partnerDetailEyebrow: string;
+  partnerOffer: string;
+  partnerOffen: string;
+  partnerGeschlossen: string;
+  partnerSchliesstUm: string;
+  partnerOeffnetUm: string;
+  partnerOeffnetAm: string;
+  partnerHeute: string;
+  partnerMorgen: string;
+  partnerUhr: string;
+  partnerTelefon: string;
+  partnerReservierung: string;
+  partnerWebsite: string;
+  voiceListening: string;
+  voiceOrTap: string;
+  yourChoice: (option: string) => string;
+  leaderDecides: string;
+  offlineHikeBanner: string;
+  leaderChose: (option: string) => string;
+  photoTake: string;
+  photoSkip: string;
+  photoUploading: string;
+  photoUploaded: string;
+  photoUploadError: string;
+  photoAddBtn: string;
+  photoCommunityTitle: string;
+  offRouteTitle: string;
+  offRouteHint: string;
+  offRouteRecalculating: string;
+  offRouteRecalcDone: string;
+  offRouteFollow: string;
+  offRouteRecalcFailed: string;
+  offRouteStartChoiceTitle: string;
+  offRouteStartChoiceMessage: string;
+  offRouteToStart: string;
+  offRouteFastestToRoute: string;
+  offRouteChoiceLater: string;
+  routeChange: string;
+  routeChangeStart: string;
+  routeChangeTransport: string;
+  routeChangeWaypoint: string;
+  routeChangePickHint: string;
+  routeChangeCalculating: string;
+  routeChangeError: string;
+  routeChangeCableCarLabel: string;
+  startHikeNow: string;
+  startHikeMessage: string;
+  communityConditions: string;
+  reportCondition: string;
+  conditionReportedAgo: (relTime: string) => string;
+  conditionNoteLabel: string;
+  conditionNotePlaceholder: string;
+  conditionSubmit: string;
+  conditionSubmitting: string;
+  conditionSubmitted: string;
+  conditionRateLimit: string;
+  conditionError: string;
+  conditionNoReports: string;
+  conditions: { excellent: string; clear: string; muddy: string; snow: string; icy: string; blocked: string; };
+  conditionEmoji: { excellent: string; clear: string; muddy: string; snow: string; icy: string; blocked: string; };
+}
+
+const HIKE_STRINGS: StringsDict<HikeStrings> = {
+  de: {
+    notAvailable: "Nicht verfügbar",
+    callSosManually: (num) => `Bitte wähle den Notruf ${num} manuell.`,
+    hikeNotFound: "Wanderung nicht gefunden.",
+    back: "Zurück",
+    noLocationAccess: "Kein Standortzugriff — Live-Navigation pausiert.",
+    locationDeniedHint: "Ohne GPS wird dein Fortschritt nur geschätzt. Aktiviere den Standortzugriff in den Systemeinstellungen, damit die Sage deinem echten Weg folgt.",
+    gpsSignalLostTitle: "Kein aktueller GPS-Fix",
+    gpsSignalLostHint: "Fortschritt, Wegführung und automatische Ansagen pausieren, bis wieder ein aktueller Standort vorliegt.",
+    allow: "Erlauben",
+    walkToStartTitle: "Noch nicht auf der Route",
+    walkToStartHint: (distance, direction) =>
+      `Noch ${distance} Richtung ${direction} bis zum Wegstart.`,
+    walkToStartSpoken: (distance, direction) =>
+      `Du bist noch ${distance} vom Wegstart entfernt, Richtung ${direction}.`,
+    compassDirections: ["Norden", "Nordosten", "Osten", "Südosten", "Süden", "Südwesten", "Westen", "Nordwesten"],
+    compass: "KOMPASS",
+    compassUnavailable: "Kompass auf diesem Gerät nicht verfügbar",
+    panorama: "GIPFELPANORAMA",
+    panoramaHint: "Drehe dich langsam — echte OSM-Gipfel werden im Sichtfeld markiert.",
+    panoramaNeedCompass: "Kompass aktivieren, um Gipfel in Blickrichtung zu erkennen.",
+    panoramaNoGps: "GPS-Position wird benötigt, um Gipfel zu erkennen.",
+    panoramaNoPeaks: "Im aktuellen Umfeld wurden keine benannten Gipfel geladen.",
+    panoramaDetected: "GIPFEL IM BLICK",
+    panoramaDistance: (distance) => `${distance} km entfernt`,
+    camera: "KAMERA",
+    cameraOff: "SCHLIESSEN",
+    cameraPermission: "Kameraberechtigung wird benötigt.",
+    arUnavailable: "AR ist auf diesem Gerät nicht verfügbar.",
+    arTrackingStarting: "AR-Tracking wird stabilisiert …",
+    arTrackingLimited: "AR-Tracking ist eingeschränkt.",
+    arTrackingPaused: "Die Wegführung bleibt pausiert, bis das Tracking stabil ist.",
+    panoramaOfflineData: "OFFLINE-GIPFELDATENBANK",
+    panoramaOnlineData: "LIVE-GIPFELDATEN",
+    panoramaHeightUnknown: "Höhenwinkel unbekannt",
+    panoramaDrag: "Wischen oder drehen für 360°-Panorama",
+    panoramaElevationAngle: (angle) => `Höhenwinkel ${angle}`,
+    panoramaTerrainModel: "KARTE UM DICH",
+    panoramaTerrainModelDetail: (radius) => `SwissTopo · Radius ${radius}`,
+    coordinates: "KOORDINATEN",
+    place: "ORT",
+    altitude: "HÖHE",
+    altitudeUnit: "m ü. M.",
+    live: "LIVE",
+    discoveredNearby: "ENTDECKT IN DER NÄHE",
+    metricDistance: "DISTANZ",
+    metricHeight: "HÖHE",
+    metricTimeLeft: "RESTZEIT",
+    metricSac: "SAC",
+    metricSteps: "SCHRITTE",
+    metricRemaining: "REST-KM",
+    unitKm: "km",
+    unitHm: "hm",
+    unitMin: "min",
+    preparingText: "Die Sage erwacht …",
+    chapterMark: (current, total) => `KAPITEL ${current} / ${total}`,
+    pause: "Pause",
+    readAloud: "Vorlesen",
+    repeatChapter: "Wiederholen",
+    turnNotifTitle: "Abzweigung voraus",
+    chapterNotif: (n) => `Kapitel ${n} beginnt`,
+    turnNotifLeft: "Gleich links halten",
+    turnNotifRight: "Gleich rechts halten",
+    surfaceChangeTitle: "Wegwechsel",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `In ${leadDistance} beginnt ein längerer Anstieg: ${sectionDistance} mit durchschnittlich ${gradePct} Prozent.`
+        : `In ${leadDistance} folgt ein längeres Gefälle: ${sectionDistance} mit durchschnittlich ${gradePct} Prozent.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `Noch ${remainingDistance} bis zum Ende des Anstiegs, durchschnittlich ${gradePct} Prozent.`
+        : `Noch ${remainingDistance} bis zum Ende des Gefälles, durchschnittlich ${gradePct} Prozent.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "Der Anstieg endet in etwa 100 Metern." : "Das Gefälle endet in etwa 100 Metern.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Achtung: sehr steiler Anstieg mit bis zu ${gradePct} Prozent auf ${sectionDistance}.`
+        : `Achtung: sehr steiles Gefälle mit bis zu ${gradePct} Prozent auf ${sectionDistance}.`,
+    terrainWarningTitle: "Achtung: sehr steiler Abschnitt",
+    milestoneTitle: "Meilenstein",
+    poiNearby: "Du befindest dich in der Nähe einer interessanten Sehenswürdigkeit.",
+    partnerNearby: "Du befindest dich in der Nähe eines SagaTrail-Partners.",
+    poiNotifBody: "Ein besonderer Ort ganz in deiner Nähe — der Erzähler berichtet gerade davon",
+    perception: "WAHRNEHMUNG",
+    finishHike: "Wanderung abschliessen",
+    finishEarlyButton: "Vorzeitig abschliessen",
+    finishEarlyConfirmTitle: "Wanderung vorzeitig abschliessen?",
+    finishEarlyConfirmMessage: "Du hast die Route noch nicht ganz zurückgelegt. Trotzdem abschliessen und zum Album?",
+    finishEarlyConfirmAction: "Abschliessen",
+    finishEarlyCancelAction: "Weiterwandern",
+    interruptHikeConfirmTitle: "Wanderung wirklich unterbrechen?",
+    interruptHikeConfirmMessage: "Dein Fortschritt bleibt gespeichert und du kannst später weiterwandern.",
+    interruptHikeConfirmAction: "Ja",
+    interruptHikeCancelAction: "Nein",
+    sos: "SOS",
+    emergency: "Notfall",
+    emergencySub: "Wähle den passenden Notruf. Bleib ruhig, nenne Standort und Lage.",
+    regaTitle: "Rega 1414",
+    regaSub: "Schweizerische Rettungsflugwacht",
+    euroEmergencyTitle: "Euro-Notruf 112",
+    euroEmergencySub: "Allgemeiner Notruf",
+    sendLocationToContact: "Standort an Notfallkontakt senden",
+    smsNotAvailable: "SMS ist auf diesem Gerät nicht verfügbar.",
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name}: ` : ""}Notfall auf Wanderung. Ungefährer Standort: ${coords}`,
+    safetyCheckinButton: "Sicherheits-Check-in",
+    safetyCheckinTitle: "Sicherheits-Check-in",
+    safetyCheckinExplanation: "Setze einen lokalen Timer für deine Wanderung. Das ist keine Überwachung und kein Live-Tracking.",
+    safetyCheckinChooseDuration: "Erneut melden nach",
+    safetyCheckinMinutes: "Min.",
+    safetyCheckinStart: "Timer starten",
+    safetyCheckinConfirm: "Mir geht es gut — Timer stoppen",
+    safetyCheckinActive: "Check-in-Timer",
+    safetyCheckinOverdue: "Timer überfällig",
+    safetyCheckinNoGps: "Zum Teilen des Standorts ist ein frischer GPS-Fix erforderlich.",
+    safetyCheckinNoContact: "Bitte hinterlege zuerst einen Notfallkontakt.",
+    safetyCheckinMessage: "Sicherheits-Check-in auf der Wanderung",
+    safetyCheckinExternalShare: "Live-Link teilen",
+    safetyCheckinExternalShareActive: "Live-Link aktiv",
+    safetyCheckinShareFailed: "Der Live-Sicherheitslink konnte nicht gestartet werden.",
+    safetyCheckinLoadFailed: "Der gespeicherte Sicherheits-Check-in konnte nicht geladen werden.",
+    safetyCheckinEndFailed: "Der Sicherheits-Check-in konnte noch nicht beendet werden. Bitte versuche es erneut.",
+    safetyCheckinStartFailed: "Der Sicherheits-Check-in konnte nicht gestartet werden.",
+    safetyCheckinLocalOnly: "Nur lokaler Timer — kein Live-Monitoring",
+    safetyCheckinShareWhatsApp: "Per WhatsApp senden",
+    safetyCheckinShareSms: "Per SMS senden",
+    safetyCheckinWhatsappUnavailable: "WhatsApp ist auf diesem Gerät nicht verfügbar. Bitte sende den Link per SMS.",
+    watchPulseTitle: "PULS",
+    watchPulseWaiting: "Warte auf Live-Puls",
+    unknown: "unbekannt",
+    close: "Schliessen",
+    narrationUnavailable: "KI-Erzählstimme gerade nicht verfügbar (Internet prüfen).",
+    backgroundNotificationTitle: "SagaTrail wandert mit",
+    backgroundNotificationBody: "Die Geschichte läuft weiter, auch wenn der Bildschirm gesperrt ist.",
+    poiDetailEyebrow: "MEHR INFOS",
+    poiStoryLoading: "Die Geschichte wird erzählt …",
+    partnerDetailEyebrow: "PARTNERBETRIEB",
+    partnerOffer: "Angebot",
+    partnerOffen: "Geöffnet",
+    partnerGeschlossen: "Geschlossen",
+    partnerSchliesstUm: "Schliesst um",
+    partnerOeffnetUm: "Öffnet um",
+    partnerOeffnetAm: "Öffnet am",
+    partnerHeute: "heute",
+    partnerMorgen: "morgen",
+    partnerUhr: "Uhr",
+    partnerTelefon: "Telefon",
+    partnerReservierung: "Reservieren",
+    partnerWebsite: "Website",
+    voiceListening: "Ich höre zu … sag deine Antwort",
+    voiceOrTap: "Sprich deine Antwort oder tippe eine Option an",
+    yourChoice: (option) => `Du hast gewählt: ${option}`,
+    leaderDecides: "Die Gruppenleitung entscheidet für die Gruppe …",
+    offlineHikeBanner: "Kein Empfang — Narration pausiert.",
+    leaderChose: (option) => `Die Gruppenleitung hat gewählt: ${option}`,
+    photoTake: "Foto aufnehmen",
+    photoSkip: "Überspringen",
+    photoUploading: "Foto wird hochgeladen …",
+    photoUploaded: "Gespeichert",
+    photoUploadError: "Upload fehlgeschlagen",
+    photoAddBtn: "Foto",
+    photoCommunityTitle: "Wandererfotos",
+    offRouteTitle: "Vom Weg abgekommen",
+    offRouteHint: "GPS zeigt ~80 m neben dem Wanderweg",
+    offRouteRecalculating: "Neue Route wird berechnet …",
+    offRouteRecalcDone: "Neue Route bereit",
+    offRouteFollow: "Dieser Route folgen",
+    offRouteRecalcFailed: "Neuberechnung fehlgeschlagen",
+    offRouteStartChoiceTitle: "Wie möchtest du zur Route gelangen?",
+    offRouteStartChoiceMessage: "Du bist noch nicht in der Nähe des offiziellen Startpunkts.",
+    offRouteToStart: "Zum Startpunkt",
+    offRouteFastestToRoute: "Schnellster Weg zur Route",
+    offRouteChoiceLater: "Später entscheiden",
+    routeChange: "Route ändern",
+    routeChangeStart: "Zurück zum Start",
+    routeChangeTransport: "Schnell zur Bahn",
+    routeChangeWaypoint: "Wegpunkt setzen",
+    routeChangePickHint: "Tippe auf der Karte auf dein neues Ziel.",
+    routeChangeCalculating: "Neue Wanderroute wird berechnet …",
+    routeChangeError: "Kein begehbarer Weg zu diesem Ziel gefunden.",
+    routeChangeCableCarLabel: "Seilbahnstation",
+    startHikeNow: "Wanderung starten",
+    startHikeMessage: "Du bist am offiziellen Startpunkt. Möchtest du die Wanderung jetzt beginnen?",
+    communityConditions: "Wegbedingungen der Community",
+    reportCondition: "Zustand melden",
+    conditionReportedAgo: (t) => `vor ${t}`,
+    conditionNoteLabel: "Anmerkung (optional)",
+    conditionNotePlaceholder: "z. B. Schnee ab 1500 m, Holzfällerbetrieb …",
+    conditionSubmit: "Melden",
+    conditionSubmitting: "Wird gespeichert …",
+    conditionSubmitted: "Danke für deinen Bericht!",
+    conditionRateLimit: "Du hast diese Route kürzlich bereits gemeldet. Bitte warte 2 Stunden.",
+    conditionError: "Meldung konnte nicht gespeichert werden.",
+    conditionNoReports: "Noch keine Meldungen in den letzten 7 Tagen.",
+    conditions: { excellent: "Top-Zustand", clear: "Problemlos", muddy: "Nass / Matschig", snow: "Schnee", icy: "Vereist", blocked: "Gesperrt" },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+  },
+  gsw: {
+    notAvailable: "Nid verfügbär",
+    callSosManually: (num) => `Bitte wähl de Notruef ${num} vo Hand.`,
+    hikeNotFound: "Wanderig nid gfunde.",
+    back: "Zrugg",
+    noLocationAccess: "Kei Standortzuegriff — d Live-Navigation pausiert.",
+    locationDeniedHint: "Ohni GPS wird di Fortschritt nur gschätzt. Aktivier de Standortzuegriff i de Systemiistellige, dass d Sag dim ächte Wäg folgt.",
+    gpsSignalLostTitle: "Kei aktuelle GPS-Position",
+    gpsSignalLostHint: "Fortschritt, Wägfüehrig und automatischi Ansage pausiered, bis wieder e aktuelle Standort da isch.",
+    allow: "Erlaube",
+    walkToStartTitle: "No nid uf de Route",
+    walkToStartHint: (distance, direction) =>
+      `No ${distance} Richtig ${direction} bis zum Wägstart.`,
+    walkToStartSpoken: (distance, direction) =>
+      `Du bist noch ${distance} vom Wegstart entfernt, Richtung ${direction}.`,
+    compassDirections: ["Norden", "Nordosten", "Osten", "Südosten", "Süden", "Südwesten", "Westen", "Nordwesten"],
+    compass: "KOMPASS",
+    compassUnavailable: "Kompass auf diesem Gerät nicht verfügbar",
+    panorama: "GIPFELPANORAMA",
+    panoramaHint: "Dreh di langsam — ächte OSM-Gipfel werde im Sichtfeld markiert.",
+    panoramaNeedCompass: "Kompass aktiviere, zum Gipfel i Blickrichtig z erkenne.",
+    panoramaNoGps: "GPS-Standort wird bruucht, zum Gipfel z erkenne.",
+    panoramaNoPeaks: "I de aktuelle Umgebig sind kei benannte Gipfel glade worde.",
+    panoramaDetected: "GIPFEL IM BLICK",
+    panoramaDistance: (distance) => `${distance} km entfernt`,
+    camera: "KAMERA",
+    cameraOff: "ZUE",
+    cameraPermission: "Kameraberechtigung wird bruucht.",
+    arUnavailable: "AR isch uf dem Gerät nöd verfügbar.",
+    arTrackingStarting: "AR-Tracking wird stabilisiert …",
+    arTrackingLimited: "AR-Tracking isch iigschränkt.",
+    arTrackingPaused: "D Wägfüehrig bliibt pausiert, bis s Tracking stabil isch.",
+    panoramaOfflineData: "OFFLINE-GIPFELDATEBANK",
+    panoramaOnlineData: "LIVE-GIPFELDATE",
+    panoramaHeightUnknown: "Höhewinkel unbekannt",
+    panoramaDrag: "Wüsche oder dreh für 360°-Panorama",
+    panoramaElevationAngle: (angle) => `Höhewinkel ${angle}`,
+    panoramaTerrainModel: "CHARTE UM DI",
+    panoramaTerrainModelDetail: (radius) => `SwissTopo · Radius ${radius}`,
+    coordinates: "KOORDINATE",
+    place: "ORT",
+    altitude: "HÖCHI",
+    altitudeUnit: "m ü. M.",
+    live: "LIVE",
+    discoveredNearby: "I DE NÄCHI ENTDECKT",
+    metricDistance: "DISTANZ",
+    metricHeight: "HÖCHI",
+    metricTimeLeft: "RÄSCHTZYT",
+    metricSac: "SAC",
+    metricSteps: "SCHRITT",
+    metricRemaining: "REST-KM",
+    unitKm: "km",
+    unitHm: "hm",
+    unitMin: "min",
+    preparingText: "D Sag erwacht …",
+    chapterMark: (current, total) => `KAPITEL ${current} / ${total}`,
+    pause: "Pause",
+    readAloud: "Vorläse",
+    repeatChapter: "Nomal",
+    turnNotifTitle: "Abzwiigig voruus",
+    chapterNotif: (n) => `Kapitel ${n} faht aa`,
+    turnNotifLeft: "Grad links halte",
+    turnNotifRight: "Grad rächts halte",
+    surfaceChangeTitle: "Wägwächsel",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `I ${leadDistance} fangt en längere Ufstieg aa: ${sectionDistance} mit durchschnittlich ${gradePct} Prozent.`
+        : `I ${leadDistance} chunnt es längers Gfäll: ${sectionDistance} mit durchschnittlich ${gradePct} Prozent.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `No ${remainingDistance} bis zum Ändi vom Ufstieg, durchschnittlich ${gradePct} Prozent.`
+        : `No ${remainingDistance} bis zum Ändi vom Gfäll, durchschnittlich ${gradePct} Prozent.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "De Ufstieg isch i öppe 100 Meter fertig." : "S Gfäll isch i öppe 100 Meter fertig.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Achtung: sehr steile Ufstieg mit bis zu ${gradePct} Prozent uf ${sectionDistance}.`
+        : `Achtung: sehr steils Gfäll mit bis zu ${gradePct} Prozent uf ${sectionDistance}.`,
+    terrainWarningTitle: "Achtung: sehr steile Abschnitt",
+    milestoneTitle: "Miileschtei",
+    poiNearby: "Du bisch i de Nöchi vo ere interessante Sehenswürdigkeit.",
+    partnerNearby: "Du bisch i de Nöchi vo eme SagaTrail-Partner.",
+    poiNotifBody: "En bsundrige Ort grad i dinere Nöchi — dr Verzeller verzellt grad dervo",
+    perception: "WAHRNÄHMIG",
+    finishHike: "Wanderig abschliesse",
+    finishEarlyButton: "Vorzytig abschliesse",
+    finishEarlyConfirmTitle: "Wanderig vorzytig abschliesse?",
+    finishEarlyConfirmMessage: "Du bisch d Route no nid ganz gloffe. Trotzdem abschliesse und zum Album?",
+    finishEarlyConfirmAction: "Abschliesse",
+    finishEarlyCancelAction: "Wyterwandere",
+    interruptHikeConfirmTitle: "Wanderig würkli unterbräche?",
+    interruptHikeConfirmMessage: "Din Fortschritt bliibt gspeicheret und du chasch später wiiterwandere.",
+    interruptHikeConfirmAction: "Ja",
+    interruptHikeCancelAction: "Nei",
+    sos: "SOS",
+    emergency: "Notfall",
+    emergencySub: "Wähl de passendi Notruef. Bliib ruhig, nenn Standort und Lag.",
+    regaTitle: "Rega 1414",
+    regaSub: "Schwiizerischi Rettigsflugwacht",
+    euroEmergencyTitle: "Euro-Notruef 112",
+    euroEmergencySub: "Allgemeine Notruef",
+    sendLocationToContact: "Standort am Notfallkontakt schicke",
+    smsNotAvailable: "SMS isch uf dem Grät nid verfügbär.",
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name}: ` : ""}Notfall uf de Wanderig. Ungefähr Standort: ${coords}`,
+    safetyCheckinButton: "Sicherheits-Check-in",
+    safetyCheckinTitle: "Sicherheits-Check-in",
+    safetyCheckinExplanation: "Setz en lokale Timer für dini Wanderig. Das isch kei Überwachig und kei Live-Tracking.",
+    safetyCheckinChooseDuration: "Wieder melde nach",
+    safetyCheckinMinutes: "Min.",
+    safetyCheckinStart: "Timer starte",
+    safetyCheckinConfirm: "Mir gaht's guet — Timer stoppe",
+    safetyCheckinActive: "Check-in-Timer",
+    safetyCheckinOverdue: "Timer überfällig",
+    safetyCheckinNoGps: "Zum Teile vom Standort bruchts en frische GPS-Fix.",
+    safetyCheckinNoContact: "Bitte hinterleg zerscht en Notfallkontakt.",
+    safetyCheckinMessage: "Sicherheits-Check-in uf de Wanderig",
+    safetyCheckinExternalShare: "Live-Link teile",
+    safetyCheckinExternalShareActive: "Live-Link aktiv",
+    safetyCheckinShareFailed: "De Live-Sicherheitslink het nöd chönne gstartet werde.",
+    safetyCheckinLoadFailed: "De gspeicherte Sicherheits-Check-in het nöd chönne glade werde.",
+    safetyCheckinEndFailed: "De Sicherheits-Check-in het no nöd chönne beendet werde. Bitte probiers nomal.",
+    safetyCheckinStartFailed: "De Sicherheits-Check-in het nöd chönne gstartet werde.",
+    safetyCheckinLocalOnly: "Nume lokale Timer — kei Live-Überwachig",
+    safetyCheckinShareWhatsApp: "Per WhatsApp schicke",
+    safetyCheckinShareSms: "Per SMS schicke",
+    safetyCheckinWhatsappUnavailable: "WhatsApp isch uf dem Grät nid verfügbär. Bitte schick de Link per SMS.",
+    watchPulseTitle: "PULS",
+    watchPulseWaiting: "Wart uf Live-Puls",
+    unknown: "unbekannt",
+    close: "Schliesse",
+    narrationUnavailable: "KI-Erzählstimm grad nid verfügbär (Internet prüefe).",
+    backgroundNotificationTitle: "SagaTrail wanderet mit",
+    backgroundNotificationBody: "D Gschicht laufft wiiter, au wenn de Bildschirm gsperrt isch.",
+    poiDetailEyebrow: "MEH INFOS",
+    poiStoryLoading: "D Gschicht wird verzellt …",
+    partnerDetailEyebrow: "PARTNERBETRIEB",
+    partnerOffer: "Aagebot",
+    partnerOffen: "Offe",
+    partnerGeschlossen: "Zue",
+    partnerSchliesstUm: "Schlisst ume",
+    partnerOeffnetUm: "Öffnet ume",
+    partnerOeffnetAm: "Öffnet am",
+    partnerHeute: "hüt",
+    partnerMorgen: "morn",
+    partnerUhr: "Uhr",
+    partnerTelefon: "Telefon",
+    partnerReservierung: "Reserviere",
+    partnerWebsite: "Website",
+    voiceListening: "Ich lose … sag dini Antwort",
+    voiceOrTap: "Sprich dini Antwort oder tipp e Option a",
+    yourChoice: (option) => `Du hesch gwählt: ${option}`,
+    leaderDecides: "D Gruppäleitig entscheidet für d Gruppä …",
+    offlineHikeBanner: "Kei Empfang — Erzählig pausiert.",
+    leaderChose: (option) => `D Gruppäleitig het gwählt: ${option}`,
+    photoTake: "Foto ufnä",
+    photoSkip: "Überspringe",
+    photoUploading: "Foto wird ueglade …",
+    photoUploaded: "Gspeicheret",
+    photoUploadError: "Upload fehlgschlage",
+    photoAddBtn: "Foto",
+    photoCommunityTitle: "Wandererfotos",
+    offRouteTitle: "Vom Wäg abcho",
+    offRouteHint: "GPS zeigt ~80 m näbe em Wanderwäg",
+    offRouteRecalculating: "Neui Route wird berechnet …",
+    offRouteRecalcDone: "Neui Route bereit",
+    offRouteFollow: "Dere Route folge",
+    offRouteRecalcFailed: "Neuberechniig fehlgschlage",
+    offRouteStartChoiceTitle: "Wie wotsch zur Route cho?",
+    offRouteStartChoiceMessage: "Du bisch no nöd i de Nöchi vom offizielle Startpunkt.",
+    offRouteToStart: "Zum Startpunkt",
+    offRouteFastestToRoute: "Schnällschte Wäg zur Route",
+    offRouteChoiceLater: "Spöter entscheide",
+    routeChange: "Route ändere",
+    routeChangeStart: "Zrugg zum Start",
+    routeChangeTransport: "Schnäll zur Bahn",
+    routeChangeWaypoint: "Wägpunkt setze",
+    routeChangePickHint: "Tippe uf de Charte dis neue Ziel aa.",
+    routeChangeCalculating: "D neue Wanderroute wird berechnet …",
+    routeChangeError: "Kein begehbare Wäg zu dem Ziel gfunde.",
+    routeChangeCableCarLabel: "Seilbahnstation",
+    startHikeNow: "Wanderig starte",
+    startHikeMessage: "Du bisch am offizielle Startpunkt. Wotsch d Wanderig jetzt starte?",
+    communityConditions: "Wegbedingige vo de Community",
+    reportCondition: "Zuestand mälde",
+    conditionReportedAgo: (t) => `vor ${t}`,
+    conditionNoteLabel: "Aammerkig (optional)",
+    conditionNotePlaceholder: "z. B. Schnee ab 1500 m …",
+    conditionSubmit: "Mälde",
+    conditionSubmitting: "Wird gspicheret …",
+    conditionSubmitted: "Danke für dini Mäldig!",
+    conditionRateLimit: "Du häsch die Route kürzlich scho gmäldet. Bitte wart 2 Stund.",
+    conditionError: "Mäldig het nid chöne gspicheret wärde.",
+    conditionNoReports: "No kei Mäldigge in de letzte 7 Tag.",
+    conditions: { excellent: "Top-Zuestand", clear: "Problemlos", muddy: "Nass / Matschig", snow: "Schnee", icy: "Veriiset", blocked: "Gsperrt" },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+  },
+  en: {
+    notAvailable: "Not available",
+    callSosManually: (num) => `Please call the emergency number ${num} manually.`,
+    hikeNotFound: "Hike not found.",
+    back: "Back",
+    noLocationAccess: "No location access — live navigation is paused.",
+    locationDeniedHint: "Without GPS your progress is only estimated. Enable location access in the system settings so the saga follows your real path.",
+    gpsSignalLostTitle: "No current GPS fix",
+    gpsSignalLostHint: "Progress, route guidance and automatic narration are paused until a current location is available again.",
+    allow: "Allow",
+    walkToStartTitle: "Not on the route yet",
+    walkToStartHint: (distance, direction) =>
+      `${distance} to go, heading ${direction}, to reach the trailhead.`,
+    walkToStartSpoken: (distance, direction) =>
+      `You're still ${distance} from the trailhead, heading ${direction}.`,
+    compassDirections: ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"],
+    compass: "COMPASS",
+    compassUnavailable: "Compass unavailable on this device",
+    panorama: "PEAK PANORAMA",
+    panoramaHint: "Turn slowly — real OSM peaks are marked in your field of view.",
+    panoramaNeedCompass: "Enable the compass to identify peaks in your direction.",
+    panoramaNoGps: "GPS position is needed to identify peaks.",
+    panoramaNoPeaks: "No named peaks were loaded in the current area.",
+    panoramaDetected: "PEAK IN VIEW",
+    panoramaDistance: (distance) => `${distance} km away`,
+    camera: "CAMERA",
+    cameraOff: "CLOSE",
+    cameraPermission: "Camera permission is needed.",
+    arUnavailable: "AR is not available on this device.",
+    arTrackingStarting: "AR tracking is stabilizing …",
+    arTrackingLimited: "AR tracking is limited.",
+    arTrackingPaused: "Route guidance stays paused until tracking is stable.",
+    panoramaOfflineData: "OFFLINE PEAK DATABASE",
+    panoramaOnlineData: "LIVE PEAK DATA",
+    panoramaHeightUnknown: "Elevation angle unknown",
+    panoramaDrag: "Swipe or turn for 360° panorama",
+    panoramaElevationAngle: (angle) => `Elevation angle ${angle}`,
+    panoramaTerrainModel: "3D TERRAIN",
+    panoramaTerrainModelDetail: (radius) => `Elevation relief · ${radius} radius`,
+    coordinates: "COORDINATES",
+    place: "PLACE",
+    altitude: "ALTITUDE",
+    altitudeUnit: "m a.s.l.",
+    live: "LIVE",
+    discoveredNearby: "DISCOVERED NEARBY",
+    metricDistance: "DISTANCE",
+    metricHeight: "ASCENT",
+    metricTimeLeft: "REMAINING",
+    metricSac: "SAC",
+    metricSteps: "STEPS",
+    metricRemaining: "REMAINING",
+    unitKm: "km",
+    unitHm: "m",
+    unitMin: "min",
+    preparingText: "The legend awakens …",
+    chapterMark: (current, total) => `CHAPTER ${current} / ${total}`,
+    pause: "Pause",
+    readAloud: "Read aloud",
+    repeatChapter: "Repeat",
+    turnNotifTitle: "Turn ahead",
+    chapterNotif: (n) => `Chapter ${n} begins`,
+    turnNotifLeft: "Keep left shortly",
+    turnNotifRight: "Keep right shortly",
+    surfaceChangeTitle: "Trail surface",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `In ${leadDistance}, a longer climb begins: ${sectionDistance} at an average of ${gradePct} percent.`
+        : `In ${leadDistance}, a longer descent follows: ${sectionDistance} at an average of ${gradePct} percent.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `${remainingDistance} to the end of the climb, averaging ${gradePct} percent.`
+        : `${remainingDistance} to the end of the descent, averaging ${gradePct} percent.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "The climb ends in about 100 meters." : "The descent ends in about 100 meters.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Caution: very steep climb of up to ${gradePct} percent over ${sectionDistance}.`
+        : `Caution: very steep descent of up to ${gradePct} percent over ${sectionDistance}.`,
+    terrainWarningTitle: "Caution: very steep section",
+    milestoneTitle: "Milestone",
+    poiNearby: "You are near an interesting landmark.",
+    partnerNearby: "You are near a SagaTrail partner.",
+    poiNotifBody: "A special place right nearby — the narrator is telling its story now",
+    perception: "PERCEPTION",
+    finishHike: "Finish hike",
+    finishEarlyButton: "Finish early",
+    finishEarlyConfirmTitle: "Finish hike early?",
+    finishEarlyConfirmMessage: "You haven't completed the whole route yet. Finish anyway and go to your album?",
+    finishEarlyConfirmAction: "Finish",
+    finishEarlyCancelAction: "Keep hiking",
+    interruptHikeConfirmTitle: "Really interrupt this hike?",
+    interruptHikeConfirmMessage: "Your progress will be saved so you can continue later.",
+    interruptHikeConfirmAction: "Yes",
+    interruptHikeCancelAction: "No",
+    sos: "SOS",
+    emergency: "Emergency",
+    emergencySub: "Call the appropriate emergency number. Stay calm, state your location and situation.",
+    regaTitle: "Rega 1414",
+    regaSub: "Swiss Air-Rescue",
+    euroEmergencyTitle: "Euro Emergency 112",
+    euroEmergencySub: "General emergency number",
+    sendLocationToContact: "Send location to emergency contact",
+    smsNotAvailable: "SMS is not available on this device.",
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name}: ` : ""}Emergency during hike. Approximate location: ${coords}`,
+    safetyCheckinButton: "Safety check-in",
+    safetyCheckinTitle: "Safety check-in",
+    safetyCheckinExplanation: "Set a local timer for your hike. This does not provide monitoring or live tracking.",
+    safetyCheckinChooseDuration: "Check in again after",
+    safetyCheckinMinutes: "min",
+    safetyCheckinStart: "Start timer",
+    safetyCheckinConfirm: "I'm safe — stop timer",
+    safetyCheckinActive: "Check-in timer",
+    safetyCheckinOverdue: "Timer overdue",
+    safetyCheckinNoGps: "A fresh GPS position is required before sharing your location.",
+    safetyCheckinNoContact: "Set an emergency contact before sharing your location.",
+    safetyCheckinMessage: "Safety check-in location",
+    safetyCheckinExternalShare: "Share live link",
+    safetyCheckinExternalShareActive: "Live link active",
+    safetyCheckinShareFailed: "The live safety link could not be started.",
+    safetyCheckinLoadFailed: "The saved safety check-in could not be loaded.",
+    safetyCheckinEndFailed: "The safety check-in could not be ended yet. Please try again.",
+    safetyCheckinStartFailed: "The safety check-in could not be started.",
+    safetyCheckinLocalOnly: "Local timer only — no live monitoring",
+    safetyCheckinShareWhatsApp: "Send via WhatsApp",
+    safetyCheckinShareSms: "Send via SMS",
+    safetyCheckinWhatsappUnavailable: "WhatsApp is not available on this device. Please send the link by SMS.",
+    watchPulseTitle: "HEART RATE",
+    watchPulseWaiting: "Waiting for live heart rate",
+    unknown: "unknown",
+    close: "Close",
+    narrationUnavailable: "AI narration voice unavailable right now (check your connection).",
+    backgroundNotificationTitle: "SagaTrail is hiking along",
+    backgroundNotificationBody: "The story keeps going even with the screen locked.",
+    poiDetailEyebrow: "MORE INFO",
+    poiStoryLoading: "The story is being told …",
+    partnerDetailEyebrow: "PARTNER BUSINESS",
+    partnerOffer: "Offer",
+    partnerOffen: "Open",
+    partnerGeschlossen: "Closed",
+    partnerSchliesstUm: "Closes at",
+    partnerOeffnetUm: "Opens at",
+    partnerOeffnetAm: "Opens on",
+    partnerHeute: "today",
+    partnerMorgen: "tomorrow",
+    partnerUhr: "",
+    partnerTelefon: "Phone",
+    partnerReservierung: "Reserve",
+    partnerWebsite: "Website",
+    voiceListening: "Listening … say your answer",
+    voiceOrTap: "Speak your answer or tap an option",
+    yourChoice: (option) => `You chose: ${option}`,
+    leaderDecides: "The group leader decides for the group …",
+    offlineHikeBanner: "No signal — narration paused.",
+    leaderChose: (option) => `The group leader chose: ${option}`,
+    photoTake: "Take photo",
+    photoSkip: "Skip",
+    photoUploading: "Uploading photo …",
+    photoUploaded: "Saved",
+    photoUploadError: "Upload failed",
+    photoAddBtn: "Photo",
+    photoCommunityTitle: "Hiker photos",
+    offRouteTitle: "Off Route",
+    offRouteHint: "GPS shows ~80 m from the hiking trail",
+    offRouteRecalculating: "Calculating new route …",
+    offRouteRecalcDone: "New route ready",
+    offRouteFollow: "Follow this route",
+    offRouteRecalcFailed: "Recalculation failed",
+    offRouteStartChoiceTitle: "How would you like to reach the route?",
+    offRouteStartChoiceMessage: "You are not near the official trailhead yet.",
+    offRouteToStart: "Go to trailhead",
+    offRouteFastestToRoute: "Fastest way to the route",
+    offRouteChoiceLater: "Decide later",
+    routeChange: "Change route",
+    routeChangeStart: "Return to start",
+    routeChangeTransport: "Fastest way to transport",
+    routeChangeWaypoint: "Set waypoint",
+    routeChangePickHint: "Tap the map to choose your new destination.",
+    routeChangeCalculating: "Calculating your new hiking route …",
+    routeChangeError: "No walkable route to this destination was found.",
+    routeChangeCableCarLabel: "Cable-car station",
+    startHikeNow: "Start hike",
+    startHikeMessage: "You are at the official trailhead. Start the hike now?",
+    communityConditions: "Community Trail Reports",
+    reportCondition: "Report conditions",
+    conditionReportedAgo: (t) => `${t} ago`,
+    conditionNoteLabel: "Note (optional)",
+    conditionNotePlaceholder: "e.g. snow above 1500 m, logging in progress …",
+    conditionSubmit: "Submit",
+    conditionSubmitting: "Saving …",
+    conditionSubmitted: "Thanks for your report!",
+    conditionRateLimit: "You already reported conditions for this route recently. Please wait 2 hours.",
+    conditionError: "Could not save your report.",
+    conditionNoReports: "No reports in the last 7 days.",
+    conditions: { excellent: "Excellent", clear: "All clear", muddy: "Wet / Muddy", snow: "Snow", icy: "Icy", blocked: "Blocked" },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+  },
+  fr: {
+    notAvailable: "Non disponible",
+    callSosManually: (num) => `Veuillez appeler le numéro d'urgence ${num} manuellement.`,
+    hikeNotFound: "Randonnée non trouvée.",
+    back: "Retour",
+    noLocationAccess: "Pas d'accès à la localisation — la navigation en direct est en pause.",
+    locationDeniedHint: "Sans GPS, ta progression n'est qu'estimée. Active l'accès à la position dans les réglages du système pour que la légende suive ton vrai chemin.",
+    gpsSignalLostTitle: "Aucun signal GPS récent",
+    gpsSignalLostHint: "La progression, le guidage et les annonces automatiques sont en pause jusqu'au retour d'une position actuelle.",
+    allow: "Autoriser",
+    walkToStartTitle: "Pas encore sur l'itinéraire",
+    walkToStartHint: (distance, direction) =>
+      `Encore ${distance} vers le ${direction} pour atteindre le départ.`,
+    walkToStartSpoken: (distance, direction) =>
+      `Il te reste ${distance} vers le ${direction} pour atteindre le départ.`,
+    compassDirections: ["nord", "nord-est", "est", "sud-est", "sud", "sud-ouest", "ouest", "nord-ouest"],
+    compass: "BOUSSOLE",
+    compassUnavailable: "Boussole indisponible sur cet appareil",
+    panorama: "PANORAMA DES SOMMETS",
+    panoramaHint: "Tournez-vous lentement — les vrais sommets OSM sont marqués dans votre champ de vision.",
+    panoramaNeedCompass: "Activez la boussole pour reconnaître les sommets dans votre direction.",
+    panoramaNoGps: "La position GPS est nécessaire pour reconnaître les sommets.",
+    panoramaNoPeaks: "Aucun sommet nommé n'a été chargé dans les environs.",
+    panoramaDetected: "SOMMET EN VUE",
+    panoramaDistance: (distance) => `à ${distance} km`,
+    camera: "CAMÉRA",
+    cameraOff: "FERMER",
+    cameraPermission: "L'autorisation de la caméra est nécessaire.",
+    arUnavailable: "La réalité augmentée n'est pas disponible sur cet appareil.",
+    arTrackingStarting: "Le suivi AR se stabilise …",
+    arTrackingLimited: "Le suivi AR est limité.",
+    arTrackingPaused: "Le guidage reste en pause jusqu'à ce que le suivi soit stable.",
+    panoramaOfflineData: "BASE HORS LIGNE",
+    panoramaOnlineData: "DONNÉES EN DIRECT",
+    panoramaHeightUnknown: "Angle d'élévation inconnu",
+    panoramaDrag: "Glissez ou tournez pour le panorama à 360°",
+    panoramaElevationAngle: (angle) => `Angle d'élévation ${angle}`,
+    panoramaTerrainModel: "TERRAIN 3D",
+    panoramaTerrainModelDetail: (radius) => `Relief d'altitude · rayon ${radius}`,
+    coordinates: "COORDONNÉES",
+    place: "LIEU",
+    altitude: "ALTITUDE",
+    altitudeUnit: "m s. m.",
+    live: "LIVE",
+    discoveredNearby: "DÉCOUVERT À PROXIMITÉ",
+    metricDistance: "DISTANCE",
+    metricHeight: "DÉNIVELÉ",
+    metricTimeLeft: "TEMPS RESTANT",
+    metricSac: "SAC",
+    metricSteps: "PAS",
+    metricRemaining: "RESTANT",
+    unitKm: "km",
+    unitHm: "m",
+    unitMin: "min",
+    preparingText: "La légende s'éveille …",
+    chapterMark: (current, total) => `CHAPITRE ${current} / ${total}`,
+    pause: "Pause",
+    readAloud: "Lire à voix haute",
+    repeatChapter: "Répéter",
+    turnNotifTitle: "Bifurcation en vue",
+    chapterNotif: (n) => `Le chapitre ${n} commence`,
+    turnNotifLeft: "Serrez à gauche",
+    turnNotifRight: "Serrez à droite",
+    surfaceChangeTitle: "Surface du chemin",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `Dans ${leadDistance}, une montée plus longue commence : ${sectionDistance} à ${gradePct} pour cent en moyenne.`
+        : `Dans ${leadDistance}, une descente plus longue suit : ${sectionDistance} à ${gradePct} pour cent en moyenne.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `Encore ${remainingDistance} jusqu'à la fin de la montée, ${gradePct} pour cent en moyenne.`
+        : `Encore ${remainingDistance} jusqu'à la fin de la descente, ${gradePct} pour cent en moyenne.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "La montée se termine dans environ 100 mètres." : "La descente se termine dans environ 100 mètres.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Attention : montée très raide jusqu'à ${gradePct} pour cent sur ${sectionDistance}.`
+        : `Attention : descente très raide jusqu'à ${gradePct} pour cent sur ${sectionDistance}.`,
+    terrainWarningTitle: "Attention : passage très raide",
+    milestoneTitle: "Borne",
+    poiNearby: "Vous êtes à proximité d’un site intéressant.",
+    partnerNearby: "Vous êtes à proximité d’un partenaire SagaTrail.",
+    poiNotifBody: "Un lieu remarquable tout près de toi — le narrateur en parle en ce moment",
+    perception: "PERCEPTION",
+    finishHike: "Terminer la randonnée",
+    finishEarlyButton: "Terminer plus tôt",
+    finishEarlyConfirmTitle: "Terminer la randonnée maintenant ?",
+    finishEarlyConfirmMessage: "Tu n'as pas encore parcouru tout le trajet. Terminer quand même et aller à l'album ?",
+    finishEarlyConfirmAction: "Terminer",
+    finishEarlyCancelAction: "Continuer",
+    interruptHikeConfirmTitle: "Interrompre vraiment la randonnée ?",
+    interruptHikeConfirmMessage: "Votre progression sera enregistrée pour pouvoir continuer plus tard.",
+    interruptHikeConfirmAction: "Oui",
+    interruptHikeCancelAction: "Non",
+    sos: "SOS",
+    emergency: "Urgence",
+    emergencySub: "Appelez le numéro d'urgence approprié. Restez calme, indiquez votre position et la situation.",
+    regaTitle: "Rega 1414",
+    regaSub: "Garde aérienne suisse de sauvetage",
+    euroEmergencyTitle: "Urgence Euro 112",
+    euroEmergencySub: "Numéro d'urgence général",
+    sendLocationToContact: "Envoyer ma position au contact d'urgence",
+    smsNotAvailable: "Les SMS ne sont pas disponibles sur cet appareil.",
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name} : ` : ""}Urgence pendant la randonnée. Position approximative : ${coords}`,
+    safetyCheckinButton: "Check-in de sécurité",
+    safetyCheckinTitle: "Check-in de sécurité",
+    safetyCheckinExplanation: "Définissez un minuteur local pour votre randonnée. Il ne s'agit ni d'une surveillance ni d'un suivi en direct.",
+    safetyCheckinChooseDuration: "Se signaler à nouveau dans",
+    safetyCheckinMinutes: "min",
+    safetyCheckinStart: "Démarrer le minuteur",
+    safetyCheckinConfirm: "Je vais bien — arrêter le minuteur",
+    safetyCheckinActive: "Minuteur de check-in",
+    safetyCheckinOverdue: "Minuteur dépassé",
+    safetyCheckinNoGps: "Une position GPS récente est nécessaire avant de partager votre position.",
+    safetyCheckinNoContact: "Ajoutez d'abord un contact d'urgence avant de partager votre position.",
+    safetyCheckinMessage: "Check-in de sécurité pendant la randonnée",
+    safetyCheckinExternalShare: "Partager le lien en direct",
+    safetyCheckinExternalShareActive: "Lien en direct actif",
+    safetyCheckinShareFailed: "Le lien de sécurité en direct n'a pas pu être démarré.",
+    safetyCheckinLoadFailed: "Le check-in de sécurité enregistré n'a pas pu être chargé.",
+    safetyCheckinEndFailed: "Le check-in de sécurité n'a pas encore pu être terminé. Réessayez.",
+    safetyCheckinStartFailed: "Le check-in de sécurité n'a pas pu être démarré.",
+    safetyCheckinLocalOnly: "Minuteur local uniquement — pas de suivi en direct",
+    safetyCheckinShareWhatsApp: "Envoyer par WhatsApp",
+    safetyCheckinShareSms: "Envoyer par SMS",
+    safetyCheckinWhatsappUnavailable: "WhatsApp n'est pas disponible sur cet appareil. Envoyez le lien par SMS.",
+    watchPulseTitle: "POULS",
+    watchPulseWaiting: "En attente du pouls en direct",
+    unknown: "inconnu",
+    close: "Fermer",
+    narrationUnavailable: "Voix narrative IA indisponible pour le moment (vérifiez votre connexion).",
+    backgroundNotificationTitle: "SagaTrail vous accompagne",
+    backgroundNotificationBody: "L'histoire continue même écran verrouillé.",
+    poiDetailEyebrow: "PLUS D'INFOS",
+    poiStoryLoading: "L'histoire est en train d'être racontée …",
+    partnerDetailEyebrow: "PARTENAIRE",
+    partnerOffer: "Offre",
+    partnerOffen: "Ouvert",
+    partnerGeschlossen: "Fermé",
+    partnerSchliesstUm: "Ferme à",
+    partnerOeffnetUm: "Ouvre à",
+    partnerOeffnetAm: "Ouvre le",
+    partnerHeute: "aujourd'hui",
+    partnerMorgen: "demain",
+    partnerUhr: "h",
+    partnerTelefon: "Téléphone",
+    partnerReservierung: "Réserver",
+    partnerWebsite: "Site web",
+    voiceListening: "J'écoute … dis ta réponse",
+    voiceOrTap: "Dis ta réponse ou touche une option",
+    yourChoice: (option) => `Tu as choisi : ${option}`,
+    leaderDecides: "Le chef de groupe décide pour le groupe …",
+    offlineHikeBanner: "Pas de réseau — narration en pause.",
+    leaderChose: (option) => `Le chef de groupe a choisi : ${option}`,
+    photoTake: "Prendre une photo",
+    photoSkip: "Ignorer",
+    photoUploading: "Envoi de la photo …",
+    photoUploaded: "Enregistré",
+    photoUploadError: "Échec de l'envoi",
+    photoAddBtn: "Photo",
+    photoCommunityTitle: "Photos de randonneurs",
+    offRouteTitle: "Hors itinéraire",
+    offRouteHint: "Le GPS indique ~80 m à l'écart du sentier",
     offRouteRecalculating: "Calcul du nouvel itinéraire …",
     offRouteRecalcDone: "Nouvel itinéraire prêt",
     offRouteFollow: "Suivre cet itinéraire",

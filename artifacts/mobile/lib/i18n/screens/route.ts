@@ -1,4 +1,394 @@
-emp}°C`,
+import { createUseStrings, StringsDict } from "../createStrings";
+
+export interface RouteStrings {
+  notFound: string;
+  title: string;
+  distance: string;
+  ascent: string;
+  duration: string;
+  sacScale: string;
+  offlineAvailable: string;
+  saveForOffline: string;
+  offlineStatusActive: (size: string) => string;
+  offlineStatusInactive: string;
+  loadingMap: (done: number, total: number) => string;
+  loadingSaga: string;
+  loadingAudio: (done: number, total: number) => string;
+  loadingPois: string;
+  downloadInfoItems: string[];
+  downloadInfoTime: string;
+  downloadPhaseLabels: [string, string, string, string];
+  removeDownload: string;
+  download: string;
+  downloadFailed: string;
+  downloadFailedText: string;
+  checkBeforeTour: string;
+  weatherLoading: string;
+  weather: string;
+  weatherNotAvailable: string;
+  wind: string;
+  trailCondition: string;
+  weatherNote: string;
+  energySavingTitle: string;
+  energySavingHint: string;
+  importGpx: string;
+  importGpxImporting: string;
+  importGpxTitle: string;
+  importGpxText: string;
+  importGpxReadError: string;
+  exportGpx: string;
+  exportGpxError: string;
+  matchingSaga: string;
+  matchingSagaHintLoading: string;
+  matchingSagaHintLoaded: string;
+  sagaWriting: string;
+  sagaLoadError: string;
+  localisationNote: string;
+  premiumButton: string;
+  continueToSaga: string;
+  selectRoute: string;
+  sagaPickerHint: string;
+  unlockMoreSagas: string;
+  chooseOtherSaga: string;
+  progressNew: string;
+  progressStarted: string;
+  progressDone: string;
+  progressHeard: string;
+  sagaOnRoute: string;
+  sagaNear: string;
+  sagaInCanton: string;
+  windValues: (speed: number, gusts: number) => string;
+  weatherValues: (label: string, temp: number) => string;
+  trailConditions: {
+    gut: string;
+    vorsicht: string;
+    kritisch: string;
+  };
+  seasonLabel: string;
+  season: {
+    ganzjaehrig: string;
+    eherSommer: string;
+    nurSommer: string;
+  };
+  seasonNote: string;
+  routeTypeLabel: string;
+  routeTypeRundweg: string;
+  routeTypeStrecke: string;
+  streckeHint: string;
+  planReturn: string;
+  planOutward: string;
+  similarRoutes: string;
+  communityConditions: string;
+  reportCondition: string;
+  conditionReportedAgo: (relTime: string) => string;
+  conditionNoteLabel: string;
+  conditionNotePlaceholder: string;
+  conditionSubmit: string;
+  conditionSubmitting: string;
+  conditionSubmitted: string;
+  conditionRateLimit: string;
+  conditionError: string;
+  conditionNoReports: string;
+  conditions: {
+    excellent: string;
+    clear: string;
+    muddy: string;
+    snow: string;
+    icy: string;
+    blocked: string;
+  };
+  conditionEmoji: {
+    excellent: string;
+    clear: string;
+    muddy: string;
+    snow: string;
+    icy: string;
+    blocked: string;
+  };
+  avalancheBulletin: string;
+  avalancheLoading: string;
+  avalancheNoAlpine: string;
+  avalancheNoBulletin: string;
+  avalancheError: string;
+  avalancheSource: string;
+  avalancheValidUntil: (date: string) => string;
+  avalancheLevelLabel: (level: number, name: string) => string;
+  avalancheLevelNames: { 1: string; 2: string; 3: string; 4: string; 5: string };
+  altitudeWarning: string;
+  altitudeM: (m: number) => string;
+  altitudeWarningBerg: string;
+  altitudeWarningHoch: string;
+  altitudeWarningAlpin: string;
+  transportLive: string;
+  transportLoading: string;
+  transportNoStation: string;
+  transportError: string;
+  transportDepartingFrom: (name: string) => string;
+  transportPlatform: (p: string) => string;
+  transportDelay: (min: number) => string;
+  transportOnTime: string;
+  transportDisclaimer: string;
+  transportAnreiseLive: string;
+  transportArrivingAt: (name: string) => string;
+  reverseRoute: string;
+  elevationProfile: string;
+  sacHuettenTitle: string;
+  sacHuettenLoading: string;
+  sacHuettenNone: string;
+  sacHuettenError: string;
+  sacHuettenCall: string;
+  sacHuettenReserve: string;
+  sacHuettenOpen: string;
+  sacHuettenClosed: string;
+  sacHuettenAltitude: (m: number) => string;
+  sacHuettenPartnerBadge: string;
+  sacHuettenOeffnungszeiten: string;
+  sacHuettenSchliessen: string;
+  shareRoute: string;
+  bookmarkAdd: string;
+  bookmarkRemove: string;
+  sperrungenTitle: string;
+  sperrungenLoading: string;
+  sperrungenNone: string;
+  sperrungenError: string;
+  themeEvidenceUnavailableOffline: string;
+}
+
+const ROUTE_STRINGS: StringsDict<RouteStrings> = {
+  de: {
+    notFound: "Route nicht gefunden.",
+    title: "Routenplanung",
+    distance: "Distanz",
+    ascent: "Aufstieg",
+    duration: "Dauer",
+    sacScale: "SAC-Skala",
+    offlineAvailable: "Offline verfügbar",
+    saveForOffline: "Für offline sichern",
+    offlineStatusActive: (size) =>
+      `Sage und Karte liegen auf dem Gerät${size ? ` · ${size}` : ""}. Die Wanderung startet ohne Empfang.`,
+    offlineStatusInactive:
+      "Lädt die Sage und den Kartenausschnitt herunter, damit die Tour auch ohne Empfang funktioniert.",
+    loadingMap: (done, total) => `Karte wird gesichert … ${done}/${total}`,
+    loadingSaga: "Sage wird geladen …",
+    loadingAudio: (done, total) => `Audio wird gespeichert … ${done}/${total}`,
+    loadingPois: "Orte werden gesichert …",
+    downloadInfoItems: [
+      "Sagentext & Geschichte",
+      "Sprach-Erzählung (Audio)",
+      "Karte & Wanderwege",
+      "Sehenswürdigkeiten & Orte",
+    ],
+    downloadInfoTime:
+      "Je nach Route kann der Download einige Minuten dauern.",
+    downloadPhaseLabels: ["Sage", "Audio", "Orte", "Karte"],
+    removeDownload: "Download entfernen",
+    download: "Herunterladen",
+    downloadFailed: "Download fehlgeschlagen",
+    downloadFailedText:
+      "Die Wanderung konnte nicht vollstaendig geladen werden. Bitte pruefe deine Verbindung und versuche es erneut.",
+    checkBeforeTour: "Vor der Tour prüfen",
+    weatherLoading: "Wetter wird geladen …",
+    weather: "Wetter",
+    weatherNotAvailable: "Nicht verfügbar",
+    wind: "Wind",
+    trailCondition: "Wegzustand",
+    weatherNote:
+      "Live-Wetter via Open-Meteo, kein offizieller Sperr- oder Lawinenstatus — Richtwerte zur eigenen Prüfung.",
+    energySavingTitle: "Energiesparmodus",
+    energySavingHint:
+      "Diese Tour verbraucht durch GPS und Audio spürbar Akku. Der Sparmodus schont die Batterie.",
+    importGpx: "GPX importieren",
+    importGpxImporting: "GPX wird importiert …",
+    importGpxTitle: "GPX-Import",
+    importGpxText: "Die GPX-Datei konnte nicht verarbeitet werden.",
+    importGpxReadError: "Die Datei konnte nicht gelesen werden.",
+    exportGpx: "GPX exportieren",
+    exportGpxError: "GPX-Export fehlgeschlagen.",
+    matchingSaga: "Passende Sage",
+    matchingSagaHintLoading: "Die passende Regionalsage wird gesucht …",
+    matchingSagaHintLoaded:
+      "Diese überlieferte Legende begleitet dich auf der Route. Tippe an, um sie zu lesen.",
+    sagaWriting: "Sage wird geschrieben …",
+    sagaLoadError: "Die Sage konnte nicht geladen werden. Bitte prüfe deine Verbindung.",
+    localisationNote:
+      "Für diese Route ist keine punktgenau belegte Sage überliefert. Gezeigt wird die nächstgelegene dokumentierte Regionalsage.",
+    premiumButton: "Premium freischalten",
+    continueToSaga: "Zur Sage weiter",
+    selectRoute: "Diese Route auswählen",
+    sagaPickerHint: "Mehrere Sagen in der Nähe – wähle deine für diese Wanderung",
+    unlockMoreSagas: "Weitere Sagen freischalten",
+    chooseOtherSaga: "Andere Sage wählen",
+    progressNew: "Neu",
+    progressStarted: "Angefangen",
+    progressDone: "Gehört",
+    progressHeard: "schon gehört",
+    sagaOnRoute: "Spielt auf der Route",
+    sagaNear: "Spielt in der Nähe",
+    sagaInCanton: "Spielt in diesem Kanton",
+    windValues: (speed, gusts) => `${speed} km/h, Böen ${gusts} km/h`,
+    weatherValues: (label, temp) => `${label}, ${temp}°C`,
+    trailConditions: {
+      gut: "Gute Bedingungen",
+      vorsicht: "Mit Vorsicht begehbar",
+      kritisch: "Erschwerte Bedingungen",
+    },
+    seasonLabel: "Saison",
+    season: {
+      ganzjaehrig: "Ganzjährig",
+      eherSommer: "Eher Sommer/Herbst",
+      nurSommer: "Nur Sommer",
+    },
+    seasonNote:
+      "Einschätzung aus Höhe und Schwierigkeit — keine amtliche Aussage zum aktuellen Zustand.",
+    routeTypeLabel: "Routentyp",
+    routeTypeRundweg: "Rundweg",
+    routeTypeStrecke: "Streckenwanderung",
+    streckeHint:
+      "Start und Ziel liegen auseinander — in der Schweiz üblich: Die Rückreise erfolgt meist mit Bahn oder Postauto.",
+    planReturn: "Mit SBB zurückreisen",
+    planOutward: "Mit SBB anreisen",
+    similarRoutes: "Weitere Routen im Kanton",
+    communityConditions: "Wegbedingungen der Community",
+    reportCondition: "Zustand melden",
+    conditionReportedAgo: (t) => `vor ${t}`,
+    conditionNoteLabel: "Anmerkung (optional)",
+    conditionNotePlaceholder: "z. B. Schnee ab 1500 m, Holzfällerbetrieb …",
+    conditionSubmit: "Melden",
+    conditionSubmitting: "Wird gespeichert …",
+    conditionSubmitted: "Danke für deinen Bericht!",
+    conditionRateLimit: "Du hast diese Route kürzlich bereits gemeldet. Bitte warte 2 Stunden.",
+    conditionError: "Meldung konnte nicht gespeichert werden.",
+    conditionNoReports: "Noch keine Meldungen in den letzten 7 Tagen.",
+    conditions: {
+      excellent: "Top-Zustand",
+      clear: "Problemlos",
+      muddy: "Nass / Matschig",
+      snow: "Schnee",
+      icy: "Vereist",
+      blocked: "Gesperrt",
+    },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+    avalancheBulletin: "Lawinenbulletin",
+    avalancheLoading: "Lawinenbulletin wird geladen …",
+    avalancheNoAlpine: "Für diese Region ist kein Lawinenbulletin verfügbar.",
+    avalancheNoBulletin: "Kein aktuelles Lawinenbulletin (Sommerhalbjahr).",
+    avalancheError: "Bulletin konnte nicht geladen werden.",
+    avalancheSource: "Quelle: EAWS / SLF",
+    avalancheValidUntil: (d) => `Gültig bis ${d}`,
+    avalancheLevelLabel: (l, n) => `Gefahrenstufe ${l} · ${n}`,
+    avalancheLevelNames: { 1: "Gering", 2: "Mässig", 3: "Erheblich", 4: "Gross", 5: "Sehr gross" },
+    altitudeWarning: "Höhenwarnung",
+    altitudeM: (m) => `Höchster Punkt: ${m.toLocaleString("de-CH")} m ü. M.`,
+    altitudeWarningBerg: "Bergwetter: schnelle Wetterwechsel möglich. Sonnenschutz empfohlen.",
+    altitudeWarningHoch: "Höhenlage: UV-Intensität hoch, warme Kleidung einplanen, Wettersturz möglich.",
+    altitudeWarningAlpin: "Hochgebirge: alpine Ausrüstung erforderlich, Höhenkrankheit möglich.",
+    transportLive: "SBB live am Ziel",
+    transportLoading: "Fahrplan wird geladen …",
+    transportNoStation: "Kein Bahnhof in der Nähe gefunden.",
+    transportError: "Fahrplan konnte nicht geladen werden.",
+    transportDepartingFrom: (name) => `Ab ${name}`,
+    transportPlatform: (p) => `Gl. ${p}`,
+    transportDelay: (min) => `+${min} Min.`,
+    transportOnTime: "pünktlich",
+    transportDisclaimer: "Fahrplandaten: opendata.ch · Keine offizielle SBB-App",
+    transportAnreiseLive: "SBB live am Start",
+    transportArrivingAt: (name) => `Ankunft in ${name}`,
+    reverseRoute: "Strecke umkehren",
+    elevationProfile: "Höhenprofil",
+    sacHuettenTitle: "SAC-Hütten in der Nähe",
+    sacHuettenLoading: "Hütten werden geladen …",
+    sacHuettenNone: "Keine SAC-Hütten in der Nähe gefunden.",
+    sacHuettenError: "Hütten konnten nicht geladen werden.",
+    sacHuettenCall: "Anrufen",
+    sacHuettenReserve: "Reservieren",
+    sacHuettenOpen: "Offen",
+    sacHuettenClosed: "Saisonschluss",
+    sacHuettenAltitude: (m) => `${m} m ü. M.`,
+    sacHuettenPartnerBadge: "Partner",
+    sacHuettenOeffnungszeiten: "Öffnungszeiten",
+    sacHuettenSchliessen: "Schliessen",
+    shareRoute: "Route teilen",
+    bookmarkAdd: "Tour merken",
+    bookmarkRemove: "Gemerkt ✓",
+    sperrungenTitle: "Sperrungen & Wegschäden",
+    sperrungenLoading: "Sperrungen werden geladen …",
+    sperrungenNone: "Keine aktuellen Sperrungen",
+    sperrungenError: "Sperrungen konnten nicht geladen werden",
+    themeEvidenceUnavailableOffline:
+      "Offline sind für diese Route keine Themenbelege gespeichert.",
+  },
+  gsw: {
+    notFound: "Route nid gfunde.",
+    title: "Roteplanig",
+    distance: "Distanz",
+    ascent: "Ufstieg",
+    duration: "Duur",
+    sacScale: "SAC-Skala",
+    offlineAvailable: "Offline verfügbär",
+    saveForOffline: "Für offline sichere",
+    offlineStatusActive: (size) =>
+      `Sag und Karte ligged ufem Grät${size ? ` · ${size}` : ""}. D'Wanderig startet ohni Empfang.`,
+    offlineStatusInactive:
+      "Ladet d'Sag und de Kartenuusschnitt abe, damit d'Tour au ohni Empfang funktioniert.",
+    loadingMap: (done, total) => `Karte wird gsicheret … ${done}/${total}`,
+    loadingSaga: "Sag wird glade …",
+    loadingAudio: (done, total) => `Audio wird gspeicheret … ${done}/${total}`,
+    loadingPois: "Ort werde gsicheret …",
+    downloadInfoItems: [
+      "Sagetexcht & G'schicht",
+      "Sprach-Verzählig (Audio)",
+      "Karte & Wanderwäg",
+      "Sehenswürdigkeite & Ort",
+    ],
+    downloadInfoTime:
+      "Je nach Wäg cha s Abelade einigi Minute brüche.",
+    downloadPhaseLabels: ["Sag", "Audio", "Ort", "Charte"],
+    removeDownload: "Download entferne",
+    download: "Abelade",
+    downloadFailed: "Download fählgschlage",
+    downloadFailedText:
+      "D'Wanderig hät nid ganz chönne glade wärde. Bitte prüef dini Verbindig und probiers nomal.",
+    checkBeforeTour: "Vor de Tour prüefe",
+    weatherLoading: "Wätter wird glade …",
+    weather: "Wätter",
+    weatherNotAvailable: "Nid verfügbär",
+    wind: "Wind",
+    trailCondition: "Wegzuestand",
+    weatherNote:
+      "Live-Wätter via Open-Meteo, kei offizielle Sperr- oder Lawinestatus — Richtwärt zur eigene Prüfig.",
+    energySavingTitle: "Energiesparmodus",
+    energySavingHint:
+      "Die Tour verbruucht dur GPS und Audio spürbar Akku. De Sparmodus schont d'Batterie.",
+    importGpx: "GPX importiere",
+    importGpxImporting: "GPX wird importiert …",
+    importGpxTitle: "GPX-Import",
+    importGpxText: "D'GPX-Datei het nid chöne verarbeitet wärde.",
+    importGpxReadError: "D'Datei het nöd chöne gläse wärde.",
+    exportGpx: "GPX exportiere",
+    exportGpxError: "GPX-Export isch fehlgschlage.",
+    matchingSaga: "Passendi Sag",
+    matchingSagaHintLoading: "Die passendi Regionalsag wird gsuecht …",
+    matchingSagaHintLoaded:
+      "Die überliifereti Legände begleitet dich uf de Rote. Tipp a, zum si läse.",
+    sagaWriting: "Sag wird gschribe …",
+    sagaLoadError: "D'Sag hät nid chönne glade wärde. Bitte prüef dini Verbindig.",
+    localisationNote:
+      "Für die Rote isch kei punktgnaui Sag überliiferet. Zeigt wird die nächschti dokumentierti Regionalsag.",
+    premiumButton: "Premium freischalte",
+    continueToSaga: "Wiiter zur Sag",
+    selectRoute: "Die Route usswähle",
+    sagaPickerHint: "Meri Sage i dr Nächi – wähl dyni für die Wanderig",
+    unlockMoreSagas: "Wiiteri Sage freischalte",
+    chooseOtherSaga: "Anderi Sag wähle",
+    progressNew: "Neu",
+    progressStarted: "Agriffe",
+    progressDone: "Ghört",
+    progressHeard: "scho ghört",
+    sagaOnRoute: "Spielt uf dr Route",
+    sagaNear: "Spielt i dr Nächi",
+    sagaInCanton: "Spielt i däm Kanton",
+    windValues: (speed, gusts) => `${speed} km/h, Böe ${gusts} km/h`,
+    weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
       gut: "Gueti Bedingige",
       vorsicht: "Mit Vorsicht begehbar",

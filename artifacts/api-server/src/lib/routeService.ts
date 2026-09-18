@@ -1,4 +1,1116 @@
-fficial SchweizMobil local-route rows that have no geometry.
+import type { Logger } from "pino";
+import { eq, sql, inArray } from "drizzle-orm";
+import {
+  db,
+  externalRoutesTable,
+  catalogSagasTable,
+  cantonFetchesTable,
+  partnersTable,
+  type ExternalRouteRow,
+  type CatalogSagaRow,
+  type PartnerRow,
+} from "@workspace/db";
+import { and, gte, lte, isNull, isNotNull, or, notInArray } from "drizzle-orm";
+import { isoForCanton, CANTON_ISO } from "./cantonIso";
+import {
+  fetchCantonRouteIndex,
+  fetchRouteGeometries,
+  fetchRouteGeometryChunked,
+  fetchRouteSuperDeep,
+  fetchSwissNumberedIndex,
+  resolveNumberedRouteOsmId,
+  fetchAerialways,
+  fetchHistoricPois,
+  fetchPeakPois,
+  searchOsmRouteByFromTo,
+  fetchOsmRouteDifficulties,
+  type RouteIndexEntry,
+  type RawHikingRoute,
+  type RawAerialway,
+  type RawPoi,
+} from "./overpass";
+import { computeElevationStats } from "./elevation";
+import { istPoiBildPassend } from "./poiImageCheck";
+import { assessSac, deriveSacFromSwissTlm3d } from "./swisstopoHiking";
+import { getCachedRoutePhoto } from "./commonsPhoto";
+import { reverseGeocode } from "./geocoding";
+import { START_CANTON_OVERRIDES } from "./routeCantonOverrides";
+import { refreshCantonRouteThemes } from "./routeThemeRefresh";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+// ---------------------------------------------------------------------------
+// POI-Such-Hilfsfunktionen
+// ---------------------------------------------------------------------------
+
+/** Reiner Zahlen-/Code-Name ("42", "K17", "GB 42") — keine sinnvolle
+ *  Namens-Suche auf Commons oder Wikipedia moeglich. */
+function isCodeName(name: string): boolean {
+  return name.replace(/[\d\s.\-\/\\,#]+/g, "").length <= 2;
+}
+
+const KIND_SEARCH_LABEL: Record<string, string> = {
+  "historic=boundary_stone":      "Grenzstein",
+  "historic=ruins":               "Ruine",
+  "historic=castle":              "Burg Schloss",
+  "historic=manor":               "Herrenhaus",
+  "historic=monument":            "Denkmal",
+  "historic=memorial":            "Gedenkstätte",
+  "historic=wayside_cross":       "Wegkreuz",
+  "historic=wayside_shrine":      "Wegkapelle",
+  "historic=church":              "Kirche",
+  "historic=city_gate":           "Stadttor",
+  "historic=fort":                "Festung",
+  "historic=archaeological_site": "archäologische Stätte",
+  "historic=milestone":           "Meilenstein",
+  "historic=tomb":                "Grabmal",
+  "tourism=artwork":              "Kunstwerk",
+  "tourism=viewpoint":            "Aussichtspunkt",
+};
+
+/** Commons-Suchbegriff fuer einen POI. Reine Codes/Zahlen werden durch
+ *  den Typ ersetzt, damit Commons etwas Sinnvolles zurueckgibt. */
+function commonsSearchTerm(name: string, kind: string | undefined): string | null {
+  if (!isCodeName(name)) return name;
+  return kind ? (KIND_SEARCH_LABEL[kind] ?? null) : null;
+}
+
+// Orts-Hinweis fuer die Commons-Suche: grobe Zellen reichen als Suchkontext
+// aus und verhindern eine Nominatim-Anfrage pro POI in derselben Ortschaft.
+const poiPlaceHintCache = new Map<string, Promise<string | null>>();
+
+async function getPoiPlaceHint(lat: number, lng: number, log: Logger): Promise<string | null> {
+  const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+  const cached = poiPlaceHintCache.get(key);
+  if (cached) return cached;
+  const pending = reverseGeocode(lat, lng, log)
+    .then((result) => result.place)
+    .catch(() => null);
+  poiPlaceHintCache.set(key, pending);
+  return pending;
+}
+
+import { logger as rootLogger } from "./logger";
+import { deriveSeason } from "./season";
+import {
+  downsample,
+  rdpSimplify,
+  estimateMinutes,
+  haversineM,
+  pathDistanceKm,
+  type LatLng,
+} from "./geo";
+import {
+  fetchCommonsImageByName,
+  fetchNearbyCommonsImage,
+  fetchWikipediaSummary,
+  fetchWikidataImage,
+  fetchWikidataFacts,
+  resolveOsmWikipediaTag,
+  resolveWikidataTitle,
+  fetchWikidataCommonsCategory,
+  fetchWikipediaArticleImageByPoiName,
+  searchAiPoiKnowledge,
+  searchCantonLegend,
+  searchNearbyWikipedia,
+  type WikiSummary,
+} from "./wikipedia";
+
+/**
+ * Orchestriert die dynamischen Routen: laedt reale Wanderrouten je Kanton aus
+ * OpenStreetMap, reichert sie mit swisstopo-Hoehenmetern an und cacht sie in
+ * Postgres. Einer Route wird die naechstgelegene kuratierte, gemeinfrei belegte
+ * Sage zugeordnet — es werden keine Sagen mehr frei erzeugt.
+ */
+
+const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 Tage
+const MIN_KM = 5;
+const MAX_KM = 45;
+const STORED_GEOMETRY_POINTS = 500; // Douglas-Peucker, war 80 (gleichmässig)
+const ELEVATION_CONCURRENCY = 8;
+
+// Wie viele Kandidaten (nach Bounding-Box-Vorfilter + Rang) pro Suche die teure
+// Geometrie-/Hoehen-Anreicherung durchlaufen. Bei aktiver Distanz-Obergrenze
+// etwas grosszuegiger, weil manche Kandidaten die exakte Laengenpruefung noch
+// verfehlen (Bounding-Box-Diagonale ist nur eine untere Schranke).
+const GEOMETRY_POOL_DEFAULT = 300;
+const GEOMETRY_POOL_FILTERED = 400;
+
+// Sicherheitszuschlag auf die Bounding-Box-Diagonale beim Vorfilter, damit die
+// haversine-Naeherung keine knapp passenden Kurzrouten faelschlich verwirft.
+const BBOX_SLACK = 1.1;
+
+/**
+ * In-Memory-Index je Kanton (Tags + Bounding Box aller benannten Routen).
+ * Er wird pro Suche wiederverwendet, damit nur die erste Suche eines Kantons
+ * den (kleinen, aber langsamen) Overpass-Indexlauf bezahlt.
+ */
+const INDEX_TTL_MS = 6 * 60 * 60 * 1000; // 6 Stunden
+const indexCache = new Map<string, { at: number; entries: RouteIndexEntry[] }>();
+
+async function getCantonIndex(
+  canton: string,
+  iso: string,
+  log: Logger,
+  timeoutMs?: number,
+): Promise<RouteIndexEntry[]> {
+  const hit = indexCache.get(canton);
+  if (hit && !timeoutMs && Date.now() - hit.at < INDEX_TTL_MS) return hit.entries;
+  const entries = await fetchCantonRouteIndex(iso, log, timeoutMs);
+  indexCache.set(canton, { at: Date.now(), entries });
+  return entries;
+}
+
+/**
+ * In-Memory-Cache der Seilbahn-Abfragen je (grob gerasterte) Bounding Box.
+ * Seilbahnen aendern sich praktisch nie, daher eine grosszuegige TTL. Der
+ * Raster (2 Nachkommastellen, ~1 km) buendelt nahe beieinanderliegende
+ * Kartenausschnitte auf denselben Cache-Eintrag.
+ */
+const AERIALWAY_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const AERIALWAY_CACHE_MAX = 40;
+const aerialwayCache = new Map<string, { at: number; entries: RawAerialway[] }>();
+
+function bboxCacheKey(bbox: { south: number; west: number; north: number; east: number }): string {
+  const r = (n: number) => Math.round(n * 100) / 100;
+  return `${r(bbox.south)},${r(bbox.west)},${r(bbox.north)},${r(bbox.east)}`;
+}
+
+/**
+ * Liefert Seilbahnen/Standseilbahnen innerhalb einer Bounding Box (gecacht).
+ */
+export async function getAerialways(
+  bbox: { south: number; west: number; north: number; east: number },
+  log: Logger,
+): Promise<RawAerialway[]> {
+  const key = bboxCacheKey(bbox);
+  const hit = aerialwayCache.get(key);
+  if (hit && Date.now() - hit.at < AERIALWAY_TTL_MS) return hit.entries;
+  const entries = await fetchAerialways(bbox, log);
+  if (aerialwayCache.size >= AERIALWAY_CACHE_MAX) { const k = aerialwayCache.keys().next().value; if (k !== undefined) aerialwayCache.delete(k); }
+  aerialwayCache.set(key, { at: Date.now(), entries });
+  return entries;
+}
+
+/** Angereicherter POI (fuer die API-Antwort). */
+export interface EnrichedPoi extends RawPoi {
+  wiki: WikiSummary | null;
+}
+
+/** Normalisiert einen POI-Namen fuer den Duplikat-Vergleich. */
+function normalizePoiName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * Entfernt gleichnamige Duplikate aus der POI-Liste (z. B. mehrere
+ * "Basiliskenbrunnen" in Basel). Pro normalisiertem Name bleibt genau ein
+ * Eintrag — bevorzugt derjenige mit dem reichhaltigsten bereits verfügbaren
+ * Inhalt. Die Reihenfolge der Originalliste bleibt bei gleicher Reichhaltigkeit
+ * erhalten.
+ *
+ * Die initiale POI-Suche lädt Wikipedia absichtlich noch nicht. Deshalb müssen
+ * OSM-Kontext und vorhandene Wikipedia-/Wikidata-Verweise schon hier in die
+ * Auswahl einfliessen; nur `wiki` zu bewerten würde beim initialen Laden immer
+ * zu einem Gleichstand führen.
+ */
+function deduplicatePois(pois: EnrichedPoi[]): EnrichedPoi[] {
+  const richness = (p: EnrichedPoi) => {
+    let score = 0;
+    if (p.wiki?.extract?.trim()) score += 1000;
+    if (p.wiki?.image) score += 500;
+    if (p.osmContext?.trim()) score += 100;
+    if (p.wikipediaTag) score += 50;
+    if (p.wikidataTag) score += 25;
+    return score;
+  };
+  const best = new Map<string, EnrichedPoi>();
+  for (const poi of pois) {
+    const key = normalizePoiName(poi.name);
+    const existing = best.get(key);
+    if (!existing || richness(poi) > richness(existing)) {
+      best.set(key, poi);
+    }
+  }
+  // Originalreihenfolge beibehalten (Map preserviert insertion order,
+  // aber wir wollen die erste Occurrence — nicht die letzte beibehaltene).
+  return pois.filter((poi) => best.get(normalizePoiName(poi.name)) === poi);
+}
+
+/**
+ * Liefert aktive Partnerbetriebe innerhalb einer Bounding Box. Direkt aus
+ * Postgres (kein externer Fetch/Cache noetig, da Datenmenge klein und selten
+ * geaendert). "Aktiv" heisst: isActive = true UND (kein Zeitraum gesetzt ODER
+ * aktuelles Datum liegt darin).
+ */
+export async function getPartners(
+  bbox: { south: number; west: number; north: number; east: number },
+  _log: Logger,
+): Promise<PartnerRow[]> {
+  const now = new Date();
+  return db
+    .select()
+    .from(partnersTable)
+    .where(
+      and(
+        eq(partnersTable.isActive, true),
+        gte(partnersTable.lat, bbox.south),
+        lte(partnersTable.lat, bbox.north),
+        gte(partnersTable.lng, bbox.west),
+        lte(partnersTable.lng, bbox.east),
+        or(isNull(partnersTable.aktivVon), lte(partnersTable.aktivVon, now)),
+        or(isNull(partnersTable.aktivBis), gte(partnersTable.aktivBis, now)),
+      ),
+    );
+}
+
+/**
+ * In-Memory-Cache der POI-Abfragen je (grob gerasterte) Bounding Box.
+ * Historische Orte aendern sich praktisch nie, Wikipedia-Inhalte gelegentlich —
+ * eine grosszuegige TTL haelt die Live-Anreicherung dennoch aktuell genug.
+ */
+const POI_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+// Sehr kurze TTL fuer Overpass-Fehler (Timeout, Netzausfall): damit wird nach
+// 30 s erneut versucht statt 24 h lang leere POI-Listen auszuliefern.
+const POI_ERROR_TTL_MS = 30 * 1000; // 30 Sekunden
+// Cache fuer on-demand-Anreicherung einzelner POIs (lazy, pro Name+Koordinate).
+const POI_DETAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const POI_CACHE_MAX = 150;
+const poiCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
+// Separater Fehler-Cache: nur Timestamp, kein entries-Array. Wird von
+// poiCache bewusst getrennt gehalten, damit ein erfolgreicher Folgeaufruf
+// das poiCache-Ergebnis nicht mit einem leeren Array ueberschreiben kann.
+const POI_ERROR_CACHE_MAX = 100;
+const poiErrorCache = new Map<string, number>();
+// Verhindert parallele Hintergrund-Refreshes fuer dieselbe BBox.
+const poiRefreshInFlight = new Set<string>();
+// Gipfel werden separat gecacht, weil ihre Abfrage einen anderen Radius und
+// einen anderen Lebenszyklus als die normalen Weg-POIs hat.
+const PEAK_TTL_MS = 24 * 60 * 60 * 1000;
+const PEAK_CACHE_MAX = 256;
+const peakCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
+const PEAK_GRID_DEGREES = 0.1;
+const PEAK_QUERY_PADDING_KM = 8;
+const PEAK_FETCH_MAX_CONCURRENT = 2;
+const peakFetchInFlight = new Map<string, Promise<EnrichedPoi[]>>();
+const peakFetchQueue: Array<{
+  task: () => Promise<EnrichedPoi[]>;
+  resolve: (entries: EnrichedPoi[]) => void;
+  reject: (reason: unknown) => void;
+}> = [];
+let peakFetchActive = 0;
+
+function drainPeakFetchQueue(): void {
+  while (peakFetchActive < PEAK_FETCH_MAX_CONCURRENT && peakFetchQueue.length > 0) {
+    const queued = peakFetchQueue.shift()!;
+    peakFetchActive++;
+    queued.task().then(queued.resolve, queued.reject).finally(() => {
+      peakFetchActive--;
+      drainPeakFetchQueue();
+    });
+  }
+}
+
+function schedulePeakFetch(task: () => Promise<EnrichedPoi[]>): Promise<EnrichedPoi[]> {
+  return new Promise((resolve, reject) => {
+    peakFetchQueue.push({ task, resolve, reject });
+    drainPeakFetchQueue();
+  });
+}
+
+function peakCellKey(
+  around: { lat: number; lng: number; radiusKm: number },
+): {
+  key: string;
+  queryCenter: { lat: number; lng: number };
+} {
+  const latCell = Math.floor(around.lat / PEAK_GRID_DEGREES);
+  const lngCell = Math.floor(around.lng / PEAK_GRID_DEGREES);
+  return {
+    key: `cell:${latCell}:${lngCell}:${Math.round(around.radiusKm * 10)}`,
+    queryCenter: {
+      lat: (latCell + 0.5) * PEAK_GRID_DEGREES,
+      lng: (lngCell + 0.5) * PEAK_GRID_DEGREES,
+    },
+  };
+}
+
+function peaksInRequestedRadius(
+  entries: EnrichedPoi[],
+  around: { lat: number; lng: number; radiusKm: number },
+): EnrichedPoi[] {
+  const center = { lat: around.lat, lng: around.lng };
+  const radiusM = around.radiusKm * 1000;
+  return entries.filter((entry) =>
+    haversineM(center, { lat: entry.lat, lng: entry.lng }) <= radiusM,
+  );
+}
+// On-demand-Cache fuer einzelne POI-Anreicherungen.
+const POI_DETAIL_CACHE_MAX = 200;
+const poiDetailCache = new Map<string, { at: number; wiki: WikiSummary | null }>();
+
+/**
+ * Loest die Wikipedia-Referenz eines POI auf: zuerst der OSM-`wikipedia`-Tag
+ * (enthaelt bereits Sprache + Titel), sonst der `wikidata`-Tag (Q-ID -> Titel
+ * der Zielsprache), sonst kein Treffer.
+ */
+/**
+ * Laedt das Wikidata-P18-Bild (falls vorhanden) und fuegt es in ein bereits
+ * gefundenes WikiSummary ein. Vermeidet einen zweiten Netzwerkaufruf, wenn
+ * das Bild schon aus der Wikipedia-REST-API kommt.
+ */
+async function withP18Image(wiki: WikiSummary, qid: string | null): Promise<WikiSummary> {
+  if (wiki.image || !qid) return wiki;
+  const image = await fetchWikidataImage(qid);
+  return image ? { ...wiki, image } : wiki;
+}
+
+async function enrichPoiWithWikipedia(
+  poi: RawPoi,
+  log: Logger,
+  geoSearchBudget: { rest: number },
+): Promise<EnrichedPoi> {
+  try {
+    if (poi.wikipediaTag) {
+      const wiki = await resolveOsmWikipediaTag(poi.wikipediaTag, "de", poi.lat, poi.lng);
+      if (wiki) return { ...poi, wiki: await withP18Image(wiki, poi.wikidataTag) };
+    }
+    if (poi.wikidataTag) {
+      // Titel und P18-Bild parallel auflosen — beides kommt aus Wikidata, aber
+      // resolveWikidataTitle laedt nur Sitelinks, fetchWikidataImage nur Claims.
+      // Statt zwei serieller Requests: Titel zuerst (brauchen wir fuer Summary),
+      // dann Summary + P18 parallel.
+      const title = await resolveWikidataTitle(poi.wikidataTag);
+      if (title) {
+        const [wiki, p18Image] = await Promise.all([
+          fetchWikipediaSummary(title, "de", poi.lat, poi.lng),
+          fetchWikidataImage(poi.wikidataTag),
+        ]);
+        if (wiki) {
+          // Bild-Hierarchie: Wikipedia-Thumbnail > P18 > P373-Kategorie > Commons-Name > Commons-Geo
+          const image =
+            wiki.image ??
+            p18Image ??
+            (await fetchWikidataCommonsCategory(poi.wikidataTag)) ??
+            (await fetchCommonsImageByName(poi.name))?.url ??
+            (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
+          return { ...poi, wiki: { ...wiki, image } };
+        }
+        // Kein Wikipedia-Artikel: Wikidata-Fakten + Bild + KI parallel.
+        // Wikidata-Fakten (Beschreibung + Einweihungsjahr) haben Vorrang vor
+        // searchAiPoiKnowledge — verifizierte Fakten vor geratenen.
+        const [imageFromWikidata, wikidataFacts, aiTextWiki] = await Promise.all([
+          (async () =>
+            p18Image ??
+            (poi.wikidataTag ? await fetchWikidataCommonsCategory(poi.wikidataTag) : null) ??
+            ((await fetchCommonsImageByName(poi.name))?.url) ??
+            (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name)))(),
+          poi.wikidataTag ? fetchWikidataFacts(poi.wikidataTag) : Promise.resolve(null),
+          searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
+        ]);
+        const extractA = wikidataFacts ?? aiTextWiki?.extract ?? "";
+        if (imageFromWikidata || extractA) {
+          return {
+            ...poi,
+            wiki: {
+              title: aiTextWiki?.title ?? poi.name,
+              extract: extractA,
+              url: aiTextWiki?.url ?? "",
+              lang: "de",
+              image: imageFromWikidata ?? aiTextWiki?.image ?? null,
+            },
+          };
+        }
+      } else {
+        // Kein Wikipedia-Eintrag: Wikidata-Fakten + Bild + KI parallel.
+        // Wikidata-Fakten haben Vorrang vor searchAiPoiKnowledge.
+        const [p18Image, p373Image, nameMatch, geoImage, wikidataFactsB, aiTextWiki] = await Promise.all([
+          fetchWikidataImage(poi.wikidataTag),
+          fetchWikidataCommonsCategory(poi.wikidataTag),
+          fetchCommonsImageByName(poi.name),
+          fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
+          fetchWikidataFacts(poi.wikidataTag),
+          searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
+        ]);
+        const image = p18Image ?? p373Image ?? nameMatch?.url ?? geoImage;
+        // Die unbeschränkte Namenssuche hat hier keinen Ortsabgleich; ihre
+        // Bildbeschreibung darf deshalb nicht als POI-Fakt verwendet werden.
+        const extractB = wikidataFactsB ?? aiTextWiki?.extract ?? "";
+        if (image || extractB) {
+          return {
+            ...poi,
+            wiki: {
+              title: aiTextWiki?.title ?? poi.name,
+              extract: extractB,
+              url: aiTextWiki?.url ?? nameMatch?.descriptionUrl ?? "",
+              lang: "de",
+              image: image ?? aiTextWiki?.image ?? null,
+            },
+          };
+        }
+      }
+    }
+    // Dritte Stufe: kein OSM-Verweis vorhanden oder aufloesbar — Wikipedia-
+    // Geo-Suche im Umkreis mit unscharfem Namensabgleich. Budget-gedeckelt.
+    // Reine Codes/Zahlen ("42") werden uebersprungen — Wikipedia hat dazu keinen
+    // Artikel und eine Namens-Suche nach "42" wuerde falsche Treffer liefern.
+    if (geoSearchBudget.rest > 0 && !isCodeName(poi.name)) {
+      geoSearchBudget.rest--;
+      const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng, "de", poi.kind);
+      if (wiki) {
+        // Bild-Hierarchie: Commons-Name-Suche zuerst (findet z.B. Denkmal-Foto
+        // auch wenn der Artikel ueber die Person handelt und nur ein Portrait als
+        // Thumbnail hat). Danach Artikel-interne Bildersuche, dann Thumbnail,
+        // dann Geo-Fallback.
+        const commonsMatch = await fetchCommonsImageByName(poi.name);
+        const image =
+          commonsMatch?.url ??
+          (await fetchWikipediaArticleImageByPoiName(wiki.title, poi.name)) ??
+          wiki.image ??
+          (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
+        return { ...poi, wiki: { ...wiki, image } };
+      }
+    }
+    // Vierte + Fuenfte Stufe parallel: Commons-Bild mit Ortskontext UND
+    // Claude-Text gleichzeitig suchen. Der Ortskontext macht die Suche
+    // spezifisch genug fuer gleichnamige POIs in verschiedenen Orten.
+    const placeHint = await getPoiPlaceHint(poi.lat, poi.lng, log);
+    const searchTerm = commonsSearchTerm(poi.name, poi.kind);
+    const [nameMatch, geoImage, aiWiki] = await Promise.all([
+      placeHint && searchTerm
+        ? fetchCommonsImageByName(searchTerm, 600, placeHint)
+        : Promise.resolve(null),
+      fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
+      searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
+    ]);
+    const commonsImage = nameMatch?.url ?? geoImage;
+    const commonsDescription = nameMatch?.description ?? "";
+    const verifiedExtract = [commonsDescription, aiWiki?.extract]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join("\n\n");
+    if (commonsImage || verifiedExtract) {
+      return {
+        ...poi,
+        wiki: {
+          title: aiWiki?.title ?? poi.name,
+          extract: verifiedExtract,
+          url: aiWiki?.url ?? nameMatch?.descriptionUrl ?? "",
+          lang: aiWiki?.lang ?? "de",
+          image: commonsImage ?? aiWiki?.image ?? null,
+        },
+      };
+    }
+  } catch (err) {
+    log.warn({ poi: poi.id, err }, "POI-Wikipedia-Anreicherung fehlgeschlagen");
+  }
+  return { ...poi, wiki: null };
+}
+
+/**
+ * Interne Hilfsfunktion: holt frische POI-Daten von Overpass und schreibt sie
+ * in den Cache. Laeuft ggf. im Hintergrund (fire-and-forget), ohne den
+ * Aufrufer zu blockieren. Verhindert Parallellaeufe fuer dieselbe BBox via
+ * poiRefreshInFlight.
+ */
+async function refreshPoisBackground(
+  bbox: { south: number; west: number; north: number; east: number },
+  key: string,
+  log: Logger,
+): Promise<void> {
+  if (poiRefreshInFlight.has(key)) return;
+  poiRefreshInFlight.add(key);
+  try {
+    const errAt = poiErrorCache.get(key);
+    if (errAt !== undefined && Date.now() - errAt < POI_ERROR_TTL_MS) return;
+    let raw: RawPoi[];
+    try {
+      raw = await fetchHistoricPois(bbox, log);
+    } catch (err) {
+      log.warn({ err, bbox }, "POI-Overpass fehlgeschlagen (Hintergrund-Refresh)");
+      if (poiErrorCache.size >= POI_ERROR_CACHE_MAX) { const k = poiErrorCache.keys().next().value; if (k !== undefined) poiErrorCache.delete(k); }
+      poiErrorCache.set(key, Date.now());
+      return;
+    }
+    poiErrorCache.delete(key);
+    // Keine Batch-Anreicherung mehr — Wiki/Commons wird on-demand beim Oeffnen
+    // des POI geladen. Das eliminiert Rate-Limiting durch hunderte parallele
+    // Wikimedia-Requests und macht den Karten-Load sofort.
+    const checkedAt = new Date();
+    const entries = deduplicatePois(raw.map((p) => ({
+      ...p,
+      wiki: null,
+      source: "OpenStreetMap",
+      sourceUrl: `https://www.openstreetmap.org/${p.id}`,
+      checkedAt,
+    })));
+    if (poiCache.size >= POI_CACHE_MAX) { const k = poiCache.keys().next().value; if (k !== undefined) poiCache.delete(k); }
+    poiCache.set(key, { at: Date.now(), entries });
+    log.info(
+      { bbox, total: raw.length, deduplicated: entries.length },
+      "POI-Cache im Hintergrund aktualisiert (ohne Anreicherung)",
+    );
+  } finally {
+    poiRefreshInFlight.delete(key);
+  }
+}
+
+/**
+ * Liefert historische/touristische Orte in einer Bounding Box (gecacht).
+ *
+ * Keine Batch-Wikipedia-Anreicherung mehr — Wiki/Commons wird on-demand beim
+ * Oeffnen des POI geladen (getPoiDetail). Stale-while-revalidate: gibt
+ * abgelaufene Cache-Eintraege sofort zurueck und aktualisiert im Hintergrund.
+ */
+export async function getPois(
+  bbox: { south: number; west: number; north: number; east: number },
+  log: Logger,
+): Promise<EnrichedPoi[]> {
+  const key = bboxCacheKey(bbox);
+  const errAt = poiErrorCache.get(key);
+  if (errAt !== undefined && Date.now() - errAt < POI_ERROR_TTL_MS) return [];
+  const hit = poiCache.get(key);
+  if (hit) {
+    if (Date.now() - hit.at < POI_TTL_MS) return hit.entries;
+    void refreshPoisBackground(bbox, key, log);
+    return hit.entries;
+  }
+  // Kein Cache-Eintrag vorhanden: Hintergrundladen starten und sofort []
+  // zurueckgeben. Der mobile Client hat bereits eine Retry-Logik (alle 60 s);
+  // nach dem Overpass-Aufruf (~5–30 s) liefert die naechste Anfrage sofort
+  // Daten aus dem Cache. Das verhindert, dass die App-HTTP-Anfrage vor dem
+  // Ende der Overpass-Kette abbricht und der Client nie POIs sieht.
+  void refreshPoisBackground(bbox, key, log);
+  return [];
+}
+
+/**
+ * Liefert ausschliesslich benannte Gipfel in einer Bounding Box. Die Abfrage
+ * ist absichtlich vom allgemeinen POI-Cache getrennt, damit der 20-km-Radius
+ * des Panoramas keine historische/touristische Overpass-Abfrage vergroessert.
+ */
+export async function getPeakPois(
+  bbox: { south: number; west: number; north: number; east: number },
+  log: Logger,
+  around?: { lat: number; lng: number; radiusKm: number },
+): Promise<EnrichedPoi[]> {
+  const cell = around ? peakCellKey(around) : null;
+  const key = cell
+    ? cell.key
+    : `bbox:${bboxCacheKey(bbox)}`;
+  const hit = peakCache.get(key);
+  if (hit && Date.now() - hit.at < PEAK_TTL_MS) {
+    return around ? peaksInRequestedRadius(hit.entries, around) : hit.entries;
+  }
+
+  let pending = peakFetchInFlight.get(key);
+  if (!pending) {
+    const queryAround = cell
+      ? {
+          lat: cell.queryCenter.lat,
+          lng: cell.queryCenter.lng,
+          radiusKm: (around?.radiusKm ?? 20) + PEAK_QUERY_PADDING_KM,
+        }
+      : undefined;
+    pending = schedulePeakFetch(async () => {
+      const raw = await fetchPeakPois(bbox, log, queryAround);
+      const checkedAt = new Date();
+      return raw.map((poi) => ({
+        ...poi,
+        wiki: null,
+        source: "OpenStreetMap",
+        sourceUrl: `https://www.openstreetmap.org/${poi.id}`,
+        checkedAt,
+      }));
+    });
+    peakFetchInFlight.set(key, pending);
+    void pending.then(
+      () => {
+        if (peakFetchInFlight.get(key) === pending) peakFetchInFlight.delete(key);
+      },
+      () => {
+        if (peakFetchInFlight.get(key) === pending) peakFetchInFlight.delete(key);
+      },
+    );
+  }
+  const entries = await pending;
+  if (peakCache.size >= PEAK_CACHE_MAX) {
+    const oldestKey = peakCache.keys().next().value;
+    if (oldestKey !== undefined) peakCache.delete(oldestKey);
+  }
+  peakCache.set(key, { at: Date.now(), entries });
+  return around ? peaksInRequestedRadius(entries, around) : entries;
+}
+
+/**
+ * On-demand-Anreicherung eines einzelnen POI mit Wikipedia-Zusammenfassung
+ * und/oder Bild. Wird aufgerufen wenn der Nutzer den POI oeffnet (lazy).
+ * Ergebnis wird 24 h gecacht.
+ */
+export async function getPoiDetail(
+  params: {
+    name: string;
+    kind: string;
+    lat: number;
+    lng: number;
+    wikipediaTag?: string;
+    wikidataTag?: string;
+  },
+  log: Logger,
+): Promise<WikiSummary | null> {
+  const cacheKey = `${params.lat.toFixed(5)},${params.lng.toFixed(5)},${params.name}`;
+  const hit = poiDetailCache.get(cacheKey);
+  if (hit && Date.now() - hit.at < POI_DETAIL_TTL_MS) return hit.wiki;
+  const rawPoi: RawPoi = {
+    id: cacheKey,
+    name: params.name,
+    kind: params.kind,
+    lat: params.lat,
+    lng: params.lng,
+    elevation: null,
+    wikipediaTag: params.wikipediaTag ?? null,
+    wikidataTag: params.wikidataTag ?? null,
+    osmContext: null,
+  };
+  // Voller Anreicherungs-Budget fuer einen einzelnen POI (kein Batch-Limit).
+  const enriched = await enrichPoiWithWikipedia(rawPoi, log, { rest: 1 });
+  let wiki = enriched.wiki;
+  // KI-Passungspruefung des Bildes (nur on-demand, Ergebnis haengt am 24h-Cache):
+  // unpassende Bilder (Lok statt Refugium, Portrait statt Denkmal) verwerfen.
+  if (wiki?.image) {
+    const passend = await istPoiBildPassend(wiki.image, params.name, params.kind, log);
+    if (!passend) wiki = { ...wiki, image: null };
+  }
+  if (poiDetailCache.size >= POI_DETAIL_CACHE_MAX) { const k = poiDetailCache.keys().next().value; if (k !== undefined) poiDetailCache.delete(k); }
+  poiDetailCache.set(cacheKey, { at: Date.now(), wiki });
+  log.info({ name: params.name, hasImage: !!wiki?.image, hasExtract: !!wiki?.extract }, "POI-Detail angereichert");
+  return wiki;
+}
+
+/**
+ * Waehlt die anzureichernden Kandidaten aus dem Kanton-Index: bei aktiver
+ * Distanz-Obergrenze werden zunaechst alle sicher zu langen Routen verworfen
+ * (Bounding-Box-Diagonale > distMax), erst danach nach Netz-Rang priorisiert und
+ * gedeckelt. So gelangen auch kurze lokale Routen in die Auswahl, statt nur die
+ * ranghoechsten Fernwege.
+ */
+function selectCandidates(
+  index: RouteIndexEntry[],
+  distMax: number | undefined,
+): RouteIndexEntry[] {
+  const filtered =
+    distMax != null
+      ? index.filter((e) => e.bboxDiagKm <= distMax * BBOX_SLACK)
+      : index;
+  const pool = distMax != null ? GEOMETRY_POOL_FILTERED : GEOMETRY_POOL_DEFAULT;
+  // Nationale (nwn) und internationale (iwn) Routen (Trans Swiss Trail, Via Alpina…)
+  // kommen über syncSwissNumberedRoutes in die DB — hier explizit ausschliessen,
+  // damit sie nicht doppelt (ohne Nummer) in Kanton-Listen erscheinen.
+  const isNationalOrIntl = (e: RouteIndexEntry) => e.rank <= 1; // iwn=0, nwn=1
+
+  // Generische Verbindungswege (z.B. "Baar – Höllgrotten", "Bibersteg - Bubrugg")
+  // erkennen: kein ref, kein network-Tag (lwn/ohne) UND Name enthält " - " oder " – ".
+  // Diese werden komplett ausgeschlossen – sie sind kurze Pfadsegmente, keine
+  // eigenständigen Wanderrouten, und füllen den Pool mit unbrauchbarem Inhalt.
+  const isGenericConnector = (e: RouteIndexEntry) =>
+    e.rank >= 3 &&          // lwn oder ohne Tag
+    !e.ref &&
+    /\s[–\-]\s/.test(e.name);
+
+  return filtered
+    .filter((e) => !isGenericConnector(e))
+    .sort((a, b) => {
+      if (a.rank !== b.rank) return a.rank - b.rank;
+      const refA = a.ref ? 0 : 1;
+      const refB = b.ref ? 0 : 1;
+      if (refA !== refB) return refA - refB;
+      return a.name.localeCompare(b.name, "de");
+    })
+    .slice(0, pool);
+}
+
+/** Fuehrt einen async-Mapper mit begrenzter Parallelitaet aus. */
+async function mapPool<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (cursor < items.length) {
+      const i = cursor++;
+      results[i] = await fn(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+function terrainLabel(ref: string | null, network: string | null, sac: string): string {
+  const parts: string[] = [];
+  parts.push(ref ? `Wanderland-Route ${ref}` : "Wanderweg");
+  if (network === "iwn" || network === "nwn") parts.push("nationales Netz");
+  else if (network === "rwn") parts.push("regionales Netz");
+  if (sac !== "unbekannt") parts.push(`SAC ${sac}`);
+  return parts.join(" · ");
+}
+
+// Version des Geometrie-Verkettungs-Algorithmus (siehe overpass.ts
+// stitchGeometry). Aeltere Cache-Eintraege wurden mit der fehlerhaften
+// Zickzack-Verkettung erzeugt und gelten als abgelaufen.
+export const GEOMETRY_VERSION = 5; // v5: amtliche SchweizMobil-Werte (OSM-Tags distance/ascent) + Lückenüberbrückung statt nur längster Kette
+
+export const MISSING_SCHWEIZMOBIL_LWN_REFS = [
+  "447", "458", "459", "463", "464", "472", "483", "583", "584", "701",
+  "737", "738", "739", "748", "749", "751", "753", "754", "759", "763",
+  "769", "787", "789", "826", "848", "857", "858", "864", "866", "899",
+  "931", "932", "933", "966", "967", "968", "973", "976", "979", "981",
+  "994", "995", "996", "998", "999",
+] as const;
+
+export const SCHWEIZMOBIL_WANDERLAND_SOURCE =
+  "https://data.schweizmobil.ch/gpkg_export/wander.gpkg";
+
+type OfficialSchweizMobilGeometry = {
+  ref: string;
+  points: [number, number][];
+  officialDistanceKm: number | null;
+  source: string;
+  sourceUrl: string;
+};
+
+const execFileAsync = promisify(execFile);
+let officialGeometryPromise: Promise<OfficialSchweizMobilGeometry[]> | null = null;
+
+export type OfficialSchweizMobilDifficulty = {
+  ref: string;
+  condition: string | null;
+  technique: string | null;
+  routeType: string | null;
+  level: string | null;
+  source: string;
+  sourceUrl: string;
+};
+
+let officialDifficultyPromise: Promise<OfficialSchweizMobilDifficulty[]> | null = null;
+
+/**
+ * Lädt die offiziellen SchweizMobil-Bewertungen. Kondition und Technik sind
+ * eine eigene, amtliche Skala und werden nicht als SAC ausgegeben.
+ */
+export async function loadOfficialSchweizMobilDifficulties(
+  log: Logger,
+): Promise<OfficialSchweizMobilDifficulty[]> {
+  if (!officialDifficultyPromise) {
+    officialDifficultyPromise = execFileAsync(
+      "python3",
+      [officialExtractorPath(), "--difficulty"],
+      { maxBuffer: 20 * 1024 * 1024 },
+    )
+      .then(({ stdout }) => JSON.parse(stdout) as OfficialSchweizMobilDifficulty[])
+      .catch((err) => {
+        officialDifficultyPromise = null;
+        log.error({ err }, "SchweizMobil-Schwierigkeitsdaten konnten nicht gelesen werden");
+        throw err;
+      });
+  }
+  return officialDifficultyPromise;
+}
+
+/**
+ * Persistiert die offizielle SchweizMobil-Handicap-Klassifikation anhand
+ * exakter Routenreferenzen. Nicht gefundene Referenzen werden nicht angelegt
+ * und nicht über Namen, Nähe oder Geometrie erraten.
+ */
+export async function syncOfficialSchweizMobilHandicap(
+  log: Logger,
+): Promise<{
+  officialRoutes: number;
+  handicapRoutes: number;
+  matchedRefs: number;
+  matchedRows: number;
+  missingRefs: string[];
+  updatedRows: number;
+}> {
+  // Der Admin-Sync ist der explizite Aktualisierungspunkt; danach darf ein
+  // neuer offizieller Export erneut geladen werden.
+  officialDifficultyPromise = null;
+  const official = await loadOfficialSchweizMobilDifficulties(log);
+  const officialByRef = new Map(official.map((item) => [item.ref, item]));
+  const handicapRefs = new Set(
+    official.filter((item) => item.routeType === "handicap").map((item) => item.ref),
+  );
+  const rows = await db
+    .select({
+      id: externalRoutesTable.id,
+      ref: externalRoutesTable.ref,
+      wheelchairAccessibleSource: externalRoutesTable.wheelchairAccessibleSource,
+      wheelchairAccessibleCheckedAt: externalRoutesTable.wheelchairAccessibleCheckedAt,
+    })
+    .from(externalRoutesTable)
+    .where(isNotNull(externalRoutesTable.ref));
+
+  const matchedRefs = new Set<string>();
+  let matchedRows = 0;
+  let updatedRows = 0;
+  const checkedAt = new Date();
+  const sourceUrl = official.find((item) => item.sourceUrl)?.sourceUrl ?? null;
+
+  for (const row of rows) {
+    const ref = row.ref;
+    if (!ref) continue;
+    const officialItem = officialByRef.get(ref);
+    const wasImported = row.wheelchairAccessibleSource === sourceUrl;
+    if (!officialItem && !wasImported) continue;
+
+    if (officialItem) {
+      matchedRefs.add(ref);
+      matchedRows++;
+    }
+    const nextAccessible = officialItem && handicapRefs.has(ref) ? true : null;
+    const nextSource = officialItem ? sourceUrl : null;
+    const nextCheckedAt = officialItem ? checkedAt : null;
+    const changed =
+      row.wheelchairAccessibleSource !== nextSource ||
+      (row.wheelchairAccessibleCheckedAt?.getTime() ?? null) !== nextCheckedAt?.getTime();
+
+    if (changed) {
+      await db
+        .update(externalRoutesTable)
+        .set({
+          wheelchairAccessible: nextAccessible,
+          wheelchairAccessibleSource: nextSource,
+          wheelchairAccessibleCheckedAt: nextCheckedAt,
+        })
+        .where(eq(externalRoutesTable.id, row.id))
+        .execute();
+      updatedRows++;
+    }
+  }
+
+  return {
+    officialRoutes: official.length,
+    handicapRoutes: handicapRefs.size,
+    matchedRefs: matchedRefs.size,
+    matchedRows,
+    missingRefs: [...handicapRefs].filter((ref) => !matchedRefs.has(ref)).sort(),
+    updatedRows,
+  };
+}
+
+export type SchweizMobilDifficultyAuditRow = {
+  id: string;
+  name: string;
+  ref: string | null;
+  currentSac: string;
+  currentSacSource: string;
+  osm: {
+    relationCount: number;
+    sacValues: string[];
+    conflict: boolean;
+  };
+  schweizMobil: OfficialSchweizMobilDifficulty | null;
+  decision: {
+    sac: string;
+    sacSource: string;
+    exact: boolean;
+    status: "exact_sac" | "official_categories_only" | "unknown" | "conflict";
+  };
+  updated: boolean;
+};
+
+/**
+ * Vergleicht gespeicherte SchweizMobil-Routen mit OSM-Relationstags und dem
+ * offiziellen Wanderland-Export. Ein OSM-sac_scale wird nur bei eindeutigem
+ * Ergebnis als exakter SAC-Wert übernommen. SchweizMobil-Kategorien bleiben
+ * separat; bei fehlendem Beleg bleibt SAC unbekannt.
+ */
+export async function auditSchweizMobilDifficulties(
+  log: Logger,
+  opts: { dryRun?: boolean } = {},
+): Promise<{
+  scanned: number;
+  exactSac: number;
+  officialCategories: number;
+  unknown: number;
+  conflicts: number;
+  updated: number;
+  routes: SchweizMobilDifficultyAuditRow[];
+}> {
+  const rows = await db
+    .select({
+      id: externalRoutesTable.id,
+      name: externalRoutesTable.name,
+      ref: externalRoutesTable.ref,
+      sac: externalRoutesTable.sac,
+      sacSource: externalRoutesTable.sacSource,
+      schweizMobilCondition: externalRoutesTable.schweizMobilCondition,
+      schweizMobilTechnique: externalRoutesTable.schweizMobilTechnique,
+      routeType: externalRoutesTable.routeType,
+    })
+    .from(externalRoutesTable)
+    .where(
+      sql`id LIKE 'schweizmobil-%' AND geometry_version > 0 AND ref IS NOT NULL AND sac = 'unbekannt'`,
+    )
+    .orderBy(externalRoutesTable.id);
+  const refs = rows.map((row) => row.ref).filter((ref): ref is string => !!ref);
+  const [official, osm] = await Promise.all([
+    loadOfficialSchweizMobilDifficulties(log),
+    fetchOsmRouteDifficulties(refs, log),
+  ]);
+  const officialByRef = new Map(official.map((item) => [item.ref, item]));
+  const osmByRef = new Map<string, typeof osm>();
+  for (const item of osm) {
+    const list = osmByRef.get(item.ref) ?? [];
+    list.push(item);
+    osmByRef.set(item.ref, list);
+  }
+
+  let exactSac = 0;
+  let officialCategories = 0;
+  let unknown = 0;
+  let conflicts = 0;
+  let updated = 0;
+  const auditRows: SchweizMobilDifficultyAuditRow[] = [];
+
+  for (const row of rows) {
+    const officialItem = row.ref ? officialByRef.get(row.ref) ?? null : null;
+    const osmMatches = row.ref ? osmByRef.get(row.ref) ?? [] : [];
+    const sacValues = [
+      ...new Set(
+        osmMatches
+          .map((item) => assessSac(item.sacScale, null).value)
+          .filter((value) => value !== "unbekannt"),
+      ),
+    ];
+    const conflict = sacValues.length > 1;
+    const hasOfficialCategories = !!(officialItem?.condition || officialItem?.technique);
+    if (conflict) conflicts++;
+    else if (sacValues.length === 1) exactSac++;
+    else if (hasOfficialCategories) officialCategories++;
+    else unknown++;
+
+    const nextSac = !conflict && sacValues.length === 1 ? sacValues[0]! : row.sac;
+    const nextSource =
+      !conflict && sacValues.length === 1
+        ? "osm_exact"
+        : row.sacSource ?? "unknown";
+    const changed =
+      nextSac !== row.sac ||
+      nextSource !== row.sacSource ||
+      (officialItem?.condition ?? null) !== row.schweizMobilCondition ||
+      (officialItem?.technique ?? null) !== row.schweizMobilTechnique;
+
+    if (!opts.dryRun && changed) {
+      const terrain = terrainLabel(row.ref, row.routeType, nextSac);
+      await db
+        .update(externalRoutesTable)
+        .set({
+          sac: nextSac,
+          sacSource: nextSource,
+          schweizMobilCondition: officialItem?.condition ?? null,
+          schweizMobilTechnique: officialItem?.technique ?? null,
+          terrain,
+        })
+        .where(eq(externalRoutesTable.id, row.id))
+        .execute();
+      updated++;
+    }
+
+    auditRows.push({
+      id: row.id,
+      name: row.name,
+      ref: row.ref,
+      currentSac: row.sac,
+      currentSacSource: row.sacSource ?? "unknown",
+      osm: {
+        relationCount: osmMatches.length,
+        sacValues,
+        conflict,
+      },
+      schweizMobil: officialItem,
+      decision: {
+        sac: nextSac,
+        sacSource: nextSource,
+        exact: !conflict && sacValues.length === 1,
+        status: conflict
+          ? "conflict"
+          : sacValues.length === 1
+            ? "exact_sac"
+            : hasOfficialCategories
+              ? "official_categories_only"
+              : "unknown",
+      },
+      updated: !opts.dryRun && changed,
+    });
+  }
+
+  return {
+    scanned: rows.length,
+    exactSac,
+    officialCategories,
+    unknown,
+    conflicts,
+    updated,
+    routes: auditRows,
+  };
+}
+
+function officialExtractorPath(): string {
+  return new URL("./extract_schweizmobil_wanderland.py", import.meta.url).pathname;
+}
+
+async function loadOfficialSchweizMobilGeometries(
+  log: Logger,
+): Promise<OfficialSchweizMobilGeometry[]> {
+  if (!officialGeometryPromise) {
+    officialGeometryPromise = execFileAsync(
+      "python3",
+      [officialExtractorPath()],
+      { timeout: 240_000, maxBuffer: 20 * 1024 * 1024 },
+    )
+      .then(({ stdout }) => JSON.parse(stdout) as OfficialSchweizMobilGeometry[])
+      .catch((err) => {
+        officialGeometryPromise = null;
+        log.error({ err }, "SchweizMobil Open Data konnte nicht gelesen werden");
+        throw err;
+      });
+  }
+  return officialGeometryPromise;
+}
+
+function isPlausibleOfficialGeometry(points: unknown): points is [number, number][] {
+  if (!Array.isArray(points) || points.length < 2) return false;
+  const validPoints = points.every((point) => {
+    if (!Array.isArray(point) || point.length !== 2) return false;
+    const [lat, lng] = point;
+    return (
+      typeof lat === "number" &&
+      typeof lng === "number" &&
+      Number.isFinite(lat) &&
+      Number.isFinite(lng) &&
+      lat >= 45 &&
+      lat <= 48.5 &&
+      lng >= 5 &&
+      lng <= 11.5
+    );
+  });
+  if (!validPoints) return false;
+  for (let i = 1; i < points.length; i++) {
+    const [lat1, lng1] = points[i - 1]!;
+    const [lat2, lng2] = points[i]!;
+    if (haversineM({ lat: lat1, lng: lng1 }, { lat: lat2, lng: lng2 }) > 2_000) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Restores the official SchweizMobil local-route rows that have no geometry.
  * The extractor returns only validated WGS84 points. Existing route metadata
  * (name, saga, photos, etc.) is deliberately preserved.
  */

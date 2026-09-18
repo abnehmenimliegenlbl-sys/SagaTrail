@@ -1,4 +1,607 @@
-ber;
+import type { Logger } from "pino";
+import { haversineM, type LatLng } from "./geo";
+import sacHuettenSeed from "./sacHuettenSeed.json" with { type: "json" };
+
+/**
+ * Laedt reale Wanderrouten je Kanton aus OpenStreetMap ueber die Overpass-API.
+ *
+ * Zweistufiges, distanzbewusstes Vorgehen, um Last und Antwortgroesse gering zu
+ * halten und trotzdem auch KURZE lokale Routen in routendichten Kantonen zu
+ * finden:
+ *
+ *  1. Index (`out tags bb;`): fuer ALLE benannten Wanderrouten-Relationen des
+ *     Kantons nur Tags und die Bounding Box holen. Das ist selbst fuer grosse
+ *     Kantone (>1000 Relationen) klein und schnell. Aus der Bounding-Box-
+ *     Diagonale ergibt sich eine UNTERE Schranke der echten Routenlaenge: eine
+ *     Route ist nie kuerzer als ihre Bounding-Box-Diagonale. Damit lassen sich
+ *     bei einer Obergrenze (distMax) alle sicher zu langen Routen vorab
+ *     aussortieren, BEVOR die teure Geometrie geladen wird.
+ *  2. Geometrie (`out geom;`): nur fuer die ausgewaehlten Kandidaten die
+ *     Wegpunkte nachladen, um die exakte Laenge zu berechnen.
+ *
+ * Overpass verlangt einen aussagekraeftigen User-Agent, sonst 406.
+ */
+
+// Mehrere Overpass-Spiegel: der oeffentliche Hauptserver ist oft ueberlastet
+// (504/429). Wir probieren der Reihe nach mit kurzer Wartezeit weiter.
+// OVERPASS_PROXY_URL: optionaler PHP-Proxy auf eigenem Hosting (z.B. Infomaniak)
+// der nicht auf der Replit-Blockliste steht. Wird als erster Mirror verwendet.
+const OVERPASS_PROXY_URL = process.env.OVERPASS_PROXY_URL?.trim() ?? "";
+const OVERPASS_PROXY_TOKEN = process.env.OVERPASS_PROXY_TOKEN?.trim() ?? "";
+const OVERPASS_MIRRORS = [
+  // Schweizer Mirror: aus dem Replit-Netz erreichbar und für den 20-km-
+  // Panorama-Ausschnitt deutlich schneller als die allgemeinen Mirrors.
+  "https://overpass.osm.ch/api/interpreter",
+  ...(OVERPASS_PROXY_URL ? [OVERPASS_PROXY_URL] : []),
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
+];
+const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion)";
+// 60 s pro Versuch war zu grosszuegig: bei zwei Versuchen je Spiegel und drei
+// Spiegeln konnte ein einzelner Aufruf im Worst Case bis zu 6 Minuten haengen,
+// bevor er fehlschlug — auf der Wanderungs-Seite sieht das wie "keine POI
+// gefunden" aus, obwohl der Server nur extrem lange auf eine tote Quelle
+// gewartet hat. Kuerzere Versuche + weniger Wiederholungen scheitern schneller
+// und geben so den naechsten Spiegeln (bzw. dem 502 an den Client) frueher eine
+// Chance.
+const REQUEST_TIMEOUT_MS = 12000;
+
+// Geometrie wird in Bloecken nachgeladen, damit die Antwort auch bei vielen
+// Kandidaten nicht das Overpass-Zeit-/Groessenlimit sprengt.
+const GEOMETRY_BATCH = 80;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Angereicherte Route mit voller Geometrie (nach Phase 2). */
+export interface RawHikingRoute {
+  id: string;
+  osmId: number;
+  name: string;
+  ref: string | null;
+  sac: string | null;
+  network: string | null;
+  points: LatLng[];
+  /** Amtliche Distanz (km) aus dem OSM-Tag `distance` (SchweizMobil-Angabe), falls vorhanden. */
+  distanceTagKm: number | null;
+  /** Amtlicher Aufstieg (m) aus dem OSM-Tag `ascent`, falls vorhanden. */
+  ascentTagM: number | null;
+  /** OSM `from`/`to` Tags — Startort und Zielort der Route. */
+  from: string | null;
+  to: string | null;
+}
+
+/**
+ * Parst numerische OSM-Tags wie `distance`/`ascent` ("8", "8.2 km", "1,250").
+ * Liefert null bei fehlendem oder unbrauchbarem Wert.
+ */
+export function parseNumericTag(
+  value: string | undefined,
+  max = Infinity,
+): number | null {
+  if (!value) return null;
+  let s = value.trim().replace(/['\s\u00a0]/g, "");
+  // Komma: Tausendertrenner ("1,250" → 1250) vs. Dezimaltrenner ("8,2" → 8.2)
+  if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, "");
+  else s = s.replace(",", ".");
+  const v = parseFloat(s.replace(/[^0-9.]/g, ""));
+  // Plausibilitaetsgrenze: absurde Tag-Werte nie als amtlich uebernehmen.
+  return Number.isFinite(v) && v > 0 && v <= max ? v : null;
+}
+
+/**
+ * Leichter Index-Eintrag (nach Phase 1): Tags plus die aus der Bounding Box
+ * abgeleitete Diagonale als untere Schranke der Routenlaenge.
+ */
+export interface RouteIndexEntry {
+  osmId: number;
+  name: string;
+  nameDe: string | null;
+  ref: string | null;
+  sac: string | null;
+  network: string | null;
+  bboxDiagKm: number;
+  rank: number;
+}
+
+interface OverpassBounds {
+  minlat: number;
+  minlon: number;
+  maxlat: number;
+  maxlon: number;
+}
+
+interface OverpassTagsElement {
+  type: string;
+  id: number;
+  bounds?: OverpassBounds;
+  tags?: Record<string, string>;
+}
+
+interface OverpassGeomMember {
+  type: string;
+  ref?: number;
+  role?: string;
+  geometry?: { lat: number; lon: number }[];
+}
+
+interface OverpassGeomElement {
+  type: string;
+  id: number;
+  tags?: Record<string, string>;
+  members?: OverpassGeomMember[];
+}
+
+export async function runOverpass<T>(query: string, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T[]> {
+  // Ein Versuch je Spiegel: mit Cache-Vorwaermung (siehe routeService.warmAllCantonCaches)
+  // treffen echte Nutzer selten den kalten Pfad, daher zaehlt hier vor allem,
+  // schnell zum naechsten Spiegel (bzw. zum DB-Cache-Fallback) zu wechseln,
+  // statt denselben lahmen Spiegel zweimal zu befragen.
+  let lastError: Error | null = null;
+  for (const url of OVERPASS_MIRRORS) {
+    for (let attempt = 0; attempt < 1; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const headers: Record<string, string> = {
+          "User-Agent": USER_AGENT,
+          "Content-Type": "application/x-www-form-urlencoded",
+        };
+        if (OVERPASS_PROXY_URL && url === OVERPASS_PROXY_URL && OVERPASS_PROXY_TOKEN) {
+          headers["X-Proxy-Token"] = OVERPASS_PROXY_TOKEN;
+        }
+        const res = await fetch(url, {
+          method: "POST",
+          headers,
+          body: new URLSearchParams({ data: query }).toString(),
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          // 429/5xx: naechster Versuch/Spiegel; andere Fehler abbrechen.
+          if (res.status === 429 || res.status >= 500) {
+            lastError = new Error(`Overpass HTTP ${res.status}`);
+            await sleep(1000);
+            continue;
+          }
+          throw new Error(`Overpass HTTP ${res.status}`);
+        }
+        const json = (await res.json()) as { elements?: T[] };
+        return json.elements ?? [];
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+  }
+  throw lastError ?? new Error("Overpass nicht erreichbar");
+}
+
+const NETWORK_RANK: Record<string, number> = {
+  iwn: 0,
+  nwn: 1,
+  rwn: 2,
+  lwn: 3,
+};
+
+function rankOf(network: string | null): number {
+  return NETWORK_RANK[network ?? ""] ?? 4;
+}
+
+/** Diagonale der Bounding Box in km (untere Schranke der Routenlaenge). */
+function bboxDiagonalKm(b: OverpassBounds): number {
+  return (
+    haversineM(
+      { lat: b.minlat, lng: b.minlon },
+      { lat: b.maxlat, lng: b.maxlon },
+    ) / 1000
+  );
+}
+
+// Rollen, die NICHT zum Hauptverlauf einer Route gehoeren (Varianten,
+// Zubringer, Abstecher) — sie wuerden den Verlauf mit Zickzack verfaelschen.
+const NEBENROLLEN = new Set([
+  "alternative",
+  "alternate",
+  "excursion",
+  "approach",
+  "connection",
+  "shortcut",
+  "detour",
+  "link",
+]);
+
+// Endpunkte gelten als "verbunden", wenn sie hoechstens so weit auseinander
+// liegen (OSM-Wegstuecke teilen sich meist exakt einen Knoten, kleine Luecken
+// kommen aber vor, z.B. an Faehren oder Strassenquerungen).
+const VERBINDUNGS_TOLERANZ_M = 150;
+
+// Ab dieser Lueckengroesse gilt ein Sprung als Stitch-Artefakt (keine echte
+// Wegverbindung). stitchGeometry gibt dann nur die laengste lueckenfreie
+// Teilkette zurueck — eine sichtbare Luecke ist besser als eine km-lange
+// Phantomlinie quer durchs Gelaende.
+const ARTEFAKT_LUECKE_M = 500;
+
+/**
+ * Kompassrichtung von a nach b in Grad [0, 360).
+ */
+function kompassRichtung(a: LatLng, b: LatLng): number {
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const x = Math.sin(dLng) * Math.cos(lat2);
+  const y =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  return ((Math.atan2(x, y) * 180) / Math.PI + 360) % 360;
+}
+
+/**
+ * Richtungsaenderung in Grad zwischen den Vektoren a→b und b→c.
+ * 0 = gleiche Richtung, 180 = Kehrtwendung.
+ */
+function richtungsAenderung(a: LatLng, b: LatLng, c: LatLng): number {
+  const r1 = kompassRichtung(a, b);
+  const r2 = kompassRichtung(b, c);
+  const d = Math.abs(r2 - r1);
+  return d <= 180 ? d : 360 - d;
+}
+
+/**
+ * Korrigiert Zickzack-Artefakte in einer Punktkette, die durch falsch
+ * ausgerichtete OSM-Wegstuecke entstehen.
+ *
+ * Verfahren: lokaler Umkehr-Optimierer. Kandidaten-Grenzen sind alle Punkte
+ * mit Richtungsaenderung > 60 Grad (plus Kettenanfang/-ende). Fuer jedes
+ * Grenzpaar wird probeweise der Abschnitt dazwischen umgedreht; die Umkehrung
+ * wird uebernommen, wenn sie die Anzahl scharfer Knicke (> 150 Grad) senkt
+ * OHNE die Gesamtlaenge zu erhoehen (Toleranz 1 %) — sonst wuerde der
+ * Optimierer Knicke durch lange Phantom-Verbindungen "wegoptimieren".
+ * Iteriert bis keine Verbesserung mehr moeglich ist (max. 5 Runden).
+ */
+function korrigiereZickzack(punkte: LatLng[]): LatLng[] {
+  const KNICK_WINKEL = 150;
+  const KANDIDAT_WINKEL = 60;
+  const KNICK_MINDEST_M = 15;
+  const MAX_FENSTER = 120; // max. Indizes zwischen Umkehr-Grenzen
+  const MAX_RUNDEN = 5;
+
+  if (punkte.length < 3) return punkte;
+
+  const zaehleKnicke = (g: LatLng[]): number => {
+    let n = 0;
+    for (let i = 1; i < g.length - 1; i++) {
+      if (
+        haversineM(g[i - 1]!, g[i]!) > KNICK_MINDEST_M &&
+        haversineM(g[i]!, g[i + 1]!) > KNICK_MINDEST_M &&
+        richtungsAenderung(g[i - 1]!, g[i]!, g[i + 1]!) > KNICK_WINKEL
+      )
+        n++;
+    }
+    return n;
+  };
+
+  const gesamtLaenge = (g: LatLng[]): number => {
+    let l = 0;
+    for (let i = 1; i < g.length; i++) l += haversineM(g[i - 1]!, g[i]!);
+    return l;
+  };
+
+  let kette = punkte;
+  for (let runde = 0; runde < MAX_RUNDEN; runde++) {
+    const knicke = zaehleKnicke(kette);
+    if (knicke === 0) break;
+
+    // Kandidaten-Grenzen: Punkte mit deutlicher Richtungsaenderung
+    const grenzen: number[] = [0];
+    for (let i = 1; i < kette.length - 1; i++) {
+      if (
+        haversineM(kette[i - 1]!, kette[i]!) > KNICK_MINDEST_M &&
+        haversineM(kette[i]!, kette[i + 1]!) > KNICK_MINDEST_M &&
+        richtungsAenderung(kette[i - 1]!, kette[i]!, kette[i + 1]!) > KANDIDAT_WINKEL
+      )
+        grenzen.push(i);
+    }
+    grenzen.push(kette.length);
+
+    // Kosten-Deckel: bei sehr verwinkelten Routen (viele Kandidaten-Grenzen)
+    // waere die Paar-Schleife zu teuer — dann nur die scharfen Knicke selbst
+    // als Grenzen verwenden.
+    if (grenzen.length > 40) {
+      const nurKnicke: number[] = [0];
+      for (let i = 1; i < kette.length - 1; i++) {
+        if (
+          haversineM(kette[i - 1]!, kette[i]!) > KNICK_MINDEST_M &&
+          haversineM(kette[i]!, kette[i + 1]!) > KNICK_MINDEST_M &&
+          richtungsAenderung(kette[i - 1]!, kette[i]!, kette[i + 1]!) > KNICK_WINKEL
+        )
+          nurKnicke.push(i);
+      }
+      nurKnicke.push(kette.length);
+      grenzen.length = 0;
+      grenzen.push(...nurKnicke);
+    }
+
+    const laengeVorher = gesamtLaenge(kette);
+    let beste: LatLng[] | null = null;
+    let besterScore = knicke;
+
+    for (let ai = 0; ai < grenzen.length; ai++) {
+      for (let bi = ai + 1; bi < grenzen.length; bi++) {
+        const a = grenzen[ai]!;
+        const b = grenzen[bi]!;
+        if (b - a < 2 || b - a > MAX_FENSTER) continue;
+        const kandidat = [
+          ...kette.slice(0, a),
+          ...kette.slice(a, b).reverse(),
+          ...kette.slice(b),
+        ];
+        if (gesamtLaenge(kandidat) > laengeVorher * 1.01) continue;
+        const score = zaehleKnicke(kandidat);
+        if (score < besterScore) {
+          besterScore = score;
+          beste = kandidat;
+        }
+      }
+    }
+
+    if (!beste) break;
+    kette = beste;
+  }
+
+  return kette;
+}
+
+/**
+ * Teilt eine Punktliste an Spruengen > maxLueckeM auf und gibt die laengste
+ * zusammenhaengende Teilkette zurueck. Entfernt so Stitch-Artefakte aus dem
+ * Routenverlauf, ohne die Geometrie zu verfaelschen.
+ */
+function laengsteKette(punkte: LatLng[], maxLueckeM: number): LatLng[] {
+  if (punkte.length < 2) return punkte;
+  const ketten: LatLng[][] = [];
+  let aktuelle: LatLng[] = [punkte[0]!];
+  for (let i = 1; i < punkte.length; i++) {
+    if (haversineM(punkte[i - 1]!, punkte[i]!) > maxLueckeM) {
+      ketten.push(aktuelle);
+      aktuelle = [punkte[i]!];
+    } else {
+      aktuelle.push(punkte[i]!);
+    }
+  }
+  ketten.push(aktuelle);
+  // Laengste Kette nach Punktanzahl — korreliert mit physischer Strecklaenge
+  return ketten.reduce((a, b) => (b.length > a.length ? b : a), [] as LatLng[]);
+}
+
+/**
+ * Verkettet die Wegstuecke einer OSM-Relation zu einer Punktliste.
+ *
+ * Strategie: geordnete Traversierung entlang der OSM-Memberreihenfolge.
+ * OSM-Editoren speichern die Ways einer Route in der Begehungsreihenfolge;
+ * die Ausrichtung jedes Ways wird per Endpunkt-Uebereinstimmung mit dem
+ * aktuellen Kettenende bestimmt (kein Umsortieren). Liegt ein Stueck ausserhalb
+ * der Verbindungstoleranz, wird es als neue Luecke angefuegt — laengsteKette
+ * entfernt spaeter alle Luecken > ARTEFAKT_LUECKE_M und gibt die Hauptkette
+ * zurueck. Abstecher/Schleifen mit grosser Luecke zur Hauptkette fallen dabei
+ * automatisch heraus, was Zickzack-Artefakte durch Figur-8-Routen verhindert.
+ */
+function stitchGeometry(
+  members: OverpassGeomMember[],
+  opts?: { behalteAlleKetten?: boolean },
+): LatLng[] {
+  const segmente: LatLng[][] = [];
+  for (const m of members) {
+    if (m.type !== "way" || !m.geometry || m.geometry.length < 2) continue;
+    if (m.role && NEBENROLLEN.has(m.role.trim().toLowerCase())) continue;
+    segmente.push(m.geometry.map((g) => ({ lat: g.lat, lng: g.lon })));
+  }
+  if (segmente.length === 0) return [];
+
+  const naht = (ziel: LatLng[], stueck: LatLng[]) => {
+    // Doppelten Nahtpunkt vermeiden
+    const last = ziel[ziel.length - 1]!;
+    const first = stueck[0]!;
+    ziel.push(
+      ...(last.lat === first.lat && last.lng === first.lng
+        ? stueck.slice(1)
+        : stueck),
+    );
+  };
+
+  // Erste Segment-Ausrichtung: schaue auf das zweite Segment um zu bestimmen,
+  // ob das erste vorwaerts oder rueckwaerts traversiert werden soll. Sind
+  // beide Enden fast gleich nah (< 5 m Unterschied, z.B. Rundweg-Start),
+  // entscheidet der Anschlusswinkel zum zweiten Segment.
+  let kette: LatLng[];
+  if (segmente.length > 1) {
+    const s0 = segmente[0]!;
+    const s1 = segmente[1]!;
+    const d0end = Math.min(
+      haversineM(s0[s0.length - 1]!, s1[0]!),
+      haversineM(s0[s0.length - 1]!, s1[s1.length - 1]!),
+    );
+    const d0start = Math.min(
+      haversineM(s0[0]!, s1[0]!),
+      haversineM(s0[0]!, s1[s1.length - 1]!),
+    );
+    if (Math.abs(d0start - d0end) < 5 && s0.length >= 2 && s1.length >= 2) {
+      // Winkel-Tiebreaker: welches Ende von s0 laeuft glatter in s1 weiter?
+      const s1Naechster =
+        haversineM(s0[s0.length - 1]!, s1[0]!) <=
+        haversineM(s0[s0.length - 1]!, s1[s1.length - 1]!)
+          ? s1[1]!
+          : s1[s1.length - 2]!;
+      const winkelVorwaerts = richtungsAenderung(
+        s0[s0.length - 2]!,
+        s0[s0.length - 1]!,
+        s1Naechster,
+      );
+      const winkelRueck = richtungsAenderung(s0[1]!, s0[0]!, s1Naechster);
+      kette = winkelRueck < winkelVorwaerts ? [...s0].reverse() : [...s0];
+    } else {
+      kette = d0start < d0end ? [...s0].reverse() : [...s0];
+    }
+  } else {
+    kette = [...segmente[0]!];
+  }
+
+  // Geordnete Traversierung: jedes Segment in Memberreihenfolge anfuegen.
+  // Richtung: primaer per Endpunkt-Naehe, Tiebreaker per Winkel wenn beide
+  // Enden fast gleich weit sind (< 5 m Unterschied) — verhindert, dass kurze
+  // Ways rueckwaerts angehaengt werden und Zickzack erzeugen.
+  for (let i = 1; i < segmente.length; i++) {
+    const s = segmente[i]!;
+    const ende = kette[kette.length - 1]!;
+    const dStart = haversineM(ende, s[0]!);
+    const dEnd = haversineM(ende, s[s.length - 1]!);
+
+    let vorwaerts: boolean;
+    if (Math.abs(dStart - dEnd) < 5 && kette.length >= 2) {
+      // Tiebreaker: waehle Richtung mit kleinerem Anschlusswinkel
+      const vorPunkt = kette[kette.length - 2]!;
+      const winkelVorwaerts = s.length >= 2
+        ? richtungsAenderung(vorPunkt, ende, s[1]!)
+        : 180;
+      const winkelRueck = s.length >= 2
+        ? richtungsAenderung(vorPunkt, ende, s[s.length - 2]!)
+        : 180;
+      vorwaerts = winkelVorwaerts <= winkelRueck;
+    } else {
+      vorwaerts = dStart <= dEnd;
+    }
+
+    naht(kette, vorwaerts ? s : [...s].reverse());
+  }
+
+  // Standard: nur die laengste zusammenhaengende Kette behalten (verhindert
+  // Zickzack-Artefakte bei Figur-8-Routen). Bei nachweislich zu kurzem
+  // Ergebnis (amtliche Distanz aus OSM-Tags deutlich groesser) verbindet der
+  // Aufrufer per behalteAlleKetten alle Teilstuecke in Memberreihenfolge —
+  // kleine Luecken werden dann als direkte Verbindung ueberbrueckt.
+  const hauptkette = opts?.behalteAlleKetten
+    ? kette
+    : laengsteKette(kette, ARTEFAKT_LUECKE_M);
+  return korrigiereZickzack(hauptkette);
+}
+
+/** Streckenlaenge einer Punktliste in km (fuer Plausibilitaetspruefungen). */
+function kettenLaengeKm(points: LatLng[]): number {
+  let m = 0;
+  for (let i = 1; i < points.length; i++) m += haversineM(points[i - 1]!, points[i]!);
+  return m / 1000;
+}
+
+/**
+ * Stitcht eine Relation und prueft das Ergebnis gegen die amtliche Distanz
+ * aus den OSM-Tags: faellt die Hauptkette deutlich zu kurz aus (< 75% der
+ * amtlichen Laenge), sind Teilstuecke durch Luecken > ARTEFAKT_LUECKE_M
+ * abgeschnitten worden (z.B. Route 831 Rigi Scheidegg) — dann werden alle
+ * Ketten in Memberreihenfolge verbunden, sofern das dem Amtswert naeher kommt.
+ */
+function stitchMitTagPruefung(
+  members: OverpassGeomMember[],
+  tags: Record<string, string>,
+): LatLng[] {
+  const standard = stitchGeometry(members);
+  const amtlichKm = parseNumericTag(tags.distance, 5_000);
+  if (!amtlichKm || standard.length < 2) return standard;
+  const standardKm = kettenLaengeKm(standard);
+  if (standardKm >= amtlichKm * 0.75) return standard;
+  const voll = stitchGeometry(members, { behalteAlleKetten: true });
+  if (voll.length < 2) return standard;
+  const vollKm = kettenLaengeKm(voll);
+  // Nur uebernehmen wenn die Vollversion naeher am Amtswert liegt und nicht
+  // absurd ueberschiesst (Hin+Rueck doppelt erfasst o.ae.).
+  return Math.abs(vollKm - amtlichKm) < Math.abs(standardKm - amtlichKm) &&
+    vollKm <= amtlichKm * 1.6
+    ? voll
+    : standard;
+}
+
+/** Seilbahn/Standseilbahn-Wegstueck aus OpenStreetMap fuer die Kartendarstellung. */
+export interface RawAerialway {
+  id: string;
+  kind: string;
+  points: LatLng[];
+}
+
+interface OverpassWayGeomElement {
+  type: string;
+  id: number;
+  tags?: Record<string, string>;
+  geometry?: { lat: number; lon: number }[];
+}
+
+/**
+ * Laedt Seilbahnen, Gondelbahnen, Sessellifte und Standseilbahnen (typische
+ * alpine Wander-Verkehrsmittel) innerhalb einer Bounding Box. Bewusst eng
+ * begrenzt auf einen Kartenausschnitt, damit die Abfrage klein und schnell
+ * bleibt (kein flaechendeckender Import wie bei den Wanderrouten).
+ */
+export async function fetchAerialways(
+  bbox: { south: number; west: number; north: number; east: number },
+  log: Logger,
+): Promise<RawAerialway[]> {
+  const b = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
+  const query = [
+    "[out:json][timeout:25];",
+    "(",
+    `way["aerialway"~"^(cable_car|gondola|chair_lift)$"](${b});`,
+    `way["railway"="funicular"](${b});`,
+    ");",
+    "out geom;",
+  ].join("");
+  const elements = await runOverpass<OverpassWayGeomElement>(query);
+  const result: RawAerialway[] = [];
+  for (const e of elements) {
+    if (!e.geometry || e.geometry.length < 2) continue;
+    const tags = e.tags ?? {};
+    const kind = tags.aerialway ?? "funicular";
+    result.push({
+      id: `aerialway-${e.id}`,
+      kind,
+      points: e.geometry.map((g) => ({ lat: g.lat, lng: g.lon })),
+    });
+  }
+  log.info({ bbox, count: result.length }, "Overpass: Seilbahnen geladen");
+  return result;
+}
+
+/** Historischer/touristischer Ort aus OpenStreetMap, roh vor Wikipedia-Anreicherung. */
+export interface RawPoi {
+  id: string;
+  name: string;
+  kind: string;
+  lat: number;
+  lng: number;
+  elevation: number | null;
+  wikipediaTag: string | null;
+  wikidataTag: string | null;
+  /** Kuratierter Kontext aus OSM-Tags (note, description, inscription, alt_name …)
+   *  als formatierter String fuer den Claude-Prompt — enthaelt keine erfundenen Daten. */
+  osmContext: string | null;
+  /** Provenienz wird nach einem erfolgreichen Fetch am Cache-Eintrag ergänzt. */
+  source?: string;
+  sourceUrl?: string;
+  checkedAt?: Date;
+}
+
+/** Gewaessergeometrie fuer die belastbare Wasserwege-Klassifizierung. */
+export interface RawWaterFeature {
+  id: string;
+  name: string;
+  kind: string;
+  lat: number;
+  lng: number;
+  geometry: { lat: number; lng: number }[];
+}
+
+interface OverpassPoiElement {
+  type: string;
+  id: number;
   lat?: number;
   lon?: number;
   center?: { lat: number; lon: number };

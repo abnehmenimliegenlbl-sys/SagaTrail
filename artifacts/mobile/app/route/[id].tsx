@@ -1,4 +1,1267 @@
+import { Feather } from "@expo/vector-icons";
+import SacHuettenSection, { type SacHuette } from "@/components/SacHuettenSection";
+import PreStartSafetyCard, { type SafetyClosure } from "@/components/PreStartSafetyCard";
+import { ElevationChart, type ElevationPoint } from "@/components/ElevationChart";
+import type { MapPoi } from "@/components/brand/swisstopoMapHtml";
+import { getApiBaseUrl } from "@/lib/apiConfig";
+import {
+  getAerialways,
+  getPartners,
+  getPois,
+  getPoiDetail,
+  getWeather,
+  getAvalancheBulletin,
+  getTransportStationboard,
+  useGetRouteConditions,
+} from "@workspace/api-client-react";
+import type { Partner, Poi, WeatherReport, WikiSummary, AvalancheBulletin, TransportStationboard } from "@workspace/api-client-react";
+
+import * as Location from "expo-location";
+import * as Sharing from "expo-sharing";
+import { captureRef } from "react-native-view-shot";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Image as ExpoImage } from "expo-image";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated as RNAnimated,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { alert } from "@/lib/appAlert";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { GLAS_3D } from "@/constants/depth";
+import { Background } from "@/components/brand/Background";
+import { CloseButton } from "@/components/brand/CloseButton";
+import { Glass } from "@/components/brand/Glass";
+import { KarteVollbild } from "@/components/brand/KarteVollbild";
+import { poiDisplayName } from "@/lib/poiDisplay";
+import { PrimaryButton } from "@/components/brand/PrimaryButton";
+import { RouteMap } from "@/components/brand/RouteMap";
+import RouteTerrain3D from "@/components/brand/RouteTerrain3D";
+import { ScreenHeader } from "@/components/brand/ScreenHeader";
+import { RouteAccordionCard } from "@/components/brand/RouteAccordionCard";
+import { Wegweiser } from "@/components/Wegweiser";
+import { Skeleton } from "@/components/brand/Skeleton";
+import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
+import { SparkDivider } from "@/components/brand/SparkMountain";
+import { ShareCard } from "@/components/brand/ShareCard";
+import { fonts } from "@/constants/typography";
+import { useApp } from "@/contexts/AppContext";
+import { useSubscription } from "@/lib/revenuecat";
+import {
+  hasPurchasedPack,
+  kantonSlug,
+  packEntitlementFuerKanton,
+  SAGEN_PRO_PACK,
+  sagaPackSlug,
+} from "@/lib/kantonSlug";
+import { useCatalog } from "@/contexts/CatalogContext";
+import { useDownloads } from "@/contexts/DownloadContext";
+import { useColors } from "@/hooks/useColors";
+import { useRouteStrings } from "@/lib/i18n/screens/route";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
+import {
+  bboxAroundGeometry,
+  distanzZuSegmentKm,
+  filterBusAndTramStopsToRouteEndpoints,
+  filterByRouteCorridor,
+  haversineKm,
+} from "@/lib/geo";
+import { sagaLokalisierung, allCantonSagasSorted, SagaWithMeta, SagaProximityCategory } from "@/lib/sagaMatch";
+import { Saga } from "@/types";
+import { hapticMedium, hapticSelection } from "@/lib/haptics";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
+import {
+  deriveRouteThemes,
+  ROUTE_THEME_KEYS,
+  routeThemeLabel,
+  type RouteThemeKey,
+} from "@/lib/routeThemes";
+import { hasServerThemeEvidence } from "@/lib/routeThemeIndex";
+import { formatQualityDate, routeQualityLabels } from "@/lib/routeQualityLabels";
+import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
+
+const WEB_TOP = 67;
+
+// ─── Partner-Marker Hilfskonstanten (analog hike/[id].tsx) ──────────────────
+const PARTNER_WOCHENTAGE: Record<string, Record<string, string>> = {
+  de:  { montag: "Montag", dienstag: "Dienstag", mittwoch: "Mittwoch", donnerstag: "Donnerstag", freitag: "Freitag", samstag: "Samstag", sonntag: "Sonntag" },
+  gsw: { montag: "Mäntig", dienstag: "Zischtig", mittwoch: "Mittwuch", donnerstag: "Dunschtig", freitag: "Friitig", samstag: "Samschtig", sonntag: "Sunntig" },
+  en:  { montag: "Monday", dienstag: "Tuesday", mittwoch: "Wednesday", donnerstag: "Thursday", freitag: "Friday", samstag: "Saturday", sonntag: "Sunday" },
+  fr:  { montag: "lundi", dienstag: "mardi", mittwoch: "mercredi", donnerstag: "jeudi", freitag: "vendredi", samstag: "samedi", sonntag: "dimanche" },
+  it:  { montag: "lunedì", dienstag: "martedì", mittwoch: "mercoledì", donnerstag: "giovedì", freitag: "venerdì", samstag: "sabato", sonntag: "domenica" },
+  es:  { montag: "lunes", dienstag: "martes", mittwoch: "miércoles", donnerstag: "jueves", freitag: "viernes", samstag: "sábado", sonntag: "domingo" },
+  pt:  { montag: "segunda", dienstag: "terça", mittwoch: "quarta", donnerstag: "quinta", freitag: "sexta", samstag: "sábado", sonntag: "domingo" },
+  zh:  { montag: "周一", dienstag: "周二", mittwoch: "周三", donnerstag: "周四", freitag: "周五", samstag: "周六", sonntag: "周日" },
+};
+function formatPartnerOeffnungszeit(
+  partner: { istOffen?: boolean | null; schliesstUm?: string | null; oeffnetAmTag?: string | null; oeffnetUm?: string | null },
+  lang: string,
+): string | null {
+  if (partner.istOffen && partner.schliesstUm) return `Schliesst um ${partner.schliesstUm} Uhr`;
+  if (!partner.istOffen && partner.oeffnetAmTag && partner.oeffnetUm) {
+    const tag = partner.oeffnetAmTag;
+    const uhr = partner.oeffnetUm;
+    if (tag === "heute")  return `Öffnet heute um ${uhr} Uhr`;
+    if (tag === "morgen") return `Öffnet morgen um ${uhr} Uhr`;
+    const tagName = PARTNER_WOCHENTAGE[lang]?.[tag] ?? PARTNER_WOCHENTAGE["de"]?.[tag] ?? tag;
+    return `Öffnet am ${tagName} um ${uhr} Uhr`;
+  }
+  return null;
 }
+type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
+const PARTNER_KATEGORIE: Record<string, { icon: FeatherIconName; label: string }> = {
+  restaurant:    { icon: "coffee",       label: "Restaurant" },
+  cafe:          { icon: "coffee",       label: "Café" },
+  bar:           { icon: "music",        label: "Bar" },
+  hotel:         { icon: "home",         label: "Hotel" },
+  uebernachtung: { icon: "home",         label: "Hotel" },
+  shop:          { icon: "shopping-bag", label: "Shop" },
+};
+const PARTNER_KAT_DEFAULT: { icon: FeatherIconName; label: string } = { icon: "coffee", label: "Partnerbetrieb" };
+// ────────────────────────────────────────────────────────────────────────────
+
+export default function Routenplanung() {
+  const t = useRouteStrings();
+  const meetupT = useMeetupStrings();
+  const ts = useSharedStrings();
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { energiesparmodus, setEnergiesparmodus, profile, purchasedPacks, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language, savedSagaIds, toggleBookmark, themeMode } = useApp();
+  const availablePurchasedPacks =
+    Array.from(new Set([...purchasedPacks, ...(profile?.purchasedPacks ?? [])]));
+  // POI-Infokacheln liegen ueber duesteren Karten — im Hellmodus fast
+  // deckendes Weiss statt Milchglas (identisch zum Hike-Screen).
+  const poiOverlay = themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
+  const { hatEntitlement, isElite, isSubscribed } = useSubscription();
+  const hasPremiumSubscription = premium || isSubscribed;
+  const hasPremiumAccess = premium || isSubscribed || isElite;
+  const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, sagas } = useCatalog();
+  const { download, remove, isDownloaded, getRecord, loadOfflinePois, progress } = useDownloads();
+  const qualityT = routeQualityLabels(language);
+
+  // Ein vollständiges Offline-Paket enthält einen Routensnapshot. Der
+  // Katalog darf online-only bleiben; nach einem Kaltstart kommt die Detail-
+  // ansicht trotzdem ohne Netz wieder hoch.
+  const offlineRecord = getRecord(id);
+  const catalogRoute = getRoute(id);
+  const route = catalogRoute ?? offlineRecord?.routeSnapshot;
+  const routeFromOfflineSnapshot = !catalogRoute && Boolean(offlineRecord?.routeSnapshot);
+  const qualityDate = formatQualityDate(route?.qualityCheckedAt, language);
+  const qualityStatusText =
+    route?.qualityStatus === "verified" ? qualityT.verified :
+    route?.qualityStatus === "partial" ? qualityT.partial :
+    route?.qualityStatus === "invalid" ? qualityT.invalid :
+    qualityT.unverified;
+  const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
+
+  // Routentyp aus der Geometrie ableiten: liegen Start und Ziel nahe
+  // beieinander (unter 500 m oder unter 5 % der Streckenlaenge), ist es ein
+  // Rundweg — sonst eine Streckenwanderung, bei der die Rueckreise in der
+  // Schweiz ueblicherweise mit Bahn oder Postauto erfolgt.
+  const routentyp = React.useMemo<"rundweg" | "strecke" | null>(() => {
+    const g = route?.geometry;
+    if (!g || g.length < 2) return null;
+    const start = { lat: g[0][0], lng: g[0][1] };
+    const ende = { lat: g[g.length - 1][0], lng: g[g.length - 1][1] };
+    const lueckeKm = haversineKm(start, ende);
+    const schwelleKm = Math.max(0.5, (route?.distanceKm ?? 0) * 0.05);
+    return lueckeKm <= schwelleKm ? "rundweg" : "strecke";
+  }, [route?.geometry, route?.distanceKm]);
+
+  // Strecke umkehren – tauscht Start und Ziel lokal aus (kein Server-Request)
+  const [reversed, setReversed] = useState(false);
+  const [sbbOpen, setSbbOpen] = useState(false);
+
+  // Effektive Geometrie: umgekehrt wenn reversed=true (keine Mutation des Originals).
+  const effectiveGeom = useMemo(() => {
+    const g = route?.geometry ?? [];
+    return reversed ? [...g].reverse() : g;
+  }, [route?.geometry, reversed]);
+
+
+
+  const [saga, setSaga] = useState<Saga | undefined>(
+    route ? getSagaForRoute(route) : undefined,
+  );
+  const [sagaLoading, setSagaLoading] = useState(!saga);
+  const [sagaRetryCount, setSagaRetryCount] = useState(0);
+  // Alle Sagen des Kantons, sortiert nach Proximity-Kategorie + Distanz.
+  const sagaCandidatesWithMeta = useMemo(
+    () =>
+      route
+        ? allCantonSagasSorted(route.coordinates, route.region, sagas)
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [route?.id, sagas],
+  );
+
+  // Prueft ob eine bestimmte Sage fuer den aktuellen User gesperrt ist.
+  // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
+  const isSagaLocked = useCallback(
+    (s: Saga): boolean => {
+      // Bereits gehoerte Sagen bleiben immer nutzbar: wer eine Sage schon
+      // auf einer Wanderung gehoert hat, darf sie beliebig oft wiederholen.
+      if (hikeHistory.some((h) => h.sagaId === s.id)) return false;
+      // Elite-Pruefung VOR dem freeHikeUsed-Abbruch: das DB-Premium-Flag
+      // koennte noch nicht synchronisiert sein (Erstinstall, Restore), aber
+      // das RC-Entitlement ist sofort verfuegbar und muss Vorrang haben.
+      if (isElite) return false;
+      const slug = kantonSlug(s.canton);
+      const sagasInCanton = sagas.filter((cs) => cs.canton === s.canton);
+      const sagaIdx = sagasInCanton.findIndex((cs) => cs.id === s.id);
+      const effectiveSlug = sagaIdx >= 0 ? sagaPackSlug(slug, sagaIdx) : slug;
+      const packUnlocked =
+         hasPurchasedPack(availablePurchasedPacks, effectiveSlug) ||
+        hatEntitlement(packEntitlementFuerKanton(effectiveSlug));
+      if (!hasPremiumSubscription) return freeHikeUsed && !packUnlocked;
+      if (packUnlocked) return false;
+      if (sagaIdx < 0) return false;
+      if (sagaIdx >= SAGEN_PRO_PACK) return true;
+      // `isAnchorPlace` beschreibt die Verankerung am Ort, nicht den
+      // Zugriffsstatus. Ohne gekauftes Kantonspaket ist nur die erste Sage
+      // des Kantons als Premium-Vorschau frei.
+      return sagaIdx !== 0;
+    },
+    [freeHikeUsed, hasPremiumSubscription, hatEntitlement, isElite, availablePurchasedPacks, sagas, hikeHistory],
+  );
+
+  // Zugaengliche Sagen mit Metadaten. Innerhalb jeder Proximity-Kategorie
+  // stehen ungehoerte Sagen (Neu) vor schon gehoerten.
+  const unlockedCandidatesWithMeta = useMemo((): SagaWithMeta[] => {
+    const unlocked = sagaCandidatesWithMeta.filter(
+      (m) => !isSagaLocked(m.saga),
+    );
+    const isHeard = (sagaId: string) =>
+      hikeHistory.some((h) => h.sagaId === sagaId);
+    // Stabile Re-Sortierung: Kategorie bleibt, innerhalb: Neu (0) vor Gehoert (1)
+    return [...unlocked].sort((a, b) => {
+      const catDiff = (a.category === b.category ? 0 : 1); // gleiche Kat → 0
+      if (a.category !== b.category) {
+        const ORDER: Record<SagaProximityCategory, number> = { on_route: 0, near: 1, canton: 2 };
+        return ORDER[a.category] - ORDER[b.category];
+      }
+      const heardA = isHeard(a.saga.id) ? 1 : 0;
+      const heardB = isHeard(b.saga.id) ? 1 : 0;
+      if (heardA !== heardB) return heardA - heardB;
+      return a.distM - b.distM;
+    });
+  }, [sagaCandidatesWithMeta, isSagaLocked, hikeHistory]);
+
+  const hasLockedCandidates =
+    unlockedCandidatesWithMeta.length < sagaCandidatesWithMeta.length;
+
+  const [pickerDismissed, setPickerDismissed] = useState(false);
+  const showPicker = unlockedCandidatesWithMeta.length > 1 && !pickerDismissed;
+  function selectFromPicker(s: Saga) {
+    setSaga(s);
+    setSagaLoading(false);
+    setPickerDismissed(true);
+  }
+  const [lowBattery] = useState(false);
+  // Routenbeschreibung (Wikipedia) ein-/ausklappen
+  const [beschreibungOffen, setBeschreibungOffen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  // Community Trail Conditions
+  const { data: trailConditions, isLoading: conditionsLoading, refetch: refetchConditions } =
+    useGetRouteConditions(id ?? "");
+  const [aerialways, setAerialways] = useState<
+    { id: string; geometry: number[][] }[] | null
+  >(null);
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [weather, setWeather] = useState<WeatherReport | null>(null);
+  const [weatherError, setWeatherError] = useState(false);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [weatherVersuch, setWeatherVersuch] = useState(0);
+  // Lawinenbulletin (EAWS) – alpine Kantone, Winterhalbjahr
+  const [avalanche, setAvalanche] = useState<AvalancheBulletin | null>(null);
+  const [avalancheLoading, setAvalancheLoading] = useState(false);
+  // SBB live am Ziel – naechste Abfahrten am Routenendpunkt
+  const [transport, setTransport] = useState<TransportStationboard | null>(null);
+  const [transportLoading, setTransportLoading] = useState(false);
+  // SBB live am Start – Abfahrten vom naechsten Bahnhof zum aktuellen Standort des Users
+  const [transportStart, setTransportStart] = useState<TransportStationboard | null>(null);
+  const [transportStartLoading, setTransportStartLoading] = useState(false);
+  // Naechster Bahnhof am Routenstart (Trailhead) – nur fuer SBB-URL-Aufbau, kein Loading-State noetig
+  const [startStation, setStartStation] = useState<{ id: string; name: string } | null>(null);
+
+  // Oeffnet die SBB-Anreise zum Routenstart.
+  // von = naechster Bahnhof zum aktuellen Standort; nach = naechster Bahnhof am Trailhead.
+  const oeffneAnreise = React.useCallback(() => {
+    const von = transportStart?.station?.name;
+    const nach = startStation?.name ?? route?.region ?? "";
+    const base = "https://www.sbb.ch/de/kaufen/pages/fahrplan/fahrplan.xhtml";
+    const url = von
+      ? `${base}?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}&suche=true`
+      : `${base}?nach=${encodeURIComponent(nach)}`;
+    Linking.openURL(url).catch(() => {});
+  }, [transportStart?.station?.name, startStation?.name, route?.region]);
+
+  // Oeffnet die SBB-Rueckreise vom Routenende zum Routenstart.
+  // VON = naechster Bahnhof am Ziel, NACH = naechster Bahnhof am Trailhead/Start.
+  const oeffneRueckreise = React.useCallback(() => {
+    if (effectiveGeom.length < 2) return;
+    const von = transport?.station?.name ?? (() => {
+      const e = effectiveGeom[effectiveGeom.length - 1];
+      return `${e[0]},${e[1]}`;
+    })();
+    const nach = startStation?.name ?? (() => {
+      const s = effectiveGeom[0];
+      return `${s[0]},${s[1]}`;
+    })();
+    Linking.openURL(
+      `https://www.sbb.ch/de/kaufen/pages/fahrplan/fahrplan.xhtml?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}&suche=true`
+    ).catch(() => {});
+  }, [effectiveGeom, transport?.station?.name, startStation?.name]);
+  // SAC-Hütten in der Nähe der Route
+  const [sacHuetten, setSacHuetten] = useState<SacHuette[]>([]);
+  const [sacHuettenLoading, setSacHuettenLoading] = useState(false);
+  const [sacHuettenError, setSacHuettenError] = useState(false);
+  // Höhenprofil der Route
+  const [elevProfile, setElevProfile] = useState<ElevationPoint[] | null>(null);
+  const [elevProfileLoading, setElevProfileLoading] = useState(false);
+  const [routeTerrain3dOpen, setRouteTerrain3dOpen] = useState(false);
+  // Trinkwasserquellen entlang der Route (für die Karte)
+  const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
+  // Parkplaetze am Start- und Endpunkt der Route (für die Karte)
+  const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
+  // Toiletten und sicherheitsrelevante Einrichtungen entlang der Route
+  const [safetyPois, setSafetyPois] = useState<MapPoi[]>([]);
+  const safetyPoisRequestKey = useMemo(() => {
+    if (!route?.coordinates) return null;
+    const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
+    const first = geom[0];
+    const middle = geom[Math.floor(geom.length / 2)];
+    const last = geom[geom.length - 1];
+    return [
+      route.id,
+      geom.length,
+      first?.[0],
+      first?.[1],
+      middle?.[0],
+      middle?.[1],
+      last?.[0],
+      last?.[1],
+    ].join(":");
+  }, [route?.id, route?.coordinates, route?.geometry, effectiveGeom]);
+  const [loadedSafetyPoisKey, setLoadedSafetyPoisKey] = useState<string | null>(null);
+  const safetyPoisReady =
+    safetyPoisRequestKey !== null && loadedSafetyPoisKey === safetyPoisRequestKey;
+  // Historische / touristische POIs entlang der Route (für die Karte)
+  const [pois, setPois] = useState<MapPoi[]>([]);
+  const poisRequestKey = route?.coordinates ? route.id : null;
+  const [loadedPoisKey, setLoadedPoisKey] = useState<string | null>(null);
+  const poisReady = poisRequestKey !== null && loadedPoisKey === poisRequestKey;
+  // Vollständige POI-Objekte (id → Poi) für die Detail-Ansicht beim Antippen
+  const poisVollRef = useRef<Map<string, Poi>>(new Map());
+  const [poisDetails, setPoisDetails] = useState<Poi[]>([]);
+  const [offlineThemeEvidenceMissing, setOfflineThemeEvidenceMissing] = useState(false);
+  const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  // undefined = lädt, null = nichts gefunden, WikiSummary = fertig
+  const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
+  const routeThemes = useMemo(
+    () => {
+      const serverThemes = (route?.themeKeys ?? []).filter(
+        (theme): theme is RouteThemeKey =>
+          ROUTE_THEME_KEYS.includes(theme as RouteThemeKey),
+      );
+      // An explicit server theme array is authoritative, including an empty
+      // array. Only fall back to locally loaded POIs for snapshots without
+      // theme evidence.
+      if (route && hasServerThemeEvidence(route)) {
+        return serverThemes;
+      }
+      return deriveRouteThemes(
+        poisDetails,
+        route ?? { familyFriendly: null, geometry: [] },
+      );
+    },
+    [poisDetails, route?.familyFriendly, route?.geometry, route?.qualityStatus, route?.themeKeys],
+  );
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  // Vollbild-Karte: Zustand + Signal zum Schliessen von aussen (POI-Tap im
+  // Vollbild → erst Karte schliessen, dann Detail öffnen — sonst Doppel-Modal).
+  const [karteVollbild, setKarteVollbild] = useState(false);
+  const [karteCloseSignal, setKarteCloseSignal] = useState(0);
+  const pendingKarteActionRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (!karteVollbild && pendingKarteActionRef.current) {
+      const action = pendingKarteActionRef.current;
+      pendingKarteActionRef.current = null;
+      const timer = setTimeout(action, 320);
+      return () => clearTimeout(timer);
+    }
+  }, [karteVollbild]);
+  // Wiki-Anreicherung für angetippte POIs (identisch zum Hike-Screen, ohne Offline-Cache)
+  useEffect(() => {
+    if (!selectedPoi) {
+      setSelectedPoiWiki(undefined);
+      return;
+    }
+    setSelectedPoiWiki(undefined);
+    let cancelled = false;
+    getPoiDetail({
+      name: selectedPoi.name,
+      kind: selectedPoi.kind,
+      lat: selectedPoi.lat,
+      lng: selectedPoi.lng,
+      ...(selectedPoi.wikipediaTag ? { wikipediaTag: selectedPoi.wikipediaTag } : {}),
+      ...(selectedPoi.wikidataTag ? { wikidataTag: selectedPoi.wikidataTag } : {}),
+    })
+      .then((r) => { if (!cancelled) setSelectedPoiWiki(r.wiki ?? null); })
+      .catch(() => { if (!cancelled) setSelectedPoiWiki(null); });
+    return () => { cancelled = true; };
+  }, [selectedPoi?.id]);
+
+  // ShareCard ref für Native-Share-Export
+  const shareCardRef = useRef<View>(null);
+
+  // Lesezeichen (Bookmark) für die Saga dieser Route
+  const isBookmarked = saga ? savedSagaIds.includes(saga.id) : false;
+
+  // Sperrungen & Wegschäden (Wanderwege Schweiz)
+  const [sperrungen, setSperrungen] = useState<SafetyClosure[]>([]);
+  const [sperrungenLoading, setSperrungenLoading] = useState(true);
+
+  useEffect(() => {
+    setSperrungenLoading(true);
+    const canton = saga?.canton ? kantonSlug(saga.canton) : "";
+    const url = canton
+      ? `${getApiBaseUrl()}api/sperrungen?canton=${encodeURIComponent(canton)}`
+      : `${getApiBaseUrl()}api/sperrungen`;
+    fetch(url)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: unknown) => {
+        const arr = Array.isArray(data)
+          ? (data as Array<Record<string, unknown>>).map((item) => ({
+              id: String(item.id ?? ""),
+              title: String(item.titel ?? item.title ?? "Meldung"),
+              details: typeof item.beschreibung === "string"
+                ? item.beschreibung
+                : typeof item.details === "string"
+                  ? item.details
+                  : null,
+              affectsFrom: typeof item.von === "string" ? item.von : null,
+              affectsUntil: typeof item.bis === "string" ? item.bis : null,
+              url: typeof item.url === "string" ? item.url : null,
+              canton: typeof item.canton === "string" ? item.canton : null,
+              typ: typeof item.typ === "string" ? item.typ : undefined,
+              source: typeof item.quelle === "string"
+                ? item.quelle
+                : typeof item.source === "string"
+                  ? item.source
+                  : undefined,
+            }))
+          : [];
+        setSperrungen(arr);
+      })
+      .catch(() => setSperrungen([]))
+      .finally(() => setSperrungenLoading(false));
+  }, [saga?.canton]);
+
+  const shareRoute = async () => {
+    if (!route) return;
+    try {
+      if (shareCardRef.current) {
+        const uri = await captureRef(shareCardRef, { format: "png", quality: 0.9 });
+        await Sharing.shareAsync(uri, { mimeType: "image/png", dialogTitle: route.name });
+      }
+    } catch {
+      // Teilen fehlgeschlagen (z.B. Web oder keine Berechtigung)
+    }
+  };
+
+
+  // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
+  // Wander-Verkehrsmittel) — nur mit Wegverlauf sinnvoll, best effort.
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const bbox = bboxAroundGeometry(route.geometry, route.coordinates);
+    getAerialways(bbox)
+      .then((result) => {
+        if (!cancelled) setAerialways(result);
+      })
+      .catch(() => {
+        if (!cancelled) setAerialways(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id, weatherVersuch]);
+
+  // Toiletten und Sicherheitsinfrastruktur separat laden — ohne Wiki-/Story-
+  // Anreicherung. Der Mittelpunkt-Radius ist bewusst begrenzt, damit
+  // Overpass-Abfragen auf langen Routen schnell und best effort bleiben.
+  useEffect(() => {
+    setSafetyPois([]);
+    setLoadedSafetyPoisKey(null);
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const requestKey = safetyPoisRequestKey;
+    if (requestKey === null) return;
+    const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
+    if (geom.length < 2) {
+      setLoadedSafetyPoisKey(requestKey);
+      return;
+    }
+    const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
+    const center = midIdx >= 0
+      ? { lat: geom[midIdx][0], lng: geom[midIdx][1] }
+      : route.coordinates;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/safety-pois?lat=${center.lat}&lng=${center.lng}&radius=10000`)
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data: unknown) => {
+        if (cancelled || !Array.isArray(data)) return;
+        const mapped = data
+          .filter((p): p is { osmId: string; category: string; name: string; lat: number; lng: number; description?: string | null; phone?: string | null; openingHours?: string | null } => Boolean(p && typeof p.osmId === "string"))
+          .map((p) => ({
+            id: p.osmId,
+            name: p.name,
+            lat: p.lat,
+            lng: p.lng,
+            category: p.category,
+            description: [p.description, p.phone ? `Tel. ${p.phone}` : null, p.openingHours].filter(Boolean).join(" · ") || null,
+          }));
+        setSafetyPois(filterByRouteCorridor(mapped, geom, 0.75));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadedSafetyPoisKey(requestKey);
+      });
+    return () => { cancelled = true; };
+  }, [safetyPoisRequestKey]);
+
+  // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) entlang der Route
+  // laden — best effort, gleiche Bounding Box wie die Seilbahnen.
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const bbox = bboxAroundGeometry(route.geometry, route.coordinates, 5.0);
+    getPartners(bbox)
+      .then((result) => {
+        if (!cancelled) setPartners(result);
+      })
+      .catch(() => {
+        if (!cancelled) setPartners([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id]);
+
+  // Historische/touristische POIs entlang der Route laden (fire-and-forget:
+  // Server gibt sofort [] zurueck und füllt den Cache; nach 35 s Retry).
+  useEffect(() => {
+    setPois([]);
+    setLoadedPoisKey(null);
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const requestKey = poisRequestKey;
+    if (requestKey === null) return;
+    setPoisDetails([]);
+    // 0.5 km Rand um die Geometrie (wie im Hike-Screen) — verhindert
+    // Overpass-Timeouts in dichten Staedten wie Basel.
+    // 2 km Rand damit alpine Gipfel (natural=peak) und Pässe (natural=saddle)
+    // auch abseits der Route noch gefetcht werden.
+    const bbox = bboxAroundGeometry(route.geometry, route.coordinates, 2.0);
+    const geo = route.geometry;
+    // Alpine Naturmerkmale dürfen bis 2 km vom Routenverlauf entfernt sein —
+    // Gipfel, Pässe, Gletscher, Schluchten und geologische Merkmale dürfen
+    // bis 2 km vom Routenverlauf entfernt sein.
+    // Ruinen/archäologische Fundstätten: 1 km (oft etwas abseits des Weges).
+    // Alle anderen POIs (Kreuze, Kapellen, Brunnen, …): 0.5 km.
+    const ALPINE_KINDS = new Set([
+      "natural=peak", "natural=saddle", "natural=glacier",
+      "natural=rock", "natural=arch", "natural=gorge",
+      "geological=erratic", "geological=moraine",
+    ]);
+    const RUIN_KINDS = new Set([
+      "historic=ruins", "historic=archaeological_site",
+      "historic=fort", "historic=roman_road", "historic=roman_villa",
+      "historic=roman_building", "historic=battlefield",
+    ]);
+    const korridorKm = (kind: string): number => {
+      if (ALPINE_KINDS.has(kind)) return 2.0;
+      if (RUIN_KINDS.has(kind)) return 1.0;
+      return 0.5;
+    };
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const filterAndSet = (result: Awaited<ReturnType<typeof getPois>>) => {
+      const endpointFiltered = filterBusAndTramStopsToRouteEndpoints(result, geo);
+      const gefiltert =
+        geo && geo.length > 1
+          ? endpointFiltered.filter((p) => {
+              const maxKm = korridorKm(p.kind ?? "");
+              for (let i = 0; i < geo.length - 1; i++) {
+                if (
+                  distanzZuSegmentKm(
+                    { lat: p.lat, lng: p.lng },
+                    { lat: geo[i][0], lng: geo[i][1] },
+                    { lat: geo[i + 1][0], lng: geo[i + 1][1] }
+                  ) <= maxKm
+                ) return true;
+              }
+              return false;
+            })
+          : [];
+      if (!cancelled) {
+        poisVollRef.current = new Map(gefiltert.map((p) => [p.id, p]));
+        setPoisDetails(gefiltert);
+        setPois(gefiltert.map((p) => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng })));
+      }
+    };
+
+    const tryLoad = () => {
+      getPois(bbox)
+        .then((result) => {
+          filterAndSet(result);
+          if (!cancelled) setLoadedPoisKey(requestKey);
+          if (result.length === 0 && !cancelled) {
+            retryTimer = setTimeout(tryLoad, 35_000);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setLoadedPoisKey(requestKey);
+            retryTimer = setTimeout(tryLoad, 35_000);
+          }
+        });
+    };
+    tryLoad();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer !== null) clearTimeout(retryTimer);
+    };
+  }, [poisRequestKey]);
+
+  // Offline-Pakete enthalten eine eigene POI-Antwort. Nutze sie auch für die
+  // Themenchips; fehlt sie vollständig, darf das nicht wie "keine Themen"
+  // aussehen. Ein gespeichertes leeres Array ist dagegen ein belastbarer
+  // Negativbefund und bleibt ohne Warnung.
+  useEffect(() => {
+    if (!routeFromOfflineSnapshot || !route?.id || hasServerThemeEvidence(route)) {
+      setOfflineThemeEvidenceMissing(false);
+      return;
+    }
+    let cancelled = false;
+    loadOfflinePois(route.id)
+      .then((cached) => {
+        if (cancelled) return;
+        if (cached === null) {
+          setOfflineThemeEvidenceMissing(true);
+          return;
+        }
+        setOfflineThemeEvidenceMissing(false);
+        if (cached.length === 0) return;
+        const cachedPois = cached as Poi[];
+        poisVollRef.current = new Map(cachedPois.map((poi) => [poi.id, poi]));
+        setPoisDetails(cachedPois);
+        setPois(cachedPois.map((poi) => ({
+          id: poi.id,
+          name: poi.name,
+          lat: poi.lat,
+          lng: poi.lng,
+        })));
+      })
+      .catch(() => {
+        if (!cancelled) setOfflineThemeEvidenceMissing(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadOfflinePois, route?.id, routeFromOfflineSnapshot, route?.qualityStatus, route?.themeKeys]);
+
+  // Live-Wetter + abgeleiteter Wegzustand fuer den Ausgangspunkt der Route.
+  useEffect(() => {
+    if (!route?.coordinates) {
+      setWeatherLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setWeatherLoading(true);
+    setWeatherError(false);
+    getWeather({ lat: route.coordinates.lat, lng: route.coordinates.lng })
+      .then((result) => {
+        if (cancelled) return;
+        setWeather(result);
+        setWeatherLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setWeather(null);
+        setWeatherError(true);
+        setWeatherLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id]);
+
+  // Lawinenbulletin (EAWS) – nur alpine Kantone, Winterhalbjahr.
+  // Im Sommer gibt die API available=false zurueck (korrekt, kein Fehler).
+  // HikingRoute hat kein .canton-Feld; Kanton via sagaId aus dem Sagen-Katalog.
+  useEffect(() => {
+    if (!route?.sagaId) return;
+    const sagaCanton = sagas.find((s) => s.id === route.sagaId)?.canton;
+    if (!sagaCanton) return;
+    let cancelled = false;
+    const slug = kantonSlug(sagaCanton);
+    setAvalancheLoading(true);
+    getAvalancheBulletin({ canton: slug, lang: (language ?? "de") as "de" | "fr" | "it" | "en" })
+      .then((result) => { if (!cancelled) { setAvalanche(result); setAvalancheLoading(false); } })
+      .catch(() => { if (!cancelled) { setAvalanche(null); setAvalancheLoading(false); } });
+    return () => { cancelled = true; };
+  }, [route?.id, sagas.length]);
+
+  // Höhenprofil via swisstopo-Profildienst (POST /api/elevation-profile).
+  // Wird neu geladen wenn sich die Geometrie durch Umkehren ändert.
+  useEffect(() => {
+    const geom = effectiveGeom.length >= 2 ? effectiveGeom : (route?.geometry ?? []);
+    if (geom.length < 2) return;
+    let cancelled = false;
+    setElevProfileLoading(true);
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/elevation-profile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ geometry: geom }),
+    })
+      .then((r) => r.json())
+      .then((data: { profile: ElevationPoint[] }) => {
+        if (!cancelled && Array.isArray(data?.profile)) {
+          setElevProfile(data.profile);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setElevProfileLoading(false); });
+    return () => { cancelled = true; };
+  }, [route?.id, reversed]);
+
+  // Trinkwasserquellen im Umkreis der Route laden (Routenmittelpunkt).
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
+    if (geom.length < 2) {
+      setWaterSources([]);
+      return;
+    }
+    const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
+    const center = midIdx >= 0
+      ? { lat: geom[midIdx][0], lng: geom[midIdx][1] }
+      : route.coordinates;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/trinkwasser?lat=${center.lat}&lng=${center.lng}&radius=8000`)
+      .then((r) => r.json())
+      .then((data: { osmId: string; lat: number; lng: number; name: string | null }[]) => {
+        if (!cancelled && Array.isArray(data)) {
+          const mapped = data.map((w) => ({ id: w.osmId, name: w.name ?? "Trinkwasser", lat: w.lat, lng: w.lng }));
+          setWaterSources(filterByRouteCorridor(mapped, geom, 0.75));
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [route?.id, effectiveGeom, route?.geometry]);
+
+  // Parkplaetze am Start- und Endpunkt der Route laden (je 800 m Radius).
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const geom = effectiveGeom.length >= 2 ? effectiveGeom : (route.geometry ?? []);
+    if (geom.length < 2) return;
+    const startPt = { lat: geom[0][0], lng: geom[0][1] };
+    const endPt   = { lat: geom[geom.length - 1][0], lng: geom[geom.length - 1][1] };
+    const base = getApiBaseUrl() ?? "";
+    type ParkingItem = { osmId: string; lat: number; lng: number; name: string | null; address: string | null; parkingType: string | null; capacity: number | null };
+    const fetchOne = (lat: number, lng: number) =>
+      fetch(`${base}/api/parking?lat=${lat}&lng=${lng}&radius=800`)
+        .then((r) => r.json() as Promise<ParkingItem[]>)
+        .catch(() => [] as ParkingItem[]);
+    Promise.all([fetchOne(startPt.lat, startPt.lng), fetchOne(endPt.lat, endPt.lng)])
+      .then(([fromStart, fromEnd]) => {
+        if (cancelled) return;
+        const seen = new Set<string>();
+        const merged: MapPoi[] = [];
+        const safeStart = Array.isArray(fromStart) ? fromStart : [];
+        const safeEnd = Array.isArray(fromEnd) ? fromEnd : [];
+        for (const item of [...safeStart, ...safeEnd]) {
+          if (!item?.osmId || seen.has(item.osmId)) continue;
+          seen.add(item.osmId);
+          const descParts: string[] = [];
+          if (item.parkingType) descParts.push(item.parkingType);
+          if (item.address) descParts.push(item.address);
+          if (item.capacity) descParts.push(`${item.capacity} Plätze`);
+          merged.push({
+            id: item.osmId,
+            name: item.name ?? item.parkingType ?? "Parkplatz",
+            lat: item.lat,
+            lng: item.lng,
+            description: descParts.length > 0 ? descParts.join(" · ") : null,
+          });
+        }
+        setParkingSpots(merged);
+      });
+    return () => { cancelled = true; };
+  }, [route?.id, effectiveGeom.length]);
+
+  // SAC-Hütten im Umkreis der Route laden (Mittelpunkt der Geometrie).
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    setSacHuettenLoading(true);
+    setSacHuettenError(false);
+    const geom = reversed ? [...(route.geometry ?? [])].reverse() : (route.geometry ?? []);
+    const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
+    const center = midIdx >= 0
+      ? { lat: geom[midIdx][0], lng: geom[midIdx][1] }
+      : route.coordinates;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/sac-huetten?lat=${center.lat}&lng=${center.lng}&radius=12000`)
+      .then((r) => r.json())
+      .then((data: SacHuette[]) => {
+        if (!cancelled) { setSacHuetten(data); setSacHuettenLoading(false); }
+      })
+      .catch(() => {
+        if (!cancelled) { setSacHuettenError(true); setSacHuettenLoading(false); }
+      });
+    return () => { cancelled = true; };
+  }, [route?.id, reversed]);
+
+  // SBB live am Start – Abfahrten vom naechsten Bahnhof zum aktuellen GPS-Standort.
+  // Fallback: Routenstart, falls kein GPS verfuegbar.
+  useEffect(() => {
+    if (!route) return;
+    let cancelled = false;
+    setTransportStartLoading(true);
+
+    (async () => {
+      let lat: number | null = null;
+      let lng: number | null = null;
+
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status === "granted") {
+          const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
+        }
+      } catch {
+        // kein GPS – Fallback auf Routenstart
+      }
+
+      if (lat == null || lng == null) {
+        const geom = reversed ? [...(route.geometry ?? [])].reverse() : (route.geometry ?? []);
+        const startPt = geom.length > 0
+          ? { lat: geom[0][0], lng: geom[0][1] }
+          : route.coordinates;
+        if (!startPt) { if (!cancelled) setTransportStartLoading(false); return; }
+        lat = startPt.lat;
+        lng = startPt.lng;
+      }
+
+      try {
+        const result = await getTransportStationboard({ lat, lng });
+        if (!cancelled) { setTransportStart(result); setTransportStartLoading(false); }
+      } catch {
+        if (!cancelled) { setTransportStart(null); setTransportStartLoading(false); }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [route?.id]);
+
+  // Naechster Bahnhof am Trailhead (Routenstart) – wird nur fuer die SBB-URL benoetigt.
+  useEffect(() => {
+    if (!route) return;
+    const geom = reversed ? [...(route.geometry ?? [])].reverse() : (route.geometry ?? []);
+    const startPt = geom.length > 0
+      ? { lat: geom[0][0], lng: geom[0][1] }
+      : route.coordinates;
+    if (!startPt) return;
+    let cancelled = false;
+    getTransportStationboard({ lat: startPt.lat, lng: startPt.lng })
+      .then((result) => { if (!cancelled && result.station) setStartStation(result.station); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [route?.id, reversed]);
+
+  // SBB live am Ziel – Abfahrten am naechsten Bahnhof zum Routenendpunkt.
+  // Fuer Rundwege = Ausgangspunkt; fuer Streckenwanderungen = letzter Wegpunkt.
+  useEffect(() => {
+    if (!route) return;
+    const geom = reversed ? [...(route.geometry ?? [])].reverse() : (route.geometry ?? []);
+    const endPt = geom.length > 0
+      ? { lat: geom[geom.length - 1][0], lng: geom[geom.length - 1][1] }
+      : route.coordinates;
+    if (!endPt) return;
+    let cancelled = false;
+    setTransportLoading(true);
+    getTransportStationboard({ lat: endPt.lat, lng: endPt.lng })
+      .then((result) => { if (!cancelled) { setTransport(result); setTransportLoading(false); } })
+      .catch(() => { if (!cancelled) { setTransport(null); setTransportLoading(false); } });
+    return () => { cancelled = true; };
+  }, [route?.id, reversed]);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Wenn der User bereits aus dem Picker gewaehlt hat, den State NICHT
+    // ueberschreiben — der useEffect laeuft sonst erneut wenn showPicker
+    // nach der Auswahl false wird und wuerde die Picker-Wahl mit der
+    // Standard-Route-Sage ueberschreiben.
+    if (!route || pickerDismissed || showPicker) return;
+    const known = getSagaForRoute(route);
+    if (known) {
+      setSaga(known);
+      setSagaLoading(false);
+      return;
+    }
+    setSagaLoading(true);
+    (async () => {
+      const result = await ensureRouteSaga(route.id);
+      if (cancelled) return;
+      setSaga(result);
+      setSagaLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [route, ensureRouteSaga, getSagaForRoute, sagaRetryCount, showPicker, pickerDismissed]);
+
+  if (!route) {
+    return (
+      <Background>
+        <View style={styles.center}>
+          <Text style={{ color: colors.foreground, fontFamily: fonts.titleBold }}>
+            {t.notFound}
+          </Text>
+        </View>
+      </Background>
+    );
+  }
+
+  const meta = route;
+  const routePackSlug = saga?.canton ? kantonSlug(saga.canton) : "";
+  // Position der aktuellen Sage im Kanton bestimmen
+  const routeSagasInCanton = saga?.canton ? sagas.filter((s) => s.canton === saga.canton) : [];
+  const routeSagaIdx = saga ? routeSagasInCanton.findIndex((s) => s.id === saga.id) : -1;
+  const routeEffectivePackSlug =
+    routeSagaIdx >= 0 ? sagaPackSlug(routePackSlug, routeSagaIdx) : routePackSlug;
+  const dbPackUnlocked =
+    hasPurchasedPack(availablePurchasedPacks, routeEffectivePackSlug) ||
+    hatEntitlement(packEntitlementFuerKanton(routeEffectivePackSlug));
+  // Premium schaltet alles frei; Pack entsperrt Gratis-Usern diesen Kanton
+  const canAccess = hasPremiumAccess || dbPackUnlocked;
+  // Nur gesperrt wenn kein Zugang UND Gratis-Hike bereits verbraucht.
+  // Ausnahme: bereits gehoerte Sagen bleiben immer wiederholbar.
+  const routeSagaHeard = saga
+    ? hikeHistory.some((h) => h.sagaId === saga.id)
+    : false;
+  const locked = !canAccess && freeHikeUsed && !routeSagaHeard;
+  const h = Math.floor(meta.minutes / 60);
+  const m = meta.minutes % 60;
+
+  // saga?.id hat Vorrang vor route.sagaId: Routen aus der OSM-Suche haben
+  // sagaId erst nach dem asynchronen ensureRouteSaga-Abgleich gesetzt; der
+  // Download wird aber unter saga.id gespeichert — also dieselbe ID verwenden.
+  const sagaId = saga?.id ?? route.sagaId;
+  // HikingRoute hat kein .canton-Feld; Kanton via Sage aus dem Katalog
+  // (für das Kantonswappen im Wegweiser bei regionalen/kantonalen Routen).
+  // Der Startkanton am Routenobjekt ist autoritativ. Die Sage-Zuordnung bleibt
+  // nur Rückfall für ältere/individuelle Routen ohne gespeicherten Kanton.
+  const routeKanton =
+    route?.canton ??
+    route?.region ??
+    (sagaId ? sagas.find((s) => s.id === sagaId)?.canton ?? null : null);
+  const downloaded = isDownloaded(sagaId);
+  const record = getRecord(sagaId);
+  const partialDownload = record?.status === "partial" || record?.status === "failed";
+  const downloading = progress?.sagaId === sagaId;
+  const progressText = downloading
+    ? progress?.phase === "tiles"
+      ? t.loadingMap(progress.done, progress.total)
+      : progress?.phase === "audio"
+      ? t.loadingAudio(progress.done, progress.total)
+      : progress?.phase === "pois"
+      ? t.loadingPois
+      : t.loadingSaga
+    : "";
+
+  // Animierter Gesamtfortschritt 0–1 fuer den Download-Fortschrittsbalken.
+  // Phasengewichte: Sage 3–8 %, Audio 8–50 %, Orte 50–70 %, Karte 70–100 %.
+  // Start bei 3 % damit der Balken sofort sichtbar ist, statt bei 0 % zu kleben.
+  const overallProgress = useMemo(() => {
+    if (!downloading || !progress) return 0.03;
+    const frac = progress.total > 0 ? Math.min(progress.done / progress.total, 1) : 0;
+    switch (progress.phase) {
+      case "story": return 0.03 + frac * 0.05;
+      case "audio": return 0.08 + frac * 0.42;
+      case "pois":  return 0.50 + frac * 0.20;
+      case "tiles": return 0.70 + frac * 0.30;
+      default: return 0.03;
+    }
+  }, [downloading, progress]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const dlAnim = useRef(new RNAnimated.Value(0.03)).current;
+  useEffect(() => {
+    RNAnimated.timing(dlAnim, {
+      toValue: downloading ? overallProgress : 0.03,
+      duration: 450,
+      useNativeDriver: false,
+    }).start();
+  }, [downloading, overallProgress, dlAnim]);
+
+  const onDownload = async () => {
+    if (!profile || !saga || downloading || busy) return;
+    setBusy(true);
+    try {
+      await download(saga, route, profile, hasPremiumAccess);
+    } catch {
+      alert(
+        t.downloadFailed,
+        t.downloadFailedText
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onDelete = async () => {
+    setBusy(true);
+    try {
+      await remove(sagaId);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sizeLabel = record
+    ? record.sizeBytes >= 1024 * 1024
+      ? `${(record.sizeBytes / (1024 * 1024)).toFixed(1)} MB`
+      : `${Math.max(1, Math.round(record.sizeBytes / 1024))} KB`
+    : "";
+
+  return (
+    <Background>
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: topPad,
+          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + 120,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <ScreenHeader eyebrow={route.region} title={t.title} onBack />
+
+        {/* ── Share + Lesezeichen ────────────────────────────────── */}
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 6, marginBottom: 2 }}>
+          <Pressable
+            onPress={() => { hapticSelection(); void shareRoute(); }}
+            style={[styles.actionChip, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}
+            accessibilityRole="button"
+            accessibilityLabel={t.shareRoute}
+          >
+            <Feather name="share-2" size={14} color={colors.accent} />
+            <Text style={[styles.actionChipText, { color: colors.accent }]}>{t.shareRoute}</Text>
+          </Pressable>
+          {false && saga && (
+            <Pressable
+              onPress={() => { hapticMedium(); void toggleBookmark(saga!.id); }}
+              style={[styles.actionChip, {
+                borderColor: isBookmarked ? colors.accent : colors.glassBorder,
+                backgroundColor: isBookmarked ? colors.accent + "22" : colors.glassBg,
+              }]}
+              accessibilityRole="button"
+              accessibilityLabel={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
+              accessibilityState={{ selected: isBookmarked }}
+            >
+              <Feather name="bookmark" size={14} color={isBookmarked ? colors.accent : colors.mutedForeground} />
+              <Text style={[styles.actionChipText, { color: isBookmarked ? colors.accent : colors.mutedForeground }]}>
+                {isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+
+        {route.photoUrl ? (
+          <View style={styles.heroCard}>
+            <ExpoImage source={{ uri: route.photoUrl }} style={styles.heroImage} contentFit="cover" />
+            <LinearGradient
+              colors={["rgba(0,0,0,0.45)", "transparent"]}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0 }} end={{ x: 0, y: 0.45 }}
+            />
+            <LinearGradient
+              colors={["transparent", "rgba(0,0,0,0.35)"]}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0.55 }} end={{ x: 0, y: 1 }}
+            />
+            <View style={styles.heroOverlay}>
+              <View style={styles.heroRegionRow}>
+                <View style={styles.heroDot} />
+                <Text style={styles.heroRegion}>{route.region?.toUpperCase()}</Text>
+              </View>
+              <View style={{ marginTop: 4, marginBottom: 4 }}>
+                <Wegweiser name={meta.name} sac={route.sac} umgekehrt={reversed} kanton={routeKanton} />
+              </View>
+            </View>
+          </View>
+        ) : (
+          <>
+            <View style={{ marginBottom: 6 }}>
+              <Wegweiser name={meta.name} sac={route.sac} umgekehrt={reversed} kanton={routeKanton} />
+            </View>
+          </>
+        )}
+
+        <View style={{ marginTop: 18 }}>
+          <KarteVollbild
+            height={200}
+            onVollbildChange={setKarteVollbild}
+            closeSignal={karteCloseSignal}
+            renderKarte={(hoehe, safeAreaTop) =>
+              route.coordinates ? (
+                <SwisstopoMap
+                  center={route.coordinates}
+                  label={route.name}
+                  height={hoehe}
+                  geometry={effectiveGeom.length > 0 ? effectiveGeom : route.geometry}
+                  elevationProfile={elevProfile}
+                  aerialways={aerialways}
+                  pois={pois.length > 0 ? pois : null}
+                  poisReady={poisReady}
+                  partners={partners}
+                  waterSources={waterSources.length > 0 ? waterSources : null}
+                  parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
+                  safetyPois={safetyPois.length > 0 ? safetyPois : null}
+                  safetyPoisReady={safetyPoisReady}
+                  safeAreaInsetTop={safeAreaTop}
+                  sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: getLocalizedSagaTitle(saga, profile?.language) } : null}
+                  onPoiPress={(id) => {
+                    const poi = poisVollRef.current.get(id);
+                    if (!poi) return;
+                    if (karteVollbild) {
+                      // Vollbild: erst schliessen, dann nach Fade-Ende öffnen.
+                      pendingKarteActionRef.current = () => setSelectedPoi(poi);
+                      setKarteVollbild(false);
+                      setKarteCloseSignal((n) => n + 1);
+                    } else {
+                      setSelectedPoi(poi);
+                    }
+                  }}
+                  onPartnerPress={(id) => {
+                    const partner = partners.find((p) => p.id === id);
+                    if (!partner) return;
+                    if (karteVollbild) {
+                      pendingKarteActionRef.current = () => setSelectedPartner(partner);
+                      setKarteVollbild(false);
+                      setKarteCloseSignal((n) => n + 1);
+                    } else {
+                      setSelectedPartner(partner);
+                    }
+                  }}
+                />
+              ) : (
+                <RouteMap progress={0.15} height={hoehe} />
+              )
+            }
+          />
+        </View>
+
+        <Animated.View entering={FadeInDown} style={styles.statsGrid}>
+          <StatTile icon="map-pin"     label={t.distance} value={`${meta.distanceKm}`}                         unit="km" />
+          <StatTile icon="trending-up" label={t.ascent}   value={`${meta.ascentM}`}                            unit="hm" />
+          <StatTile icon="triangle"    label="Max. Höhe"  value={`${elevProfile && elevProfile.length > 1 ? Math.max(...elevProfile.map((p) => p.altM)) : (route.maxElevationM ?? meta.ascentM)}`} unit="m" />
+          <StatTile icon="clock"       label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`}         unit="h"  />
+          <StatTile icon="shield"      label={t.sacScale} value={meta.sac}                                     unit=""   />
+        </Animated.View>
+
+        <View
+          style={[
+            styles.readinessCard,
+            {
+              backgroundColor: colors.glassBgStrong,
+              borderColor: colors.accent,
+            },
+          ]}
+          accessible
+          accessibilityLabel={`${t.checkBeforeTour}. ${downloaded ? t.offlineStatusActive(sizeLabel) : t.offlineStatusInactive}`}
+        >
+          <View style={styles.readinessHeader}>
+            <View style={[styles.readinessIcon, { backgroundColor: colors.accent + "22" }]}>
+              <Feather name="check-circle" size={18} color={colors.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.readinessTitle, { color: colors.foreground }]}>
+                {t.checkBeforeTour}
+              </Text>
+              <Text style={[styles.readinessHint, { color: colors.mutedForeground }]}>
+                {downloaded && !partialDownload
+                  ? t.offlineStatusActive(sizeLabel)
+                  : partialDownload
+                    ? t.downloadFailedText
+                    : t.offlineStatusInactive}
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.readinessRows, { borderTopColor: colors.glassBorder }]}>
+            <ReadinessRow
+              icon={downloaded && !partialDownload ? "check" : "download-cloud"}
+              label={t.offlineAvailable}
+              value={downloaded && !partialDownload ? "OK" : partialDownload ? t.downloadFailed : t.saveForOffline}
+              positive={downloaded && !partialDownload}
+            />
+            <ReadinessRow
+              icon={saga ? "book-open" : "loader"}
+              label={t.matchingSaga}
+              value={saga ? t.progressNew : t.sagaWriting}
+              positive={Boolean(saga)}
+            />
+          </View>
+          {saga && !sagaLoading && (
+            <PrimaryButton
+              label={locked ? t.premiumButton : t.continueToSaga}
+              variant={locked ? "gold" : "primary"}
+              onPress={() =>
+                router.push(
+                  locked ? "/paywall" : `/saga/${saga.id}?routeId=${route.id}`,
+                )
+              }
+              style={{ marginTop: 14 }}
+            />
+          )}
+        </View>
+
+        <PreStartSafetyCard
+          routeId={route.id}
+          language={language}
+          weather={weather}
+          weatherLoading={weatherLoading}
+          weatherError={weatherError}
+          avalanche={avalanche}
+          avalancheLoading={avalancheLoading}
+          trailConditions={trailConditions}
+          conditionsLoading={conditionsLoading}
+          sperrungen={sperrungen}
+          sperrungenLoading={sperrungenLoading}
+          transport={transport}
+          transportLoading={transportLoading}
           onRetryWeather={() => setWeatherVersuch((value) => value + 1)}
         />
 
