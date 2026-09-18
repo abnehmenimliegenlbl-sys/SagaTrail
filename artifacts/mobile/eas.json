@@ -17,6 +17,8 @@
       }
     },
     "production": {
+      "corepack": true,
+      "pnpm": "10.26.1",
       "autoIncrement": true,
       "channel": "production",
       "ios": {
