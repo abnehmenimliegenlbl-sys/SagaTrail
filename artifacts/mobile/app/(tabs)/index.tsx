@@ -41,7 +41,6 @@ import { hapticSelection } from "@/lib/haptics";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 import {
   MEETUP_HOME_BANNER,
-  RECOMMENDATION_HOME_BANNER,
   THEME_WORLD_HOME_BANNER,
 } from "@/lib/themeWorldVisuals";
 
@@ -66,12 +65,16 @@ export default function Entdecken() {
   const recommendationCopy =
     language === "de" || language === "gsw"
       ? {
+          eyebrow: "DEIN TAG",
           title: "Beste Route für heute",
           hint: "Zeit, Begleitung, Wetter und ÖV zusammen entscheiden lassen",
+          cta: "Empfehlung öffnen",
         }
       : {
+          eyebrow: "YOUR DAY",
           title: "Best route for today",
           hint: "Choose with time, group, weather and transport together",
+          cta: "Open recommendation",
         };
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
@@ -273,35 +276,42 @@ export default function Entdecken() {
             accessibilityRole="button"
             accessibilityLabel={recommendationCopy.title}
             style={[
-              styles.themeWorldCard,
+              styles.recommendationCard,
               {
-                borderColor: colors.glassBorder,
+                backgroundColor: colors.glassBgStrong,
+                borderColor: colors.accent,
                 borderRadius: colors.radius,
               },
             ]}
           >
-            <ExpoImage
-              source={RECOMMENDATION_HOME_BANNER}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-            />
-            <LinearGradient
-              colors={["rgba(7,16,20,0.08)", "rgba(7,16,20,0.84)"]}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.themeWorldCardContent}>
-              <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "D9" }]}>
-                <Feather name="award" size={19} color={colors.backgroundDeep} />
-              </View>
-              <View style={styles.themeWorldCardText}>
-                <Text style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}>
-                  {recommendationCopy.title}
+            <View style={[styles.recommendationGlow, { backgroundColor: colors.accent + "18" }]} />
+            <View style={styles.recommendationContent}>
+              <View style={styles.recommendationTopline}>
+                <View
+                  style={[
+                    styles.recommendationIcon,
+                    { backgroundColor: colors.accent + "1F", borderColor: colors.accent + "66" },
+                  ]}
+                >
+                  <Feather name="sunrise" size={19} color={colors.accent} />
+                </View>
+                <Text style={[styles.recommendationEyebrow, { color: colors.accent }]}>
+                  {recommendationCopy.eyebrow}
                 </Text>
-                <Text style={[styles.themeWorldHint, { color: "rgba(255,255,255,0.78)" }]}>
-                  {recommendationCopy.hint}
-                </Text>
+                <Feather name="arrow-up-right" size={20} color={colors.accent} />
               </View>
-              <Feather name="chevron-right" size={21} color="#FFFFFF" />
+              <Text style={[styles.recommendationTitle, { color: colors.foreground }]}>
+                {recommendationCopy.title}
+              </Text>
+              <Text style={[styles.recommendationHint, { color: colors.mutedForeground }]}>
+                {recommendationCopy.hint}
+              </Text>
+              <View style={styles.recommendationCta}>
+                <Text style={[styles.recommendationCtaText, { color: colors.accent }]}>
+                  {recommendationCopy.cta}
+                </Text>
+                <View style={[styles.recommendationCtaLine, { backgroundColor: colors.accent }]} />
+              </View>
             </View>
           </Pressable>
         </Animated.View>
@@ -523,6 +533,37 @@ const styles = StyleSheet.create({
     ...GLAS_3D,
   },
   themeWorldsSection: { marginTop: 8 },
+  recommendationCard: {
+    marginHorizontal: 20,
+    minHeight: 188,
+    borderWidth: 1,
+    overflow: "hidden",
+    ...GLAS_3D_STARK,
+  },
+  recommendationGlow: {
+    position: "absolute",
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    top: -130,
+    right: -54,
+  },
+  recommendationContent: { flex: 1, padding: 17 },
+  recommendationTopline: { flexDirection: "row", alignItems: "center", gap: 10 },
+  recommendationIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 13,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  recommendationEyebrow: { fontFamily: fonts.monoBold, fontSize: 10, letterSpacing: 1.6, flex: 1 },
+  recommendationTitle: { fontFamily: fonts.titleBold, fontSize: 22, lineHeight: 27, marginTop: 18 },
+  recommendationHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, marginTop: 5, maxWidth: 310 },
+  recommendationCta: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 16 },
+  recommendationCtaText: { fontFamily: fonts.bodyBold, fontSize: 13 },
+  recommendationCtaLine: { width: 34, height: 2, borderRadius: 1 },
   themeWorldCard: {
     aspectRatio: 3,
     marginHorizontal: 20,
