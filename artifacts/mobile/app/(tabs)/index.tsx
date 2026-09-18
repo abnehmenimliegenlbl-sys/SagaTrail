@@ -39,7 +39,11 @@ import {
 } from "@/lib/kantonSlug";
 import { hapticSelection } from "@/lib/haptics";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
-import { MEETUP_HOME_BANNER, THEME_WORLD_HOME_BANNER } from "@/lib/themeWorldVisuals";
+import {
+  MEETUP_HOME_BANNER,
+  RECOMMENDATION_HOME_BANNER,
+  THEME_WORLD_HOME_BANNER,
+} from "@/lib/themeWorldVisuals";
 
 const WEB_TOP = 67;
 
@@ -87,12 +91,8 @@ export default function Entdecken() {
             .includes(query),
         )
       : cantons;
-    return [...filtered].sort((a, b) => {
-      const aHome = a.canton === profile?.homeCanton ? 0 : 1;
-      const bHome = b.canton === profile?.homeCanton ? 0 : 1;
-      return aHome - bHome || a.canton.localeCompare(b.canton, "de");
-    });
-  }, [cantonQuery, cantons, language, profile?.homeCanton]);
+    return [...filtered].sort((a, b) => a.canton.localeCompare(b.canton, "de"));
+  }, [cantonQuery, cantons, language]);
 
   return (
     <Background>
@@ -275,25 +275,33 @@ export default function Entdecken() {
             style={[
               styles.themeWorldCard,
               {
-                borderColor: colors.accent,
+                borderColor: colors.glassBorder,
                 borderRadius: colors.radius,
-                backgroundColor: colors.glassBgStrong,
               },
             ]}
           >
+            <ExpoImage
+              source={RECOMMENDATION_HOME_BANNER}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
+            <LinearGradient
+              colors={["rgba(7,16,20,0.08)", "rgba(7,16,20,0.84)"]}
+              style={StyleSheet.absoluteFill}
+            />
             <View style={styles.themeWorldCardContent}>
               <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "D9" }]}>
                 <Feather name="award" size={19} color={colors.backgroundDeep} />
               </View>
               <View style={styles.themeWorldCardText}>
-                <Text style={[styles.themeWorldLabel, { color: colors.foreground }]}>
+                <Text style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}>
                   {recommendationCopy.title}
                 </Text>
-                <Text style={[styles.themeWorldHint, { color: colors.mutedForeground }]}>
+                <Text style={[styles.themeWorldHint, { color: "rgba(255,255,255,0.78)" }]}>
                   {recommendationCopy.hint}
                 </Text>
               </View>
-              <Feather name="chevron-right" size={21} color={colors.accent} />
+              <Feather name="chevron-right" size={21} color="#FFFFFF" />
             </View>
           </Pressable>
         </Animated.View>

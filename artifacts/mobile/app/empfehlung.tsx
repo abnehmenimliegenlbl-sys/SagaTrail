@@ -9,7 +9,7 @@ import {
   type WeatherReport,
 } from "@workspace/api-client-react";
 import { Stack, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -25,6 +25,7 @@ import { Background } from "@/components/brand/Background";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { CANTONS } from "@/constants/onboarding";
+import type { HikingRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
@@ -60,8 +61,8 @@ type Copy = {
   eyebrow: string;
   title: string;
   intro: string;
-  canton: (name: string) => string;
-  nearbyCanton: string;
+  locationScope: string;
+  allCantons: string;
   time: string;
   fitness: string;
   companion: string;
@@ -103,16 +104,16 @@ const COPY_DE: Copy = {
   eyebrow: "Deine nächste Wanderung",
   title: "Was passt heute?",
   intro: "Sag uns kurz, wie dein Tag aussieht. SagaTrail wählt eine konkrete Route und zeigt dir offen, warum sie passt.",
-  canton: (name) => `Suche zuerst in deinem Heimatkanton · ${name}`,
-  nearbyCanton: "Suche in deiner Nähe statt nur im Heimatkanton",
+  locationScope: "Suche aktuelle Routen in deiner Nähe per GPS",
+  allCantons: "Standort nicht verfügbar – zeige Routen aus allen Kantonen",
   time: "Wie viel Zeit hast du?",
   fitness: "Wie viel möchtest du heute leisten?",
   companion: "Wer ist dabei?",
   travel: "Wie möchtest du anreisen?",
   returnConnection: "ÖV-Rückweg soll heute gut funktionieren",
-  nearbySearch: "Noch in meiner Nähe suchen",
+  nearbySearch: "Nach meiner GPS-Position suchen",
   nearbyLocating: "Standort wird ermittelt …",
-  nearbyDenied: "Standort nicht verfügbar – Suche bleibt im Heimatkanton.",
+  nearbyDenied: "Standort nicht verfügbar – erlaube den Zugriff für die Suche in deiner Nähe.",
   interests: "Was möchtest du unterwegs sehen?",
   find: "Beste Route für heute finden",
   searching: "Route, Wetter, Bedingungen und Anreise werden verglichen …",
@@ -169,16 +170,16 @@ const COPY_EN: Copy = {
   eyebrow: "Your next hike",
   title: "What fits today?",
   intro: "Tell us how your day looks. SagaTrail chooses one concrete route and explains why it fits.",
-  canton: (name) => `Starting in your home canton · ${name}`,
-  nearbyCanton: "Search near you instead of only in your home canton",
+  locationScope: "Find current routes near you using GPS",
+  allCantons: "Location unavailable – showing routes from all cantons",
   time: "How much time do you have?",
   fitness: "How much effort do you want today?",
   companion: "Who is joining?",
   travel: "How do you want to travel?",
   returnConnection: "A reliable public-transport return matters today",
-  nearbySearch: "Also search near me",
+  nearbySearch: "Search near my GPS position",
   nearbyLocating: "Getting your location …",
-  nearbyDenied: "Location unavailable – continuing with your home canton.",
+  nearbyDenied: "Location unavailable – allow access to search near you.",
   interests: "What would you like to see?",
   find: "Find my best route today",
   searching: "Comparing routes, weather, conditions and transport …",
@@ -243,10 +244,9 @@ export default function Empfehlung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { language, profile } = useApp();
+  const { language } = useApp();
   const { loadCantonRoutes } = useCatalog();
   const copy = language === "de" || language === "gsw" ? COPY_DE : COPY_EN;
-  const canton = profile?.homeCanton ?? CANTONS[0] ?? "Zürich";
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   const [timeBudgetMin, setTimeBudgetMin] = useState(180);
@@ -255,7 +255,7 @@ export default function Empfehlung() {
   const [travel, setTravel] = useState<RecommendationTravel>("publicTransport");
   const [needsReturnConnection, setNeedsReturnConnection] = useState(true);
   const [nearbyPosition, setNearbyPosition] = useState<LatLng | null>(null);
-  const [nearbySearch, setNearbySearch] = useState(false);
+  const [nearbySearch, setNearbySearch] = useState(true);
   const [nearbyLocating, setNearbyLocating] = useState(false);
   const [nearbyDenied, setNearbyDenied] = useState(false);
   const [interests, setInterests] = useState<RouteThemeKey[]>(["wasserwege"]);
@@ -277,14 +277,7 @@ export default function Empfehlung() {
     [companion, fitness, interests, nearbyPosition, needsReturnConnection, timeBudgetMin, travel],
   );
 
-  const toggleNearbySearch = async () => {
-    if (nearbySearch) {
-      setNearbySearch(false);
-      setNearbyPosition(null);
-      setNearbyDenied(false);
-      return;
-    }
-
+  const locateNearby = useCallback(async (): Promise<void> => {
     setNearbyLocating(true);
     setNearbyDenied(false);
     try {
@@ -293,6 +286,8 @@ export default function Empfehlung() {
         permission = await Location.requestForegroundPermissionsAsync();
       }
       if (permission.status !== Location.PermissionStatus.GRANTED) {
+        setNearbyPosition(null);
+        setNearbySearch(false);
         setNearbyDenied(true);
         return;
       }
@@ -302,10 +297,26 @@ export default function Empfehlung() {
       setNearbyPosition({ lat: position.coords.latitude, lng: position.coords.longitude });
       setNearbySearch(true);
     } catch {
+      setNearbyPosition(null);
+      setNearbySearch(false);
       setNearbyDenied(true);
     } finally {
       setNearbyLocating(false);
     }
+  }, []);
+
+  useEffect(() => {
+    void locateNearby();
+  }, [locateNearby]);
+
+  const toggleNearbySearch = async () => {
+    if (nearbySearch) {
+      setNearbySearch(false);
+      setNearbyPosition(null);
+      setNearbyDenied(false);
+      return;
+    }
+    await locateNearby();
   };
 
   const findRecommendation = async () => {
@@ -315,7 +326,7 @@ export default function Empfehlung() {
     setRecommendations([]);
     try {
       const routeFilter = routeRecommendationFilters(preferences);
-      const cantons = nearbyPosition ? [...CANTONS] : [canton];
+      const cantons = [...CANTONS];
       const routeResults: HikingRoute[] = [];
       let cursor = 0;
       const loadNextCanton = async (): Promise<void> => {
@@ -413,7 +424,9 @@ export default function Empfehlung() {
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>{copy.intro}</Text>
         <View style={[styles.cantonHint, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
           <Feather name="map-pin" size={15} color={colors.accent} />
-          <Text style={[styles.cantonText, { color: colors.mutedForeground }]}>{copy.canton(canton)}</Text>
+          <Text style={[styles.cantonText, { color: colors.mutedForeground }]}>
+            {nearbyPosition ? copy.locationScope : copy.allCantons}
+          </Text>
         </View>
 
         <Section title={copy.time} colors={colors}>
@@ -436,7 +449,7 @@ export default function Empfehlung() {
         </Section>
         <Section title={copy.companion} colors={colors}>
           <ChoiceRow
-            values={["solo", "children", "dog", "wheelchair"] as RecommendationCompanion[]}
+            values={["solo", "children", "wheelchair"] as RecommendationCompanion[]}
             selected={companion}
             label={(value) => copy.values.companion[value]}
             onSelect={setCompanion}
@@ -465,6 +478,27 @@ export default function Empfehlung() {
               />
               <Text style={[styles.toggleText, { color: colors.foreground }]}>{copy.returnConnection}</Text>
             </Pressable>
+          )}
+          <Pressable
+            onPress={() => void toggleNearbySearch()}
+            style={styles.toggleRow}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: nearbySearch }}
+            disabled={nearbyLocating}
+          >
+            <Feather
+              name={nearbyLocating ? "loader" : nearbySearch ? "check-square" : "square"}
+              size={18}
+              color={nearbySearch ? colors.accent : colors.mutedForeground}
+            />
+            <Text style={[styles.toggleText, { color: colors.foreground }]}>
+              {nearbyLocating ? copy.nearbyLocating : copy.nearbySearch}
+            </Text>
+          </Pressable>
+          {nearbyDenied && (
+            <Text style={[styles.nearbyDenied, { color: colors.mutedForeground }]}>
+              {copy.nearbyDenied}
+            </Text>
           )}
         </Section>
         <Section title={copy.interests} colors={colors}>
@@ -639,6 +673,7 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: fonts.body, fontSize: 11 },
   toggleRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 },
   toggleText: { fontFamily: fonts.body, fontSize: 12, flex: 1 },
+  nearbyDenied: { fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 7, marginLeft: 26 },
   statusCard: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 16 },
   statusText: { fontFamily: fonts.body, fontSize: 12, flex: 1 },
   error: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, marginTop: 16 },

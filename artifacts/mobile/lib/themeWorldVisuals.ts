@@ -22,3 +22,4 @@ export const THEME_WORLD_IMAGES: Record<RouteThemeKey, number> = {
 
 export const THEME_WORLD_HOME_BANNER = require("@/assets/images/theme-worlds/home-banner.jpg");
 export const MEETUP_HOME_BANNER = require("@/assets/images/meetup-banner.jpg");
+export const RECOMMENDATION_HOME_BANNER = require("@/assets/images/theme-worlds/panorama.jpg");
