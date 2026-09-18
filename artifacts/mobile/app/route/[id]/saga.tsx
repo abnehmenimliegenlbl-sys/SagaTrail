@@ -34,6 +34,7 @@ import { allCantonSagasSorted, SagaProximityCategory, SagaWithMeta } from "@/lib
 import { kantonSlug } from "@/lib/kantonSlug";
 import { Saga } from "@/types";
 import { alert } from "@/lib/appAlert";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
 
 export default function RouteSagaSelection() {
   const t = useRouteStrings();
@@ -220,7 +221,7 @@ export default function RouteSagaSelection() {
                     {saga.canton.toUpperCase()}
                   </Text>
                   <Text style={[styles.sagaTitle, { color: colors.foreground }]} numberOfLines={2}>
-                    {saga.title}
+                    {getLocalizedSagaTitle(saga, profile?.language)}
                   </Text>
                   <Text style={[styles.sagaStatus, { color: colors.mutedForeground }]}>
                     {locked

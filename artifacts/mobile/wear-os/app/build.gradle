@@ -1,0 +1,47 @@
+plugins {
+    id "com.android.application"
+    id "org.jetbrains.kotlin.android"
+    id "org.jetbrains.kotlin.plugin.compose"
+}
+
+android {
+    namespace "ch.sagatrail.wear"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "ch.sagatrail.wear"
+        minSdk 30
+        targetSdk 35
+        versionCode 1
+        versionName "1.0.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildFeatures { compose true; buildConfig true }
+    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
+}
+
+// Fail during configuration with an actionable message instead of producing a
+// misleading downstream aapt error on machines without the Wear SDK platform.
+def sdkDir = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
+if (sdkDir == null || !file("${sdkDir}/platforms/android-35").exists()) {
+    throw new GradleException("Wear OS MVP requires Android SDK Platform 35. Set ANDROID_HOME (or ANDROID_SDK_ROOT) and install platform android-35.")
+}
+
+dependencies {
+    implementation platform("androidx.compose:compose-bom:2024.12.01")
+    implementation "androidx.activity:activity-compose:1.10.0"
+    implementation "androidx.core:core-ktx:1.15.0"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.7"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7"
+    implementation "androidx.wear.compose:compose-material3:1.0.0"
+    implementation "androidx.wear.compose:compose-foundation:1.4.1"
+    implementation "androidx.wear.compose:compose-navigation:1.4.1"
+    implementation "com.google.android.gms:play-services-wearable:19.0.0"
+    implementation "androidx.health:health-services-client:1.1.0-alpha05"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1"
+
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.jetbrains.kotlin:kotlin-test:2.0.21"
+}

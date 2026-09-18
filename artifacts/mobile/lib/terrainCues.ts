@@ -90,6 +90,30 @@ function smoothIsolatedProfileSpikes(
   });
 }
 
+/** Total positive climb after removing isolated short DTM spikes. */
+export function calculateProfileAscentM(
+  points: readonly TerrainProfilePoint[],
+): number {
+  const valid: TerrainProfilePoint[] = [];
+  for (const point of points) {
+    if (
+      !Number.isFinite(point.distanceKm) ||
+      !Number.isFinite(point.altM) ||
+      (valid.length > 0 &&
+        point.distanceKm <= valid[valid.length - 1]!.distanceKm)
+    ) {
+      continue;
+    }
+    valid.push(point);
+  }
+  const smoothed = smoothIsolatedProfileSpikes(valid);
+  let ascentM = 0;
+  for (let index = 1; index < smoothed.length; index += 1) {
+    ascentM += Math.max(0, smoothed[index]!.altM - smoothed[index - 1]!.altM);
+  }
+  return Math.round(ascentM);
+}
+
 function pointAtDistance(
   coords: number[][],
   distances: number[],
@@ -118,16 +142,48 @@ function gradeAtDistance(
   profile: TerrainProfilePoint[],
   distanceKmValue: number,
   routeLengthKm: number,
-  profileScale: number,
 ): number {
   const halfWindow = Math.min(GRADE_WINDOW_KM / 2, routeLengthKm / 2);
   const startKm = Math.max(0, distanceKmValue - halfWindow);
   const endKm = Math.min(routeLengthKm, distanceKmValue + halfWindow);
   const horizontalKm = endKm - startKm;
   if (horizontalKm <= 0) return 0;
-  const startAltitude = profileAltitude(profile, startKm * profileScale);
-  const endAltitude = profileAltitude(profile, endKm * profileScale);
+  // The API profile distances are cumulative distances along the submitted
+  // geometry. Do not normalize them to the route's total length: that would
+  // move a profile from a different/stale geometry onto the active route and
+  // can colour a flat start detour with the original route's steep gradient.
+  const startAltitude = profileAltitude(profile, startKm);
+  const endAltitude = profileAltitude(profile, endKm);
   return ((endAltitude - startAltitude) / (horizontalKm * 1000)) * 100;
+}
+
+/**
+ * Returns the signed local gradient from the same smoothed 50 m window used
+ * for route colouring. Positive values are climbs; negative values descents.
+ */
+export function getSmoothedGradePctAtDistance(
+  inputProfile: TerrainProfilePoint[] | null | undefined,
+  distanceKmValue: number,
+): number | null {
+  if (!Number.isFinite(distanceKmValue)) return null;
+  const profile = (inputProfile ?? [])
+    .filter((point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM))
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+  if (profile.length < 2) return null;
+
+  const firstProfileDistance = profile[0].distanceKm;
+  const normalizedProfile = profile.map((point) => ({
+    distanceKm: point.distanceKm - firstProfileDistance,
+    altM: point.altM,
+  }));
+  const profileLengthKm = normalizedProfile[normalizedProfile.length - 1].distanceKm;
+  if (profileLengthKm <= 0) return null;
+
+  return gradeAtDistance(
+    smoothIsolatedProfileSpikes(normalizedProfile),
+    Math.max(0, Math.min(profileLengthKm, distanceKmValue)),
+    profileLengthKm,
+  );
 }
 
 /**
@@ -159,11 +215,34 @@ export function buildRouteGradeSegments(
   const routeLengthKm = routeDistances[routeDistances.length - 1];
   if (routeLengthKm <= 0) return [];
 
+  const flatSegments = () => {
+    const breakDistances = [...routeDistances];
+    for (
+      let distanceKmValue = GRADE_WINDOW_KM;
+      distanceKmValue < routeLengthKm;
+      distanceKmValue += GRADE_WINDOW_KM
+    ) {
+      breakDistances.push(distanceKmValue);
+    }
+    breakDistances.sort((a, b) => a - b);
+    const uniqueBreakDistances = breakDistances.filter(
+      (distanceKmValue, index) =>
+        index === 0 || distanceKmValue - breakDistances[index - 1] > 0.000001,
+    );
+    return uniqueBreakDistances.slice(1).map((endDistanceKm, index) => ({
+      coordinates: [
+        pointAtDistance(coords, routeDistances, uniqueBreakDistances[index]),
+        pointAtDistance(coords, routeDistances, endDistanceKm),
+      ],
+      band: "green" as const,
+    }));
+  };
+
   const profile = (inputProfile ?? [])
     .filter((point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM))
     .sort((a, b) => a.distanceKm - b.distanceKm);
   if (profile.length < 2) {
-    return [{ coordinates: coords, band: "green" }];
+    return flatSegments();
   }
   const firstProfileDistance = profile[0].distanceKm;
   const normalizedProfile = profile.map((point) => ({
@@ -171,8 +250,7 @@ export function buildRouteGradeSegments(
     altM: point.altM,
   }));
   const profileLengthKm = normalizedProfile[normalizedProfile.length - 1].distanceKm;
-  if (profileLengthKm <= 0) return [{ coordinates: coords, band: "green" }];
-  const profileScale = profileLengthKm / routeLengthKm;
+  if (profileLengthKm <= 0) return flatSegments();
   const gradingProfile = smoothIsolatedProfileSpikes(normalizedProfile);
 
   const breakDistances = [...routeDistances];
@@ -191,7 +269,6 @@ export function buildRouteGradeSegments(
       gradingProfile,
       (startDistanceKm + endDistanceKm) / 2,
       routeLengthKm,
-      profileScale,
     );
     return {
       coordinates: [

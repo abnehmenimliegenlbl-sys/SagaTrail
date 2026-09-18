@@ -16,6 +16,22 @@ const NAISMITH_BASE_KMH = 4.0;
 const NAISMITH_HM_PER_H = 300;
 
 /**
+ * Gehzeit nach der auch serverseitig verwendeten Schweizer-Wanderwege-Formel:
+ * 4 km/h horizontal, 400 Hm/h aufwärts, kleinere Zeit zur Hälfte angerechnet.
+ */
+export function estimateRouteMinutes(
+  distanceKm: number,
+  ascentM: number,
+): number {
+  const horizontalHours = Math.max(0, distanceKm) / 4;
+  const verticalHours = Math.max(0, ascentM) / 400;
+  const hours =
+    Math.max(horizontalHours, verticalHours) +
+    Math.min(horizontalHours, verticalHours) / 2;
+  return Math.max(15, Math.round(hours * 60));
+}
+
+/**
  * Gibt ETAs fuer alle vier Meilensteine zurueck.
  *
  * @param distance    km bisher zurueckgelegt

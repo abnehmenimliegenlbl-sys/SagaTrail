@@ -1,6 +1,7 @@
 import {
   boolean,
   doublePrecision,
+  index,
   jsonb,
   pgTable,
   text,
@@ -47,6 +48,14 @@ export const externalRoutesTable = pgTable("external_routes", {
   // für fehlende Werte konservative technische Empfehlungen ergänzen.
   // NULL bedeutet weiterhin unbekannt und darf nicht als "nein" interpretiert werden.
   familyFriendly: boolean("family_friendly"),
+  // Aus belastbaren POIs entlang der Route abgeleitete Themenwelten.
+  // Leeres Array bedeutet: geprüft, aber kein Themenbeleg gefunden.
+  themeKeys: text("theme_keys").array().notNull().default([]),
+  // Letzter erfolgreicher Qualitätscheck der gespeicherten Route.
+  qualityCheckedAt: timestamp("quality_checked_at", { withTimezone: true }),
+  // verified = Geometrie/Metriken plausibel, partial = Daten vorhanden aber
+  // mindestens eine Quelle fehlt, invalid = nicht vertrauenswürdig.
+  qualityStatus: text("quality_status").notNull().default("unverified"),
   // Legacy-Speicherfelder; nicht mehr Teil von App- oder API-Filtern.
   childFriendly: boolean("child_friendly"),
   dogsAllowed: boolean("dogs_allowed"),
@@ -77,7 +86,13 @@ export const externalRoutesTable = pgTable("external_routes", {
   fetchedAt: timestamp("fetched_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  cantonIdx: index("external_routes_canton_idx").on(table.canton),
+  themeKeysGinIdx: index("external_routes_theme_keys_gin_idx").using(
+    "gin",
+    table.themeKeys,
+  ),
+}));
 
 export const insertExternalRouteSchema = createInsertSchema(externalRoutesTable);
 export type InsertExternalRoute = z.infer<typeof insertExternalRouteSchema>;

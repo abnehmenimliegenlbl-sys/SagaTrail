@@ -2,17 +2,11 @@
   "expo": {
     "name": "SagaTrail",
     "slug": "sagatrail",
-    "version": "1.0.4",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#FFFFFF"
-    },
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
@@ -28,7 +22,7 @@
         ],
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "69",
+      "buildNumber": "119",
       "bundleIdentifier": "com.sagatrail2.app",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
@@ -69,11 +63,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_LOCATION",
         "android.permission.RECORD_AUDIO"
-      ],
-      "notification": {
-        "icon": "./assets/images/notification-icon.png",
-        "color": "#CC0000"
-      }
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -109,6 +99,14 @@
           "origin": "https://replit.com/"
         }
       ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
       "expo-updates",
       "expo-font",
       "expo-web-browser",
@@ -127,9 +125,12 @@
       [
         "expo-notifications",
         {
-          "iosDisplayInForeground": true
+          "iosDisplayInForeground": true,
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#CC0000"
         }
       ],
+      "expo-audio",
       [
         "expo-location",
         {
@@ -148,12 +149,13 @@
             "com.google.android.googlequicksearchbox"
           ]
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "updates": {
       "url": "https://u.expo.dev/5df5021d-8b4d-4168-8247-1094f2e4c216",
       "enabled": true,
-      "fallbackToCacheTimeout": 0,
+      "fallbackToCacheTimeout": 5000,
       "checkAutomatically": "ON_LOAD"
     },
     "runtimeVersion": "1.0.0",
@@ -162,15 +164,12 @@
       "reactCompiler": true
     },
     "extra": {
+      "apiBaseUrl": "https://api.sagatrail.ch",
       "eas": {
         "projectId": "5df5021d-8b4d-4168-8247-1094f2e4c216"
-      }
+      },
+      "clerkPublishableKey": "pk_test_dmFzdC1zaGluZXItNzEuY2xlcmsuYWNjb3VudHMuZGV2JA"
     },
-    "owner": "inster",
-    "notification": {
-      "icon": "./assets/images/notification-icon.png",
-      "color": "#CC0000",
-      "androidMode": "default"
-    }
+    "owner": "inster"
   }
 }

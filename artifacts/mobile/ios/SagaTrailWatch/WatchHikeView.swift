@@ -1,0 +1,1844 @@
+import SwiftUI
+import MapKit
+import Foundation
+
+private enum WatchPalette {
+  // Shared SagaTrail light-theme tokens, adapted for watchOS contrast.
+  static let red = Color(red: 204 / 255, green: 0, blue: 0)
+  static let gpsGreen = Color(red: 28 / 255, green: 155 / 255, blue: 87 / 255)
+  static let routeStart = Color(red: 204 / 255, green: 0, blue: 0)
+  static let gold = Color(red: 184 / 255, green: 147 / 255, blue: 90 / 255)
+  static let black = Color(red: 16 / 255, green: 18 / 255, blue: 22 / 255)
+  static let white = Color.white
+  static let mutedWhite = Color(red: 107 / 255, green: 114 / 255, blue: 128 / 255)
+  static let surface = Color(red: 244 / 255, green: 245 / 255, blue: 247 / 255)
+  static let surfaceAlt = Color.white
+  static let ink = Color(red: 24 / 255, green: 26 / 255, blue: 30 / 255)
+  static let border = Color(red: 204 / 255, green: 0, blue: 0).opacity(0.28)
+}
+
+private enum WatchType {
+  // These roles mirror Albert Sans / Karla / JetBrains Mono without bundling
+  // another font into the Watch target, keeping small text crisp on-device.
+  static let label = Font.system(size: 9, weight: .bold, design: .monospaced)
+  static let body = Font.system(size: 11, weight: .medium, design: .rounded)
+  static let title = Font.system(size: 14, weight: .bold, design: .rounded)
+  static let display = Font.system(size: 21, weight: .heavy, design: .rounded)
+  static let metric = Font.system(size: 11, weight: .semibold, design: .monospaced)
+}
+
+private struct AudioWaveform: View {
+  let isActive: Bool
+
+  private let barHeights: [CGFloat] = [0.42, 0.72, 1.0, 0.58, 0.86, 0.48, 0.78, 0.36, 0.62]
+
+  var body: some View {
+    TimelineView(.animation(minimumInterval: 0.25, paused: !isActive)) { context in
+      let elapsed = context.date.timeIntervalSinceReferenceDate
+
+      HStack(spacing: 3) {
+        ForEach(barHeights.indices, id: \.self) { index in
+          let pulse = isActive
+            ? 0.5 + 0.5 * sin(elapsed * 5.2 + Double(index) * 0.62)
+            : 0.2
+
+          Capsule()
+            .fill(isActive ? WatchPalette.red : WatchPalette.mutedWhite)
+            .frame(width: 3, height: 5 + barHeights[index] * 20 * pulse)
+        }
+      }
+      .frame(height: 26)
+      .accessibilityHidden(true)
+    }
+  }
+}
+
+private struct SagaTrailAlertOverlay<Actions: View>: View {
+  let title: String
+  let message: String?
+  let isDestructive: Bool
+  let actions: Actions
+
+  init(
+    title: String,
+    message: String?,
+    isDestructive: Bool,
+    @ViewBuilder actions: () -> Actions
+  ) {
+    self.title = title
+    self.message = message
+    self.isDestructive = isDestructive
+    self.actions = actions()
+  }
+
+  var body: some View {
+    ZStack {
+      Color.black.opacity(0.6).ignoresSafeArea()
+
+      ScrollView {
+        VStack(alignment: .leading, spacing: 6) {
+          HStack(spacing: 6) {
+            BrandIcon.image
+              .resizable()
+              .scaledToFit()
+              .frame(width: 18, height: 18)
+              .clipShape(RoundedRectangle(cornerRadius: 4))
+            Text(title)
+              .font(WatchType.title)
+              .foregroundStyle(WatchPalette.black)
+          }
+
+          if let message = message, !message.isEmpty {
+            Text(message)
+              .font(WatchType.body)
+              .foregroundStyle(WatchPalette.black)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+
+          actions
+            .padding(.top, 4)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(WatchPalette.white)
+        .cornerRadius(12)
+        .overlay(
+          RoundedRectangle(cornerRadius: 12)
+            .stroke(WatchPalette.red, lineWidth: isDestructive ? 3 : 2)
+        )
+        .padding(.horizontal, 4)
+        .padding(.vertical, 8)
+      }
+    }
+    .zIndex(100)
+    .transition(.opacity)
+  }
+}
+
+struct WatchHikeView: View {
+  @EnvironmentObject private var hike: WatchHikeModel
+  @State private var selectedPage = 0
+  @State private var pageCrownPosition = 0.0
+  @State private var poiTextPage = 0.0
+  // The alert and the live-state payload travel over separate
+  // WatchConnectivity deliveries. Keep an explicit open request when the
+  // user confirms before the POI story has reached the Watch.
+  @State private var pendingPoiStoryPage = false
+  @State private var isMapPresented = false
+  private var copy: WatchCopy { WatchCopy(language: hike.state?.language ?? "de") }
+  private var pageCount: Int { hike.state?.poiStory == nil ? 4 : 5 }
+  private var lastPage: Double { Double(max(0, pageCount - 1)) }
+
+  private enum TurnDirection {
+    case left
+    case right
+    case uTurn
+    case straight
+
+    var icon: String {
+      switch self {
+      case .left: return "arrow.turn.up.left"
+      case .right: return "arrow.turn.up.right"
+      case .uTurn: return "arrow.uturn.up"
+      case .straight: return "arrow.up"
+      }
+    }
+
+    var copyKey: String {
+      switch self {
+      case .left: return "turnLeft"
+      case .right: return "turnRight"
+      case .uTurn: return "turnAround"
+      case .straight: return "goStraight"
+      }
+    }
+  }
+
+  var body: some View {
+    ZStack(alignment: .topLeading) {
+      VStack(spacing: 5) {
+        if let state = hike.state, state.sessionStatus != "preparing" {
+          TabView(selection: $selectedPage) {
+            navigationPage(state).tag(0)
+            statusPage(state).tag(1)
+            safetyPage(state).tag(2)
+            storyPage(state).tag(3)
+            if let poiStory = state.poiStory {
+              poiStoryPage(poiStory).tag(4)
+            }
+          }
+          .tabViewStyle(.verticalPage)
+          .frame(maxHeight: .infinity)
+          .onChange(of: state.poiStory?.id) { _, id in
+            SagaTrailWatchRemoteDiagnostics.log("POI page state changed", data: [
+              "poiStoryPresent": id != nil,
+              "poiStoryId": id ?? "none",
+              "pendingOpen": pendingPoiStoryPage,
+              "selectedPageBefore": selectedPage,
+            ])
+            if id != nil {
+              poiTextPage = 0
+              if pendingPoiStoryPage || selectedPage != 4 {
+                selectedPage = 4
+                SagaTrailWatchRemoteDiagnostics.log("POI page selected", data: [
+                  "poiStoryId": id ?? "none",
+                  "reason": pendingPoiStoryPage ? "confirmed_pending" : "state_arrived",
+                  "selectedPage": 4,
+                ])
+              }
+              pendingPoiStoryPage = false
+            } else if selectedPage == 4 {
+              selectedPage = 0
+            }
+          }
+        } else {
+          waitingPage
+        }
+      }
+      // Keep the page header below the system clock while the GPS status
+      // remains in the compact top-left slot beside it.
+      .padding(.top, 48)
+
+      if !isMapPresented {
+        GeometryReader { proxy in
+          // Cover only the watchOS clock, not the GPS label beside it.
+          let clockWidth = min(54, max(48, proxy.size.width * 0.27))
+          let clockHeight = min(30, max(26, proxy.size.height * 0.07))
+          RoundedRectangle(cornerRadius: clockHeight * 0.4)
+            .fill(WatchPalette.red)
+            .frame(width: clockWidth, height: clockHeight)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+            // The watchOS clock sits below the physical top edge; align the
+            // red backing with the clock instead of touching the upper bezel.
+            .padding(.top, 9)
+            .padding(.trailing, max(2, proxy.size.width * 0.01) + 1)
+        }
+        .allowsHitTesting(false)
+        .zIndex(20)
+      }
+
+      gpsIndicator
+        .padding(.leading, 12)
+        .padding(.top, 8)
+
+      if isMapPresented, let state = hike.state, let map = state.map {
+        GeometryReader { proxy in
+          ZStack(alignment: .topLeading) {
+            WatchRouteMap(
+              map: map,
+              offline: !hike.isReachable || hike.isStale,
+              language: state.language,
+              height: proxy.size.height,
+              showControls: true,
+              cornerRadius: 0
+            )
+            .background(WatchPalette.surface.ignoresSafeArea())
+            .overlay(alignment: .bottomLeading) {
+              Button {
+                isMapPresented = false
+              } label: {
+                Image(systemName: "xmark")
+                  .font(.system(size: 10, weight: .bold))
+                  .foregroundStyle(WatchPalette.black)
+                  .frame(width: 20, height: 20)
+                  .background(WatchPalette.white, in: Circle())
+                  .overlay(
+                    Circle()
+                      .stroke(WatchPalette.red, lineWidth: 1)
+                  )
+              }
+              .buttonStyle(.plain)
+              .frame(width: 44, height: 44)
+              .contentShape(Rectangle())
+              .padding(.leading, 8)
+              .padding(.bottom, 18)
+              .zIndex(20)
+            }
+          }
+          .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(WatchPalette.surface.ignoresSafeArea())
+        .zIndex(10)
+      }
+
+      customOverlays
+    }
+    .padding(.horizontal, isMapPresented ? 0 : 4)
+    .scrollContentBackground(.hidden)
+    .background(WatchPalette.surface.ignoresSafeArea())
+    .ignoresSafeArea(.container, edges: isMapPresented ? .all : .top)
+    .tint(WatchPalette.red)
+    .preferredColorScheme(.light)
+    .focusable(true)
+    .digitalCrownRotation(
+      $pageCrownPosition,
+      from: 0,
+      through: lastPage,
+      by: 1,
+      sensitivity: .medium,
+      isContinuous: false,
+      isHapticFeedbackEnabled: true
+    )
+    .onChange(of: selectedPage) { _, page in
+      pageCrownPosition = Double(min(max(page, 0), pageCount - 1))
+    }
+    .onChange(of: pageCrownPosition) { _, position in
+      let page = min(max(Int(position.rounded()), 0), pageCount - 1)
+      if selectedPage != page {
+        selectedPage = page
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var customOverlays: some View {
+    if hike.showSOSConfirmation {
+      SagaTrailAlertOverlay(title: copy.t("sosTitle"), message: copy.t("sosMessage"), isDestructive: true) {
+        VStack(spacing: 6) {
+          Button {
+            hike.confirmSOS()
+          } label: {
+            Text(copy.t("confirmSOS"))
+              .font(WatchType.title)
+              .foregroundStyle(WatchPalette.white)
+              .frame(maxWidth: .infinity, minHeight: 32)
+              .background(WatchPalette.red, in: Capsule())
+          }
+          .buttonStyle(.plain)
+
+          Button {
+            hike.showSOSConfirmation = false
+          } label: {
+            Text(copy.t("cancel"))
+              .font(WatchType.body.bold())
+              .foregroundStyle(WatchPalette.black)
+              .frame(maxWidth: .infinity, minHeight: 32)
+              .background(WatchPalette.surface, in: Capsule())
+              .overlay(Capsule().stroke(WatchPalette.mutedWhite, lineWidth: 1))
+          }
+          .buttonStyle(.plain)
+        }
+      }
+    } else if hike.showSafetyCheckinOptions {
+      SagaTrailAlertOverlay(title: copy.t("safetyTitle"), message: copy.t("safetyMessage"), isDestructive: false) {
+        VStack(spacing: 6) {
+          ForEach([30, 60, 120], id: \.self) { minutes in
+            Button {
+              hike.sendSafetyCheckin(durationMinutes: minutes)
+            } label: {
+              Text("\(minutes) \(copy.t("minutes"))")
+                .font(WatchType.title)
+                .foregroundStyle(WatchPalette.white)
+                .frame(maxWidth: .infinity, minHeight: 32)
+                .background(WatchPalette.red, in: Capsule())
+            }
+            .buttonStyle(.plain)
+          }
+
+          Button {
+            hike.showSafetyCheckinOptions = false
+          } label: {
+            Text(copy.t("cancel"))
+              .font(WatchType.body.bold())
+              .foregroundStyle(WatchPalette.black)
+              .frame(maxWidth: .infinity, minHeight: 32)
+              .background(WatchPalette.surface, in: Capsule())
+              .overlay(Capsule().stroke(WatchPalette.mutedWhite, lineWidth: 1))
+          }
+          .buttonStyle(.plain)
+        }
+      }
+    } else if hike.showSafetyCompletionHint {
+      SagaTrailAlertOverlay(
+        title: copy.t("safetyTitle"),
+        message: copy.t("safetyCompleteOnPhone"),
+        isDestructive: false
+      ) {
+        Button {
+          hike.showSafetyCompletionHint = false
+        } label: {
+          Text("OK")
+            .font(WatchType.title)
+            .foregroundStyle(WatchPalette.white)
+            .frame(maxWidth: .infinity, minHeight: 32)
+            .background(WatchPalette.red, in: Capsule())
+        }
+        .buttonStyle(.plain)
+      }
+    } else if let alert = hike.activeAlert {
+      SagaTrailAlertOverlay(title: alert.title, message: alert.body, isDestructive: false) {
+        Button {
+          let shouldOpenPoiStory = alert.action == "openPoiStory"
+          if shouldOpenPoiStory {
+            SagaTrailWatchRemoteDiagnostics.log("POI alert confirmed", data: [
+              "liveStatePoiStoryPresent": hike.state?.poiStory != nil,
+              "liveStatePoiStoryId": hike.state?.poiStory?.id ?? "none",
+              "selectedPageBefore": selectedPage,
+              "pendingOpenBefore": pendingPoiStoryPage,
+            ])
+          }
+          hike.activeAlert = nil
+          if shouldOpenPoiStory {
+            pendingPoiStoryPage = true
+            poiTextPage = 0
+            // The live state can already be present, or it can arrive just
+            // after this alert through a different WatchConnectivity channel.
+            // In the latter case the onChange handler above completes the
+            // navigation once the page becomes available.
+            if hike.state?.poiStory != nil {
+              selectedPage = 4
+              pendingPoiStoryPage = false
+              SagaTrailWatchRemoteDiagnostics.log("POI page selected immediately after confirmation", data: [
+                "poiStoryId": hike.state?.poiStory?.id ?? "none",
+                "selectedPage": 4,
+              ])
+            } else {
+              SagaTrailWatchRemoteDiagnostics.log("POI page selection queued after confirmation", data: [
+                "selectedPage": selectedPage,
+                "pendingOpen": true,
+              ])
+            }
+          }
+        } label: {
+          Text("OK")
+            .font(WatchType.title)
+            .foregroundStyle(WatchPalette.white)
+            .frame(maxWidth: .infinity, minHeight: 32)
+            .background(WatchPalette.red, in: Capsule())
+        }
+        .buttonStyle(.plain)
+      }
+    }
+  }
+
+  private var gpsIndicator: some View {
+    let hasGPS = hike.state.map { hasFreshGPS($0) } ?? false
+    return HStack(spacing: 4) {
+      Image(systemName: "figure.walk")
+        .font(.system(size: 16, weight: .semibold))
+        .foregroundStyle(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
+      Circle()
+        .fill(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
+        .frame(width: 4, height: 4)
+      Text(hasGPS ? copy.t("gpsLiveShort") : copy.t("noGpsShort"))
+        .font(WatchType.label)
+        .tracking(0.6)
+        .foregroundStyle(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
+      Spacer()
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+      .accessibilityLabel(Text(hasGPS ? copy.t("gpsLiveShort") : copy.t("noGpsShort")))
+  }
+
+  private func pageHeader(_ title: String, systemImage: String?) -> some View {
+    HStack(spacing: 5) {
+      if let systemImage {
+        Image(systemName: systemImage)
+          .font(.system(size: 11, weight: .bold))
+          .foregroundStyle(WatchPalette.red)
+      }
+      Text(title.uppercased())
+        .font(WatchType.label)
+        .tracking(0.9)
+        .foregroundStyle(WatchPalette.mutedWhite)
+      Spacer(minLength: 0)
+    }
+  }
+
+  private func card<Content: View>(
+    @ViewBuilder content: () -> Content
+  ) -> some View {
+    content()
+      .padding(10)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(WatchPalette.surfaceAlt, in: RoundedRectangle(cornerRadius: 12))
+      .overlay(
+        RoundedRectangle(cornerRadius: 12)
+          .stroke(WatchPalette.border, lineWidth: 1)
+      )
+  }
+
+  private func hasFreshGPS(_ state: SagaTrailWatchProtocol.LiveState) -> Bool {
+    !hike.isStale && state.map?.gpsFresh == true
+  }
+
+  private func offRouteCard(_ offRoute: SagaTrailWatchProtocol.OffRoute) -> some View {
+    return HStack(spacing: 4) {
+      Image(systemName: "location.slash.fill")
+        .foregroundStyle(WatchPalette.red)
+      Text(copy.t("offRoute"))
+        .foregroundStyle(WatchPalette.red)
+      Spacer(minLength: 2)
+      Text("\(Int(offRoute.distanceMeters)) m")
+        .foregroundStyle(WatchPalette.mutedWhite)
+      if let bearing = offRoute.bearingToRouteDegrees {
+        Text("· \(compassPoint(bearing))")
+          .foregroundStyle(WatchPalette.red)
+      }
+    }
+    .font(WatchType.body)
+    .lineLimit(1)
+    .padding(.horizontal, 6)
+    .padding(.vertical, 4)
+    .background(WatchPalette.red.opacity(0.14), in: RoundedRectangle(cornerRadius: 9))
+  }
+  private func weatherCard(
+    _ weather: SagaTrailWatchProtocol.Weather,
+    daylight: SagaTrailWatchProtocol.Daylight?,
+  ) -> some View {
+    let warnings: [String] = {
+      var values: [String] = []
+      if weather.isThunderstorm {
+        values.append(copy.t("thunderstorm"))
+      }
+      if weather.windGustsKmh >= 35 {
+        values.append("\(copy.t("gusts")) \(Int(weather.windGustsKmh.rounded())) km/h")
+      }
+      if daylight?.arrivalAfterSunset == true {
+        values.append(copy.t("afterSunset"))
+      }
+      return values
+    }()
+    return VStack(alignment: .leading, spacing: 3) {
+      HStack(spacing: 5) {
+        Label(weatherLabel(weather.weatherCode), systemImage: weatherIcon(weather.weatherCode))
+        Spacer(minLength: 2)
+        Text("\(Int(weather.temperatureCelsius.rounded()))°")
+          .monospacedDigit()
+        Text("\(Int(weather.windKmh.rounded()))")
+          .monospacedDigit()
+        Image(systemName: "wind")
+        if weather.precipitationMm > 0 {
+          Text("\(weather.precipitationMm, specifier: "%.1f")")
+            .monospacedDigit()
+          Image(systemName: "drop.fill")
+        }
+      }
+      .lineLimit(1)
+      if !warnings.isEmpty {
+        HStack(alignment: .top, spacing: 4) {
+          Image(systemName: weather.isThunderstorm ? "cloud.bolt.rain.fill" : "exclamationmark.triangle.fill")
+          Text(warnings.joined(separator: " · "))
+            .lineLimit(2)
+        }
+        .font(.caption2)
+        .foregroundStyle(WatchPalette.red)
+      }
+    }
+    .font(WatchType.body)
+    .minimumScaleFactor(0.72)
+  }
+  private func hikeSummary(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    return VStack(alignment: .leading, spacing: 6) {
+      pageHeader(copy.t("completed"), systemImage: "checkmark.circle.fill")
+      card {
+        VStack(alignment: .leading, spacing: 4) {
+          metric(copy.t("totalTime"), duration(state.elapsedSeconds))
+          metric(copy.t("totalDistance"), String(format: "%.2f km", state.distanceMeters / 1000))
+          metric(copy.t("steps"), "\(state.steps)")
+          if state.ascentMeters > 0 {
+            metric(copy.t("elevation"), "\(Int(state.ascentMeters.rounded())) m")
+          }
+          if let bpm = hike.currentHeartRate ?? state.heartRateBpm {
+            metric(copy.t("lastHeartRate"), "\(Int(bpm.rounded())) bpm")
+          }
+          if let average = hike.workoutAverageHeartRate {
+            metric(copy.t("averageHeartRate"), "\(Int(average.rounded())) bpm")
+          }
+          if let maximum = hike.workoutMaxHeartRate {
+            metric(copy.t("maxHeartRate"), "\(Int(maximum.rounded())) bpm")
+          }
+          if let energy = hike.activeEnergyKcal {
+            metric(copy.t("activeEnergy"), "\(Int(energy.rounded())) kcal")
+          }
+          Text(copy.healthStatus(hike.healthStatus))
+            .font(WatchType.body)
+            .foregroundStyle(WatchPalette.mutedWhite)
+          Text(copy.t("summaryPhone"))
+            .font(WatchType.body.bold())
+            .foregroundStyle(WatchPalette.red)
+        }
+      }
+    }
+  }
+  private func weatherIcon(_ code: Int) -> String {
+    switch code {
+    case 0: return "sun.max.fill"
+    case 1...3: return "cloud.sun.fill"
+    case 45...48: return "cloud.fog.fill"
+    case 51...67, 80...82: return "cloud.rain.fill"
+    case 71...77, 85...86: return "snowflake"
+    case 95...99: return "cloud.bolt.rain.fill"
+    default: return "cloud.fill"
+    }
+  }
+  private func weatherLabel(_ code: Int) -> String {
+    switch code {
+    case 0: return copy.t("weatherClear")
+    case 1...3: return copy.t("weatherCloudy")
+    case 45...48: return copy.t("weatherFog")
+    case 51...67, 80...82: return copy.t("weatherRain")
+    case 71...77, 85...86: return copy.t("weatherSnow")
+    case 95...99: return copy.t("weatherStorm")
+    default: return copy.t("weather")
+    }
+  }
+  private func compassPoint(_ degrees: Double) -> String {
+    let points = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"]
+    let normalized = (degrees.truncatingRemainder(dividingBy: 360) + 360)
+      .truncatingRemainder(dividingBy: 360)
+    let index = Int((normalized / 45.0).rounded()) % points.count
+    return points[index]
+  }
+  private func metric(_ label: String, _ value: String) -> some View {
+    return HStack(spacing: 3) {
+      Text(label)
+      Spacer(minLength: 2)
+      Text(value)
+        .font(WatchType.metric)
+    }
+    .font(WatchType.body)
+    .foregroundStyle(WatchPalette.ink)
+    .lineLimit(1)
+    .minimumScaleFactor(0.72)
+  }
+
+  private func routeDistance(_ meters: Double) -> String {
+    SagaTrailWatchProtocol.formattedTurnDistance(meters)
+  }
+
+  private func surfaceLabel(_ surface: String) -> String {
+    switch surface {
+    case "asphalt": return copy.t("surfaceAsphalt")
+    case "kies": return copy.t("surfaceGravel")
+    case "fels": return copy.t("surfaceRock")
+    case "holz": return copy.t("surfaceWood")
+    default: return copy.t("surfaceNatural")
+    }
+  }
+
+  private func heartRate(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    let bpm = hike.currentHeartRate ?? state.heartRateBpm
+    return Text("\(copy.t("pulse")): \(bpm.map { String(format: "%.0f", $0) } ?? "—") BPM")
+    .font(WatchType.body)
+    .foregroundStyle(WatchPalette.ink)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .lineLimit(1)
+    .minimumScaleFactor(0.72)
+  }
+  private func safetyCheckin(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    let checkin = state.safetyCheckin
+    let active = checkin?.status == "active"
+    let overdue = checkin?.status == "overdue"
+    let showCountdown = checkin?.status != nil && checkin?.status != "idle"
+    return VStack(alignment: .leading, spacing: 3) {
+      HStack {
+         Label(
+           overdue ? copy.t("overdue") : (active ? copy.t("safetyActive") : copy.t("safetyTitle")),
+          systemImage: overdue ? "exclamationmark.triangle.fill" : "checkmark.shield"
+        )
+        Spacer()
+      }
+      VStack(spacing: 6) {
+        Button {
+          if active || overdue {
+            hike.confirmSafetyCheckin()
+          } else {
+            hike.requestSafetyCheckin()
+          }
+        } label: {
+          Label(
+            active || overdue ? copy.t("safeNow") : copy.t("startCheckin"),
+            systemImage: active || overdue ? "checkmark" : "timer"
+          )
+          .foregroundStyle(WatchPalette.red)
+          .frame(maxWidth: .infinity)
+          .lineLimit(1)
+          .minimumScaleFactor(0.65)
+        }
+        .buttonStyle(.plain)
+        .controlSize(.mini)
+        .frame(maxWidth: .infinity, minHeight: 32)
+        .background(WatchPalette.white, in: Capsule())
+        .overlay(
+          Capsule()
+            .stroke(WatchPalette.red, lineWidth: 1)
+        )
+        Button(role: .destructive, action: hike.requestSOSConfirmation) {
+          Text("SOS")
+            .font(WatchType.label)
+            .foregroundStyle(WatchPalette.white)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.mini)
+        .tint(WatchPalette.red)
+        .frame(maxWidth: .infinity, minHeight: 32)
+        .accessibilityLabel(copy.t("sos"))
+      }
+      .frame(maxWidth: .infinity)
+      if let checkin, showCountdown {
+        VStack(spacing: 2) {
+          Text(checkin.liveLinkActive ? copy.t("liveLink") : copy.t("localTimer"))
+            .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.ink)
+            .lineLimit(1)
+          TimelineView(.periodic(from: .now, by: 1)) { timeline in
+            Text(formatCheckinTime(checkinRemaining(checkin, at: timeline.date)))
+              .font(WatchType.metric)
+              .foregroundStyle(WatchPalette.white)
+              .monospacedDigit()
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 4)
+              .background(WatchPalette.red, in: Capsule())
+          }
+        }
+        .frame(maxWidth: .infinity)
+      }
+    }
+    .font(WatchType.body)
+  }
+  private func formatCheckinTime(_ seconds: Double) -> String {
+    let total = max(0, Int(seconds))
+    return String(format: "%02d:%02d", total / 60, total % 60)
+  }
+  private func checkinRemaining(
+    _ checkin: SagaTrailWatchProtocol.SafetyCheckin,
+    at date: Date
+  ) -> Double {
+    guard let expiresAtEpochMs = checkin.expiresAtEpochMs else {
+      return checkin.remainingSeconds
+    }
+    return max(0, expiresAtEpochMs / 1000 - date.timeIntervalSince1970)
+  }
+  private func duration(_ seconds: Double) -> String {
+    String(format: "%02d:%02d:%02d", Int(seconds) / 3600, (Int(seconds) / 60) % 60, Int(seconds) % 60)
+  }
+  private func eta(_ seconds: Double, arrivalAt: Double?) -> String {
+    if let arrivalAt {
+      let date = Date(timeIntervalSince1970: arrivalAt / 1000)
+      return date.formatted(date: .omitted, time: .shortened)
+    }
+    return duration(seconds)
+  }
+  private func turnDirection(for direction: String) -> TurnDirection {
+    let normalized = direction.lowercased()
+    if normalized.contains("uturn") || normalized.contains("u-turn") {
+      return .uTurn
+    }
+    if normalized.contains("left") || normalized.contains("links") {
+      return .left
+    }
+    if normalized.contains("right") || normalized.contains("rechts") {
+      return .right
+    }
+    return .straight
+  }
+
+  @ViewBuilder
+  private func navigationPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    if state.sessionStatus == "finished" {
+      hikeSummary(state)
+    } else {
+      VStack(spacing: 6) {
+        if hasFreshGPS(state) {
+          card {
+            VStack(spacing: 6) {
+              if let offRoute = state.offRoute {
+                offRouteCard(offRoute)
+              }
+              let turn = turnDirection(for: state.navigationDirection)
+              HStack(spacing: 8) {
+                Image(systemName: turn.icon)
+                  .font(.system(size: 32, weight: .bold))
+                Text(copy.t(turn.copyKey))
+                  .font(WatchType.display)
+                  .tracking(0.5)
+              }
+              .foregroundStyle(WatchPalette.red)
+              Text(
+                state.distanceToTurnMeters
+                  .map(SagaTrailWatchProtocol.formattedTurnDistance)
+                  ?? "—"
+              )
+                .font(WatchType.display.monospacedDigit())
+                .foregroundStyle(WatchPalette.ink)
+              Text(state.nextInstruction)
+                .font(WatchType.body)
+                .foregroundStyle(WatchPalette.mutedWhite)
+                .multilineTextAlignment(.center)
+                .lineLimit(1)
+              HStack(spacing: 12) {
+                metric(copy.t("remaining"), state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—")
+                metric(copy.t("arrival"), state.remainingSeconds.map { eta($0, arrivalAt: state.arrivalAtEpochMs) } ?? "—")
+              }
+            }
+          }
+        } else {
+          card {
+            HStack(spacing: 6) {
+              Image(systemName: "location.slash.fill")
+                .foregroundStyle(WatchPalette.red)
+              Text(copy.t("noGpsDetail"))
+                .font(WatchType.body)
+                .foregroundStyle(WatchPalette.mutedWhite)
+                .lineLimit(2)
+            }
+          }
+        }
+        hikeControl(state)
+      }
+    }
+  }
+
+  private func statusPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    let elevationValue: String = {
+      guard let planned = state.plannedAscentMeters else { return "—" }
+      if let remaining = state.remainingAscentMeters {
+        return "\(Int(planned.rounded())) / \(Int(remaining.rounded())) m"
+      }
+      return "\(Int(planned.rounded())) m"
+    }()
+
+    return VStack(spacing: 6) {
+      pageHeader(copy.t("status"), systemImage: nil)
+      card {
+        VStack(spacing: 6) {
+          if selectedPage == 1, let map = state.map {
+            Button {
+              isMapPresented = true
+            } label: {
+              WatchRouteMap(
+                map: map,
+                offline: !hike.isReachable || hike.isStale,
+                language: state.language,
+                height: 96,
+                showControls: false,
+                cornerRadius: 12
+              )
+              .overlay(alignment: .topTrailing) {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                  .font(.caption2.bold())
+                  .foregroundStyle(WatchPalette.ink)
+                  .padding(5)
+                  .background(WatchPalette.surface.opacity(0.9), in: Circle())
+                  .padding(5)
+              }
+            }
+            .buttonStyle(.plain)
+          }
+          if let change = state.upcomingGradeChange {
+            HStack(spacing: 5) {
+              Image(systemName: change.direction == "up" ? "arrow.up.right" : "arrow.down.right")
+                .foregroundStyle(WatchPalette.red)
+              Text(
+                "\(routeDistance(change.distanceMeters)) · "
+                  + "\(change.direction == "up" ? copy.t("ascent") : copy.t("descent")) "
+                  + "\(Int(change.gradePercent.rounded())) %"
+              )
+              Spacer(minLength: 0)
+            }
+            .font(.caption2)
+            .foregroundStyle(WatchPalette.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+          }
+          if let change = state.upcomingSurfaceChange {
+            HStack(spacing: 5) {
+              Image(systemName: "shoeprints.fill")
+                .foregroundStyle(WatchPalette.red)
+              Text(
+                "\(routeDistance(change.distanceMeters)) · "
+                  + "\(copy.t("surfaceAhead")): \(surfaceLabel(change.surface))"
+              )
+              Spacer(minLength: 0)
+            }
+            .font(.caption2)
+            .foregroundStyle(WatchPalette.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+          }
+          if let attraction = state.upcomingAttraction {
+            HStack(spacing: 5) {
+              Image(systemName: "star.fill")
+                .foregroundStyle(WatchPalette.red)
+              Text(
+                "\(routeDistance(attraction.distanceMeters)) · "
+                  + "\(copy.t("attractionAhead")): \(attraction.name)"
+              )
+              Spacer(minLength: 0)
+            }
+            .font(.caption2)
+            .foregroundStyle(WatchPalette.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.62)
+          }
+          if !hasFreshGPS(state) {
+            HStack(spacing: 5) {
+              Image(systemName: "location.slash.fill")
+                .foregroundStyle(WatchPalette.red)
+              Text(copy.t("noGps"))
+                .font(WatchType.body.bold())
+                .foregroundStyle(WatchPalette.red)
+              Spacer(minLength: 2)
+            }
+            .lineLimit(1)
+          }
+          HStack(spacing: 12) {
+            metric(copy.t("distance"), String(format: "%.2f km", state.distanceMeters / 1000))
+            metric(copy.t("steps"), "\(state.steps)")
+          }
+          HStack(spacing: 12) {
+            metric(copy.t("elevation"), elevationValue)
+            metric(copy.t("time"), duration(state.elapsedSeconds))
+          }
+          heartRate(state)
+          if let weather = state.weather {
+            weatherCard(weather, daylight: state.daylight)
+          }
+        }
+      }
+    }
+  }
+
+  private func safetyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    return VStack(spacing: 6) {
+      pageHeader(copy.t("safetyTitle"), systemImage: "checkmark.shield.fill")
+      card {
+        VStack(alignment: .leading, spacing: 7) {
+          safetyCheckin(state)
+          if let terrain = state.terrainSection {
+            VStack(alignment: .leading, spacing: 2) {
+              HStack {
+                Label(terrain.direction == "up" ? copy.t("ascent") : copy.t("descent"),
+                      systemImage: terrain.direction == "up" ? "arrow.up.right" : "arrow.down.right")
+                Spacer()
+                Text("\(Int(terrain.gradePercent)) %")
+                  .font(WatchType.metric)
+              }
+              Text(terrain.startsInMeters > 0
+                ? "\(copy.t("startsIn")) \(Int(terrain.startsInMeters)) m · \(Int(terrain.remainingMeters)) m"
+                : "\(copy.t("still")) \(Int(terrain.remainingMeters)) m")
+                .foregroundStyle(WatchPalette.mutedWhite)
+                .lineLimit(1)
+          }
+            .font(WatchType.body)
+          }
+          if let offRoute = state.offRoute {
+            offRouteCard(offRoute)
+          }
+        }
+         .frame(maxWidth: .infinity, minHeight: 145, alignment: .topLeading)
+      }
+    }
+  }
+
+  private func poiStoryPage(_ story: SagaTrailWatchProtocol.PoiStory) -> some View {
+    let chunks = poiTextChunks(story.text)
+    let page = min(max(0, Int(poiTextPage.rounded())), max(0, chunks.count - 1))
+    return VStack(spacing: 6) {
+      pageHeader(
+        story.kind == "partner" ? "Partner" : copy.t("poiStory"),
+        systemImage: story.kind == "partner" ? "storefront.fill" : "mappin.and.ellipse"
+      )
+      card {
+        VStack(spacing: 5) {
+          AsyncImage(url: story.imageURL) { phase in
+            if let image = phase.image {
+              image.resizable().scaledToFill()
+            } else {
+              ZStack {
+                WatchPalette.surface
+                Image(systemName: phase.error == nil ? "photo" : "mappin.and.ellipse")
+                  .font(.title2)
+                  .foregroundStyle(WatchPalette.red)
+              }
+            }
+        }
+          .frame(height: 48)
+          .frame(maxWidth: .infinity)
+          .clipShape(RoundedRectangle(cornerRadius: 10))
+          Text(story.name)
+            .font(WatchType.title)
+            .foregroundStyle(WatchPalette.ink)
+            .multilineTextAlignment(.center)
+            .lineLimit(1)
+          Text(chunks.isEmpty ? story.text : chunks[page])
+            .font(WatchType.body)
+            .foregroundStyle(WatchPalette.ink)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .lineLimit(3)
+          Text("\(copy.t("turnCrown")) \(page + 1)/\(max(1, chunks.count))")
+            .font(WatchType.label)
+            .tracking(0.4)
+            .foregroundStyle(WatchPalette.red)
+        }
+      }
+    }
+    .onAppear {
+      SagaTrailWatchRemoteDiagnostics.log("POI story page became visible", data: [
+        "poiStoryId": story.id,
+        "poiStoryKind": story.kind ?? "unknown",
+        "textLength": story.text.count,
+        "page": page,
+        "pageCount": chunks.count,
+      ])
+    }
+    .onDisappear {
+      SagaTrailWatchRemoteDiagnostics.log("POI story page became hidden", data: [
+        "poiStoryId": story.id,
+        "poiStoryKind": story.kind ?? "unknown",
+        "selectedPage": selectedPage,
+      ])
+    }
+    .digitalCrownRotation(
+      $poiTextPage,
+      from: 0,
+      through: Double(max(0, chunks.count - 1)),
+      by: 1,
+      sensitivity: .medium,
+      isContinuous: false
+    )
+  }
+
+  private func storyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    return VStack(spacing: 6) {
+      pageHeader(copy.t("storyAudio"), systemImage: "waveform")
+      card {
+        VStack(spacing: 5) {
+          Image(systemName: "speaker.wave.3.fill")
+            .font(.system(size: 28, weight: .semibold))
+            .foregroundStyle(state.storyAudio?.isPlaying == true ? WatchPalette.red : WatchPalette.mutedWhite)
+          AudioWaveform(isActive: state.storyAudio?.isPlaying == true)
+          if let storyAudio = state.storyAudio {
+            Text(storyAudio.text)
+              .font(WatchType.body)
+              .foregroundStyle(WatchPalette.mutedWhite)
+              .multilineTextAlignment(.center)
+              .lineLimit(2)
+          }
+        }
+        .frame(maxWidth: .infinity, minHeight: 145, alignment: .center)
+      }
+    }
+  }
+
+  private var waitingPage: some View {
+    VStack(spacing: 6) {
+      pageHeader(copy.t("waiting"), systemImage: "figure.hiking")
+      card {
+        VStack(spacing: 7) {
+          Image(systemName: "figure.hiking")
+            .font(.system(size: 30, weight: .semibold))
+            .foregroundStyle(WatchPalette.red)
+          Text(copy.t("waitingStart"))
+            .font(WatchType.title)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(WatchPalette.ink)
+        }
+        .frame(maxWidth: .infinity)
+      }
+    }
+  }
+
+  private func hikeControl(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    return Button {
+      hike.sendHikeCommand(state.isHiking ? "pause" : "resume")
+    } label: {
+      Label(
+        state.isHiking ? copy.t("pause") : copy.t("resume"),
+        systemImage: state.isHiking ? "pause.fill" : "play.fill"
+      )
+    }
+    .font(WatchType.body.bold())
+    .buttonStyle(.borderedProminent)
+    .controlSize(.mini)
+    .tint(WatchPalette.red)
+  }
+
+  private func poiTextChunks(_ text: String) -> [String] {
+    var chunks: [String] = []
+    var current = ""
+    for word in text.split(whereSeparator: { $0.isWhitespace }) {
+      let candidate = current.isEmpty ? String(word) : "\(current) \(word)"
+      if candidate.count > 220, !current.isEmpty {
+        chunks.append(current)
+        current = String(word)
+      } else {
+        current = candidate
+      }
+    }
+    if !current.isEmpty { chunks.append(current) }
+    return chunks.isEmpty ? [text] : chunks
+  }
+}
+
+private struct WatchRouteMap: View {
+  private struct GradeRun: Identifiable {
+    let id: Int
+    let band: String?
+    let coordinates: [CLLocationCoordinate2D]
+  }
+
+  let map: SagaTrailWatchProtocol.RouteMap
+  let offline: Bool
+  let language: String
+  let height: CGFloat
+  let showControls: Bool
+  let cornerRadius: CGFloat
+  @State private var position: MapCameraPosition = .automatic
+  @State private var zoom: Double = 1
+  @State private var routeUp = false
+  private var copy: WatchCopy { WatchCopy(language: language) }
+
+  private var coordinates: [CLLocationCoordinate2D] {
+    map.route.map {
+      CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+    }
+  }
+
+  private var gradeRuns: [GradeRun] {
+    guard map.route.count >= 2 else { return [] }
+    var runs: [GradeRun] = []
+    var currentBand = map.route[0].gradeBand
+    var currentCoordinates = [coordinate(map.route[0]), coordinate(map.route[1])]
+    for index in 1..<(map.route.count - 1) {
+      let band = map.route[index].gradeBand
+      if band == currentBand {
+        currentCoordinates.append(coordinate(map.route[index + 1]))
+      } else {
+        runs.append(GradeRun(id: runs.count, band: currentBand, coordinates: currentCoordinates))
+        currentBand = band
+        currentCoordinates = [coordinate(map.route[index]), coordinate(map.route[index + 1])]
+      }
+    }
+    runs.append(GradeRun(id: runs.count, band: currentBand, coordinates: currentCoordinates))
+    return runs
+  }
+
+  private var center: CLLocationCoordinate2D {
+    if let current = map.current {
+      return CLLocationCoordinate2D(latitude: current.latitude, longitude: current.longitude)
+    }
+    let lat = map.route.map(\.latitude).reduce(0, +) / Double(map.route.count)
+    let lng = map.route.map(\.longitude).reduce(0, +) / Double(map.route.count)
+    return CLLocationCoordinate2D(latitude: lat, longitude: lng)
+  }
+
+  private var baseDistance: CLLocationDistance {
+    let latitudes = map.route.map(\.latitude)
+    let longitudes = map.route.map(\.longitude)
+    let span = max(
+      (latitudes.max() ?? 0) - (latitudes.min() ?? 0),
+      (longitudes.max() ?? 0) - (longitudes.min() ?? 0),
+    )
+    return max(400, span * 111_000 * 1.6)
+  }
+
+  private var routeHeading: CLLocationDirection {
+    guard let first = coordinates.first, let second = coordinates.dropFirst().first else { return 0 }
+    let lat1 = first.latitude * .pi / 180
+    let lat2 = second.latitude * .pi / 180
+    let deltaLng = (second.longitude - first.longitude) * .pi / 180
+    let y = sin(deltaLng) * cos(lat2)
+    let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLng)
+    return (atan2(y, x) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
+  }
+
+  private func coordinate(_ point: SagaTrailWatchProtocol.MapPoint) -> CLLocationCoordinate2D {
+    CLLocationCoordinate2D(latitude: point.latitude, longitude: point.longitude)
+  }
+
+  private func gradeColor(_ band: String?) -> Color {
+    switch band {
+    case "yellow":
+      return Color(red: 255 / 255, green: 208 / 255, blue: 0)
+    case "orange":
+      return Color(red: 255 / 255, green: 133 / 255, blue: 0)
+    case "red":
+      return Color(red: 255 / 255, green: 48 / 255, blue: 48 / 255)
+    default:
+      return Color(red: 32 / 255, green: 212 / 255, blue: 102 / 255)
+    }
+  }
+
+  private func recenter() {
+    position = .camera(MapCamera(
+      centerCoordinate: center,
+      distance: baseDistance / zoom,
+      heading: routeUp ? routeHeading : 0,
+      pitch: 0
+    ))
+  }
+
+  var body: some View {
+    ZStack(alignment: .bottomLeading) {
+      ZStack {
+        if offline {
+          OfflineRouteSketch(map: map, language: language)
+            .frame(height: height)
+        } else {
+          Map(position: $position) {
+            ForEach(gradeRuns) { run in
+              MapPolyline(coordinates: run.coordinates)
+                .stroke(
+                  gradeColor(run.band),
+                  style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+                )
+            }
+            if let start = coordinates.first {
+              Annotation(copy.t("startMarker"), coordinate: start) {
+                WatchStartMarker()
+              }
+            }
+            if let finish = coordinates.last {
+              Annotation(copy.t("finishMarker"), coordinate: finish) {
+                WatchFinishMarker()
+              }
+            }
+            if let current = map.current {
+              Annotation(copy.t("mapYou"), coordinate: CLLocationCoordinate2D(
+                latitude: current.latitude,
+                longitude: current.longitude
+              )) {
+                ZStack {
+                  Circle().fill(WatchPalette.white).frame(width: 15, height: 15)
+                  Circle().fill(WatchPalette.red).frame(width: 10, height: 10)
+                }
+              }
+            }
+
+          }
+          .mapStyle(.standard(
+            elevation: .flat,
+            pointsOfInterest: .excludingAll,
+            showsTraffic: false
+          ))
+          .colorScheme(.light)
+          .frame(height: height)
+        }
+      }
+      .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+      if showControls {
+        VStack(alignment: .leading, spacing: 3) {
+          if !map.gpsFresh {
+            Label(copy.t("gpsPaused"), systemImage: "location.slash")
+          } else if offline {
+            Label(copy.t("lastRoute"), systemImage: "wifi.slash")
+          }
+        }
+        .foregroundStyle(WatchPalette.white)
+        .font(.caption2)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .background(WatchPalette.black.opacity(0.7), in: Capsule())
+        .padding(6)
+      }
+    }
+    .overlay(alignment: .topTrailing) {
+      if showControls {
+        Button {
+          routeUp.toggle()
+          recenter()
+        } label: {
+          Image(systemName: routeUp ? "location.north.line.fill" : "location.north")
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(WatchPalette.white)
+            .frame(width: 30, height: 30)
+            .background(WatchPalette.black.opacity(0.72), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(routeUp ? copy.t("route") : copy.t("north"))
+        .padding(.top, 32)
+        .padding(.trailing, 6)
+      }
+    }
+    .digitalCrownRotation($zoom, from: 0.5, through: 2.0, by: 0.1, sensitivity: .medium, isContinuous: false)
+    .onAppear { recenter() }
+    .onChange(of: zoom) { _, _ in recenter() }
+    .onChange(of: map.current?.latitude) { _, _ in
+      if map.current != nil { recenter() }
+    }
+    .overlay {
+      if cornerRadius > 0 {
+        RoundedRectangle(cornerRadius: cornerRadius)
+          .stroke(WatchPalette.white.opacity(0.2), lineWidth: 1)
+      }
+    }
+  }
+}
+
+private struct WatchFinishMarker: View {
+  var body: some View {
+    Canvas { context, size in
+      let poleX = size.width / 2
+      let poleTop: CGFloat = 2
+      let flagWidth: CGFloat = 10
+      let flagHeight: CGFloat = 8
+      var pole = Path()
+      pole.move(to: CGPoint(x: poleX, y: poleTop))
+      pole.addLine(to: CGPoint(x: poleX, y: size.height - 2))
+      context.stroke(
+        pole,
+        with: .color(WatchPalette.black),
+        style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
+      )
+      let flag = CGRect(x: poleX, y: poleTop, width: flagWidth, height: flagHeight)
+      context.fill(Path(flag), with: .color(WatchPalette.white))
+      context.stroke(Path(flag), with: .color(WatchPalette.black), lineWidth: 0.7)
+      let cellWidth = flag.width / 2
+      let cellHeight = flag.height / 2
+      for row in 0..<2 {
+        for column in 0..<2 where (row + column).isMultiple(of: 2) {
+          context.fill(
+            Path(CGRect(
+              x: flag.minX + CGFloat(column) * cellWidth,
+              y: flag.minY + CGFloat(row) * cellHeight,
+              width: cellWidth,
+              height: cellHeight
+            )),
+            with: .color(WatchPalette.black)
+          )
+        }
+      }
+    }
+    .frame(width: 22, height: 22)
+      .shadow(color: WatchPalette.black.opacity(0.22), radius: 2, y: 1)
+  }
+}
+
+private struct WatchStartMarker: View {
+  var body: some View {
+    ZStack {
+      Rectangle()
+        .fill(WatchPalette.white)
+        .frame(width: 1.5, height: 17)
+      TrianglePennant()
+        .fill(WatchPalette.routeStart)
+        .frame(width: 14, height: 10)
+        .offset(x: 7, y: -3.5)
+    }
+    .frame(width: 22, height: 22)
+    .shadow(color: WatchPalette.black.opacity(0.22), radius: 2, y: 1)
+  }
+}
+
+private struct TrianglePennant: Shape {
+  func path(in rect: CGRect) -> Path {
+    var path = Path()
+    path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+    path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+    path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+    path.closeSubpath()
+    return path
+  }
+}
+
+struct WatchCopy {
+  private let language: String
+
+  init(language: String) {
+    let normalized = language.lowercased().split(separator: "-").first.map(String.init) ?? "de"
+    self.language = normalized == "gsw" ? "de" : normalized
+  }
+
+  func t(_ key: String) -> String {
+    Self.words[language]?[key]
+      ?? Self.localizedAdditions[language]?[key]
+      ?? Self.commonWords[language]?[key]
+      ?? Self.words["de"]?[key]
+      ?? Self.localizedAdditions["de"]?[key]
+      ?? Self.commonWords["de"]?[key]
+      ?? key
+  }
+
+  func healthStatus(_ status: String) -> String {
+    let translatedKeys = [
+      "healthNotStarted", "healthUnavailable", "healthTypesUnavailable",
+      "healthAccessRequired", "workoutReady", "liveHeartRate",
+      "heartRateStartFailed", "workoutSaved", "workoutSaveFailed", "workoutFailed",
+    ]
+    if translatedKeys.contains(status) {
+      return t(status)
+    }
+    let keys = [
+      "Puls nicht gestartet": "healthNotStarted",
+      "HealthKit nicht verfügbar": "healthUnavailable",
+      "HealthKit-Datentypen nicht verfügbar": "healthTypesUnavailable",
+      "HealthKit-Zugriff erforderlich": "healthAccessRequired",
+      "Workout bereit": "workoutReady",
+      "Live-Puls": "liveHeartRate",
+      "Puls konnte nicht starten": "heartRateStartFailed",
+      "Workout gespeichert": "workoutSaved",
+      "Workout konnte nicht gespeichert werden": "workoutSaveFailed",
+    ]
+    return keys[status].map(t) ?? status
+  }
+
+  private static let commonWords: [String: [String: String]] = [
+    "de": [
+      "navigation": "Navigation", "current": "Aktuell", "status": "Status", "poiStory": "Ortgeschichte",
+      "turnCrown": "Krone drehen",
+      "noGps": "Kein GPS-Empfang", "noGpsShort": "Kein GPS", "gpsLiveShort": "GPS Live", "noGpsDetail": "Navigation wartet auf ein neues Signal",
+      "gpsAvailable": "GPS verfügbar", "turnLeft": "LINKS", "turnRight": "RECHTS",
+      "turnAround": "WENDEN", "goStraight": "GERADEAUS",
+      "safeNow": "Ich bin sicher", "summaryPhone": "Details auf dem iPhone",
+      "gpsPaused": "Kein GPS-Empfang",
+    ],
+    "en": [
+      "navigation": "Navigation", "current": "Now", "status": "Status", "poiStory": "Place story",
+      "turnCrown": "Turn crown",
+      "noGps": "No GPS reception", "noGpsShort": "No GPS", "gpsLiveShort": "GPS Live", "noGpsDetail": "Navigation is waiting for a new signal",
+      "gpsAvailable": "GPS available", "turnLeft": "LEFT", "turnRight": "RIGHT",
+      "turnAround": "TURN AROUND", "goStraight": "STRAIGHT",
+      "safeNow": "I'm safe", "summaryPhone": "Details on iPhone",
+      "gpsPaused": "No GPS reception",
+    ],
+    "fr": [
+      "navigation": "Navigation", "current": "Maintenant", "status": "État", "poiStory": "Histoire du lieu",
+      "turnCrown": "Tournez la couronne",
+      "noGps": "Aucun signal GPS", "noGpsShort": "Pas de GPS", "gpsLiveShort": "GPS en direct", "noGpsDetail": "La navigation attend un nouveau signal",
+      "gpsAvailable": "GPS disponible", "turnLeft": "GAUCHE", "turnRight": "DROITE",
+      "turnAround": "FAIRE DEMI-TOUR", "goStraight": "TOUT DROIT",
+      "safeNow": "Je vais bien", "summaryPhone": "Détails sur l’iPhone",
+      "gpsPaused": "Aucun signal GPS",
+    ],
+    "it": [
+      "navigation": "Navigazione", "current": "Ora", "status": "Stato", "poiStory": "Storia del luogo",
+      "turnCrown": "Gira la corona",
+      "noGps": "Nessun segnale GPS", "noGpsShort": "Niente GPS", "gpsLiveShort": "GPS live", "noGpsDetail": "La navigazione attende un nuovo segnale",
+      "gpsAvailable": "GPS disponibile", "turnLeft": "SINISTRA", "turnRight": "DESTRA",
+      "turnAround": "INVERSIONE", "goStraight": "DRITTO",
+      "safeNow": "Sto bene", "summaryPhone": "Dettagli su iPhone",
+      "gpsPaused": "Nessun segnale GPS",
+    ],
+    "es": [
+      "navigation": "Navegación", "current": "Ahora", "status": "Estado", "poiStory": "Historia del lugar",
+      "turnCrown": "Gira la corona",
+      "noGps": "Sin señal GPS", "noGpsShort": "Sin GPS", "gpsLiveShort": "GPS en vivo", "noGpsDetail": "La navegación espera una nueva señal",
+      "gpsAvailable": "GPS disponible", "turnLeft": "IZQUIERDA", "turnRight": "DERECHA",
+      "turnAround": "GIRA", "goStraight": "RECTO",
+      "safeNow": "Estoy bien", "summaryPhone": "Detalles en iPhone",
+      "gpsPaused": "Sin señal GPS",
+    ],
+    "nl": [
+      "navigation": "Navigatie", "current": "Nu", "status": "Status", "poiStory": "Plaatsverhaal",
+      "turnCrown": "Draai de kroon",
+      "noGps": "Geen GPS-signaal", "noGpsShort": "Geen GPS", "gpsLiveShort": "GPS live", "noGpsDetail": "Navigatie wacht op een nieuw signaal",
+      "gpsAvailable": "GPS beschikbaar", "turnLeft": "LINKS", "turnRight": "RECHTS",
+      "turnAround": "OMKEREN", "goStraight": "RECHTDOOR",
+      "safeNow": "Ik ben veilig", "summaryPhone": "Details op iPhone",
+      "gpsPaused": "Geen GPS-signaal",
+    ],
+    "pt": [
+      "navigation": "Navegação", "current": "Agora", "status": "Estado", "poiStory": "História do lugar",
+      "turnCrown": "Rode a coroa",
+      "noGps": "Sem sinal GPS", "noGpsShort": "Sem GPS", "gpsLiveShort": "GPS em direto", "noGpsDetail": "A navegação aguarda um novo sinal",
+      "gpsAvailable": "GPS disponível", "turnLeft": "ESQUERDA", "turnRight": "DIREITA",
+      "turnAround": "INVERTER", "goStraight": "EM FRENTE",
+      "safeNow": "Estou bem", "summaryPhone": "Detalhes no iPhone",
+      "gpsPaused": "Sem sinal GPS",
+    ],
+  ]
+
+  private static let localizedAdditions: [String: [String: String]] = [
+    "de": [
+      "minutes": "Minuten", "storyAudio": "Geschichte / Audio", "mapYou": "Du",
+      "weatherClear": "Klar", "weatherCloudy": "Bewölkt", "weatherFog": "Nebel",
+      "weatherRain": "Regen", "weatherSnow": "Schnee", "weatherStorm": "Gewitter", "weather": "Wetter",
+      "healthNotStarted": "Puls nicht gestartet", "healthUnavailable": "HealthKit nicht verfügbar",
+      "healthTypesUnavailable": "HealthKit-Datentypen nicht verfügbar", "healthAccessRequired": "HealthKit-Zugriff erforderlich",
+      "workoutReady": "Workout bereit", "liveHeartRate": "Live-Puls", "heartRateStartFailed": "Puls konnte nicht starten",
+      "workoutSaved": "Workout gespeichert", "workoutSaveFailed": "Workout konnte nicht gespeichert werden",
+      "workoutFailed": "Workout wurde unterbrochen",
+      "complicationNoGPS": "KEIN GPS", "complicationOffRoute": "ABWEG", "complicationPause": "Pause",
+      "complicationWait": "Warten", "complicationBack": "Zurück", "complicationWaitSignal": "Neues Signal abwarten",
+    ],
+    "en": [
+      "minutes": "minutes", "storyAudio": "Story / Audio", "mapYou": "You",
+      "weatherClear": "Clear", "weatherCloudy": "Cloudy", "weatherFog": "Fog",
+      "weatherRain": "Rain", "weatherSnow": "Snow", "weatherStorm": "Storm", "weather": "Weather",
+      "healthNotStarted": "Heart rate not started", "healthUnavailable": "HealthKit unavailable",
+      "healthTypesUnavailable": "HealthKit data types unavailable", "healthAccessRequired": "HealthKit access required",
+      "workoutReady": "Workout ready", "liveHeartRate": "Live heart rate", "heartRateStartFailed": "Could not start heart rate",
+      "workoutSaved": "Workout saved", "workoutSaveFailed": "Could not save workout",
+      "workoutFailed": "Workout was interrupted",
+      "complicationNoGPS": "NO GPS", "complicationOffRoute": "OFF ROUTE", "complicationPause": "Pause",
+      "complicationWait": "Wait", "complicationBack": "Back", "complicationWaitSignal": "Waiting for signal",
+    ],
+    "fr": [
+      "sosTitle": "Envoyer un SOS à l’iPhone ?", "confirmSOS": "Confirmer le SOS", "cancel": "Annuler",
+      "sosMessage": "Votre iPhone lance la procédure d’urgence.",
+      "safetyTitle": "Contrôle de sécurité", "safetyMessage": "L’iPhone lance le lien de sécurité existant.",
+      "safetyCompleteOnPhone": "Terminez l’envoi du lien en direct sur votre iPhone.",
+      "overdue": "Contrôle en retard", "safetyActive": "Contrôle actif", "liveLink": "Lien en direct actif",
+      "localTimer": "Minuteur local uniquement", "stopTimer": "En sécurité — arrêter", "startCheckin": "Démarrer le contrôle",
+      "startMarker": "Départ", "finishMarker": "Arrivée", "offlineRoute": "Itinéraire hors ligne",
+      "lastRoute": "Dernier itinéraire", "north": "Nord", "route": "Itinéraire",
+      "minutes": "minutes", "storyAudio": "Histoire / Audio", "mapYou": "Vous",
+      "weatherClear": "Dégagé", "weatherCloudy": "Nuageux", "weatherFog": "Brouillard",
+      "weatherRain": "Pluie", "weatherSnow": "Neige", "weatherStorm": "Orage", "weather": "Météo",
+      "healthNotStarted": "Pouls non démarré", "healthUnavailable": "HealthKit indisponible",
+      "healthTypesUnavailable": "Types de données HealthKit indisponibles", "healthAccessRequired": "Accès à HealthKit requis",
+      "workoutReady": "Entraînement prêt", "liveHeartRate": "Pouls en direct", "heartRateStartFailed": "Impossible de démarrer le pouls",
+      "workoutSaved": "Entraînement enregistré", "workoutSaveFailed": "Impossible d’enregistrer l’entraînement",
+      "workoutFailed": "L’entraînement a été interrompu",
+      "complicationNoGPS": "PAS DE GPS", "complicationOffRoute": "HORS ROUTE", "complicationPause": "Pause",
+      "complicationWait": "Attendre", "complicationBack": "Retour", "complicationWaitSignal": "En attente du signal",
+    ],
+    "it": [
+      "sosTitle": "Inviare SOS all’iPhone?", "confirmSOS": "Conferma SOS", "cancel": "Annulla",
+      "sosMessage": "Il tuo iPhone avvia la procedura di emergenza.",
+      "safetyTitle": "Check-in di sicurezza", "safetyMessage": "L’iPhone avvia il link di sicurezza esistente.",
+      "safetyCompleteOnPhone": "Completa l’invio del link live sul tuo iPhone.",
+      "overdue": "Check-in scaduto", "safetyActive": "Check-in attivo", "liveLink": "Link live attivo",
+      "localTimer": "Solo timer locale", "stopTimer": "Al sicuro — arresta", "startCheckin": "Avvia check-in",
+      "startMarker": "Partenza", "finishMarker": "Arrivo", "offlineRoute": "Percorso offline",
+      "lastRoute": "Ultimo percorso", "north": "Nord", "route": "Percorso",
+      "minutes": "minuti", "storyAudio": "Storia / Audio", "mapYou": "Tu",
+      "weatherClear": "Sereno", "weatherCloudy": "Nuvoloso", "weatherFog": "Nebbia",
+      "weatherRain": "Pioggia", "weatherSnow": "Neve", "weatherStorm": "Temporale", "weather": "Meteo",
+      "healthNotStarted": "Battito non avviato", "healthUnavailable": "HealthKit non disponibile",
+      "healthTypesUnavailable": "Tipi di dati HealthKit non disponibili", "healthAccessRequired": "Accesso a HealthKit necessario",
+      "workoutReady": "Allenamento pronto", "liveHeartRate": "Battito live", "heartRateStartFailed": "Impossibile avviare il battito",
+      "workoutSaved": "Allenamento salvato", "workoutSaveFailed": "Impossibile salvare l’allenamento",
+      "workoutFailed": "L’allenamento è stato interrotto",
+      "complicationNoGPS": "NIENTE GPS", "complicationOffRoute": "FUORI ROTTA", "complicationPause": "Pausa",
+      "complicationWait": "Attendi", "complicationBack": "Indietro", "complicationWaitSignal": "In attesa del segnale",
+    ],
+    "es": [
+      "sosTitle": "¿Enviar SOS al iPhone?", "confirmSOS": "Confirmar SOS", "cancel": "Cancelar",
+      "sosMessage": "Tu iPhone inicia el proceso de emergencia.",
+      "safetyTitle": "Control de seguridad", "safetyMessage": "El iPhone inicia el enlace de seguridad existente.",
+      "safetyCompleteOnPhone": "Termina de enviar el enlace en vivo en tu iPhone.",
+      "overdue": "Control atrasado", "safetyActive": "Control activo", "liveLink": "Enlace en vivo activo",
+      "localTimer": "Solo temporizador local", "stopTimer": "A salvo — detener", "startCheckin": "Iniciar control",
+      "startMarker": "Inicio", "finishMarker": "Meta", "offlineRoute": "Ruta sin conexión",
+      "lastRoute": "Última ruta", "north": "Norte", "route": "Ruta",
+      "minutes": "minutos", "storyAudio": "Historia / Audio", "mapYou": "Tú",
+      "weatherClear": "Despejado", "weatherCloudy": "Nublado", "weatherFog": "Niebla",
+      "weatherRain": "Lluvia", "weatherSnow": "Nieve", "weatherStorm": "Tormenta", "weather": "Tiempo",
+      "healthNotStarted": "Pulso no iniciado", "healthUnavailable": "HealthKit no disponible",
+      "healthTypesUnavailable": "Tipos de datos HealthKit no disponibles", "healthAccessRequired": "Se requiere acceso a HealthKit",
+      "workoutReady": "Entrenamiento listo", "liveHeartRate": "Pulso en vivo", "heartRateStartFailed": "No se pudo iniciar el pulso",
+      "workoutSaved": "Entrenamiento guardado", "workoutSaveFailed": "No se pudo guardar el entrenamiento",
+      "workoutFailed": "El entrenamiento se interrumpió",
+      "complicationNoGPS": "SIN GPS", "complicationOffRoute": "FUERA RUTA", "complicationPause": "Pausa",
+      "complicationWait": "Espera", "complicationBack": "Volver", "complicationWaitSignal": "Esperando señal",
+    ],
+    "nl": [
+      "sosTitle": "SOS naar iPhone sturen?", "confirmSOS": "SOS bevestigen", "cancel": "Annuleren",
+      "sosMessage": "Je iPhone start de noodprocedure.",
+      "safetyTitle": "Veiligheidscheck", "safetyMessage": "De iPhone start de bestaande veiligheidslink.",
+      "safetyCompleteOnPhone": "Rond het versturen van de live-link af op je iPhone.",
+      "overdue": "Check-in te laat", "safetyActive": "Check-in actief", "liveLink": "Live-link actief",
+      "localTimer": "Alleen lokale timer", "stopTimer": "Veilig — timer stoppen", "startCheckin": "Check-in starten",
+      "startMarker": "Start", "finishMarker": "Finish", "offlineRoute": "Offline route",
+      "lastRoute": "Laatste route", "north": "Noord", "route": "Route",
+      "minutes": "minuten", "storyAudio": "Verhaal / Audio", "mapYou": "Jij",
+      "weatherClear": "Helder", "weatherCloudy": "Bewolkt", "weatherFog": "Mist",
+      "weatherRain": "Regen", "weatherSnow": "Sneeuw", "weatherStorm": "Onweer", "weather": "Weer",
+      "healthNotStarted": "Hartslag niet gestart", "healthUnavailable": "HealthKit niet beschikbaar",
+      "healthTypesUnavailable": "HealthKit-gegevenstypen niet beschikbaar", "healthAccessRequired": "HealthKit-toegang vereist",
+      "workoutReady": "Workout gereed", "liveHeartRate": "Live hartslag", "heartRateStartFailed": "Hartslag kon niet starten",
+      "workoutSaved": "Workout opgeslagen", "workoutSaveFailed": "Workout kon niet worden opgeslagen",
+      "workoutFailed": "Workout werd onderbroken",
+      "complicationNoGPS": "GEEN GPS", "complicationOffRoute": "VAN ROUTE", "complicationPause": "Pauze",
+      "complicationWait": "Wachten", "complicationBack": "Terug", "complicationWaitSignal": "Wachten op signaal",
+    ],
+    "pt": [
+      "sosTitle": "Enviar SOS para o iPhone?", "confirmSOS": "Confirmar SOS", "cancel": "Cancelar",
+      "sosMessage": "O iPhone inicia o procedimento de emergência.",
+      "safetyTitle": "Check-in de segurança", "safetyMessage": "O iPhone inicia a ligação de segurança existente.",
+      "safetyCompleteOnPhone": "Conclua o envio da ligação em direto no iPhone.",
+      "overdue": "Check-in atrasado", "safetyActive": "Check-in ativo", "liveLink": "Ligação em direto ativa",
+      "localTimer": "Apenas temporizador local", "stopTimer": "Em segurança — parar", "startCheckin": "Iniciar check-in",
+      "startMarker": "Início", "finishMarker": "Chegada", "offlineRoute": "Percurso offline",
+      "lastRoute": "Último percurso", "north": "Norte", "route": "Percurso",
+      "minutes": "minutos", "storyAudio": "História / Áudio", "mapYou": "Você",
+      "weatherClear": "Céu limpo", "weatherCloudy": "Nublado", "weatherFog": "Nevoeiro",
+      "weatherRain": "Chuva", "weatherSnow": "Neve", "weatherStorm": "Trovoada", "weather": "Tempo",
+      "healthNotStarted": "Pulso não iniciado", "healthUnavailable": "HealthKit indisponível",
+      "healthTypesUnavailable": "Tipos de dados HealthKit indisponíveis", "healthAccessRequired": "É necessário acesso ao HealthKit",
+      "workoutReady": "Treino pronto", "liveHeartRate": "Pulso em direto", "heartRateStartFailed": "Não foi possível iniciar o pulso",
+      "workoutSaved": "Treino guardado", "workoutSaveFailed": "Não foi possível guardar o treino",
+      "workoutFailed": "O treino foi interrompido",
+      "complicationNoGPS": "SEM GPS", "complicationOffRoute": "FORA ROTA", "complicationPause": "Pausa",
+      "complicationWait": "Aguardar", "complicationBack": "Voltar", "complicationWaitSignal": "A aguardar sinal",
+    ],
+  ]
+
+  private static let words: [String: [String: String]] = [
+    "de": [
+      "live": "Live vom iPhone", "unreachable": "iPhone nicht erreichbar", "stale": "Daten veraltet",
+      "now": "jetzt", "ago": "vor", "waiting": "Warte auf dein iPhone",
+      "waitingStart": "Warte auf den Start der Wanderung", "waitingPhone": "Warte auf dein iPhone",
+      "waitingNext": "Warte auf deinen nächsten Standort", "pausedStatus": "Warte, bis du weitergehst",
+      "finishedStatus": "Wanderung abgeschlossen", "next": "Danach",
+      "ascent": "Anstieg", "descent": "Gefälle", "startsIn": "Beginnt in", "still": "Noch",
+      "time": "Zeit", "distance": "Distanz", "remaining": "Rest", "arrival": "Ankunft",
+      "elevation": "Höhenmeter", "remainingAscent": "Restanstieg", "steps": "Schritte",
+      "start": "Start", "pause": "Pause", "resume": "Fortsetzen", "sos": "SOS",
+      "offRoute": "Route verlassen", "atLeast": "Mindestens", "fromRoute": "vom geplanten Weg entfernt",
+      "returnDirection": "Zurück Richtung", "returnToRoute": "Zurück zur markierten Route gehen.",
+      "sunset": "Sonnenuntergang", "afterSunset": "Voraussichtliche Ankunft nach Sonnenuntergang",
+      "gusts": "Starke Böen bis", "thunderstorm": "Gewittergefahr", "completed": "Wanderung abgeschlossen",
+      "totalTime": "Gesamtzeit", "totalDistance": "Gesamtdistanz", "lastHeartRate": "Letzter Puls", "pulse": "Puls",
+      "averageHeartRate": "Ø Puls", "maxHeartRate": "Max. Puls", "activeEnergy": "Aktive Energie"
+      , "sosTitle": "SOS an iPhone senden?", "confirmSOS": "SOS bestätigen", "cancel": "Abbrechen",
+      "sosMessage": "Dein iPhone startet den Notfallablauf.",
+      "safetyTitle": "Sicherheits-Check-in", "safetyMessage": "Das iPhone startet den bestehenden Sicherheitslink.",
+      "safetyCompleteOnPhone": "Bitte schliesse den Versand des Live-Links auf deinem iPhone ab.",
+      "overdue": "Check-in überfällig", "safetyActive": "Check-in aktiv", "liveLink": "Live-Link aktiv",
+      "localTimer": "Nur lokaler Timer", "stopTimer": "Sicher — Timer stoppen", "startCheckin": "Check-in starten",
+      "startMarker": "Start", "finishMarker": "Ziel", "offlineRoute": "Offline-Route",
+      "gpsPaused": "Kein GPS-Empfang", "lastRoute": "Letzte Route", "north": "Nord", "route": "Route",
+      "surfaceAhead": "Weg", "surfaceAsphalt": "Asphalt", "surfaceGravel": "Kies/Schotter",
+      "surfaceRock": "Fels", "surfaceWood": "Holz", "surfaceNatural": "Naturweg",
+      "attractionAhead": "Sehenswürdigkeit"
+    ],
+    "en": [
+      "live": "Live from iPhone", "unreachable": "iPhone unreachable", "stale": "Data is stale",
+      "now": "now", "ago": "ago", "waiting": "Waiting for iPhone",
+      "waitingStart": "Waiting for the hike to start", "waitingPhone": "Waiting for your iPhone",
+      "waitingNext": "Waiting for your next location", "pausedStatus": "Paused — continue when you’re ready",
+      "finishedStatus": "Hike completed", "next": "Then",
+      "ascent": "Uphill", "descent": "Downhill", "startsIn": "Starts in", "still": "Remaining",
+      "time": "Time", "distance": "Distance", "remaining": "Remaining", "arrival": "Arrival",
+      "elevation": "Elevation", "remainingAscent": "Climb left", "steps": "Steps",
+      "start": "Start", "pause": "Pause", "resume": "Resume", "sos": "SOS",
+      "offRoute": "Off route", "atLeast": "At least", "fromRoute": "from the planned route",
+      "returnDirection": "Return toward", "returnToRoute": "Walk back to the marked route.",
+      "sunset": "Sunset", "afterSunset": "Estimated arrival after sunset",
+      "gusts": "Strong gusts up to", "thunderstorm": "Thunderstorm risk", "completed": "Hike completed",
+      "totalTime": "Total time", "totalDistance": "Total distance", "lastHeartRate": "Last heart rate", "pulse": "Pulse",
+      "averageHeartRate": "Avg. heart rate", "maxHeartRate": "Max. heart rate", "activeEnergy": "Active energy"
+      , "sosTitle": "Send SOS to iPhone?", "confirmSOS": "Confirm SOS", "cancel": "Cancel",
+      "sosMessage": "Your iPhone starts the emergency flow.",
+      "safetyTitle": "Safety check-in", "safetyMessage": "The iPhone starts the existing safety link.",
+      "safetyCompleteOnPhone": "Please finish sending the live link on your iPhone.",
+      "overdue": "Check-in overdue", "safetyActive": "Check-in active", "liveLink": "Live link active",
+      "localTimer": "Local timer only", "stopTimer": "Safe — stop timer", "startCheckin": "Start check-in",
+      "startMarker": "Start", "finishMarker": "Finish", "offlineRoute": "Offline route",
+      "gpsPaused": "No GPS reception", "lastRoute": "Last route", "north": "North", "route": "Route",
+      "surfaceAhead": "Path", "surfaceAsphalt": "Asphalt", "surfaceGravel": "Gravel",
+      "surfaceRock": "Rock", "surfaceWood": "Wood", "surfaceNatural": "Natural trail",
+      "attractionAhead": "Attraction"
+    ],
+    "fr": [
+      "live": "En direct depuis l’iPhone", "unreachable": "iPhone inaccessible", "stale": "Données anciennes",
+      "now": "maintenant", "ago": "il y a", "waiting": "En attente de l’iPhone",
+      "waitingStart": "En attente du début de la randonnée", "waitingPhone": "En attente de l’iPhone",
+      "waitingNext": "En attente de votre prochaine position", "pausedStatus": "En pause — reprenez quand vous êtes prêt",
+      "finishedStatus": "Randonnée terminée", "next": "Ensuite",
+      "ascent": "Montée", "descent": "Descente", "startsIn": "Commence dans", "still": "Encore",
+      "time": "Temps", "distance": "Distance", "remaining": "Restant", "arrival": "Arrivée",
+      "elevation": "Dénivelé", "remainingAscent": "Montée restante", "steps": "Pas",
+      "start": "Démarrer", "pause": "Pause", "resume": "Reprendre", "sos": "SOS",
+      "offRoute": "Hors itinéraire", "atLeast": "Au moins", "fromRoute": "de l’itinéraire",
+      "returnDirection": "Retour vers", "returnToRoute": "Revenez vers l’itinéraire marqué.",
+      "sunset": "Coucher du soleil", "afterSunset": "Arrivée prévue après le coucher du soleil",
+      "gusts": "Rafales fortes jusqu’à", "thunderstorm": "Risque d’orage", "completed": "Randonnée terminée",
+      "totalTime": "Durée totale", "totalDistance": "Distance totale", "lastHeartRate": "Dernier pouls", "pulse": "Pouls",
+      "averageHeartRate": "Pouls moyen", "maxHeartRate": "Pouls max.", "activeEnergy": "Énergie active",
+      "surfaceAhead": "Chemin", "surfaceAsphalt": "Asphalte", "surfaceGravel": "Gravier",
+      "surfaceRock": "Rocher", "surfaceWood": "Bois", "surfaceNatural": "Sentier naturel",
+      "attractionAhead": "Curiosité"
+    ],
+    "it": [
+      "live": "Live dall’iPhone", "unreachable": "iPhone non raggiungibile", "stale": "Dati obsoleti",
+      "now": "ora", "ago": "fa", "waiting": "In attesa dell’iPhone",
+      "waitingStart": "In attesa dell’inizio dell’escursione", "waitingPhone": "In attesa dell’iPhone",
+      "waitingNext": "In attesa della prossima posizione", "pausedStatus": "In pausa — riprendi quando vuoi",
+      "finishedStatus": "Escursione completata", "next": "Poi",
+      "ascent": "Salita", "descent": "Discesa", "startsIn": "Inizia tra", "still": "Ancora",
+      "time": "Tempo", "distance": "Distanza", "remaining": "Restante", "arrival": "Arrivo",
+      "elevation": "Dislivello", "remainingAscent": "Salita restante", "steps": "Passi",
+      "start": "Avvia", "pause": "Pausa", "resume": "Riprendi", "sos": "SOS",
+      "offRoute": "Fuori percorso", "atLeast": "Almeno", "fromRoute": "dal percorso previsto",
+      "returnDirection": "Torna verso", "returnToRoute": "Torna al percorso indicato.",
+      "sunset": "Tramonto", "afterSunset": "Arrivo previsto dopo il tramonto",
+      "gusts": "Raffiche forti fino a", "thunderstorm": "Rischio temporale", "completed": "Escursione completata",
+      "totalTime": "Tempo totale", "totalDistance": "Distanza totale", "lastHeartRate": "Ultimo battito", "pulse": "Battito",
+      "averageHeartRate": "Battito medio", "maxHeartRate": "Battito max.", "activeEnergy": "Energia attiva",
+      "surfaceAhead": "Sentiero", "surfaceAsphalt": "Asfalto", "surfaceGravel": "Ghiaia",
+      "surfaceRock": "Roccia", "surfaceWood": "Legno", "surfaceNatural": "Sentiero naturale",
+      "attractionAhead": "Attrazione"
+    ],
+    "es": [
+      "live": "En directo desde iPhone", "unreachable": "iPhone no disponible", "stale": "Datos antiguos",
+      "now": "ahora", "ago": "hace", "waiting": "Esperando al iPhone",
+      "waitingStart": "Esperando el inicio de la ruta", "waitingPhone": "Esperando al iPhone",
+      "waitingNext": "Esperando tu próxima ubicación", "pausedStatus": "En pausa — continúa cuando quieras",
+      "finishedStatus": "Ruta completada", "next": "Después",
+      "ascent": "Subida", "descent": "Bajada", "startsIn": "Empieza en", "still": "Quedan",
+      "time": "Tiempo", "distance": "Distancia", "remaining": "Restante", "arrival": "Llegada",
+      "elevation": "Desnivel", "remainingAscent": "Subida restante", "steps": "Pasos",
+      "start": "Iniciar", "pause": "Pausa", "resume": "Continuar", "sos": "SOS",
+      "offRoute": "Fuera de ruta", "atLeast": "Al menos", "fromRoute": "de la ruta prevista",
+      "returnDirection": "Volver hacia", "returnToRoute": "Vuelve a la ruta marcada.",
+      "sunset": "Puesta de sol", "afterSunset": "Llegada prevista después de la puesta de sol",
+      "gusts": "Ráfagas fuertes de hasta", "thunderstorm": "Riesgo de tormenta", "completed": "Ruta completada",
+      "totalTime": "Tiempo total", "totalDistance": "Distancia total", "lastHeartRate": "Último pulso", "pulse": "Pulso",
+      "averageHeartRate": "Pulso medio", "maxHeartRate": "Pulso máx.", "activeEnergy": "Energía activa",
+      "surfaceAhead": "Camino", "surfaceAsphalt": "Asfalto", "surfaceGravel": "Grava",
+      "surfaceRock": "Roca", "surfaceWood": "Madera", "surfaceNatural": "Sendero natural",
+      "attractionAhead": "Lugar de interés"
+    ],
+    "nl": [
+      "live": "Live vanaf iPhone", "unreachable": "iPhone niet bereikbaar", "stale": "Gegevens verouderd",
+      "now": "nu", "ago": "geleden", "waiting": "Wachten op iPhone",
+      "waitingStart": "Wachten tot de wandeling start", "waitingPhone": "Wachten op je iPhone",
+      "waitingNext": "Wachten op je volgende locatie", "pausedStatus": "Gepauzeerd — ga verder wanneer je klaar bent",
+      "finishedStatus": "Wandeling voltooid", "next": "Daarna",
+      "ascent": "Stijging", "descent": "Daling", "startsIn": "Begint over", "still": "Nog",
+      "time": "Tijd", "distance": "Afstand", "remaining": "Resterend", "arrival": "Aankomst",
+      "elevation": "Hoogtemeters", "remainingAscent": "Resterende stijging", "steps": "Stappen",
+      "start": "Start", "pause": "Pauze", "resume": "Hervatten", "sos": "SOS",
+      "offRoute": "Van route", "atLeast": "Minstens", "fromRoute": "van de geplande route",
+      "returnDirection": "Terug richting", "returnToRoute": "Ga terug naar de gemarkeerde route.",
+      "sunset": "Zonsondergang", "afterSunset": "Verwachte aankomst na zonsondergang",
+      "gusts": "Sterke windstoten tot", "thunderstorm": "Onweerrisico", "completed": "Wandeling voltooid",
+      "totalTime": "Totale tijd", "totalDistance": "Totale afstand", "lastHeartRate": "Laatste hartslag", "pulse": "Hartslag",
+      "averageHeartRate": "Gem. hartslag", "maxHeartRate": "Max. hartslag", "activeEnergy": "Actieve energie",
+      "surfaceAhead": "Pad", "surfaceAsphalt": "Asfalt", "surfaceGravel": "Grind",
+      "surfaceRock": "Rots", "surfaceWood": "Hout", "surfaceNatural": "Natuurpad",
+      "attractionAhead": "Bezienswaardigheid"
+    ],
+    "pt": [
+      "live": "Ao vivo do iPhone", "unreachable": "iPhone indisponível", "stale": "Dados antigos",
+      "now": "agora", "ago": "há", "waiting": "A aguardar o iPhone",
+      "waitingStart": "A aguardar o início da caminhada", "waitingPhone": "A aguardar o iPhone",
+      "waitingNext": "A aguardar a próxima localização", "pausedStatus": "Em pausa — continue quando quiser",
+      "finishedStatus": "Caminhada concluída", "next": "Depois",
+      "ascent": "Subida", "descent": "Descida", "startsIn": "Começa em", "still": "Restam",
+      "time": "Tempo", "distance": "Distância", "remaining": "Restante", "arrival": "Chegada",
+      "elevation": "Desnível", "remainingAscent": "Subida restante", "steps": "Passos",
+      "start": "Iniciar", "pause": "Pausa", "resume": "Retomar", "sos": "SOS",
+      "offRoute": "Fora do percurso", "atLeast": "Pelo menos", "fromRoute": "do percurso previsto",
+      "returnDirection": "Voltar para", "returnToRoute": "Volte ao percurso marcado.",
+      "sunset": "Pôr do sol", "afterSunset": "Chegada prevista após o pôr do sol",
+      "gusts": "Rajadas fortes até", "thunderstorm": "Risco de trovoada", "completed": "Caminhada concluída",
+      "totalTime": "Tempo total", "totalDistance": "Distância total", "lastHeartRate": "Último pulso", "pulse": "Pulso",
+      "averageHeartRate": "Pulso médio", "maxHeartRate": "Pulso máx.", "activeEnergy": "Energia ativa",
+      "surfaceAhead": "Caminho", "surfaceAsphalt": "Asfalto", "surfaceGravel": "Cascalho",
+      "surfaceRock": "Rocha", "surfaceWood": "Madeira", "surfaceNatural": "Trilho natural",
+      "attractionAhead": "Atração"
+    ]
+  ]
+}
+
+private struct OfflineRouteSketch: View {
+  let map: SagaTrailWatchProtocol.RouteMap
+  let language: String
+  private var copy: WatchCopy { WatchCopy(language: language) }
+
+  private func gradeColor(_ band: String?) -> Color {
+    switch band {
+    case "yellow":
+      return Color(red: 255 / 255, green: 208 / 255, blue: 0)
+    case "orange":
+      return Color(red: 255 / 255, green: 133 / 255, blue: 0)
+    case "red":
+      return Color(red: 255 / 255, green: 48 / 255, blue: 48 / 255)
+    default:
+      return Color(red: 32 / 255, green: 212 / 255, blue: 102 / 255)
+    }
+  }
+
+  var body: some View {
+    Canvas { context, size in
+      let route = map.route
+      guard route.count >= 2 else { return }
+      let minLat = route.map(\.latitude).min() ?? 0
+      let maxLat = route.map(\.latitude).max() ?? 1
+      let minLng = route.map(\.longitude).min() ?? 0
+      let maxLng = route.map(\.longitude).max() ?? 1
+      let latSpan = max(0.000001, maxLat - minLat)
+      let lngSpan = max(0.000001, maxLng - minLng)
+      let inset: CGFloat = 18
+      func point(_ value: SagaTrailWatchProtocol.MapPoint) -> CGPoint {
+        CGPoint(
+          x: inset + CGFloat((value.longitude - minLng) / lngSpan) * (size.width - inset * 2),
+          y: size.height - inset - CGFloat((value.latitude - minLat) / latSpan) * (size.height - inset * 2)
+        )
+      }
+      func dot(at center: CGPoint, radius: CGFloat) -> CGRect {
+        CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)
+      }
+      context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(WatchPalette.surface))
+      for index in 0..<(route.count - 1) {
+        var segmentPath = Path()
+        segmentPath.move(to: point(route[index]))
+        segmentPath.addLine(to: point(route[index + 1]))
+        context.stroke(
+          segmentPath,
+          with: .color(gradeColor(route[index].gradeBand)),
+          style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+        )
+      }
+      let startPoint = point(route[0])
+      var startFlag = Path()
+      startFlag.move(to: CGPoint(x: startPoint.x, y: startPoint.y - 8))
+      startFlag.addLine(to: CGPoint(x: startPoint.x + 9, y: startPoint.y - 4))
+      startFlag.addLine(to: CGPoint(x: startPoint.x, y: startPoint.y))
+      startFlag.closeSubpath()
+      var pole = Path()
+      pole.move(to: CGPoint(x: startPoint.x, y: startPoint.y - 8))
+      pole.addLine(to: CGPoint(x: startPoint.x, y: startPoint.y + 7))
+      context.stroke(
+        pole,
+        with: .color(WatchPalette.white),
+        style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
+      )
+      context.fill(startFlag, with: .color(WatchPalette.routeStart))
+      let finishPoint = point(route[route.count - 1])
+      var finishPole = Path()
+      finishPole.move(to: CGPoint(x: finishPoint.x, y: finishPoint.y - 8))
+      finishPole.addLine(to: CGPoint(x: finishPoint.x, y: finishPoint.y + 7))
+      context.stroke(
+        finishPole,
+        with: .color(WatchPalette.black),
+        style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
+      )
+      let finishFlag = CGRect(
+        x: finishPoint.x,
+        y: finishPoint.y - 8,
+        width: 14,
+        height: 10
+      )
+      context.fill(Path(finishFlag), with: .color(WatchPalette.white))
+      context.stroke(
+        Path(finishFlag),
+        with: .color(WatchPalette.black),
+        style: StrokeStyle(lineWidth: 0.7)
+      )
+      let cellWidth = finishFlag.width / 2
+      let cellHeight = finishFlag.height / 2
+      for row in 0..<2 {
+        for column in 0..<2 where (row + column).isMultiple(of: 2) {
+          let cell = CGRect(
+            x: finishFlag.minX + CGFloat(column) * cellWidth,
+            y: finishFlag.minY + CGFloat(row) * cellHeight,
+            width: cellWidth,
+            height: cellHeight
+          )
+          context.fill(Path(cell), with: .color(WatchPalette.black))
+        }
+      }
+      if let current = map.current {
+        context.fill(Path(ellipseIn: dot(at: point(current), radius: 6)), with: .color(WatchPalette.white))
+        context.fill(Path(ellipseIn: dot(at: point(current), radius: 4)), with: .color(WatchPalette.ink))
+      }
+    }
+    .background(WatchPalette.surface)
+    .overlay(alignment: .topLeading) {
+      Label(copy.t("offlineRoute"), systemImage: "wifi.slash")
+        .font(.caption2)
+         .foregroundStyle(WatchPalette.ink)
+        .padding(6)
+        .background(WatchPalette.surfaceAlt.opacity(0.88), in: Capsule())
+    }
+  }
+}

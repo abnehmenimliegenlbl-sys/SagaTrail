@@ -19,6 +19,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { AppState, type AppStateStatus } from "react-native";
 
 import { Achievement, HikeSession, Profile } from "@/types";
 import type { HikingRoute } from "@/constants/routes";
@@ -37,6 +38,7 @@ import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
 import { iapLog, useSubscription } from "@/lib/revenuecat";
 import * as Notifications from "expo-notifications";
 import * as Location from "expo-location";
+import * as FileSystem from "expo-file-system/legacy";
 import { getApiBaseUrl } from "@/lib/apiConfig";
 
 // Persistente Schluessel im AsyncStorage — dienen als Offline-Cache,
@@ -54,9 +56,12 @@ const KEYS = {
   uiLanguage: "sagatrail:uiLanguage",
   freieSagen: "sagatrail:freieSagen",
   themeMode: "sagatrail:themeMode",
-  groupLocationSharing: "sagatrail:groupLocationSharing",
   groupSessionCodePrefix: "sagatrail:groupSessionCode:",
 } as const;
+
+function isAuthoritativeGroupRecord(id: string): boolean {
+  return id.startsWith("group_") || id.startsWith("group_hikes_");
+}
 
 export interface EmergencyContact {
   name: string;
@@ -73,6 +78,8 @@ export type { GroupActivity, GroupMember };
 export interface ActiveHike {
   routeId: string;
   sagaId: string;
+  /** Stable identity for matching a queued/retried group start and finish. */
+  clientHikeId?: string;
   routeName: string;
   chapterIndex: number;
   chapterCount: number;
@@ -150,6 +157,7 @@ interface AppContextValue {
 
   saveProfile: (profile: Omit<Profile, "id">) => Promise<void>;
   updateProfile: (patch: Partial<Omit<Profile, "id">>) => Promise<void>;
+  uploadProfileAvatar: (localUri: string) => Promise<void>;
   /**
    * Setzt die Sprache VOR Abschluss des Onboardings (kein Profil
    * vorhanden). Wird von der Sprachauswahl im Onboarding aufgerufen, damit
@@ -184,7 +192,7 @@ interface AppContextValue {
   kickMember: (memberId: string) => void;
   setGroupActivity: (activity: GroupActivity) => void;
   /** Sendet ein Wander-Sync-Ereignis an die Gruppe (nur als Leitung wirksam). */
-  sendGroupHikeEvent: (event: HikeSyncEvent) => void;
+  sendGroupHikeEvent: (event: HikeSyncEvent) => Promise<void>;
   setGroupRendezvous: (location: GroupLocation | null) => void;
   setGroupLocationSharingEnabled: (enabled: boolean) => void;
   clearGroupError: () => void;
@@ -239,6 +247,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     useState<LanguageCode>(DEFAULT_LANGUAGE);
   const [groupSession, setGroupSession] = useState<GroupSession | null>(null);
   const [groupLocationSharingEnabled, setGroupLocationSharingEnabledState] = useState(false);
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const [groupConnectionStatus, setGroupConnectionStatus] =
     useState<GroupConnectionStatus>("getrennt");
   const [groupError, setGroupError] = useState<GroupSocketError | null>(null);
@@ -276,6 +285,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch {
       return null;
     }
+  }, []);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", setAppState);
+    return () => subscription.remove();
   }, []);
 
   useEffect(() => {
@@ -323,6 +337,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setPersistedGroupCode(null);
         setGroupSession(null);
         setGroupHikeEvent(null);
+        setGroupLocationSharingEnabledState(false);
       },
       onKicked: () => {
         if (selfIdRef.current) {
@@ -333,6 +348,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setPersistedGroupCode(null);
         setGroupSession(null);
         setGroupHikeEvent(null);
+        setGroupLocationSharingEnabledState(false);
       },
       onError: (error) => {
         setGroupError(error);
@@ -379,12 +395,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Schleife wird fuer die Gruppensichtbarkeit eingerichtet.
   useEffect(() => {
     const own = groupSession?.members.find((m) => m.id === selfIdRef.current);
-    if (!groupLocationSharingEnabled || !own || own.activity.type !== "wandert") return;
+    if (
+      appState !== "active" ||
+      !groupLocationSharingEnabled ||
+      !own ||
+      own.activity.type !== "wandert"
+    ) return;
     const wandering = own.activity;
     let cancelled = false;
     let subscription: Location.LocationSubscription | null = null;
     void (async () => {
-      const permission = await Location.requestForegroundPermissionsAsync();
+      const permission = await Location.getForegroundPermissionsAsync();
       if (cancelled || permission.status !== Location.PermissionStatus.GRANTED) return;
       subscription = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.Balanced, timeInterval: 30_000, distanceInterval: 25 },
@@ -405,8 +426,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
       subscription?.remove();
+      groupSocketRef.current?.setActivity({ ...wandering, location: undefined });
     };
   }, [
+    appState,
     groupSession?.code,
     groupLocationSharingEnabled,
     groupSession?.members.some(
@@ -430,11 +453,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           KEYS.uiLanguage,
           KEYS.freieSagen,
           KEYS.themeMode,
-          KEYS.groupLocationSharing,
         ]);
         const map = Object.fromEntries(entries);
         if (map[KEYS.profile]) {
           const cachedProfile = JSON.parse(map[KEYS.profile]!) as Profile;
+          cachedProfile.bio ??= null;
           setProfile(cachedProfile);
           setPurchasedPacks(cachedProfile.purchasedPacks ?? []);
         }
@@ -456,9 +479,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setFreieSagen(JSON.parse(map[KEYS.freieSagen]!));
         if (map[KEYS.themeMode] === "hell" || map[KEYS.themeMode] === "dunkel") {
           setThemeModeState(map[KEYS.themeMode] as ThemeMode);
-        }
-        if (map[KEYS.groupLocationSharing]) {
-          setGroupLocationSharingEnabledState(map[KEYS.groupLocationSharing] === "true");
         }
         if (map[KEYS.uiLanguage]) {
           // Sprache wurde schon einmal festgelegt (System-Erkennung oder
@@ -545,6 +565,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const next: Profile = {
         id: serverProfile.id,
         name: serverProfile.name,
+        bio: serverProfile.bio ?? null,
+        avatarUrl: serverProfile.avatarUrl ?? null,
+        dateOfBirth: serverProfile.dateOfBirth ?? null,
         archetype: serverProfile.archetype,
         ...(serverProfile.homeCanton ? { homeCanton: serverProfile.homeCanton } : {}),
         language: serverProfile.language,
@@ -622,25 +645,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }[],
         },
       });
-      // Das Zod-Schema des Servers haelt hikeHistory auf { id } reduziert
-      // (orval ignoriert additionalProperties:true fuer Passthrough). Um
-      // sagaId, routeName etc. nicht zu verlieren, werden lokale Eintraege
-      // bevorzugt; vom Server gemeldete neue IDs (anderes Geraet) kommen
-      // als sparse Eintraege hinzu.
-      const localById = new Map(hikeHistoryRef.current.map((h) => [h.id, h]));
-      const serverOnlyNew = (result.hikeHistory as unknown as HikeSession[]).filter(
-        (h) => !localById.has(h.id)
-      );
-      const mergedHistory = [...hikeHistoryRef.current, ...serverOnlyNew].slice(0, 200);
+      // Der Server kann vollständige Gruppenwanderungen nachliefern, auch
+      // wenn der lokale Verlauf bereits voll ist. Normale Dubletten behalten
+      // bewusst den vollständigen lokalen Datensatz; serverseitige group_*
+      // Datensätze sind dagegen autoritativ und dürfen nicht überschrieben
+      // werden.
+      const mergedHistoryById = new Map<string, HikeSession>();
+      const serverHistory = result.hikeHistory as unknown as HikeSession[];
+      for (const hike of serverHistory) {
+        mergedHistoryById.set(hike.id, hike);
+      }
+      for (const hike of hikeHistoryRef.current) {
+        const serverHike = mergedHistoryById.get(hike.id);
+        if (serverHike && isAuthoritativeGroupRecord(serverHike.id)) continue;
+        mergedHistoryById.set(hike.id, hike);
+      }
+      const mergedHistory = Array.from(mergedHistoryById.values())
+        .sort((a, b) => (b.startedAt ?? 0) - (a.startedAt ?? 0))
+        .slice(0, 200);
+      const mergedAchievementsById = new Map<string, Achievement>();
+      const serverAchievements = result.achievements as unknown as Achievement[];
+      for (const achievement of serverAchievements) {
+        mergedAchievementsById.set(achievement.id, achievement);
+      }
+      for (const achievement of achievementsRef.current) {
+        const serverAchievement = mergedAchievementsById.get(achievement.id);
+        if (serverAchievement && isAuthoritativeGroupRecord(serverAchievement.id)) continue;
+        mergedAchievementsById.set(achievement.id, achievement);
+      }
+      const mergedAchievements = Array.from(mergedAchievementsById.values());
       setHikeHistory(mergedHistory);
-      setAchievements(result.achievements as unknown as Achievement[]);
+      setAchievements(mergedAchievements);
       AsyncStorage.setItem(
         KEYS.hikeHistory,
         JSON.stringify(mergedHistory)
       ).catch(() => {});
       AsyncStorage.setItem(
         KEYS.achievements,
-        JSON.stringify(result.achievements)
+        JSON.stringify(mergedAchievements)
       ).catch(() => {});
     } catch {
       // Offline oder Server nicht erreichbar: lokaler Zustand bleibt
@@ -751,7 +793,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch { /* nicht kritisch */ }
       // Push-Token registrieren (nur auf nativen Plattformen)
       try {
-        const { status } = await Notifications.requestPermissionsAsync();
+        const { status } = await Notifications.getPermissionsAsync();
         if (status !== "granted") return;
         const tokenData = await Notifications.getExpoPushTokenAsync();
         await fetch(`${base}api/me/push-token`, {
@@ -774,6 +816,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (result: {
       id: string;
       name: string;
+      bio?: string | null;
+      avatarUrl?: string | null;
+      dateOfBirth?: string | null;
       archetype: string;
       homeCanton?: string;
       language: string;
@@ -793,6 +838,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const next: Profile = {
         id: result.id,
         name: result.name,
+        bio: result.bio !== undefined ? result.bio : profileRef.current?.bio ?? null,
+        avatarUrl:
+          result.avatarUrl !== undefined
+            ? result.avatarUrl
+            : profileRef.current?.avatarUrl ?? null,
+        dateOfBirth:
+          result.dateOfBirth !== undefined
+            ? result.dateOfBirth
+            : profileRef.current?.dateOfBirth ?? null,
         archetype: result.archetype,
         ...(result.homeCanton ? { homeCanton: result.homeCanton } : {}),
         language: result.language,
@@ -826,6 +880,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const result = await saveMyProfileMutation({
         data: {
           name: next.name,
+          bio: next.bio,
+          dateOfBirth: next.dateOfBirth ?? null,
           archetype: next.archetype,
           ...(next.homeCanton ? { homeCanton: next.homeCanton } : {}),
           language: next.language,
@@ -842,11 +898,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = useCallback(
     async (patch: Partial<Omit<Profile, "id">>) => {
-      if (!profile) return;
-      const merged = { ...profile, ...patch };
+      const currentProfile = profileRef.current;
+      if (!currentProfile) return;
+      const merged = { ...currentProfile, ...patch };
       const result = await saveMyProfileMutation({
         data: {
           name: merged.name,
+          bio: merged.bio,
+          dateOfBirth: merged.dateOfBirth ?? null,
           archetype: merged.archetype,
           ...(merged.homeCanton ? { homeCanton: merged.homeCanton } : {}),
           language: merged.language,
@@ -858,8 +917,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
       await applyServerProfile(result);
     },
-    [profile, saveMyProfileMutation, applyServerProfile]
+    [saveMyProfileMutation, applyServerProfile]
   );
+
+  const uploadProfileAvatar = useCallback(async (localUri: string) => {
+    const token = await getTokenRef.current();
+    if (!token) throw new Error("Nicht authentifiziert");
+    const base = getApiBaseUrl();
+    if (!base) throw new Error("API-Adresse fehlt");
+    const result = await FileSystem.uploadAsync(`${base}/api/me/avatar`, localUri, {
+      httpMethod: "POST",
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "image/jpeg",
+      },
+    });
+    if (result.status < 200 || result.status >= 300) {
+      let detail = "";
+      try {
+        detail = JSON.parse(result.body)?.error ?? "";
+      } catch {
+        detail = result.body?.slice(0, 120) ?? "";
+      }
+      throw new Error(detail || `Profilbild-Upload fehlgeschlagen: ${result.status}`);
+    }
+    await applyServerProfile(JSON.parse(result.body));
+  }, [applyServerProfile]);
 
   // Verifizierter Upgrade-Pfad: Der Server prueft selbst bei RevenueCat,
   // ob ein aktives "premium"-Entitlement vorliegt (der Client darf sich
@@ -1135,6 +1219,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setHikeHistory([]);
     setActiveHike(null);
     setGroupSession(null);
+    setGroupLocationSharingEnabledState(false);
     setPersistedGroupCode(null);
     setGroupError(null);
     setSavedSagaIds([]);
@@ -1216,6 +1301,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const leaveGroupSession = useCallback(() => {
+    const own = groupSession?.members.find((m) => m.id === selfIdRef.current);
+    if (own?.activity.type === "wandert" && own.location) {
+      groupSocketRef.current?.setActivity({ ...own.activity, location: undefined });
+    }
+    setGroupLocationSharingEnabledState(false);
     groupSocketRef.current?.leave();
     if (selfIdRef.current) {
       void AsyncStorage.removeItem(
@@ -1226,7 +1316,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setGroupSession(null);
     setGroupError(null);
     setGroupHikeEvent(null);
-  }, []);
+  }, [groupSession]);
 
   const kickMember = useCallback((memberId: string) => {
     groupSocketRef.current?.kick(memberId);
@@ -1242,7 +1332,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setGroupLocationSharingEnabled = useCallback((enabled: boolean) => {
     setGroupLocationSharingEnabledState(enabled);
-    AsyncStorage.setItem(KEYS.groupLocationSharing, enabled ? "true" : "false").catch(() => {});
     if (!enabled) {
       const own = groupSession?.members.find((m) => m.id === selfIdRef.current);
       if (own?.activity.type === "wandert") {
@@ -1254,7 +1343,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Wander-Sync-Ereignis an die Gruppe senden — nur sinnvoll als Leitung;
   // der Server weist Ereignisse von Nicht-Leitern ohnehin ab.
   const sendGroupHikeEvent = useCallback((event: HikeSyncEvent) => {
-    groupSocketRef.current?.sendHikeEvent(event);
+    return groupSocketRef.current?.sendHikeEvent(event) ?? Promise.resolve();
   }, []);
 
   const clearGroupError = useCallback(() => setGroupError(null), []);
@@ -1286,6 +1375,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       istSageInklusive,
       saveProfile,
       updateProfile,
+      uploadProfileAvatar,
       setPendingLanguage,
       unlockPremium,
       lockPremium,

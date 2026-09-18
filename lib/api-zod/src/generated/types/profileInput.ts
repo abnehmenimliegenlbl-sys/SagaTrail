@@ -11,6 +11,9 @@ import type { ProfileInputArchetype } from './profileInputArchetype';
 export interface ProfileInput {
   /** @minLength 2 */
   name: string;
+  /** @maxLength 160 */
+  bio?: string | null;
+  dateOfBirth?: Date | null;
   archetype: ProfileInputArchetype;
   /** @minLength 1 */
   homeCanton?: string;

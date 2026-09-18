@@ -54,7 +54,32 @@ export const GetCatalogResponse = zod.object({
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
-  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
 })),
   "sagas": zod.array(zod.object({
   "id": zod.string(),
@@ -185,7 +210,32 @@ export const GetCantonRoutesResponseItem = zod.object({
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
-  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
 })
 export const GetCantonRoutesResponse = zod.array(GetCantonRoutesResponseItem)
 
@@ -207,6 +257,72 @@ export const GetAerialwaysResponseItem = zod.object({
   "geometry": zod.array(zod.array(zod.number()))
 }).describe('Seilbahn, Gondelbahn, Sessellift oder Standseilbahn aus OpenStreetMap.\n')
 export const GetAerialwaysResponse = zod.array(GetAerialwaysResponseItem)
+
+
+/**
+ * Liefert die Routen einer Themenwelt direkt aus den serverseitig geprüften Themenbelegen. Die Abfrage erfolgt kantonsübergreifend in einer Datenbankabfrage.
+ * @summary Serverseitig geprüfte Routen einer Themenwelt
+ */
+export const GetThemeRoutesParams = zod.object({
+  "theme": zod.enum(['wasserwege', 'burgen_ruinen_alte_wege', 'gipfel_panorama', 'geologie_eiszeit', 'hoehlen_grotten', 'wald_wildtiere', 'alpen_landwirtschaft', 'pilger_handelswege', 'industriekultur', 'familien_entdecker', 'nacht_sterne', 'flora_jahreszeiten', 'bahn_seilbahn'])
+})
+
+export const GetThemeRoutesResponseItem = zod.object({
+  "id": zod.string(),
+  "sagaId": zod.string(),
+  "name": zod.string(),
+  "region": zod.string(),
+  "distanceKm": zod.number().describe('Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation).'),
+  "distanceTagKm": zod.number().describe('Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt.'),
+  "ascentM": zod.number(),
+  "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
+  "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
+  "minutes": zod.number(),
+  "sac": zod.string(),
+  "sacSource": zod.string().nullish().describe('Herkunft des SAC-Werts; osm_exact ist ein exakter OSM-Tag, swisstopo_derived eine amtliche Ableitung, unknown unbekannt.'),
+  "schweizMobilCondition": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Kondition (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
+  "schweizMobilTechnique": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
+  "terrain": zod.string(),
+  "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
+  "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
+  "technicalDifficulty": zod.string().nullish(),
+  "coordinates": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
+  "featured": zod.boolean(),
+  "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
+  "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
+})
+export const GetThemeRoutesResponse = zod.array(GetThemeRoutesResponseItem)
 
 
 /**
@@ -236,7 +352,10 @@ export const GetPoisResponseItem = zod.object({
 }).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).'),
   "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
   "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.'),
-  "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.')
+  "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.'),
+  "source": zod.string().optional().describe('Primärquelle des POIs.'),
+  "sourceUrl": zod.string().url().optional().describe('Direkter Nachweis des OSM-Objekts.'),
+  "checkedAt": zod.coerce.date().nullish().describe('Zeitpunkt des erfolgreichen Quellenabrufs.')
 }).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
 export const GetPoisResponse = zod.array(GetPoisResponseItem)
 
@@ -275,7 +394,10 @@ export const GetPeakPoisResponseItem = zod.object({
 }).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).'),
   "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
   "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.'),
-  "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.')
+  "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.'),
+  "source": zod.string().optional().describe('Primärquelle des POIs.'),
+  "sourceUrl": zod.string().url().optional().describe('Direkter Nachweis des OSM-Objekts.'),
+  "checkedAt": zod.coerce.date().nullish().describe('Zeitpunkt des erfolgreichen Quellenabrufs.')
 }).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
 export const GetPeakPoisResponse = zod.array(GetPeakPoisResponseItem)
 
@@ -446,6 +568,25 @@ export const GetTransportStationboardResponse = zod.object({
 
 
 /**
+ * Liefert den naechsten oeffentlichen Verkehrshalt zu einem GPS-Punkt. Die Koordinaten werden fuer eine anschliessende Fusswegroute verwendet.
+ * @summary Naechsten Verkehrshalt mit Koordinaten finden
+ */
+export const GetTransportNearbyQueryParams = zod.object({
+  "lat": zod.coerce.number(),
+  "lng": zod.coerce.number()
+})
+
+export const GetTransportNearbyResponse = zod.object({
+  "station": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "lat": zod.number(),
+  "lng": zod.number()
+}).nullable()
+})
+
+
+/**
  * Liefert aktuelle Wetterdaten (Open-Meteo, ohne API-Key) fuer den Ausgangspunkt einer Route sowie einen daraus abgeleiteten Wegzustand-Hinweis (kein offizieller Sperr-/Lawinenstatus, sondern eine Einschaetzung aus Niederschlag, Schneehoehe, Temperatur und Boeen).
  * @summary Live-Wetter und daraus abgeleiteter Wegzustand fuer einen Punkt
  */
@@ -581,7 +722,190 @@ export const GetCustomRouteResponse = zod.object({
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
-  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
+})
+
+
+/**
+ * Verbindet zwei bis zwoelf geordnete Wegpunkte ueber begehbare Wege (Valhalla pedestrian) und reichert die Route mit swisstopo-Hoehenmetern, SAC-Grad und Saison-Heuristik an. Die Route wird nicht persistiert.
+ * @summary Berechnet eine Wanderroute ueber mehrere selbst gesetzte Wegpunkte
+ */
+export const planCustomRouteBodyPointsItemLatMin = 45;
+export const planCustomRouteBodyPointsItemLatMax = 49;
+
+export const planCustomRouteBodyPointsItemLngMin = 5;
+export const planCustomRouteBodyPointsItemLngMax = 11;
+
+export const planCustomRouteBodyPointsMin = 2;
+export const planCustomRouteBodyPointsMax = 12;
+
+
+
+export const PlanCustomRouteBody = zod.object({
+  "points": zod.array(zod.object({
+  "lat": zod.number().min(planCustomRouteBodyPointsItemLatMin).max(planCustomRouteBodyPointsItemLatMax),
+  "lng": zod.number().min(planCustomRouteBodyPointsItemLngMin).max(planCustomRouteBodyPointsItemLngMax)
+})).min(planCustomRouteBodyPointsMin).max(planCustomRouteBodyPointsMax)
+})
+
+export const PlanCustomRouteResponse = zod.object({
+  "id": zod.string(),
+  "sagaId": zod.string(),
+  "name": zod.string(),
+  "region": zod.string(),
+  "distanceKm": zod.number().describe('Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation).'),
+  "distanceTagKm": zod.number().describe('Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt.'),
+  "ascentM": zod.number(),
+  "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
+  "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
+  "minutes": zod.number(),
+  "sac": zod.string(),
+  "sacSource": zod.string().nullish().describe('Herkunft des SAC-Werts; osm_exact ist ein exakter OSM-Tag, swisstopo_derived eine amtliche Ableitung, unknown unbekannt.'),
+  "schweizMobilCondition": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Kondition (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
+  "schweizMobilTechnique": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
+  "terrain": zod.string(),
+  "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
+  "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
+  "technicalDifficulty": zod.string().nullish(),
+  "coordinates": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
+  "featured": zod.boolean(),
+  "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
+  "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
+})
+
+
+/**
+ * Nimmt eine vereinfachte, geordnete Freihandlinie entgegen und mappt sie mit Valhalla pedestrian auf reale Wanderwege. Die Route wird nicht persistiert.
+ * @summary Mappt eine frei gezeichnete Linie auf begehbare Wege
+ */
+export const planDrawnRouteBodyPointsItemLatMin = 45;
+export const planDrawnRouteBodyPointsItemLatMax = 49;
+
+export const planDrawnRouteBodyPointsItemLngMin = 5;
+export const planDrawnRouteBodyPointsItemLngMax = 11;
+
+export const planDrawnRouteBodyPointsMin = 2;
+export const planDrawnRouteBodyPointsMax = 100;
+
+
+
+export const PlanDrawnRouteBody = zod.object({
+  "points": zod.array(zod.object({
+  "lat": zod.number().min(planDrawnRouteBodyPointsItemLatMin).max(planDrawnRouteBodyPointsItemLatMax),
+  "lng": zod.number().min(planDrawnRouteBodyPointsItemLngMin).max(planDrawnRouteBodyPointsItemLngMax)
+})).min(planDrawnRouteBodyPointsMin).max(planDrawnRouteBodyPointsMax)
+})
+
+export const PlanDrawnRouteResponse = zod.object({
+  "id": zod.string(),
+  "sagaId": zod.string(),
+  "name": zod.string(),
+  "region": zod.string(),
+  "distanceKm": zod.number().describe('Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation).'),
+  "distanceTagKm": zod.number().describe('Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt.'),
+  "ascentM": zod.number(),
+  "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
+  "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
+  "minutes": zod.number(),
+  "sac": zod.string(),
+  "sacSource": zod.string().nullish().describe('Herkunft des SAC-Werts; osm_exact ist ein exakter OSM-Tag, swisstopo_derived eine amtliche Ableitung, unknown unbekannt.'),
+  "schweizMobilCondition": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Kondition (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
+  "schweizMobilTechnique": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
+  "terrain": zod.string(),
+  "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
+  "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
+  "technicalDifficulty": zod.string().nullish(),
+  "coordinates": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
+  "featured": zod.boolean(),
+  "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
+  "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
 })
 
 
@@ -625,7 +949,32 @@ export const ImportGpxRouteResponse = zod.object({
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
   "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
   "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
-  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.'),
+  "themeKeys": zod.array(zod.string()).optional().describe('Serverseitig geprüfte Themenbelege der Route.'),
+  "qualityStatus": zod.string().optional().describe('Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified.\n'),
+  "qualityCheckedAt": zod.coerce.date().nullish().describe('Zeitpunkt des letzten erfolgreichen Qualitätschecks.'),
+  "sources": zod.object({
+  "route": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "geometry": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "distance": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "ascent": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+}),
+  "difficulty": zod.object({
+  "label": zod.string(),
+  "url": zod.string().url().nullable()
+})
+}).optional()
 })
 
 
@@ -672,12 +1021,17 @@ export const GetRouteSagaResponse = zod.object({
  * Liefert das Profil des authentifizierten Nutzers. 404, wenn nach dem Onboarding noch kein Profil angelegt wurde.
  * @summary Eigenes Profil laden
  */
+export const getMyProfileResponseBioMax = 160;
+
 export const getMyProfileResponseNavAnnouncementsEnabledDefault = true;
 export const getMyProfileResponsePendingPackRewardsDefault = 0;
 
 export const GetMyProfileResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(getMyProfileResponseBioMax).nullish(),
+  "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
+  "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
@@ -697,6 +1051,8 @@ export const GetMyProfileResponse = zod.object({
  */
 export const saveMyProfileBodyNameMin = 2;
 
+export const saveMyProfileBodyBioMax = 160;
+
 
 export const saveMyProfileBodyLanguageMin = 2;
 
@@ -704,6 +1060,8 @@ export const saveMyProfileBodyNavAnnouncementsEnabledDefault = true;
 
 export const SaveMyProfileBody = zod.object({
   "name": zod.string().min(saveMyProfileBodyNameMin),
+  "bio": zod.string().max(saveMyProfileBodyBioMax).nullish(),
+  "dateOfBirth": zod.coerce.date().nullish(),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
   "homeCanton": zod.string().min(1).optional(),
   "language": zod.string().min(saveMyProfileBodyLanguageMin),
@@ -711,12 +1069,17 @@ export const SaveMyProfileBody = zod.object({
   "navAnnouncementsEnabled": zod.boolean().default(saveMyProfileBodyNavAnnouncementsEnabledDefault).describe('Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.')
 })
 
+export const saveMyProfileResponseBioMax = 160;
+
 export const saveMyProfileResponseNavAnnouncementsEnabledDefault = true;
 export const saveMyProfileResponsePendingPackRewardsDefault = 0;
 
 export const SaveMyProfileResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(saveMyProfileResponseBioMax).nullish(),
+  "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
+  "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
@@ -731,6 +1094,33 @@ export const SaveMyProfileResponse = zod.object({
 
 
 /**
+ * @summary Eigenes Profilbild hochladen
+ */
+export const uploadMyAvatarResponseBioMax = 160;
+
+export const uploadMyAvatarResponseNavAnnouncementsEnabledDefault = true;
+export const uploadMyAvatarResponsePendingPackRewardsDefault = 0;
+
+export const UploadMyAvatarResponse = zod.object({
+  "id": zod.string().describe('Clerk-Benutzer-ID'),
+  "name": zod.string(),
+  "bio": zod.string().max(uploadMyAvatarResponseBioMax).nullish(),
+  "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
+  "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
+  "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
+  "homeCanton": zod.string().optional(),
+  "language": zod.string(),
+  "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "navAnnouncementsEnabled": zod.boolean().default(uploadMyAvatarResponseNavAnnouncementsEnabledDefault).describe('Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.'),
+  "premium": zod.boolean(),
+  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
+  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").'),
+  "pendingPackRewards": zod.number().default(uploadMyAvatarResponsePendingPackRewardsDefault).describe('Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen. Wird > 0, sobald ein eingeladener Freund Premium kauft.')
+})
+
+
+/**
  * Aktiviert oder deaktiviert Premium fuer den authentifizierten Nutzer.
  * @summary Premium-Status setzen
  */
@@ -738,12 +1128,17 @@ export const UpdateMyPremiumBody = zod.object({
   "premium": zod.boolean()
 })
 
+export const updateMyPremiumResponseBioMax = 160;
+
 export const updateMyPremiumResponseNavAnnouncementsEnabledDefault = true;
 export const updateMyPremiumResponsePendingPackRewardsDefault = 0;
 
 export const UpdateMyPremiumResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(updateMyPremiumResponseBioMax).nullish(),
+  "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
+  "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
@@ -761,12 +1156,17 @@ export const UpdateMyPremiumResponse = zod.object({
  * Prueft serverseitig bei RevenueCat, ob der authentifizierte Nutzer (Customer-ID = Nutzer-ID) ein aktives "premium"-Entitlement besitzt, und setzt das Premium-Flag entsprechend. Nur Upgrades werden uebernommen; ein fehlendes Entitlement fuehrt NICHT zum Entzug (Downgrade bleibt Self-Service ueber PATCH /me/premium).
  * @summary Premium-Status verifiziert mit RevenueCat abgleichen
  */
+export const syncMyPremiumResponseBioMax = 160;
+
 export const syncMyPremiumResponseNavAnnouncementsEnabledDefault = true;
 export const syncMyPremiumResponsePendingPackRewardsDefault = 0;
 
 export const SyncMyPremiumResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(syncMyPremiumResponseBioMax).nullish(),
+  "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
+  "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
@@ -825,12 +1225,17 @@ export const ClaimKantonspackResponse = zod.object({
  * Markiert die einmalige kostenlose Wanderung des authentifizierten Nutzers als verbraucht. Wird beim Start der ersten Wanderung aufgerufen (nicht-Premium-Nutzer).
  * @summary Kostenlose Wanderung verbrauchen
  */
+export const consumeMyFreeHikeResponseBioMax = 160;
+
 export const consumeMyFreeHikeResponseNavAnnouncementsEnabledDefault = true;
 export const consumeMyFreeHikeResponsePendingPackRewardsDefault = 0;
 
 export const ConsumeMyFreeHikeResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(consumeMyFreeHikeResponseBioMax).nullish(),
+  "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
+  "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
@@ -878,12 +1283,17 @@ export const ClaimPackRewardBody = zod.object({
   "packSlug": zod.string().min(1)
 })
 
+export const claimPackRewardResponseBioMax = 160;
+
 export const claimPackRewardResponseNavAnnouncementsEnabledDefault = true;
 export const claimPackRewardResponsePendingPackRewardsDefault = 0;
 
 export const ClaimPackRewardResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
+  "bio": zod.string().max(claimPackRewardResponseBioMax).nullish(),
+  "avatarUrl": zod.string().nullish().describe('Privater Objektpfad des Profilbilds'),
+  "dateOfBirth": zod.coerce.date().nullish().describe('Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben'),
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
@@ -1074,5 +1484,477 @@ export const EndSafetyShareParams = zod.object({
 })
 
 export const EndSafetyShareResponse = zod.unknown()
+
+
+/**
+ * @summary Echten SwissTopo-DTM-Korridor entlang einer Route laden
+ */
+export const createTerrainCorridorBodyGeometryMin = 2;
+export const createTerrainCorridorBodyGeometryMax = 500;
+
+export const createTerrainCorridorBodyOptionsRowsDefault = 32;
+export const createTerrainCorridorBodyOptionsRowsMin = 12;
+export const createTerrainCorridorBodyOptionsRowsMax = 80;
+
+export const createTerrainCorridorBodyOptionsColumnsDefault = 9;
+export const createTerrainCorridorBodyOptionsColumnsMin = 5;
+export const createTerrainCorridorBodyOptionsColumnsMax = 13;
+
+export const createTerrainCorridorBodyOptionsHalfWidthMDefault = 500;
+export const createTerrainCorridorBodyOptionsHalfWidthMMin = 100;
+export const createTerrainCorridorBodyOptionsHalfWidthMMax = 1500;
+
+
+
+export const CreateTerrainCorridorBody = zod.object({
+  "geometry": zod.array(zod.tuple([zod.number(),
+zod.number()])).min(createTerrainCorridorBodyGeometryMin).max(createTerrainCorridorBodyGeometryMax),
+  "options": zod.object({
+  "rows": zod.number().min(createTerrainCorridorBodyOptionsRowsMin).max(createTerrainCorridorBodyOptionsRowsMax).default(createTerrainCorridorBodyOptionsRowsDefault),
+  "columns": zod.number().min(createTerrainCorridorBodyOptionsColumnsMin).max(createTerrainCorridorBodyOptionsColumnsMax).default(createTerrainCorridorBodyOptionsColumnsDefault),
+  "halfWidthM": zod.number().min(createTerrainCorridorBodyOptionsHalfWidthMMin).max(createTerrainCorridorBodyOptionsHalfWidthMMax).default(createTerrainCorridorBodyOptionsHalfWidthMDefault)
+}).optional()
+})
+
+export const CreateTerrainCorridorResponse = zod.object({
+  "version": zod.number(),
+  "source": zod.literal("SwissTopo DTM corridor profiles"),
+  "rows": zod.number(),
+  "columns": zod.number(),
+  "halfWidthM": zod.number(),
+  "routeLengthM": zod.number(),
+  "origin": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "bounds": zod.object({
+  "north": zod.number(),
+  "south": zod.number(),
+  "east": zod.number(),
+  "west": zod.number()
+}),
+  "fetchedAt": zod.number(),
+  "grid": zod.array(zod.array(zod.object({
+  "lat": zod.number(),
+  "lng": zod.number(),
+  "elevationM": zod.number().nullable()
+})))
+})
+
+
+/**
+ * @summary Rechteckiges SwissTopo-DTM-Gelände um eine vollständige Route laden
+ */
+export const createTerrainAreaBodyGeometryMin = 2;
+export const createTerrainAreaBodyGeometryMax = 500;
+
+export const createTerrainAreaBodyOptionsRowsDefault = 24;
+export const createTerrainAreaBodyOptionsRowsMin = 12;
+export const createTerrainAreaBodyOptionsRowsMax = 40;
+
+export const createTerrainAreaBodyOptionsColumnsDefault = 24;
+export const createTerrainAreaBodyOptionsColumnsMin = 12;
+export const createTerrainAreaBodyOptionsColumnsMax = 40;
+
+export const createTerrainAreaBodyOptionsPaddingMDefault = 2000;
+export const createTerrainAreaBodyOptionsPaddingMMin = 500;
+export const createTerrainAreaBodyOptionsPaddingMMax = 5000;
+
+export const createTerrainAreaBodyOptionsViewportAspectDefault = 0.4615384615;
+export const createTerrainAreaBodyOptionsViewportAspectMin = 0.4;
+export const createTerrainAreaBodyOptionsViewportAspectMax = 1;
+
+
+
+export const CreateTerrainAreaBody = zod.object({
+  "geometry": zod.array(zod.tuple([zod.number(),
+zod.number()])).min(createTerrainAreaBodyGeometryMin).max(createTerrainAreaBodyGeometryMax),
+  "options": zod.object({
+  "rows": zod.number().min(createTerrainAreaBodyOptionsRowsMin).max(createTerrainAreaBodyOptionsRowsMax).default(createTerrainAreaBodyOptionsRowsDefault),
+  "columns": zod.number().min(createTerrainAreaBodyOptionsColumnsMin).max(createTerrainAreaBodyOptionsColumnsMax).default(createTerrainAreaBodyOptionsColumnsDefault),
+  "paddingM": zod.number().min(createTerrainAreaBodyOptionsPaddingMMin).max(createTerrainAreaBodyOptionsPaddingMMax).default(createTerrainAreaBodyOptionsPaddingMDefault),
+  "viewportAspect": zod.number().min(createTerrainAreaBodyOptionsViewportAspectMin).max(createTerrainAreaBodyOptionsViewportAspectMax).default(createTerrainAreaBodyOptionsViewportAspectDefault)
+}).optional()
+})
+
+export const CreateTerrainAreaResponse = zod.object({
+  "version": zod.number(),
+  "source": zod.literal("SwissTopo DTM rectangular route area"),
+  "rows": zod.number(),
+  "columns": zod.number(),
+  "paddingM": zod.number(),
+  "viewportAspect": zod.number(),
+  "origin": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "bounds": zod.object({
+  "north": zod.number(),
+  "south": zod.number(),
+  "east": zod.number(),
+  "west": zod.number()
+}),
+  "fetchedAt": zod.number(),
+  "grid": zod.array(zod.array(zod.object({
+  "lat": zod.number(),
+  "lng": zod.number(),
+  "elevationM": zod.number().nullable()
+})))
+})
+
+
+/**
+ * @summary Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
+ */
+export const GetMeetupsQueryParams = zod.object({
+  "from": zod.date().optional(),
+  "routeId": zod.coerce.string().optional()
+})
+
+export const GetMeetupsResponse = zod.object({
+  "meetups": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "maxParticipants": zod.number(),
+  "participantCount": zod.number(),
+  "pace": zod.string(),
+  "note": zod.string().nullish(),
+  "organizerName": zod.string(),
+  "joined": zod.boolean(),
+  "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
+  "cancellationReason": zod.string().nullish(),
+  "cancelledAt": zod.coerce.date().nullish(),
+  "isOrganizer": zod.boolean()
+}))
+})
+
+
+/**
+ * @summary Treffpunkt fuer eine Route erstellen
+ */
+export const createMeetupBodyMaxParticipantsDefault = 8;
+export const createMeetupBodyMaxParticipantsMin = 2;
+export const createMeetupBodyMaxParticipantsMax = 30;
+
+export const createMeetupBodyPaceDefault = `gemuetlich`;
+export const createMeetupBodyNoteMax = 500;
+
+
+
+export const CreateMeetupBody = zod.object({
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "maxParticipants": zod.number().min(createMeetupBodyMaxParticipantsMin).max(createMeetupBodyMaxParticipantsMax).default(createMeetupBodyMaxParticipantsDefault),
+  "pace": zod.enum(['gemuetlich', 'normal', 'sportlich']).default(createMeetupBodyPaceDefault),
+  "note": zod.string().max(createMeetupBodyNoteMax).nullish()
+})
+
+export const CreateMeetupResponse = zod.object({
+  "id": zod.string().uuid(),
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "maxParticipants": zod.number(),
+  "participantCount": zod.number(),
+  "pace": zod.string(),
+  "note": zod.string().nullish(),
+  "organizerName": zod.string(),
+  "joined": zod.boolean(),
+  "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
+  "cancellationReason": zod.string().nullish(),
+  "cancelledAt": zod.coerce.date().nullish(),
+  "isOrganizer": zod.boolean()
+})
+
+
+/**
+ * @summary Treffpunkt mit Teilnehmern laden
+ */
+export const GetMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const getMeetupResponseTwoParticipantsItemAgeMin = 13;
+export const getMeetupResponseTwoParticipantsItemAgeMax = 120;
+
+export const getMeetupResponseTwoParticipantsItemBioMax = 160;
+
+export const getMeetupResponseTwoParticipantsItemRankLevelMin = 0;
+export const getMeetupResponseTwoParticipantsItemRankLevelMax = 9;
+
+export const getMeetupResponseTwoMessagesItemMessageTextMax = 500;
+
+
+
+export const GetMeetupResponse = zod.object({
+  "id": zod.string().uuid(),
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "maxParticipants": zod.number(),
+  "participantCount": zod.number(),
+  "pace": zod.string(),
+  "note": zod.string().nullish(),
+  "organizerName": zod.string(),
+  "joined": zod.boolean(),
+  "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
+  "cancellationReason": zod.string().nullish(),
+  "cancelledAt": zod.coerce.date().nullish(),
+  "isOrganizer": zod.boolean()
+}).and(zod.object({
+  "participants": zod.array(zod.object({
+  "userId": zod.string().optional().describe('Nur für authentifizierte, bereits beigetretene Teilnehmer sichtbar.'),
+  "avatarUrl": zod.string().nullish(),
+  "age": zod.number().min(getMeetupResponseTwoParticipantsItemAgeMin).max(getMeetupResponseTwoParticipantsItemAgeMax).nullish(),
+  "name": zod.string(),
+  "joinedAt": zod.coerce.date(),
+  "bio": zod.string().max(getMeetupResponseTwoParticipantsItemBioMax).nullish(),
+  "attendanceStatus": zod.enum(['confirmed', 'delayed', 'arrived']).optional(),
+  "delayMinutes": zod.number().nullish(),
+  "statusUpdatedAt": zod.coerce.date().optional(),
+  "rankLevel": zod.number().min(getMeetupResponseTwoParticipantsItemRankLevelMin).max(getMeetupResponseTwoParticipantsItemRankLevelMax).optional().describe('Server-verifizierter Gruppenrang für Mitwandernde; nur für Teilnehmende oder den Organisator sichtbar.'),
+  "groupAchievements": zod.array(zod.object({
+  "id": zod.string(),
+  "threshold": zod.number(),
+  "title": zod.string()
+})).optional().describe('Nur für Teilnehmende oder den Organisator sichtbar.')
+})),
+  "messages": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "senderUserId": zod.string(),
+  "senderName": zod.string(),
+  "messageText": zod.string().max(getMeetupResponseTwoMessagesItemMessageTextMax),
+  "createdAt": zod.coerce.date()
+})).describe('Nachrichten sind nur für den Organisator und eingeschriebene Teilnehmende sichtbar.')
+}))
+
+
+/**
+ * @summary Eigenen Treffpunkt loeschen
+ */
+export const DeleteMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const DeleteMeetupResponse = zod.void()
+
+
+/**
+ * @summary Eigenen Treffpunkt absagen
+ */
+export const CancelMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const cancelMeetupBodyReasonMin = 3;
+export const cancelMeetupBodyReasonMax = 300;
+
+
+
+export const CancelMeetupBody = zod.object({
+  "reason": zod.string().min(cancelMeetupBodyReasonMin).max(cancelMeetupBodyReasonMax)
+})
+
+export const CancelMeetupResponse = zod.void()
+
+
+/**
+ * @summary Treffpunkt starten
+ */
+export const StartMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const StartMeetupResponse = zod.object({
+  "status": zod.enum(['in_progress', 'completed'])
+})
+
+
+/**
+ * @summary Treffpunkt abschliessen
+ */
+export const CompleteMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const CompleteMeetupResponse = zod.object({
+  "status": zod.enum(['in_progress', 'completed'])
+})
+
+
+/**
+ * @summary Nachricht an Treffpunktteilnehmer senden
+ */
+export const SendMeetupMessageParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const sendMeetupMessageBodyMessageTextMax = 500;
+
+
+
+export const SendMeetupMessageBody = zod.object({
+  "messageText": zod.string().min(1).max(sendMeetupMessageBodyMessageTextMax)
+})
+
+export const SendMeetupMessageResponse = zod.object({
+  "sent": zod.boolean()
+})
+
+
+/**
+ * @summary Bei einem Treffpunkt mitwandern
+ */
+export const JoinMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const JoinMeetupResponse = zod.object({
+  "joined": zod.boolean()
+})
+
+
+/**
+ * @summary Teilnahme an einem Treffpunkt aufheben
+ */
+export const LeaveMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const LeaveMeetupResponse = zod.object({
+  "joined": zod.boolean()
+})
+
+
+/**
+ * @summary Eigenen Anwesenheitsstatus aktualisieren
+ */
+export const UpdateMeetupAttendanceParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateMeetupAttendanceBodyDelayMinutesMin = 5;
+export const updateMeetupAttendanceBodyDelayMinutesMax = 180;
+
+
+
+export const UpdateMeetupAttendanceBody = zod.object({
+  "status": zod.enum(['confirmed', 'delayed', 'arrived']),
+  "delayMinutes": zod.number().min(updateMeetupAttendanceBodyDelayMinutesMin).max(updateMeetupAttendanceBodyDelayMinutesMax).nullish()
+})
+
+export const UpdateMeetupAttendanceResponse = zod.object({
+  "attendanceStatus": zod.enum(['confirmed', 'delayed', 'arrived']),
+  "delayMinutes": zod.number().nullable(),
+  "statusUpdatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Sicheren Treffpunkt-Link erstellen
+ */
+export const CreateMeetupShareParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const CreateMeetupShareResponse = zod.object({
+  "token": zod.string(),
+  "path": zod.string(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Öffentlichen Treffpunkt-Link laden
+ */
+export const GetSharedMeetupParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const GetSharedMeetupResponse = zod.object({
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "participantCount": zod.number(),
+  "maxParticipants": zod.number(),
+  "status": zod.enum(['scheduled', 'cancelled']),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Treffpunkt oder Nutzer melden
+ */
+export const ReportMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const reportMeetupBodyNoteMax = 500;
+
+
+
+export const ReportMeetupBody = zod.object({
+  "reason": zod.enum(['safety', 'harassment', 'spam', 'other']),
+  "reportedUserId": zod.string().optional(),
+  "note": zod.string().max(reportMeetupBodyNoteMax).optional()
+})
+
+export const ReportMeetupResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Organisator eines Treffpunkts blockieren
+ */
+export const BlockMeetupOrganizerParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const BlockMeetupOrganizerResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Nutzer für Treffpunkte blockieren
+ */
+export const BlockMeetupUserParams = zod.object({
+  "userId": zod.coerce.string()
+})
+
+export const BlockMeetupUserResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Nutzerblockierung aufheben
+ */
+export const UnblockMeetupUserParams = zod.object({
+  "userId": zod.coerce.string()
+})
+
+export const UnblockMeetupUserResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Teilnehmer als Organisator entfernen
+ */
+export const RemoveMeetupParticipantParams = zod.object({
+  "id": zod.coerce.string().uuid(),
+  "userId": zod.coerce.string()
+})
+
+export const RemoveMeetupParticipantResponse = zod.void()
 
 

@@ -94,6 +94,11 @@ export interface RouteSearchFilter {
   wheelchairAccessible?: boolean;
 }
 
+function sacLevel(sac: string | null | undefined): number | null {
+  const match = /T\s*([1-6])/i.exec(sac ?? "");
+  return match ? Number(match[1]) : null;
+}
+
 function filterCachedRoutes(routes: HikingRoute[], filter?: RouteSearchFilter): HikingRoute[] {
   if (!filter) return routes;
   const inRange = (value: number | null | undefined, min?: number, max?: number) =>
@@ -102,14 +107,15 @@ function filterCachedRoutes(routes: HikingRoute[], filter?: RouteSearchFilter): 
   let result = routes.filter((r) =>
     inRange(r.distanceKm, filter.distMin, filter.distMax) &&
     inRange(r.ascentM, filter.ascMin, filter.ascMax) &&
-    inRange(r.sac ? Number.parseFloat(r.sac.replace(",", ".")) : null, filter.diffMin, filter.diffMax)
+    inRange(sacLevel(r.sac), filter.diffMin, filter.diffMax)
   );
   if (filter.familyFriendly) result = result.filter((r) => r.familyFriendly === true);
   if (filter.wheelchairAccessible) result = result.filter((r) => r.wheelchairAccessible === true);
   if (filter.ganzjaehrigNur) {
     result = result.filter((r) =>
       (r.maxElevationM ?? 0) < 1800 &&
-      (!r.sac || Number.parseFloat(r.sac.replace(",", ".")) <= 3)
+      sacLevel(r.sac) != null &&
+      sacLevel(r.sac)! <= 3
     );
   }
   if (filter.nearLat != null && filter.nearLng != null) {
@@ -194,6 +200,9 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
   // Laufende Server-Anfragen bündeln, damit parallel geöffnete Screens
   // (Route + Sage) nicht dieselbe Abfrage doppelt anstoßen.
   const sagaInFlight = useRef<Map<string, Promise<Saga | undefined>>>(new Map());
+  // Initiales Laden und ein direkt danach gedrückter Suchbutton dürfen nicht
+  // denselben Kanton zweimal parallel anfragen.
+  const cantonRoutesInFlight = useRef<Map<string, Promise<CantonRoutesResult>>>(new Map());
 
   const persistDynamic = useCallback(() => {
     // customRoutes bewusst NICHT persistieren: sie sind pro Sitzung ephemer
@@ -293,9 +302,24 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       if (filter?.familyFriendly != null) params.familyFriendly = filter.familyFriendly;
       if (filter?.wheelchairAccessible != null) params.wheelchairAccessible = filter.wheelchairAccessible;
 
+      const requestKey = `${canton}:${JSON.stringify(params)}`;
+      const existing = cantonRoutesInFlight.current.get(requestKey);
+      if (existing) return existing;
+
+      const request = (async (): Promise<CantonRoutesResult> => {
       try {
-        // Suche stets an der externen Quelle ausloesen (kein Cache-Kurzschluss).
-        const res = await getCantonRoutes(canton, params);
+        // Die Routendaten liegen serverseitig im DB-Cache. Der Timeout schützt
+        // nur gegen eine festhängende mobile Verbindung; bei einem normalen
+        // Produktions-Request kommt die Antwort deutlich früher.
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12_000);
+        let res;
+        try {
+          // Suche stets an der externen Quelle ausloesen (kein Cache-Kurzschluss).
+          res = await getCantonRoutes(canton, params, { signal: controller.signal });
+        } finally {
+          clearTimeout(timeout);
+        }
         const routes = res as HikingRoute[];
         // Fuer die spaetere Id-Suche (getRoute/ensureRouteSaga) einen Index ueber
         // ALLE bisher gesehenen Routen des Kantons pflegen (Vereinigung nach Id),
@@ -323,6 +347,14 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
         }
         return { routes: [], source: "error" };
       }
+      })();
+      cantonRoutesInFlight.current.set(requestKey, request);
+      void request.finally(() => {
+        if (cantonRoutesInFlight.current.get(requestKey) === request) {
+          cantonRoutesInFlight.current.delete(requestKey);
+        }
+      });
+      return request;
     },
     [persistDynamic],
   );

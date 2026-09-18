@@ -458,3 +458,101 @@ mtime_ms = 1788359920692
 storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/50d1c95d-3e66-4f2a-8df1-b5069cb06254/ddf5a2c1-6d72-454c-a89a-e98c12604234"
 storage_version_token = "1788360008164255"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "YU5tXmshD5LQ68DuzcnVq"
+uri = "file://artifacts/mobile/garmin/bin/SagaTrail.prg"
+type = "unspecified"
+title = "SagaTrail Garmin – Horizon PRG"
+description = "Signierte Connect-IQ-App mit rundem Horizon-Layout, einfachen Richtungspfeilen, Safe-Area und echtem Telefon-Audiozustand."
+logical_id = "f207f670-6bd8-4994-a28d-eb6b3a7745fa"
+content_hash = "sha256:5213936f81a1f9c3d42e452b74d3cce0c24712352011de1cccc34357f06bfc86"
+size = 113580
+mtime_ms = 1788982050764
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/f207f670-6bd8-4994-a28d-eb6b3a7745fa/35c122ac-98ad-4882-8c82-9831c49a0e9e"
+storage_version_token = "1788982077817736"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XRREg5oCmm2SRx8Tvgci9"
+uri = "file://artifacts/mobile/garmin/bin/SagaTrail-garmin-simulator.zip"
+type = "unspecified"
+title = "SagaTrail Garmin – Simulator-Paket"
+description = "ZIP mit signierter PRG und zugehöriger Debug-XML für den Garmin Device Simulator."
+logical_id = "ba735d78-e50d-4ae1-b73e-d4f12fae1175"
+content_hash = "sha256:37e76cbadfb0f55483c7cdbde4f861151df6bf179ae3703b6eb760c08f2a75b9"
+size = 63591
+mtime_ms = 1788982051512
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/ba735d78-e50d-4ae1-b73e-d4f12fae1175/b54fb601-7e33-4c83-90d5-df181bd7be05"
+storage_version_token = "1788982078473118"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "bPFD3VvRdiXBQp6HnD5P4"
+uri = "file://artifacts/mobile/garmin/bin/SagaTrail-prg.zip"
+type = "unspecified"
+title = "SagaTrail Garmin PRG – Safe-Area-Layout"
+description = "Neu signierter Build mit größerem Abstand auf STATUS und einer überall höher gesetzten, seitenabhängigen Fußzeile. ZIP enthält SagaTrail.prg."
+logical_id = "ba9c70ff-4df2-4959-9bf2-734dcdc10310"
+content_hash = "sha256:321560b06e41c298d5ee1c9ae089b141373454adc2c401a7c097aa3470c3bf3e"
+size = 53993
+mtime_ms = 1789056369606
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/ba9c70ff-4df2-4959-9bf2-734dcdc10310/88e6914d-afe6-41fc-9ed6-98e0f7f3f1a5"
+storage_version_token = "1789056376439204"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YsTFk6aZzilLxv2JR9HZr"
+uri = "file://artifacts/mobile/garmin/bin/SagaTrail-prg-safe-area-6723f206.zip"
+type = "unspecified"
+title = "SagaTrail Garmin PRG – Safe Area 6723f206"
+description = "Eindeutig neu benannter Download, damit kein alter Browsercache verwendet wird. Enthält die aktuelle SagaTrail.prg mit Safe-Area-Layout."
+logical_id = "eb411bdf-a968-4f9c-9ab0-437050d8dee2"
+content_hash = "sha256:321560b06e41c298d5ee1c9ae089b141373454adc2c401a7c097aa3470c3bf3e"
+size = 53993
+mtime_ms = 1789056559472
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/eb411bdf-a968-4f9c-9ab0-437050d8dee2/28543737-ca4d-4981-b4b6-0824dd2b5eab"
+storage_version_token = "1789056567566952"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xgpB4GL5h-wksAn43xhMJ"
+uri = "file://artifacts/mobile/garmin/bin/SagaTrail-prg-round-safe-364f9dfe.zip"
+type = "unspecified"
+title = "SagaTrail Garmin PRG – Round Safe 364f9dfe"
+description = "Neu signierter Build mit einzeiligen STATUS-Messwerten und deutlich höherer Fußzeile auf allen Seiten."
+logical_id = "531a3790-0266-45b0-8564-9b1401d7786d"
+content_hash = "sha256:3eb4dab361894d2b7d96211c67c2f46bb67094726b908c470a1152cb9dc3dfb4"
+size = 54007
+mtime_ms = 1789056746775
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/531a3790-0266-45b0-8564-9b1401d7786d/036d3ac7-0421-4c6f-b196-db88ad76ef56"
+storage_version_token = "1789056755669934"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4dhJLyoLubn3is-qKlQRo"
+uri = "file://artifacts/mobile/assets/images/theme-worlds/home-banner.jpg"
+type = "image"
+title = "SagaTrail Themenwelten-Banner 3:1"
+description = "Finales Banner im exakten Format 1024 × 342 Pixel; die Startseiten-Kachel verwendet ebenfalls 3:1."
+logical_id = "7790ca49-5d67-4587-ab99-0f43686ea03c"
+content_hash = "sha256:3bb54cc5cea312ad35abff76359b6f932220d8683fb0602bbcd5c9875e9150ef"
+size = 71109
+mtime_ms = 1789469716847
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/7790ca49-5d67-4587-ab99-0f43686ea03c/3cc0c0f7-de19-49b7-bfd8-027123aa1820"
+storage_version_token = "1789469790909007"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "UXayD10il3HIQYFFkzepS"
+uri = "file://artifacts/mobile/assets/images/meetup-banner.jpg"
+type = "image"
+title = "Treffpunkt-Banner mit gemischten Altersgruppen"
+description = "Finales 3:1-Banner mit jüngeren Erwachsenen, einer Familie und zwei aktiven Seniorinnen und Senioren."
+logical_id = "fef0c67f-29a5-4d27-9042-5ae809a3ff8a"
+content_hash = "sha256:ec83b13f7b5ead9f6c1807fc645a13f93d677883f8e33c651632b2f1ca4fa2d3"
+size = 85248
+mtime_ms = 1789470231591
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/fef0c67f-29a5-4d27-9042-5ae809a3ff8a/14929d16-ecdb-49d2-a22a-1d428d939058"
+storage_version_token = "1789470245182188"
+content_type = "image/jpeg"

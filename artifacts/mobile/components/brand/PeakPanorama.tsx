@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useCameraPermissions } from "expo-camera";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PanResponder,
   Platform,
@@ -9,17 +9,42 @@ import {
   Text,
   View,
 } from "react-native";
-import type { DimensionValue } from "react-native";
-import Svg, { Circle, G, Line, Polygon, Rect, Text as SvgText } from "react-native-svg";
+import Svg, {
+  Circle,
+  G,
+  Line,
+  Rect,
+  Text as SvgText,
+} from "react-native-svg";
 
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
+import { hapticMedium, hapticRigid, hapticSelection } from "@/lib/haptics";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
-import type { RecognitionJournalEntry } from "@/types";
+import type { LatLng, RecognitionJournalEntry } from "@/types";
+import { PeakTerrainGl } from "./PeakTerrainGl";
 
 const PANORAMA_VIEW_DEGREES = 140;
+const PANORAMA_TOTAL_DEGREES = 140;
+const PANORAMA_MAX_DRAG_DEGREES = 180;
+const PANORAMA_PROFILE_BATCH_SIZE = 8;
+const PANORAMA_PROFILE_LIMIT = 40;
+const CARDINAL_DIRECTIONS = [
+  { label: "N", bearing: 0 },
+  { label: "O", bearing: 90 },
+  { label: "S", bearing: 180 },
+  { label: "W", bearing: 270 },
+] as const;
+
+function signedAngleDifference(target: number, reference: number): number {
+  return ((target - reference + 540) % 360) - 180;
+}
+
+function normalizeBearing(degrees: number): number {
+  return ((degrees % 360) + 360) % 360;
+}
 
 export interface PeakPanoramaStrings {
   title: string;
@@ -34,38 +59,445 @@ export interface PeakPanoramaStrings {
   capture: string;
   cameraPermission: string;
   arUnavailable: string;
-  offlineData: string;
-  onlineData: string;
+  arTrackingStarting: string;
+  arTrackingLimited: string;
+  arTrackingPaused: string;
   heightUnknown: string;
-  dragPanorama: string;
-  elevationAngle: (angle: string) => string;
+  terrainModel: string;
+  terrainModelDetail: (radius: string) => string;
 }
 
 interface PeakPanoramaProps {
   peaks: PanoramaGipfel[];
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
+  observerPosition?: LatLng | null;
   heading: number | null;
   observerElevationM?: number | null;
   hasGps: boolean;
-  dataStatus?: {
-    source: "online" | "offline";
-    version?: number;
-    peakCount?: number;
-  } | null;
   strings: PeakPanoramaStrings;
   onCaptured?: (entry: RecognitionJournalEntry) => void | Promise<void>;
   onCameraOpen?: () => void;
+}
+
+type PanoramaProfilePoint = { distanceKm: number; altM: number };
+type PanoramaProfile = {
+  peakId: string;
+  profile: PanoramaProfilePoint[];
+  peakDistanceKm?: number;
+};
+type CachedPanoramaProfile = {
+  points: PanoramaProfilePoint[];
+  peakDistanceKm: number | null;
+};
+
+function profileCacheKey(
+  observerKey: string,
+  peakId: string,
+): string {
+  return `${observerKey}|${peakId}`;
+}
+
+function finiteProfile(
+  value: unknown,
+): PanoramaProfilePoint[] | null {
+  if (!Array.isArray(value)) return null;
+  const profile = value
+    .filter(
+      (point): point is { distanceKm: unknown; altM: unknown } =>
+        !!point && typeof point === "object" && "distanceKm" in point && "altM" in point,
+    )
+    .map((point) => ({
+      distanceKm: Number(point.distanceKm),
+      altM: Number(point.altM),
+    }))
+    .filter((point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM));
+  return profile.length >= 2 ? profile : null;
+}
+
+type MeshPoint = { x: number; y: number };
+type PanoramaMeshTriangle = {
+  points: string;
+  tone: "light" | "dark" | "bridge";
+};
+type PanoramaMeshPeak = {
+  peak: PanoramaGipfel;
+  profile: PanoramaProfilePoint[];
+  centerX: number;
+  points: MeshPoint[];
+  lowerPoints: MeshPoint[];
+  peakPoint: MeshPoint;
+};
+type PanoramaMesh = {
+  peaks: PanoramaMeshPeak[];
+  triangles: PanoramaMeshTriangle[];
+  terrainFaces: Array<{
+    points: string;
+    opacity: number;
+    tone: "light" | "dark";
+  }>;
+  terrainLines: Array<{ points: string; opacity: number }>;
+  elevationRangeM: { min: number; max: number } | null;
+  observerLineY: number | null;
+};
+type PanoramaAltitudeRange = { minM: number; maxM: number };
+
+function pointString(points: readonly MeshPoint[]): string {
+  return points.map((point) => `${point.x},${point.y}`).join(" ");
+}
+
+function projectElevationToY(
+  elevationM: number | null,
+  minElevationM: number,
+  maxElevationM: number,
+): number | null {
+  if (
+    elevationM == null ||
+    !Number.isFinite(elevationM) ||
+    !Number.isFinite(minElevationM) ||
+    !Number.isFinite(maxElevationM)
+  ) {
+    return null;
+  }
+  const topY = 44;
+  const baselineY = 274;
+  const altitudeSpan = Math.max(40, maxElevationM - minElevationM);
+  return Math.max(
+    topY,
+    Math.min(
+      baselineY,
+      baselineY -
+        ((elevationM - minElevationM) / altitudeSpan) * (baselineY - topY),
+    ),
+  );
+}
+
+function interpolateProfileAltitude(
+  points: readonly PanoramaProfilePoint[],
+  distanceKm: number,
+  fallbackAltM: number,
+): number {
+  if (points.length === 0) return fallbackAltM;
+  if (distanceKm <= points[0].distanceKm) return points[0].altM;
+  for (let index = 1; index < points.length; index += 1) {
+    const previous = points[index - 1];
+    const next = points[index];
+    if (!previous || !next || distanceKm > next.distanceKm) continue;
+    const span = Math.max(0.000001, next.distanceKm - previous.distanceKm);
+    const fraction = (distanceKm - previous.distanceKm) / span;
+    return previous.altM + (next.altM - previous.altM) * fraction;
+  }
+  return points[points.length - 1]?.altM ?? fallbackAltM;
+}
+
+function buildTerrainSurface(
+  terrainModel: LocalTerrainModel,
+  terrainBearing: (bearing: number) => number | null,
+): {
+  faces: Array<{
+    points: string;
+    opacity: number;
+    tone: "light" | "dark";
+  }>;
+  lines: Array<{ points: string; opacity: number }>;
+  elevationRangeM: { min: number; max: number } | null;
+} {
+  const allSamples = terrainModel.rays.flatMap((ray) =>
+    ray.samples.filter(
+      (sample) => Number.isFinite(sample.distanceM) && Number.isFinite(sample.elevationM),
+    ),
+  );
+  if (allSamples.length === 0) {
+    return { faces: [], lines: [], elevationRangeM: null };
+  }
+
+  const minM = Math.min(...allSamples.map((sample) => sample.elevationM));
+  const maxM = Math.max(...allSamples.map((sample) => sample.elevationM));
+  const observerElevation =
+    terrainModel.observerElevationM ?? allSamples[0]?.elevationM ?? minM;
+  const minRelative = minM - observerElevation;
+  const maxRelative = maxM - observerElevation;
+  const span = Math.max(40, maxRelative - minRelative);
+  const topY = 44;
+  const baselineY = 274;
+  const rays = terrainModel.rays
+    .map((ray) => {
+      const bearing = terrainBearing(ray.bearingDeg);
+      const samples = ray.samples.filter(
+        (sample) => Number.isFinite(sample.distanceM) && Number.isFinite(sample.elevationM),
+      );
+      if (bearing == null || samples.length === 0) return null;
+      return {
+        bearing,
+        samples: samples.sort((a, b) => a.distanceM - b.distanceM),
+      };
+    })
+    .filter((ray): ray is { bearing: number; samples: LocalTerrainModel["rays"][number]["samples"] } =>
+      ray !== null,
+    )
+    .sort((a, b) => a.bearing - b.bearing);
+
+  const maxAngularGap = 360 / Math.max(8, terrainModel.sectors) * 1.8;
+  const ringCount = Math.max(...rays.map((ray) => ray.samples.length), 0);
+  const projectSample = (
+    ray: (typeof rays)[number],
+    ringIndex: number,
+  ): MeshPoint | null => {
+    const sample = ray.samples[ringIndex];
+    if (!sample) return null;
+    return {
+      x: 180 + (ray.bearing / PANORAMA_VIEW_DEGREES) * 360,
+      y: Math.max(
+        topY,
+        Math.min(
+          baselineY,
+          baselineY -
+            ((sample.elevationM - observerElevation - minRelative) / span) *
+              (baselineY - topY),
+        ),
+      ),
+    };
+  };
+  const faces: Array<{
+    points: string;
+    opacity: number;
+    tone: "light" | "dark";
+  }> = [];
+  for (let ringIndex = 1; ringIndex < ringCount - 1; ringIndex += 1) {
+    for (let rayIndex = 0; rayIndex < rays.length - 1; rayIndex += 1) {
+      const leftRay = rays[rayIndex];
+      const rightRay = rays[rayIndex + 1];
+      if (rightRay.bearing - leftRay.bearing > maxAngularGap) continue;
+      const nearLeft = projectSample(leftRay, ringIndex);
+      const nearRight = projectSample(rightRay, ringIndex);
+      const farLeft = projectSample(leftRay, ringIndex + 1);
+      const farRight = projectSample(rightRay, ringIndex + 1);
+      if (!nearLeft || !nearRight || !farLeft || !farRight) continue;
+      const leftRise = nearLeft.y - farLeft.y;
+      const rightRise = nearRight.y - farRight.y;
+      faces.push({
+        points: pointString([nearLeft, nearRight, farRight, farLeft]),
+        opacity:
+          0.38 +
+          (ringIndex / Math.max(1, ringCount - 2)) * 0.34,
+        tone: leftRise + rightRise >= 0 ? "light" : "dark",
+      });
+    }
+  }
+  const lines: Array<{ points: string; opacity: number }> = [];
+  for (let ringIndex = 1; ringIndex < ringCount; ringIndex += 1) {
+    const ringPoints = rays
+      .map((ray) => {
+        const sample = ray.samples[ringIndex];
+        if (!sample) return null;
+        return {
+          bearing: ray.bearing,
+          x: 180 + (ray.bearing / PANORAMA_VIEW_DEGREES) * 360,
+          y:
+            baselineY -
+            ((sample.elevationM - observerElevation - minRelative) / span) *
+              (baselineY - topY),
+        };
+      })
+      .filter(
+        (point): point is { bearing: number; x: number; y: number } => point !== null,
+      );
+    let current: { x: number; y: number }[] = [];
+    for (const point of ringPoints) {
+      const previous = current[current.length - 1];
+      const angularGap = previous
+        ? ((point.x - previous.x) / 360) * PANORAMA_VIEW_DEGREES
+        : 0;
+      if (previous && angularGap > maxAngularGap) {
+        if (current.length >= 2) {
+          lines.push({
+            points: pointString(current),
+            opacity: 0.18 + (ringIndex / Math.max(1, ringCount - 1)) * 0.5,
+          });
+        }
+        current = [];
+      }
+      current.push({ x: point.x, y: Math.max(topY, Math.min(baselineY, point.y)) });
+    }
+    if (current.length >= 2) {
+      lines.push({
+        points: pointString(current),
+        opacity: 0.18 + (ringIndex / Math.max(1, ringCount - 1)) * 0.5,
+      });
+    }
+  }
+  return { faces, lines, elevationRangeM: { min: minM, max: maxM } };
+}
+
+function buildPanoramaMesh(
+  entries: readonly {
+    peak: PanoramaGipfel;
+    profile: PanoramaProfilePoint[];
+    peakDistanceKm?: number | null;
+  }[],
+  displayBearing: (peak: PanoramaGipfel) => number | null,
+  observerElevationM: number | null,
+  fixedAltitudeRangeM: PanoramaAltitudeRange | null,
+  terrainModel: LocalTerrainModel | null,
+  terrainBearing: (bearing: number) => number | null,
+): PanoramaMesh {
+  const effectiveObserverElevationM = Number.isFinite(observerElevationM)
+    ? observerElevationM
+    : terrainModel?.observerElevationM ?? null;
+  const terrainSurface = terrainModel
+    ? buildTerrainSurface(terrainModel, terrainBearing)
+    : { faces: [], lines: [], elevationRangeM: null };
+  const terrainObserverLineY =
+    terrainSurface.elevationRangeM != null
+      ? projectElevationToY(
+          effectiveObserverElevationM,
+          terrainSurface.elevationRangeM.min,
+          terrainSurface.elevationRangeM.max,
+        )
+      : null;
+  const validEntries = entries
+    .map((entry) => ({
+      ...entry,
+      profile: entry.profile.filter(
+        (point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM),
+      ),
+      bearing: displayBearing(entry.peak),
+    }))
+    .filter(
+      (entry): entry is typeof entry & { bearing: number } =>
+        entry.profile.length >= 2 && entry.bearing != null,
+    );
+  if (validEntries.length === 0) {
+    return {
+      peaks: [],
+      triangles: [],
+      terrainFaces: terrainSurface.faces,
+      terrainLines: terrainSurface.lines,
+      elevationRangeM: terrainSurface.elevationRangeM,
+      observerLineY: terrainObserverLineY,
+    };
+  }
+
+  const allAltitudes = fixedAltitudeRangeM
+    ? []
+    : validEntries.flatMap((entry) => entry.profile.map((point) => point.altM));
+  const datum = Number.isFinite(effectiveObserverElevationM)
+    ? (effectiveObserverElevationM as number)
+    : fixedAltitudeRangeM?.minM
+      ?? allAltitudes[0]
+      ?? 0;
+  const minAltitude = fixedAltitudeRangeM
+    ? fixedAltitudeRangeM.minM - datum
+    : Math.min(...allAltitudes.map((altitude) => altitude - datum));
+  const maxAltitude = fixedAltitudeRangeM
+    ? fixedAltitudeRangeM.maxM - datum
+    : Math.max(...allAltitudes.map((altitude) => altitude - datum));
+  const altitudeSpan = Math.max(40, maxAltitude - minAltitude);
+  const baselineY = 274;
+  const topY = 44;
+  const sampleCount = 16;
+  const observerLineY =
+    terrainObserverLineY ??
+    projectElevationToY(
+      effectiveObserverElevationM,
+      minAltitude + datum,
+      maxAltitude + datum,
+    );
+
+  const meshPeaks = validEntries
+    .sort((a, b) => {
+      const aBearing = (a.bearing + 360) % 360;
+      const bBearing = (b.bearing + 360) % 360;
+      return aBearing - bBearing;
+    })
+    .map(({ peak, profile, peakDistanceKm, bearing }) => {
+      const points = profile
+        .slice()
+        .sort((a, b) => a.distanceKm - b.distanceKm)
+        .filter((point) => point.distanceKm >= 0);
+      const firstDistance = points[0]?.distanceKm ?? 0;
+      const lastDistance = points[points.length - 1]?.distanceKm ?? 0;
+      const distanceSpan = Math.max(0.001, lastDistance - firstDistance);
+      const measuredPeakDistance = Number.isFinite(peakDistanceKm)
+        ? Math.max(firstDistance, Math.min(lastDistance, peakDistanceKm as number))
+        : lastDistance;
+      const peakFraction = (measuredPeakDistance - firstDistance) / distanceSpan;
+      const centerX = 180 + (bearing / PANORAMA_VIEW_DEGREES) * 360;
+      const width = Math.max(48, Math.min(104, 108 - peak.distanceKm * 2.2));
+      const yForDistance = (targetDistance: number) => {
+        const sampledAltitude = interpolateProfileAltitude(points, targetDistance, datum);
+        const relativeAltitude = sampledAltitude - datum;
+        return Math.max(
+          topY,
+          Math.min(
+            baselineY,
+            baselineY -
+              ((relativeAltitude - minAltitude) / altitudeSpan) * (baselineY - topY),
+          ),
+        );
+      };
+      const sampled = Array.from({ length: sampleCount }, (_, index) => {
+        const fraction = index / (sampleCount - 1);
+        const targetDistance = firstDistance + fraction * distanceSpan;
+        return {
+          x: centerX - width / 2 + fraction * width,
+          y: yForDistance(targetDistance),
+        };
+      });
+      const depth = Math.max(4, Math.min(8, width * 0.24));
+      const peakPoint = {
+        x: centerX - width / 2 + peakFraction * width,
+        y: yForDistance(measuredPeakDistance),
+      };
+      return {
+        peak,
+        profile,
+        centerX,
+        points: sampled,
+        peakPoint,
+        lowerPoints: sampled.map((point) => ({
+          x: point.x,
+          y: Math.min(286, point.y + depth),
+        })),
+      };
+    });
+
+  const triangles: PanoramaMeshTriangle[] = [];
+  for (const meshPeak of meshPeaks) {
+    for (let index = 0; index < meshPeak.points.length - 1; index += 1) {
+      const a = meshPeak.points[index];
+      const b = meshPeak.points[index + 1];
+      const c = meshPeak.lowerPoints[index + 1];
+      const d = meshPeak.lowerPoints[index];
+      if (!a || !b || !c || !d) continue;
+      triangles.push(
+        { points: pointString([a, b, c]), tone: index % 2 === 0 ? "light" : "dark" },
+        { points: pointString([a, c, d]), tone: index % 2 === 0 ? "dark" : "light" },
+      );
+    }
+  }
+
+  return {
+    peaks: meshPeaks,
+    triangles,
+    terrainFaces: terrainSurface.faces,
+    terrainLines: terrainSurface.lines,
+    elevationRangeM: terrainSurface.elevationRangeM ?? {
+      min: minAltitude + datum,
+      max: maxAltitude + datum,
+    },
+    observerLineY,
+  };
 }
 
 export function PeakPanorama({
   peaks,
   terrainProfile = null,
   terrainModel = null,
+  observerPosition = null,
   heading,
   observerElevationM = null,
   hasGps,
-  dataStatus = null,
   strings,
   onCaptured,
   onCameraOpen,
@@ -75,55 +507,306 @@ export function PeakPanorama({
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [panOffsetDeg, setPanOffsetDeg] = useState(0);
+  const panOffsetValueRef = useRef(0);
+  const profileCacheRef = useRef<Map<string, CachedPanoramaProfile>>(new Map());
+  const profileRequestsRef = useRef<Set<string>>(new Set());
+  const profileObserverRef = useRef<LatLng | null>(null);
+  const fixedElevationRangeRef = useRef<PanoramaAltitudeRange | null>(null);
+  const [profileRevision, setProfileRevision] = useState(0);
+  const [profilesComplete, setProfilesComplete] = useState(false);
+  const [terrainGlReady, setTerrainGlReady] = useState(false);
+  const [terrainTextureMode, setTerrainTextureMode] = useState<
+    "map" | "satellite"
+  >("satellite");
+  const [terrainTextureLoadPercent, setTerrainTextureLoadPercent] = useState(0);
+  const [terrainLoadPercent, setTerrainLoadPercent] = useState(
+    terrainModel ? 100 : 8,
+  );
   const panStartOffsetRef = useRef(0);
+  panOffsetValueRef.current = panOffsetDeg;
+  const viewCenterBearing = normalizeBearing((heading ?? 0) + panOffsetDeg);
+
+  useEffect(() => {
+    if (terrainModel) {
+      setTerrainLoadPercent(100);
+      return;
+    }
+    if (!hasGps) {
+      setTerrainLoadPercent(0);
+      return;
+    }
+    setTerrainLoadPercent(8);
+    const timer = setInterval(() => {
+      setTerrainLoadPercent((current) =>
+        Math.min(92, current + Math.max(1, Math.round((92 - current) * 0.12))),
+      );
+    }, 300);
+    return () => clearInterval(timer);
+  }, [terrainModel, hasGps]);
+
+  useEffect(() => {
+    // Keep an already-created GL surface visible while a refreshed terrain
+    // model arrives. Reset only when there is no model to render at all.
+    if (!terrainModel) setTerrainGlReady(false);
+  }, [terrainModel]);
+
+  useEffect(() => {
+    if (!terrainModel) {
+      setTerrainTextureLoadPercent(0);
+      setTerrainGlReady(false);
+      return;
+    }
+    setTerrainGlReady(false);
+    setTerrainTextureLoadPercent(8);
+    const timer = setInterval(() => {
+      setTerrainTextureLoadPercent((current) =>
+        current >= 92
+          ? current
+          : Math.min(92, current + Math.max(1, Math.round((92 - current) * 0.12))),
+      );
+    }, 300);
+    return () => clearInterval(timer);
+  }, [terrainModel, terrainTextureMode]);
+
+  const displayBearing = (peak: PanoramaGipfel): number | null =>
+    peak.relativeBearingDeg == null
+      ? null
+      : signedAngleDifference(peak.relativeBearingDeg - panOffsetDeg, 0);
+  const terrainBearing = (bearing: number): number | null =>
+    heading == null ? null : signedAngleDifference(bearing - heading - panOffsetDeg, 0);
   const visiblePeaks =
     heading == null
       ? []
       : peaks
+          .map((peak) => ({ peak, relative: displayBearing(peak) }))
           .filter(
-            (peak) =>
-              peak.relativeBearingDeg != null &&
-              Math.abs(peak.relativeBearingDeg - panOffsetDeg) <= PANORAMA_VIEW_DEGREES / 2,
+            (entry): entry is { peak: PanoramaGipfel; relative: number } =>
+              entry.relative != null &&
+              Math.abs(entry.relative) <= PANORAMA_VIEW_DEGREES / 2,
           )
-          .slice(0, 4);
-  const panoramaHasHeight = visiblePeaks.some((peak) => peak.elevationAngleDeg != null);
+          .sort((a, b) => a.peak.distanceKm - b.peak.distanceKm)
+          .map(({ peak }) => peak);
+  const profileCandidates = useMemo(
+    () =>
+      peaks
+        .slice()
+        .sort((a, b) => a.distanceKm - b.distanceKm)
+        .slice(0, PANORAMA_PROFILE_LIMIT),
+    [peaks],
+  );
+  if (!profileObserverRef.current && observerPosition) {
+    profileObserverRef.current = observerPosition;
+  }
+  const profileObserver = profileObserverRef.current;
+  const observerKey = profileObserver
+    ? `${profileObserver.lat.toFixed(4)}:${profileObserver.lng.toFixed(4)}`
+    : null;
+  const profileCandidateIds = profileCandidates.map((peak) => peak.id).join("|");
+
+  useEffect(() => {
+    if (!profileObserver || !observerKey || profileCandidates.length === 0) return;
+    const requestObserver = profileObserver;
+    const requestObserverKey = observerKey;
+    let cancelled = false;
+    let activeController: AbortController | null = null;
+    setProfilesComplete(false);
+    fixedElevationRangeRef.current = null;
+    const apiBase = process.env.EXPO_PUBLIC_DOMAIN
+      ? `https://${process.env.EXPO_PUBLIC_DOMAIN.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+      : "";
+
+    const loadAllProfiles = async () => {
+      while (!cancelled) {
+        const missingPeaks = profileCandidates
+          .filter((peak) => {
+            const key = profileCacheKey(requestObserverKey, peak.id);
+            return !profileCacheRef.current.has(key) && !profileRequestsRef.current.has(key);
+          })
+          .slice(0, PANORAMA_PROFILE_BATCH_SIZE);
+        if (missingPeaks.length === 0) {
+          setProfilesComplete(true);
+          break;
+        }
+
+        const requestKeys = missingPeaks.map((peak) => profileCacheKey(requestObserverKey, peak.id));
+        requestKeys.forEach((key) => profileRequestsRef.current.add(key));
+        activeController =
+          typeof AbortController !== "undefined" ? new AbortController() : null;
+
+        try {
+          // Der erste Netzwerkaufruf passiert direkt; Schwenken kann diese
+          // Schleife nicht abbrechen, weil panOffset nicht in den Dependencies
+          // dieses Effekts liegt.
+          const response = await fetch(`${apiBase}/api/panorama-profiles`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: activeController?.signal,
+            body: JSON.stringify({
+              observer: { lat: requestObserver.lat, lng: requestObserver.lng },
+              peaks: missingPeaks.map((peak) => ({
+                id: peak.id,
+                lat: peak.lat,
+                lng: peak.lng,
+              })),
+            }),
+          });
+          if (!response.ok) break;
+          const payload = (await response.json()) as { profiles?: PanoramaProfile[] };
+          if (cancelled || !payload.profiles) break;
+
+          let added = false;
+          for (const result of payload.profiles) {
+            const profile = finiteProfile(result.profile);
+            if (!profile || typeof result.peakId !== "string") continue;
+            const peakDistanceKm = Number(result.peakDistanceKm);
+            profileCacheRef.current.set(profileCacheKey(requestObserverKey, result.peakId), {
+              points: profile,
+              peakDistanceKm: Number.isFinite(peakDistanceKm) ? peakDistanceKm : null,
+            });
+            added = true;
+          }
+          if (added) setProfileRevision((revision) => revision + 1);
+        } catch {
+          // Ein fehlgeschlagener Batch beendet nur diesen Ladevorgang;
+          // vorhandene Profile bleiben im Speicher und zeichnen weiter.
+          break;
+        } finally {
+          requestKeys.forEach((key) => profileRequestsRef.current.delete(key));
+          activeController = null;
+        }
+      }
+    };
+
+    void loadAllProfiles();
+    return () => {
+      cancelled = true;
+      activeController?.abort();
+    };
+  }, [observerKey, profileCandidateIds]);
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => visiblePeaks.length > 0,
+        // Do not claim taps immediately: controls inside the panorama (such as
+        // Karte/Sat) must receive them. Claim only an actual horizontal drag.
+        onStartShouldSetPanResponder: () => false,
         onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 4,
         onPanResponderGrant: () => {
-          panStartOffsetRef.current = panOffsetDeg;
+          panStartOffsetRef.current = panOffsetValueRef.current;
         },
         onPanResponderMove: (_, gesture) => {
           // Eine Fingerbewegung nach links zeigt den Ausschnitt weiter rechts.
           const next = panStartOffsetRef.current - gesture.dx * 0.28;
-          setPanOffsetDeg(Math.max(-70, Math.min(70, next)));
+          setPanOffsetDeg(
+            Math.max(
+              -PANORAMA_MAX_DRAG_DEGREES,
+              Math.min(PANORAMA_MAX_DRAG_DEGREES, next),
+            ),
+          );
         },
       }),
-    [panOffsetDeg, visiblePeaks.length],
+    [heading, peaks.length],
   );
   const focusedPeak = visiblePeaks.find(
     (peak) =>
-      peak.relativeBearingDeg != null &&
-      Math.abs(peak.relativeBearingDeg) <= 18,
+      displayBearing(peak) != null && Math.abs(displayBearing(peak) ?? 180) <= 18,
   );
   const targetPeak =
     visiblePeaks.find((peak) => peak.id === selectedPeakId) ??
     focusedPeak ??
     visiblePeaks[0];
-  const markerPosition = (relativeBearingDeg: number): DimensionValue => {
-    const percentage =
-      50 + ((relativeBearingDeg - panOffsetDeg) / PANORAMA_VIEW_DEGREES) * 100;
-    return `${Math.max(8, Math.min(92, percentage))}%`;
-  };
-  const skylinePeaks = visiblePeaks.slice(0, 6);
-  const skylineX = (peak: PanoramaGipfel) =>
-    180 + (((peak.relativeBearingDeg ?? 0) - panOffsetDeg) / PANORAMA_VIEW_DEGREES) * 360;
-  const skylineY = (peak: PanoramaGipfel) => {
-    const angle = peak.elevationAngleDeg ?? 0;
-    return Math.max(43, Math.min(149, 129 - angle * 5.2));
-  };
+  const markedPeaks = useMemo(() => {
+    const selected = visiblePeaks.slice(0, 3);
+    if (targetPeak && !selected.some((peak) => peak.id === targetPeak.id)) {
+      selected.push(targetPeak);
+    }
+    return selected;
+  }, [targetPeak, visiblePeaks]);
+  const directionPeak = markedPeaks
+    .map((peak) => ({
+      peak,
+      relative: displayBearing(peak),
+    }))
+    .filter(
+      (entry): entry is { peak: PanoramaGipfel; relative: number } =>
+        entry.relative != null && Math.abs(entry.relative) <= 30,
+    )
+    .sort(
+      (a, b) =>
+        Math.abs(a.relative) - Math.abs(b.relative) ||
+        a.peak.distanceKm - b.peak.distanceKm,
+    )[0]?.peak;
+  const profileEntries = useMemo(
+    () =>
+      profileCandidates.flatMap((peak) => {
+        const cachedProfile = observerKey
+          ? profileCacheRef.current.get(profileCacheKey(observerKey, peak.id))
+          : undefined;
+        return cachedProfile
+          ? [{
+              peak,
+              profile: cachedProfile.points,
+              peakDistanceKm: cachedProfile.peakDistanceKm,
+            }]
+          : [];
+      }),
+    [observerKey, profileCandidateIds, profileCandidates, profileRevision],
+  );
+  const loadedProfileCount = profileCandidates.filter((peak) =>
+    observerKey
+      ? profileCacheRef.current.has(profileCacheKey(observerKey, peak.id))
+      : false,
+  ).length;
+  const profileLoadPercent =
+    profileCandidates.length > 0
+      ? Math.round((loadedProfileCount / profileCandidates.length) * 100)
+      : 0;
+  if (profilesComplete && !fixedElevationRangeRef.current && profileEntries.length > 0) {
+    const allAltitudes = profileEntries.flatMap((entry) =>
+      entry.profile.map((point) => point.altM),
+    );
+    const summitAltitudes = profileEntries.map((entry) => {
+      if (Number.isFinite(entry.peak.elevationM)) return entry.peak.elevationM as number;
+      const fallbackDistance = entry.profile[entry.profile.length - 1]?.distanceKm ?? 0;
+      const peakDistance = Number.isFinite(entry.peakDistanceKm)
+        ? (entry.peakDistanceKm as number)
+        : fallbackDistance;
+      return interpolateProfileAltitude(entry.profile, peakDistance, fallbackDistance);
+    });
+    const minM = Math.min(...allAltitudes);
+    const maxSummitM = Math.max(...summitAltitudes);
+    fixedElevationRangeRef.current = {
+      minM,
+      maxM: Math.max(maxSummitM, minM + 40),
+    };
+  }
+  const fixedElevationRange = fixedElevationRangeRef.current;
+  const panoramaMesh = useMemo(
+    () => buildPanoramaMesh(
+      profileEntries,
+      displayBearing,
+      observerElevationM,
+      fixedElevationRange,
+      terrainModel,
+      terrainBearing,
+    ),
+    [
+      profileEntries,
+      panOffsetDeg,
+      observerElevationM,
+      fixedElevationRange,
+      terrainModel,
+      heading,
+    ],
+  );
+  const compassTicks = CARDINAL_DIRECTIONS.map((direction) => {
+    const relative = signedAngleDifference(direction.bearing, viewCenterBearing);
+    return {
+      ...direction,
+      relative,
+      x: 180 + (relative / PANORAMA_VIEW_DEGREES) * 360,
+    };
+  }).filter((direction) => Math.abs(direction.relative) <= PANORAMA_VIEW_DEGREES / 2 + 8);
   let status = strings.noPeaks;
   if (!hasGps) status = strings.noGps;
   else if (heading == null) status = strings.needCompass;
@@ -151,16 +834,16 @@ export function PeakPanorama({
       accessibilityLabel={strings.title}
     >
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <View style={[styles.titleIcon, { backgroundColor: colors.glassHighlight }]}>
-            <Feather name="triangle" size={14} color={colors.accent} />
-          </View>
-          <View>
-            <Text style={[styles.kicker, { color: colors.mutedForeground }]}>
-              {strings.detected}
-            </Text>
-            <Text style={[styles.title, { color: colors.accent }]}>{strings.title}</Text>
-          </View>
+        <View
+          style={[
+            styles.headingBadge,
+            { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
+          ]}
+        >
+          <Feather name="triangle" size={12} color={colors.tint} />
+          <Text style={[styles.heading, { color: colors.foreground }]} numberOfLines={1}>
+            {visiblePeaks.length} {strings.detected}
+          </Text>
         </View>
         <View style={styles.headerActions}>
           {heading != null && (
@@ -178,22 +861,20 @@ export function PeakPanorama({
           )}
           {Platform.OS !== "web" && (
             <Pressable
-              onPress={toggleCamera}
+              onPress={() => {
+                hapticMedium();
+                toggleCamera();
+              }}
               style={[
-                styles.cameraButton,
+                 styles.cameraButton,
                 {
                   backgroundColor: colors.primary,
                   borderColor: colors.primary,
                 },
               ]}
               accessibilityRole="button"
-                 accessibilityLabel={strings.camera}
+              accessibilityLabel="AR Kamera öffnen"
             >
-                 <Feather
-                name="camera"
-                size={14}
-                color={colors.primaryForeground}
-              />
               <Text
                 style={[
                   styles.cameraButtonText,
@@ -202,16 +883,12 @@ export function PeakPanorama({
                   },
                 ]}
               >
-                {strings.camera}
+                AR Kamera
               </Text>
             </Pressable>
           )}
         </View>
       </View>
-
-      <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-        {strings.hint}
-      </Text>
 
       <View style={styles.signalRow}>
         <View
@@ -230,39 +907,43 @@ export function PeakPanorama({
             {visiblePeaks.length > 0 ? `${visiblePeaks.length} · ${strings.detected}` : status}
           </Text>
         </View>
-        {heading == null ? (
-          <Feather name="compass" size={16} color={colors.mutedForeground} />
-        ) : (
-          <Text style={[styles.viewAngle, { color: colors.mutedForeground }]}>
-            {PANORAMA_VIEW_DEGREES}°
-          </Text>
-        )}
       </View>
-      <View style={styles.dataRow}>
-        <View style={[styles.dataBadge, { borderColor: colors.glassBorder }]}>
-          <Feather
-            name={dataStatus?.source === "offline" ? "download-cloud" : "database"}
-            size={11}
-            color={colors.tint}
-          />
-          <Text style={[styles.dataText, { color: colors.mutedForeground }]}>
-            {dataStatus?.source === "offline" ? strings.offlineData : strings.onlineData}
-            {dataStatus?.version ? ` · v${dataStatus.version}` : ""}
-          </Text>
+      {hasGps && !terrainModel && (
+        <View
+          style={styles.profileProgress}
+          accessibilityLabel="Höhenprofil wird geladen"
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: 100, now: terrainLoadPercent }}
+        >
+          <View style={styles.profileProgressHeader}>
+            <Text style={[styles.profileProgressLabel, { color: colors.mutedForeground }]}>
+              HÖHENPROFIL WIRD GELADEN
+            </Text>
+            <Text style={[styles.profileProgressCount, { color: colors.tint }]}>
+              {terrainLoadPercent}%
+            </Text>
+          </View>
+          <View style={[styles.profileProgressTrack, { backgroundColor: colors.glassHighlight }]}>
+            <View
+              style={[
+                styles.profileProgressFill,
+                { width: `${terrainLoadPercent}%`, backgroundColor: colors.accent },
+              ]}
+            />
+          </View>
         </View>
-        <Text style={[styles.dataText, { color: colors.mutedForeground }]}>
-          {dataStatus?.peakCount ?? peaks.length} {strings.detected.toLocaleLowerCase()}
-        </Text>
-      </View>
-
+      )}
       {visiblePeaks.length > 0 && (
         <View style={styles.peakRail}>
-          {visiblePeaks.slice(0, 3).map((peak, index) => {
-            const isSelected = targetPeak?.id === peak.id;
+          {markedPeaks.map((peak, index) => {
+            const isSelected = directionPeak?.id === peak.id;
             return (
               <Pressable
                 key={peak.id}
-                onPress={() => setSelectedPeakId(peak.id)}
+                onPress={() => {
+                  hapticSelection();
+                  setSelectedPeakId(peak.id);
+                }}
                 style={[
                   styles.peakChip,
                   {
@@ -313,87 +994,262 @@ export function PeakPanorama({
         {...panResponder.panHandlers}
         accessibilityLabel={strings.title}
       >
-        <Svg width="100%" height={220} viewBox="0 0 360 220">
-          <Rect x="0" y="0" width="360" height="220" fill={colors.glassBg} />
-          <Line x1="0" y1="129" x2="360" y2="129" stroke={colors.glassBorder} strokeWidth="1" />
-          <Line x1="0" y1="166" x2="360" y2="166" stroke={colors.glassBorder} strokeWidth="1" />
+        {terrainModel && (
+          <PeakTerrainGl
+            terrainModel={terrainModel}
+            bearingDeg={viewCenterBearing}
+            textureMode={terrainTextureMode}
+            backgroundColor={colors.glassBg}
+            fallbackColor="transparent"
+            peaks={markedPeaks}
+            selectedPeakId={targetPeak?.id ?? null}
+            onPeakPress={(peakId) => {
+              hapticSelection();
+              setSelectedPeakId(peakId);
+            }}
+            onReady={() => {
+              setTerrainTextureLoadPercent(100);
+              setTerrainGlReady(true);
+            }}
+          />
+        )}
+        <Svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 360 350"
+          preserveAspectRatio="none"
+        >
+          <Rect
+            x="0"
+            y="0"
+            width="360"
+            height="350"
+            fill={terrainGlReady ? "transparent" : colors.glassBg}
+          />
+          {panoramaMesh.observerLineY != null && (
+            <Line
+              x1="0"
+              y1={panoramaMesh.observerLineY}
+              x2="360"
+              y2={panoramaMesh.observerLineY}
+              stroke={colors.primary}
+              strokeOpacity={0.86}
+              strokeWidth="1.5"
+              strokeDasharray="6 4"
+            />
+          )}
           <G opacity={0.34}>
-            <Line x1="90" y1="0" x2="90" y2="220" stroke={colors.glassBorder} strokeWidth="1" />
-            <Line x1="180" y1="0" x2="180" y2="220" stroke={colors.accent} strokeWidth="1" />
-            <Line x1="270" y1="0" x2="270" y2="220" stroke={colors.glassBorder} strokeWidth="1" />
+            <Line x1="180" y1="0" x2="180" y2="350" stroke={colors.accent} strokeWidth="1" />
           </G>
-          {skylinePeaks
-            .slice()
-            .sort((a, b) => skylineX(a) - skylineX(b))
-            .map((peak, index) => {
-              const x = skylineX(peak);
-              const y = skylineY(peak);
-              const width = Math.max(24, Math.min(62, 50 - peak.distanceKm * 1.2));
-              const fill = index % 2 === 0 ? colors.glassHighlight : colors.glassBgStrong;
-              return (
-                <G key={peak.id}>
-                  <Polygon
-                    points={`${x - width},166 ${x},${y} ${x + width},166`}
-                    fill={fill}
-                    stroke={colors.accent}
-                    strokeOpacity={0.5}
-                    strokeWidth="1"
-                  />
-                  <Line x1={x} y1={y} x2={x} y2="166" stroke={colors.accent} strokeOpacity={0.45} />
-                  <Circle cx={x} cy={y} r="3.5" fill={colors.primary} />
-                  {x > -18 && x < 378 && (
-                    <SvgText
-                      x={x}
-                      y={Math.max(30, y - 10)}
-                      fill={colors.foreground}
-                      fontSize="9"
-                      fontWeight="600"
-                      textAnchor="middle"
-                    >
-                      {peak.name.length > 16 ? `${peak.name.slice(0, 15)}…` : peak.name}
-                    </SvgText>
-                  )}
-                </G>
-              );
-            })}
-          <SvgText x="180" y="191" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
-            {panoramaHasHeight && targetPeak?.elevationAngleDeg != null
-              ? strings.elevationAngle(`${targetPeak.elevationAngleDeg.toFixed(1)}°`)
-              : strings.heightUnknown}
-          </SvgText>
-          <SvgText x="180" y="207" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
-            {strings.dragPanorama}
-          </SvgText>
+          {compassTicks.map((direction) => (
+            <G key={direction.label}>
+              <Line
+                x1={direction.x}
+                y1="12"
+                x2={direction.x}
+                y2="338"
+                stroke={colors.tint}
+                strokeOpacity={0.24}
+                strokeWidth="1"
+                strokeDasharray="3 4"
+              />
+              <SvgText
+                x={direction.x}
+                y="16"
+                fill={colors.tint}
+                fontSize="9"
+                fontWeight="700"
+                textAnchor="middle"
+              >
+                {direction.label}
+              </SvgText>
+            </G>
+          ))}
+           <Line
+             x1="180"
+              y1="12"
+             x2="180"
+              y2="338"
+             stroke={colors.primary}
+             strokeOpacity={0.72}
+             strokeWidth="1"
+           />
+           <SvgText x="180" y="29" fill={colors.primary} fontSize="7" fontWeight="700" textAnchor="middle">
+             BLICK
+           </SvgText>
+           {Platform.OS === "web" &&
+             markedPeaks.map((peak) => {
+               const meshPeak = panoramaMesh.peaks.find(
+                 (candidate) => candidate.peak.id === peak.id,
+               );
+               const relativeBearing = displayBearing(peak);
+               if (relativeBearing == null) return null;
+               const peakPoint = meshPeak?.peakPoint ?? {
+                 x: 180 + (relativeBearing / PANORAMA_VIEW_DEGREES) * 360,
+                 y: Math.max(
+                   72,
+                   Math.min(
+                     238,
+                     190 - (peak.elevationAngleDeg ?? 0) * 8,
+                   ),
+                 ),
+               };
+               const isSelected = targetPeak?.id === peak.id;
+               const markerY = Math.max(38, peakPoint.y - 8);
+               const label = peak.name.length > 17
+                 ? `${peak.name.slice(0, 16)}…`
+                 : peak.name;
+               const labelWidth = Math.max(
+                 54,
+                 Math.min(112, label.length * 5.4 + 14),
+               );
+               return (
+                 <G
+                   key={`map-peak-${peak.id}`}
+                   onPress={() => {
+                     hapticSelection();
+                     setSelectedPeakId(peak.id);
+                   }}
+                 >
+                   <Line
+                     x1={peakPoint.x}
+                     y1={markerY}
+                     x2={peakPoint.x}
+                     y2={peakPoint.y}
+                     stroke={colors.primary}
+                     strokeOpacity={0.9}
+                     strokeWidth="1"
+                     strokeDasharray="2 2"
+                   />
+                   <Circle
+                     cx={peakPoint.x}
+                     cy={peakPoint.y}
+                     r={isSelected ? 5 : 4}
+                     fill={colors.primary}
+                     stroke={colors.primaryForeground}
+                     strokeWidth="2"
+                   />
+                   <Rect
+                     x={peakPoint.x - labelWidth / 2}
+                     y={markerY - 20}
+                     width={labelWidth}
+                     height="15"
+                     rx="7.5"
+                     fill={colors.glassBgStrong}
+                     stroke={colors.primary}
+                     strokeWidth={isSelected ? "1.5" : "1"}
+                   />
+                   <SvgText
+                     x={peakPoint.x}
+                     y={markerY - 10}
+                     fill={colors.primary}
+                     fontSize="7"
+                     fontWeight="700"
+                     textAnchor="middle"
+                   >
+                     {label}
+                   </SvgText>
+                 </G>
+               );
+             })}
         </Svg>
-      </View>
-
-      <View
-        style={[
-          styles.cameraPrompt,
-          {
-            backgroundColor: colors.glassBgStrong,
-            borderColor: colors.glassBorder,
-          },
-        ]}
-      >
-        <View style={styles.previewSky}>
-          <View style={[styles.mountainFar, { borderBottomColor: colors.glassHighlight }]} />
-          <View style={[styles.mountainNear, { borderBottomColor: colors.accent }]} />
-          <View style={[styles.previewSun, { backgroundColor: colors.tint }]} />
-          <View style={[styles.previewCrosshair, { borderColor: colors.glassHighlight }]}>
-            <View style={[styles.previewCrosshairDot, { backgroundColor: colors.accent }]} />
-          </View>
-        </View>
-        <View style={styles.promptCopy}>
-          <View style={styles.promptTitleRow}>
-            <Feather name="camera" size={16} color={colors.accent} />
-            <Text style={[styles.promptTitle, { color: colors.foreground }]}>
-              {strings.camera}
-            </Text>
-          </View>
-          <Text style={[styles.promptStatus, { color: colors.mutedForeground }]} numberOfLines={2}>
-            {status}
-          </Text>
+         {terrainModel && !terrainGlReady && (
+           <View
+             style={[
+               styles.terrainTextureProgress,
+               {
+                 backgroundColor: colors.glassBgStrong,
+                 borderColor: colors.glassBorder,
+               },
+             ]}
+             pointerEvents="none"
+             accessibilityLabel={
+               terrainTextureMode === "map"
+                 ? "Karte wird geladen"
+                 : "Satellitenbild wird geladen"
+             }
+             accessibilityRole="progressbar"
+             accessibilityValue={{
+               min: 0,
+               max: 100,
+               now: terrainTextureLoadPercent,
+             }}
+           >
+             <View style={styles.profileProgressHeader}>
+               <Text style={[styles.profileProgressLabel, { color: colors.mutedForeground }]}>
+                 {terrainTextureMode === "map"
+                   ? "KARTE WIRD GELADEN"
+                   : "SATELLITENBILD WIRD GELADEN"}
+               </Text>
+               <Text style={[styles.profileProgressCount, { color: colors.tint }]}>
+                 {terrainTextureLoadPercent}%
+               </Text>
+             </View>
+             <View
+               style={[
+                 styles.profileProgressTrack,
+                 { backgroundColor: colors.glassHighlight },
+               ]}
+             >
+               <View
+                 style={[
+                   styles.profileProgressFill,
+                   {
+                     width: `${terrainTextureLoadPercent}%`,
+                     backgroundColor: colors.accent,
+                   },
+                 ]}
+               />
+             </View>
+           </View>
+         )}
+        <View
+          style={[
+            styles.terrainModeSwitch,
+            {
+              backgroundColor: colors.glassBgStrong,
+              borderColor: colors.glassBorder,
+            },
+          ]}
+        >
+          {([
+            ["map", "Karte"],
+            ["satellite", "Sat"],
+          ] as const).map(([mode, label]) => {
+            const active = terrainTextureMode === mode;
+            return (
+              <Pressable
+                key={mode}
+                onPress={() => {
+                  if (mode === terrainTextureMode) return;
+                   hapticRigid();
+                  setTerrainGlReady(false);
+                  setTerrainTextureLoadPercent(8);
+                  setTerrainTextureMode(mode);
+                }}
+                style={[
+                  styles.terrainModeButton,
+                  active && { backgroundColor: colors.primary },
+                ]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={`${label} als Geländeoberfläche`}
+              >
+                <Text
+                  style={[
+                    styles.terrainModeLabel,
+                    {
+                      color: active
+                        ? colors.primaryForeground
+                        : colors.foreground,
+                    },
+                  ]}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
 
@@ -403,10 +1259,11 @@ export function PeakPanorama({
 
 const styles = StyleSheet.create({
   card: {
-    marginTop: 12,
+    flex: 1,
+    marginTop: 6,
     borderWidth: 1,
     borderRadius: 16,
-    padding: 14,
+    padding: 10,
   },
   header: {
     flexDirection: "row",
@@ -435,6 +1292,7 @@ const styles = StyleSheet.create({
     gap: 5,
     borderWidth: 1,
     borderRadius: 9,
+    height: 40,
     paddingHorizontal: 8,
     paddingVertical: 6,
   },
@@ -444,11 +1302,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 5,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    borderRadius: 11,
+    height: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  cameraButtonText: { fontFamily: fonts.mono, fontSize: 9 },
+  cameraButtonText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    letterSpacing: 0.4,
+  },
   hint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 9 },
   signalRow: {
     flexDirection: "row",
@@ -457,22 +1320,6 @@ const styles = StyleSheet.create({
     marginTop: 11,
     marginBottom: 1,
   },
-  dataRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 7,
-  },
-  dataBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-  },
-  dataText: { fontFamily: fonts.mono, fontSize: 8 },
   signalPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -486,12 +1333,66 @@ const styles = StyleSheet.create({
   signalDot: { width: 6, height: 6, borderRadius: 3 },
   signalText: { fontFamily: fonts.bodyMedium, fontSize: 11 },
   viewAngle: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 0.8 },
+  profileProgress: { marginTop: 9, gap: 5 },
+  profileProgressHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  profileProgressLabel: {
+    fontFamily: fonts.monoBold,
+    fontSize: 8,
+    letterSpacing: 1,
+  },
+  profileProgressCount: { fontFamily: fonts.monoBold, fontSize: 9 },
+  profileProgressTrack: {
+    height: 5,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  profileProgressFill: { height: "100%", borderRadius: 3 },
   skylineCard: {
-    height: 220,
-    marginTop: 11,
+    flex: 1,
+    minHeight: 350,
+    marginTop: 7,
     borderWidth: 1,
     borderRadius: 12,
     overflow: "hidden",
+  },
+  terrainModeSwitch: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 5,
+    flexDirection: "row",
+    borderWidth: 1,
+    borderRadius: 9,
+    padding: 2,
+  },
+  terrainModeButton: {
+    minWidth: 45,
+    minHeight: 28,
+    paddingHorizontal: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 7,
+  },
+  terrainModeLabel: {
+    fontFamily: fonts.monoBold,
+    fontSize: 9,
+    letterSpacing: 0.3,
+  },
+  terrainTextureProgress: {
+    position: "absolute",
+    left: 24,
+    right: 24,
+    top: "46%",
+    zIndex: 4,
+    gap: 7,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   peakRail: {
     flexDirection: "row",
@@ -521,83 +1422,14 @@ const styles = StyleSheet.create({
   peakChipCopy: { flex: 1, minWidth: 0 },
   peakChipName: { fontFamily: fonts.bodyBold, fontSize: 10 },
   peakChipDistance: { fontFamily: fonts.mono, fontSize: 8, marginTop: 2 },
-  cameraPrompt: {
-    minHeight: 116,
-    marginTop: 12,
-    borderWidth: 1,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "stretch",
-    overflow: "hidden",
-  },
-  previewSky: {
-    width: 112,
-    minHeight: 116,
-    overflow: "hidden",
-    position: "relative",
-    justifyContent: "flex-end",
-  },
-  previewSun: {
-    position: "absolute",
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    top: 17,
-    right: 18,
-    opacity: 0.8,
-  },
-  mountainFar: {
-    position: "absolute",
-    bottom: -20,
-    left: -14,
-    width: 92,
-    height: 92,
-    borderLeftWidth: 46,
-    borderRightWidth: 46,
-    borderBottomWidth: 92,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    opacity: 0.24,
-    transform: [{ rotate: "-7deg" }],
-  },
-  mountainNear: {
-    position: "absolute",
-    bottom: -29,
-    right: -18,
-    width: 108,
-    height: 108,
-    borderLeftWidth: 54,
-    borderRightWidth: 54,
-    borderBottomWidth: 108,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    opacity: 0.18,
-    transform: [{ rotate: "8deg" }],
-  },
-  previewCrosshair: {
-    position: "absolute",
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    left: 35,
-    top: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  previewCrosshairDot: { width: 5, height: 5, borderRadius: 3 },
-  promptCopy: { flex: 1, justifyContent: "center", paddingHorizontal: 14, gap: 5 },
-  promptTitleRow: { flexDirection: "row", alignItems: "center", gap: 7 },
-  promptTitle: { fontFamily: fonts.titleBold, fontSize: 15 },
-  promptStatus: { fontFamily: fonts.body, fontSize: 11, lineHeight: 15, paddingRight: 4 },
   fullscreenCamera: { flex: 1, backgroundColor: "#000" },
-  camera: { ...StyleSheet.absoluteFillObject },
+  camera: { ...StyleSheet.absoluteFill },
   imageScrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.17)",
   },
   scanLines: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.25,
   },
   scanLineTop: {

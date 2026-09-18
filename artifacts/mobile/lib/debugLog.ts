@@ -7,14 +7,23 @@
 // /api/debug/log (fire-and-forget, darf den Ablauf nie stoeren).
 import { getApiBaseUrl } from "./apiConfig";
 
+let clientLogSequence = 0;
+
 export function makeLogger(prefix: string, remoteTag: string) {
   return function log(...args: unknown[]) {
-    console.log(prefix, new Date().toISOString(), ...args);
-    sendRemoteLog(remoteTag, args);
+    const emittedAt = new Date().toISOString();
+    const sequence = ++clientLogSequence;
+    const eventId = `${Date.now()}-${sequence}`;
+    console.log(prefix, emittedAt, ...args);
+    sendRemoteLog(remoteTag, args, { emittedAt, eventId, sequence });
   };
 }
 
-function sendRemoteLog(tag: string, args: unknown[]) {
+function sendRemoteLog(
+  tag: string,
+  args: unknown[],
+  meta: { emittedAt: string; eventId: string; sequence: number },
+) {
   try {
     const base = getApiBaseUrl();
     if (!base) return;
@@ -24,6 +33,7 @@ function sendRemoteLog(tag: string, args: unknown[]) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         tag,
+        ...meta,
         message: typeof message === "string" ? message : JSON.stringify(message),
         data: rest,
       }),

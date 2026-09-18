@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -18,7 +19,7 @@ import { Background } from "@/components/brand/Background";
 import { PermissionsStep } from "@/components/brand/PermissionsStep";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
-import { AGE_TIERS, ARCHETYPES, CANTONS } from "@/constants/onboarding";
+import { AGE_TIERS, ARCHETYPES } from "@/constants/onboarding";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -29,42 +30,62 @@ import {
   SUPPORTED_LANGUAGES,
 } from "@/lib/i18n/languageCode";
 import { AgeTier, Archetype } from "@/types";
-import { translateCanton } from "@/lib/i18n/cantonNames";
 
 const WEB_TOP = 67;
+
+function normalizeBirthDate(value: string): string {
+  const match = value.trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  if (!match) throw new Error("Ungültiges Geburtsdatum");
+  const [, day, month, year] = match;
+  const iso = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  const date = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== iso) {
+    throw new Error("Ungültiges Geburtsdatum");
+  }
+  const age = new Date().getUTCFullYear() - date.getUTCFullYear();
+  if (age < 13 || age > 120) throw new Error("Ungültiges Alter");
+  return iso;
+}
 
 export default function Onboarding() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { saveProfile, language: activeLanguage, setPendingLanguage } = useApp();
+  const { saveProfile, uploadProfileAvatar, language: activeLanguage, setPendingLanguage } = useApp();
   const t = useOnboardingStrings();
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [archetype, setArchetype] = useState<Archetype | null>(null);
   const [language, setLanguage] = useState<LanguageCode>(activeLanguage);
-  const [homeCanton, setHomeCanton] = useState("");
   const [ageTier, setAgeTier] = useState<AgeTier | null>(null);
   const [consent, setConsent] = useState(false);
+  const [permissionsGranted, setPermissionsGranted] = useState(false);
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 12;
 
-  const totalSteps = 6;
+  const totalSteps = 5;
 
   const canAdvance = () => {
     switch (step) {
       case 0:
-        return name.trim().length >= 2;
+        if (name.trim().length < 2 || !dateOfBirth.trim()) return false;
+        try {
+          normalizeBirthDate(dateOfBirth);
+          return true;
+        } catch {
+          return false;
+        }
       case 1:
         return archetype !== null;
       case 2:
         return true;
       case 3:
-        return homeCanton.length > 0;
-      case 4:
         return ageTier !== null && (ageTier !== "kinder" || consent);
-      case 5:
-        return true;
+      case 4:
+        return permissionsGranted;
       default:
         return false;
     }
@@ -85,11 +106,13 @@ export default function Onboarding() {
       try {
         await saveProfile({
           name: name.trim(),
+          bio: bio.trim() || null,
+          dateOfBirth: normalizeBirthDate(dateOfBirth),
           archetype,
           language,
-          homeCanton,
           ageTier,
         });
+        if (avatarUri) await uploadProfileAvatar(avatarUri);
       } catch {
         setSaveError(t.saveError);
       } finally {
@@ -153,6 +176,57 @@ export default function Onboarding() {
                   borderRadius: colors.radius,
                 },
               ]}
+            />
+            <Text style={[styles.label, { color: colors.foreground }]}>
+              {t.bioLabel}
+            </Text>
+            <TextInput
+              value={bio}
+              onChangeText={setBio}
+              placeholder={t.bioPlaceholder}
+              placeholderTextColor={colors.mutedForeground}
+              maxLength={160}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+              style={[
+                styles.input,
+                styles.bioInput,
+                {
+                  color: colors.foreground,
+                  borderColor: colors.glassBorder,
+                  borderRadius: colors.radius,
+                },
+              ]}
+            />
+            <Text style={[styles.hint, styles.bioHint, { color: colors.mutedForeground }]}>
+              {t.bioHint}
+            </Text>
+            <Pressable
+              onPress={async () => {
+                const result = await ImagePicker.launchImageLibraryAsync({
+                  mediaTypes: ["images"],
+                  allowsEditing: true,
+                  aspect: [1, 1],
+                  quality: 0.82,
+                });
+                if (!result.canceled) setAvatarUri(result.assets[0]?.uri ?? null);
+              }}
+              style={[styles.photoButton, { borderColor: colors.glassBorder }]}
+            >
+              <Feather name={avatarUri ? "check" : "camera"} size={18} color={colors.accent} />
+              <Text style={[styles.photoButtonText, { color: colors.accent }]}>
+                {avatarUri ? "Profilbild ausgewählt" : "Profilbild auswählen (optional)"}
+              </Text>
+            </Pressable>
+            <Text style={[styles.label, { color: colors.foreground }]}>Geburtsdatum</Text>
+            <TextInput
+              value={dateOfBirth}
+              onChangeText={setDateOfBirth}
+              placeholder="TT.MM.JJJJ"
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="numbers-and-punctuation"
+              style={[styles.input, { color: colors.foreground, borderColor: colors.glassBorder, borderRadius: colors.radius }]}
             />
           </Animated.View>
         )}
@@ -245,38 +319,7 @@ export default function Onboarding() {
         )}
 
         {step === 3 && (
-          <StepFrame title={t.cantonTitle} eyebrow={t.stepOf(4, totalSteps)}>
-            <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-              {t.cantonHint}
-            </Text>
-            <View style={styles.cantonGrid}>
-              {CANTONS.map((canton) => {
-                const active = homeCanton === canton;
-                return (
-                  <Pressable
-                    key={canton}
-                    onPress={() => setHomeCanton(canton)}
-                    style={[
-                      styles.cantonChip,
-                      {
-                        borderColor: active ? colors.accent : colors.glassBorder,
-                        backgroundColor: active ? colors.glassBgStrong : colors.glassBg,
-                        borderRadius: colors.radius,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.cantonChipText, { color: active ? colors.accent : colors.foreground }]}>
-                      {translateCanton(canton, language)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </StepFrame>
-        )}
-
-        {step === 4 && (
-          <StepFrame title={t.ageTierTitle} eyebrow={t.stepOf(5, totalSteps)}>
+          <StepFrame title={t.ageTierTitle} eyebrow={t.stepOf(4, totalSteps)}>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
               {t.ageTierHint}
             </Text>
@@ -339,9 +382,9 @@ export default function Onboarding() {
           </StepFrame>
         )}
 
-        {step === 5 && (
-          <StepFrame title={t.permissionsTitle} eyebrow={t.stepOf(6, totalSteps)}>
-            <PermissionsStep />
+        {step === 4 && (
+          <StepFrame title={t.permissionsTitle} eyebrow={t.stepOf(5, totalSteps)}>
+            <PermissionsStep onAllGrantedChange={setPermissionsGranted} />
           </StepFrame>
         )}
       </ScrollView>
@@ -464,6 +507,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 17,
   },
+  bioInput: { minHeight: 88 },
+  bioHint: { alignSelf: "flex-start", marginBottom: 0, marginTop: 7 },
+  photoButton: { alignItems: "center", borderWidth: 1, borderRadius: 12, flexDirection: "row", gap: 8, marginTop: 14, padding: 13 },
+  photoButtonText: { fontFamily: fonts.bodyBold, fontSize: 13 },
   stepEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2 },
   stepTitle: { fontFamily: fonts.titleBold, fontSize: 34, marginTop: 4 },
   hint: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21, marginBottom: 18 },
@@ -480,9 +527,6 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   chipText: { fontFamily: fonts.bodyMedium, fontSize: 13 },
-  cantonGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  cantonChip: { borderWidth: 1, paddingHorizontal: 11, paddingVertical: 10, minWidth: "30%" },
-  cantonChipText: { fontFamily: fonts.bodyMedium, fontSize: 13, textAlign: "center" },
   langRow: { ...GLAS_3D,
     borderWidth: 1,
     padding: 16,

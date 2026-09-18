@@ -11,10 +11,16 @@ const router: IRouter = Router();
  * einer eventuellen Anmeldung erzeugt, und der Inhalt ist nicht sensibel.
  */
 router.post("/debug/log", (req, res) => {
-  const { tag, message, data } = req.body ?? {};
+  const { tag, message, data, eventId, emittedAt, sequence } = req.body ?? {};
   req.log.info(
-    { tag: typeof tag === "string" ? tag : "client", data },
-    `[IAP-CLIENT] ${typeof message === "string" ? message : "log"}`
+    {
+      tag: typeof tag === "string" ? tag : "client",
+      eventId: typeof eventId === "string" ? eventId : undefined,
+      emittedAt: typeof emittedAt === "string" ? emittedAt : undefined,
+      sequence: Number.isFinite(sequence) ? sequence : undefined,
+      data,
+    },
+    `[CLIENT-DEBUG] ${typeof message === "string" ? message : "log"}`
   );
   res.status(204).end();
 });

@@ -3,9 +3,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { Image as ExpoImage } from "expo-image";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -16,7 +15,6 @@ import {
   View,
 } from "react-native";
 import { alert } from "@/lib/appAlert";
-import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D, SCHATTEN_3D } from "@/constants/depth";
@@ -26,7 +24,7 @@ import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RangeSlider } from "@/components/brand/RangeSlider";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { SearchProgress } from "@/components/brand/SearchProgress";
-import { Wegweiser } from "@/components/Wegweiser";
+import { RouteCard } from "@/components/RouteCard";
 import { HikingRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
@@ -40,8 +38,6 @@ import { useKantonStrings } from "@/lib/i18n/screens/kanton";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
-import { haversineKm } from "@/lib/geo";
-import { useRouteFoto, clearRouteFotoCache } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
 import { hasPurchasedPack, kantonSlug, packEntitlementFuerKanton } from "@/lib/kantonSlug";
 import {
@@ -51,6 +47,12 @@ import {
 } from "@/lib/revenuecat";
 import { useClaimKantonspack, getGetMyProfileQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  ROUTE_THEME_KEYS,
+  routeThemeLabel,
+  type RouteThemeKey,
+} from "@/lib/routeThemes";
+import { getRouteThemes, routeThemeCache } from "@/lib/routeThemeIndex";
 
 const DIST_MIN = 0;
 const DIST_MAX = 50;
@@ -247,6 +249,13 @@ export default function KantonRouten() {
   const [startMin, setStartMin] = useState(0);
   const [sliderAktiv, setSliderAktiv] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showThemeFilters, setShowThemeFilters] = useState(false);
+  // Keine Auswahl bedeutet: Themenfilter ist aus und alle Kantonsrouten bleiben sichtbar.
+  const [selectedThemeKeys, setSelectedThemeKeys] = useState<RouteThemeKey[]>([]);
+  const [routeThemesById, setRouteThemesById] = useState<Record<string, RouteThemeKey[]>>({});
+  const [themeFilterLoading, setThemeFilterLoading] = useState(false);
+  const [themeFilterError, setThemeFilterError] = useState(false);
+  const themeFilterActive = selectedThemeKeys.length > 0;
   const suitabilityCopy = useMemo(() => {
     if (language === "fr") return { title: "Recommandation technique", family: "Adapté aux enfants / familles", accessible: "Accès sans barrières officiel", note: "La recommandation enfants / familles est technique; l'accès sans barrières repose sur la classification officielle de SuisseMobile." };
     if (language === "it") return { title: "Raccomandazione tecnica", family: "Adatto a bambini / famiglie", accessible: "Accesso senza barriere ufficiale", note: "La raccomandation bambini / famiglie è tecnica; l'accesso senza barriere si basa sulla classificazione ufficiale di SvizzeraMobile." };
@@ -257,12 +266,26 @@ export default function KantonRouten() {
   const sunsetTime = useMemo(() => calcSunsetCH(new Date()), []);
   const sunsetTimeStr = `${String(sunsetTime.h).padStart(2, "0")}:${String(sunsetTime.m).padStart(2, "0")}`;
 
-  const filteredRoutes = useMemo(() => {
+  const sunsetFilteredRoutes = useMemo(() => {
     if (!sunsetFilter) return routes;
     const availMin = sunsetTime.h * 60 + sunsetTime.m - (startH * 60 + startMin);
     if (availMin <= 0) return [];
     return routes.filter((r) => r.minutes <= availMin);
   }, [routes, sunsetFilter, startH, startMin, sunsetTime]);
+
+  const filteredRoutes = useMemo(() => {
+    if (!themeFilterActive || themeFilterLoading) return sunsetFilteredRoutes;
+    const selected = new Set(selectedThemeKeys);
+    return sunsetFilteredRoutes.filter((route) =>
+      (routeThemesById[route.id] ?? []).some((theme) => selected.has(theme)),
+    );
+  }, [
+    sunsetFilteredRoutes,
+    themeFilterActive,
+    themeFilterLoading,
+    selectedThemeKeys,
+    routeThemesById,
+  ]);
 
   // Beim Kantonswechsel Filter und Ergebnisse zuruecksetzen — erst suchen,
   // wenn der Nutzer die Filter gesetzt und die Suche gestartet hat.
@@ -280,10 +303,64 @@ export default function KantonRouten() {
     setStartH(9);
     setStartMin(0);
     setShowAdvancedFilters(false);
+    setShowThemeFilters(false);
+    setSelectedThemeKeys([]);
+    setRouteThemesById({});
+    setThemeFilterLoading(false);
+    setThemeFilterError(false);
     setRoutes([]);
     setSearched(false);
     setSearching(false);
   }, [cantonName]);
+
+  useEffect(() => {
+    if (!themeFilterActive || routes.length === 0) {
+      setThemeFilterLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setThemeFilterLoading(true);
+    setThemeFilterError(false);
+
+    const missingRoutes = routes.filter((route) => !routeThemeCache.has(route.id));
+    let cursor = 0;
+    const loaded: Record<string, RouteThemeKey[]> = {};
+    for (const route of routes) {
+      const cached = routeThemeCache.get(route.id);
+      if (cached) loaded[route.id] = cached;
+    }
+    if (Object.keys(loaded).length > 0) setRouteThemesById((current) => ({ ...current, ...loaded }));
+
+    const loadNext = async (): Promise<void> => {
+      const route = missingRoutes[cursor++];
+      if (!route) return;
+      try {
+        const themes = await getRouteThemes(route);
+        routeThemeCache.set(route.id, themes);
+        loaded[route.id] = themes;
+        if (!cancelled) setRouteThemesById((current) => ({ ...current, [route.id]: themes }));
+      } catch {
+        routeThemeCache.set(route.id, []);
+        loaded[route.id] = [];
+        if (!cancelled) {
+          setThemeFilterError(true);
+          setRouteThemesById((current) => ({ ...current, [route.id]: [] }));
+        }
+      }
+      if (!cancelled) await loadNext();
+    };
+
+    Promise.all([loadNext(), loadNext(), loadNext(), loadNext()])
+      .catch(() => {
+        if (!cancelled) setThemeFilterError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setThemeFilterLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [routes, themeFilterActive]);
 
   const handleNearbyToggle = useCallback(async (value: boolean) => {
     if (!value) {
@@ -294,7 +371,7 @@ export default function KantonRouten() {
     setNearbyLocating(true);
     setNearbyDenied(false);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.getForegroundPermissionsAsync();
       if (status !== "granted") {
         setNearbyDenied(true);
         setNearbyLocating(false);
@@ -381,6 +458,12 @@ export default function KantonRouten() {
 
   return (
     <Background>
+      <Stack.Screen
+        options={{
+          gestureEnabled: false,
+          fullScreenGestureEnabled: false,
+        }}
+      />
       <ScrollView
         contentContainerStyle={{
           paddingTop: topPad,
@@ -467,15 +550,117 @@ export default function KantonRouten() {
             onDraggingChange={setSliderAktiv}
           />
 
+          <View style={[styles.themeFilterBox, { borderColor: colors.glassBorder }]}>
+            <Pressable
+              onPress={() => setShowThemeFilters((visible) => !visible)}
+              accessibilityRole="button"
+              accessibilityLabel={t.themeFilterTitle}
+              accessibilityState={{ expanded: showThemeFilters }}
+              style={styles.themeFilterHeader}
+            >
+              <View style={[styles.themeFilterIcon, { backgroundColor: colors.accent + "1F" }]}>
+                <Feather name="tag" size={14} color={colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.themeFilterTitle, { color: colors.foreground }]}>
+                  {t.themeFilterTitle}
+                </Text>
+                <Text style={[styles.themeFilterHint, { color: colors.mutedForeground }]}>
+                  {t.themeFilterCount(selectedThemeKeys.length, ROUTE_THEME_KEYS.length)}
+                </Text>
+              </View>
+              <Feather
+                name={showThemeFilters ? "chevron-up" : "chevron-down"}
+                size={17}
+                color={colors.mutedForeground}
+              />
+            </Pressable>
+            {showThemeFilters && (
+              <View style={[styles.themeFilterBody, { borderTopColor: colors.glassBorder }]}>
+                <View style={styles.themeFilterActions}>
+                  <Pressable
+                    onPress={() => setSelectedThemeKeys([...ROUTE_THEME_KEYS])}
+                    accessibilityRole="button"
+                    style={[styles.themeFilterAction, { borderColor: colors.glassBorder }]}
+                  >
+                    <Text style={[styles.themeFilterActionText, { color: colors.accent }]}>
+                      {t.themeFilterSelectAll}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setSelectedThemeKeys([])}
+                    accessibilityRole="button"
+                    style={[styles.themeFilterAction, { borderColor: colors.glassBorder }]}
+                  >
+                    <Text style={[styles.themeFilterActionText, { color: colors.mutedForeground }]}>
+                      {t.themeFilterClear}
+                    </Text>
+                  </Pressable>
+                </View>
+                <View style={styles.themeFilterGrid}>
+                  {ROUTE_THEME_KEYS.map((theme) => {
+                    const selected = selectedThemeKeys.includes(theme);
+                    return (
+                      <Pressable
+                        key={theme}
+                        onPress={() =>
+                          setSelectedThemeKeys((current) =>
+                            current.includes(theme)
+                              ? current.filter((key) => key !== theme)
+                              : [...current, theme],
+                          )
+                        }
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: selected }}
+                        accessibilityLabel={routeThemeLabel(theme, language)}
+                        style={[
+                          styles.themeFilterChip,
+                          {
+                            backgroundColor: selected ? colors.accent + "1F" : "transparent",
+                            borderColor: selected ? colors.accent : colors.glassBorder,
+                          },
+                        ]}
+                      >
+                        <Feather
+                          name={selected ? "check-circle" : "circle"}
+                          size={14}
+                          color={selected ? colors.accent : colors.mutedForeground}
+                        />
+                        <Text
+                          style={[
+                            styles.themeFilterChipText,
+                            { color: selected ? colors.foreground : colors.mutedForeground },
+                          ]}
+                        >
+                          {routeThemeLabel(theme, language)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                {themeFilterLoading && (
+                  <Text style={[styles.themeFilterStatus, { color: colors.mutedForeground }]}>
+                    {t.themeFilterLoading}
+                  </Text>
+                )}
+                {themeFilterError && !themeFilterLoading && (
+                  <Text style={[styles.themeFilterStatus, { color: colors.destructive }]}>
+                    {t.themeFilterError}
+                  </Text>
+                )}
+              </View>
+            )}
+          </View>
+
           <Pressable
             onPress={() => setShowAdvancedFilters((visible) => !visible)}
             accessibilityRole="button"
-            accessibilityLabel={showAdvancedFilters ? "Weniger Filter" : "Weitere Filter"}
+            accessibilityLabel={showAdvancedFilters ? t.fewerFilters : t.moreFilters}
             style={[styles.moreFiltersButton, { borderColor: colors.glassBorder }]}
           >
             <Feather name={showAdvancedFilters ? "chevron-up" : "sliders"} size={14} color={colors.accent} />
             <Text style={[styles.moreFiltersText, { color: colors.accent }]}>
-              {showAdvancedFilters ? "Weniger Filter" : "Weitere Filter"}
+              {showAdvancedFilters ? t.fewerFilters : t.moreFilters}
             </Text>
           </Pressable>
 
@@ -664,6 +849,7 @@ export default function KantonRouten() {
                     setSunsetFilter(false);
                     setStartH(9);
                     setStartMin(0);
+                    setSelectedThemeKeys([]);
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={t.resetFilters}
@@ -676,20 +862,26 @@ export default function KantonRouten() {
                 </Pressable>
               )}
             </View>
-          ) : filteredRoutes.length === 0 && sunsetFilter ? (
+          ) : filteredRoutes.length === 0 && (sunsetFilter || themeFilterActive) ? (
             <View style={styles.hint}>
-              <Feather name="sunset" size={28} color={colors.mutedForeground} />
+              <Feather
+                name={themeFilterActive && !sunsetFilter ? "tag" : "sunset"}
+                size={28}
+                color={colors.mutedForeground}
+              />
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-                {t.sunsetNoneInTime}
+                {themeFilterActive && !sunsetFilter ? t.themeFilterNone : t.sunsetNoneInTime}
               </Text>
               <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-                {t.sunsetInfo(sunsetTimeStr)}
+                {themeFilterActive && !sunsetFilter
+                  ? t.themeFilterCount(selectedThemeKeys.length, ROUTE_THEME_KEYS.length)
+                  : t.sunsetInfo(sunsetTimeStr)}
               </Text>
             </View>
           ) : (
             <>
               <Text style={[styles.resultCount, { color: colors.mutedForeground }]}>
-                {sunsetFilter
+                {sunsetFilter || themeFilterActive
                   ? (filteredRoutes.length === 1 ? t.routeFound : t.routesFound(filteredRoutes.length))
                   : (routes.length === 1 ? t.routeFound : t.routesFound(routes.length))
                 }
@@ -742,100 +934,6 @@ export default function KantonRouten() {
 
       </ScrollView>
     </Background>
-  );
-}
-
-function RouteCard({
-  route,
-  index,
-  locked,
-  nearbyPos,
-  onPress,
-  kanton,
-}: {
-  route: HikingRoute;
-  index: number;
-  locked: boolean;
-  nearbyPos?: { lat: number; lng: number } | null;
-  onPress: () => void;
-  kanton?: string | null;
-}) {
-  const t = useKantonStrings();
-  const colors = useColors();
-  const distToStart = nearbyPos && route.coordinates
-    ? (() => {
-        const km = haversineKm(nearbyPos, { lat: route.coordinates.lat, lng: route.coordinates.lng });
-        return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
-      })()
-    : null;
-  // Echtes, moeglichst saisonpassendes Foto aus Routennaehe; solange keins
-  // geladen ist, zeigt der Hook das gebuendelte Saison-Panorama.
-  const foto = useRouteFoto(route);
-  const [fotoFehler, setFotoFehler] = useState(false);
-  // Sobald sich die Foto-URL ändert (z. B. DB-URL nachgeladen), Fehlerzustand
-  // zurücksetzen, damit der neue Versuch eine faire Chance bekommt.
-  const prevPhotoUrl = useRef(route.photoUrl);
-  if (prevPhotoUrl.current !== route.photoUrl) {
-    prevPhotoUrl.current = route.photoUrl;
-    setFotoFehler(false);
-  }
-  const h = Math.floor(route.minutes / 60);
-  const m = route.minutes % 60;
-  return (
-    <Animated.View entering={FadeInDown.delay(index * 80)} style={styles.cardWrap}>
-      <Pressable onPress={onPress} style={[styles.card, { borderColor: colors.glassBorder }]}>
-        <ExpoImage
-          source={fotoFehler ? foto.fallback : foto.source}
-          style={styles.cardImg}
-          contentFit="cover"
-          onError={() => { clearRouteFotoCache(route); setFotoFehler(true); }}
-        />
-        {foto.attribution && (
-          <View style={styles.cardAttributionScrim}>
-            <Text
-              style={[styles.cardAttribution, { color: colors.photoScrimMuted }]}
-              numberOfLines={1}
-            >
-              {foto.attribution}
-            </Text>
-          </View>
-        )}
-        {locked && (
-          <View style={styles.cardLockBadge}>
-            <Feather name="lock" size={14} color={colors.photoScrimText} />
-          </View>
-        )}
-        <View style={styles.cardContent}>
-          <Wegweiser name={route.name} sac={route.sac} kompakt kanton={kanton} />
-          {distToStart && (
-            <View style={styles.cardSeasonRow}>
-              <Feather name="navigation" size={11} color={colors.accent} />
-              <Text style={[styles.cardSeasonText, { color: colors.accent }]}>
-                {" "}{t.nearbyDistBadge(distToStart)}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.cardZeitleiste}>
-          <Text
-            style={styles.cardZeitleisteText}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.75}
-          >
-            {t.sacLabel} {route.sac} · {route.distanceTagKm ?? route.distanceKm} km · {route.ascentM} hm ·{" "}
-            {h}:{String(m).padStart(2, "0")} h ·{" "}
-            {t.season[
-              route.season === "ganzjaehrig"
-                ? "ganzjaehrig"
-                : route.season === "nur_sommer"
-                  ? "nurSommer"
-                  : "eherSommer"
-            ]}
-          </Text>
-        </View>
-      </Pressable>
-    </Animated.View>
   );
 }
 
@@ -907,6 +1005,63 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   filterTitle: { fontFamily: fonts.titleBold, fontSize: 16, flex: 1 },
+  themeFilterBox: {
+    borderWidth: 1,
+    borderRadius: 12,
+    marginTop: 2,
+    marginBottom: 10,
+    overflow: "hidden",
+  },
+  themeFilterHeader: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  themeFilterIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  themeFilterTitle: { fontFamily: fonts.bodyBold, fontSize: 14 },
+  themeFilterHint: { fontFamily: fonts.mono, fontSize: 11, marginTop: 2 },
+  themeFilterBody: {
+    borderTopWidth: 1,
+    padding: 10,
+  },
+  themeFilterActions: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 10,
+  },
+  themeFilterAction: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  themeFilterActionText: { fontFamily: fonts.bodyBold, fontSize: 11 },
+  themeFilterGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  themeFilterChip: {
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  themeFilterChipText: { fontFamily: fonts.bodyMedium, fontSize: 11, flexShrink: 1 },
+  themeFilterStatus: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 10 },
   switchRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1016,42 +1171,4 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono,
     fontSize: 11,
   },
-  cardWrap: { ...SCHATTEN_3D, marginBottom: 14 },
-  card: { ...GLAS_3D, height: 200, borderRadius: 18, borderWidth: 1, overflow: "hidden" },
-  cardImg: { width: "100%", height: "100%" },
-  cardContent: { position: "absolute", left: 16, right: 16, bottom: 40 },
-  cardLockBadge: {
-    position: "absolute",
-    top: 12,
-    left: 12,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(8,10,12,0.55)",
-    zIndex: 2,
-  },
-  cardZeitleiste: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 28,
-    backgroundColor: "rgba(227,6,19,0.55)",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 10,
-  },
-  cardZeitleisteText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: "#FFFFFF",
-    letterSpacing: 0.3,
-    textShadowColor: "rgba(0,0,0,0.35)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  cardSeasonRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 6 },
-  cardSeasonText: { fontFamily: fonts.body, fontSize: 11 },
 });

@@ -3,6 +3,13 @@ import test from "node:test";
 
 import {
   buildLocalTerrainMesh,
+  buildGeographicTerrainRouteDestination,
+  buildGeographicTerrainRouteSegments,
+  arWorldOffsetForPosition,
+  projectGeographicPointOntoTerrain,
+  routeGeometryMaxDistanceM,
+  routeGeometryAheadOfPosition,
+  routeOriginForAR,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
 } from "./terrainModel";
@@ -82,6 +89,193 @@ test("builds a compass-aligned mesh only with a known observer height", () => {
   assert.equal(mesh.vertices.length, 12);
   assert.equal(mesh.triangleIndices.length, 16);
   assert.ok(mesh.vertices.some(([x, y, z]) => x > 0 && z < 0 && y > 0));
+  assert.ok(
+    mesh.texcoords.slice(0, 3).every(([, v], index) =>
+      index === 0 ? v === 0.5 : v > 0.5,
+    ),
+    "north-facing terrain must sample the northern half of a flipY WMS texture",
+  );
   assert.equal(buildLocalTerrainMesh(model({ observerElevationM: null }), 0), null);
   assert.equal(buildLocalTerrainMesh(model(), null), null);
+});
+
+test("projects a geographic point onto the exact rendered terrain triangle", () => {
+  const terrain = model();
+  const point = {
+    lat: terrain.center.lat + (50 * 180) / (Math.PI * 6_371_000),
+    lng: terrain.center.lng,
+  };
+  const projected = projectGeographicPointOntoTerrain(terrain, point);
+
+  assert.ok(projected);
+  assert.ok(Math.abs(projected[0]) < 0.0001);
+  assert.ok(Math.abs(projected[2] + 2) < 0.001);
+  assert.ok(Math.abs(projected[1] - 0.6) < 0.001);
+});
+
+const ROUTE_CENTER = { lat: 46, lng: 7 };
+const LONG_ROUTE = [
+  [46, 7],
+  [46.005, 7],
+  [46.01, 7],
+  [46.015, 7],
+  [46.02, 7],
+];
+
+test("projects the complete route into compressed AR depth", () => {
+  const segments = buildGeographicTerrainRouteSegments(
+    null,
+    LONG_ROUTE,
+    ROUTE_CENTER,
+    500,
+    null,
+    { maxSegments: 96, maxVirtualDistanceM: 2_000 },
+  );
+
+  assert.ok(segments.length > 1);
+  assert.ok(segments.length <= 96);
+  const points = segments.flatMap((segment) => segment.points);
+  assert.ok(points.length > 2);
+  assert.ok(
+    points.every(([east, _elevation, north]) => Math.hypot(east, north) <= 80.001),
+  );
+  assert.ok(segments[0]!.thickness > segments.at(-1)!.thickness);
+  assert.ok(segments.at(-1)!.thickness >= 0.032);
+  for (let index = 1; index < segments.length; index++) {
+    assert.deepEqual(
+      segments[index - 1]!.points.at(-1),
+      segments[index]!.points[0],
+    );
+  }
+});
+
+test("places the destination flag at the final route point", () => {
+  const destination = buildGeographicTerrainRouteDestination(
+    null,
+    LONG_ROUTE,
+    ROUTE_CENTER,
+    500,
+    { maxVirtualDistanceM: 2_000 },
+  );
+
+  assert.ok(destination);
+  assert.ok(Math.hypot(destination[0], destination[2]) > 0);
+  assert.ok(Math.hypot(destination[0], destination[2]) <= 80.001);
+});
+
+test("snaps a nearby GPS fix to the route for the AR origin", () => {
+  const gpsFix = { lat: 46.004, lng: 7.00012 };
+  const snapped = routeOriginForAR(gpsFix, LONG_ROUTE);
+
+  assert.ok(Math.abs(snapped.lat - gpsFix.lat) < 0.00001);
+  assert.ok(Math.abs(snapped.lng - 7) < 0.00001);
+});
+
+test("does not pull an off-route AR origin onto a distant route", () => {
+  const gpsFix = { lat: 46.004, lng: 7.002 };
+  const origin = routeOriginForAR(gpsFix, LONG_ROUTE);
+
+  assert.deepEqual(origin, gpsFix);
+});
+
+test("hides the walked route while preserving the fixed geographic origin", () => {
+  const route = [
+    [46, 7],
+    [46.005, 7],
+    [46.01, 7],
+  ];
+  const remaining = routeGeometryAheadOfPosition(
+    route,
+    { lat: 46, lng: 7 },
+    { lat: 46.006, lng: 7.00001 },
+  );
+
+  assert.ok(remaining);
+  assert.equal(remaining.length, 2);
+  assert.ok(Math.abs(remaining[0]![0] - 46.006) < 0.00001);
+  assert.equal(remaining[1]![0], 46.01);
+});
+
+test("refreshes the AR route near the moving observer without resetting its world position", () => {
+  const metersPerLatitudeDegree = 180 / (Math.PI * 6_371_000);
+  const route = Array.from({ length: 7 }, (_, index) => [
+    46 + (index * 20 * metersPerLatitudeDegree),
+    7,
+  ]);
+  const origin = { lat: route[0]![0], lng: route[0]![1] };
+  const observer = { lat: route[2]![0], lng: route[2]![1] };
+  const remaining = routeGeometryAheadOfPosition(route, origin, observer);
+  const worldOffset = arWorldOffsetForPosition(origin, observer);
+
+  assert.ok(remaining);
+  const segments = buildGeographicTerrainRouteSegments(
+    null,
+    remaining,
+    observer,
+    500,
+    null,
+    {
+      maxRenderedDistanceM: 50,
+      maxRouteDistanceM: routeGeometryMaxDistanceM(route, observer),
+      worldOffset,
+    },
+  );
+  const points = segments.flatMap((segment) => segment.points);
+
+  assert.ok(points.length >= 2);
+  assert.ok(Math.abs(points[0]![2] - worldOffset[2]) < 0.01);
+  assert.ok(points.some((point) => point[2] < worldOffset[2] - 0.5));
+});
+
+test("keeps only the connected near-field prefix for looped routes", () => {
+  const metersPerLatitudeDegree = 180 / (Math.PI * 6_371_000);
+  const route = [
+    [46, 7],
+    [46 + 40 * metersPerLatitudeDegree, 7],
+    [46 + 40 * metersPerLatitudeDegree, 7 + 40 * metersPerLatitudeDegree],
+    [46, 7 + 40 * metersPerLatitudeDegree],
+    [46 + 5 * metersPerLatitudeDegree, 7 + 5 * metersPerLatitudeDegree],
+  ];
+  const segments = buildGeographicTerrainRouteSegments(
+    null,
+    route,
+    ROUTE_CENTER,
+    500,
+    null,
+    {
+      maxRenderedDistanceM: 50,
+      realScaleRadiusM: 50,
+      maxRouteDistanceM: 250,
+      maxVirtualDistanceM: 300,
+    },
+  );
+
+  const points = segments.flatMap((segment) => segment.points);
+  assert.ok(points.length >= 2);
+  assert.ok(
+    points.every(([east, _elevation, north]) => Math.hypot(east, north) <= 2.001),
+  );
+  assert.ok(
+    points.every((point, index) => {
+      if (index === 0) return true;
+      const previous = points[index - 1]!;
+      return Math.hypot(point[0] - previous[0], point[2] - previous[2]) < 2.1;
+    }),
+  );
+});
+
+test("keeps the full route when the GPS fix is too far from it", () => {
+  const route = [
+    [46, 7],
+    [46.005, 7],
+    [46.01, 7],
+  ];
+  assert.equal(
+    routeGeometryAheadOfPosition(
+      route,
+      { lat: 46, lng: 7 },
+      { lat: 46.006, lng: 7.002 },
+    ),
+    null,
+  );
 });

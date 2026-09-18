@@ -50,6 +50,8 @@ import {
   deletePoiCaches,
 } from "@/lib/offlinePois";
 import { Profile, Saga, StoryChapter } from "@/types";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
+import type { MapPoi } from "@/components/brand/swisstopoMapHtml";
 
 /**
  * Download-Verwaltung fuer einzelne Wanderungen (Offline-Nutzung).
@@ -69,9 +71,12 @@ const INDEX_KEY = "sagatrail:downloads";
 // Versionierter Prefix: muss mitbumpen, wenn der Server-Erzaehlstil (STORY_SOURCE
 // in routes/stories.ts) wechselt — sonst bleiben alte, im Stil ueberholte
 // Kapitel auf dem Geraet haengen. Alte v1-Eintraege werden schlicht ignoriert.
-const storyKeyPrefix = "sagatrail:story:v2:";
+const storyKeyPrefix = "sagatrail:story:v5:";
+const MIN_STORY_CHAPTERS = 8;
+const MIN_SERVER_STORY_CHAPTERS = 8;
 const poisKeyPrefix = "sagatrail:pois:v1:";
-const panoramaKeyPrefix = "sagatrail:panorama:v3:";
+const panoramaKeyPrefix = "sagatrail:panorama:v4:";
+const safetyKeyPrefix = "sagatrail:safety:v1:";
 
 export interface DownloadRecord {
   sagaId: string;
@@ -102,9 +107,17 @@ export interface DownloadRecord {
   sagaSnapshot?: Saga;
   offlinePackageVersion?: number;
   emergencyNumbers?: string[];
+  safetyInfo?: boolean;
 }
 
-export type DownloadPhase = "story" | "audio" | "pois" | "tiles";
+export type DownloadPhase = "story" | "audio" | "pois" | "safety" | "tiles";
+
+export interface OfflineSafetyData {
+  emergencyNumbers: string[];
+  waterSources: MapPoi[];
+  safetyPois: MapPoi[];
+  parkingSpots: MapPoi[];
+}
 
 export interface DownloadProgress {
   sagaId: string;
@@ -124,6 +137,7 @@ interface DownloadContextValue {
   loadOfflineTiles: (sagaId: string) => Promise<Record<string, string>>;
   loadOfflinePois: (routeId: string) => Promise<unknown[] | null>;
   loadOfflinePanorama: (routeId: string) => Promise<OfflinePanoramaDatenbank | null>;
+  loadOfflineSafety: (routeId: string) => Promise<OfflineSafetyData | null>;
   resolveStory: (
     saga: Saga,
     profile: Profile,
@@ -143,6 +157,32 @@ function poisKey(routeId: string): string {
 
 function panoramaKey(routeId: string): string {
   return `${panoramaKeyPrefix}${routeId}`;
+}
+
+function safetyKey(routeId: string): string {
+  return `${safetyKeyPrefix}${routeId}`;
+}
+
+async function deleteOfflinePayload(record: DownloadRecord): Promise<void> {
+  await AsyncStorage.removeItem(
+    storyKey(record.sagaId, record.archetype, record.ageTier, record.language),
+  ).catch(() => {});
+
+  try {
+    const poisRaw = await AsyncStorage.getItem(poisKey(record.routeId));
+    if (poisRaw) {
+      const pois = JSON.parse(poisRaw) as { id: string }[];
+      await deletePoiCaches(pois.map((poi) => poi.id));
+    }
+  } catch {
+    // Einzelne fehlerhafte POI-Daten dürfen den restlichen Löschvorgang nicht blockieren.
+  }
+
+  await AsyncStorage.removeItem(poisKey(record.routeId)).catch(() => {});
+  await AsyncStorage.removeItem(panoramaKey(record.routeId)).catch(() => {});
+  await AsyncStorage.removeItem(safetyKey(record.routeId)).catch(() => {});
+  await deleteTiles(record.sagaId);
+  await deleteNarrationAudio(record.sagaId);
 }
 
 async function loadTerrainProfileForDownload(
@@ -203,7 +243,7 @@ async function readStory(
     );
     if (!raw) return null;
     const chapters = JSON.parse(raw) as StoryChapter[];
-    return chapters?.length ? chapters : null;
+    return chapters?.length >= MIN_STORY_CHAPTERS ? chapters : null;
   } catch {
     return null;
   }
@@ -234,6 +274,18 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
 
   const download = useCallback(
     async (saga: Saga, route: HikingRoute, profile: Profile, premium: boolean) => {
+      // SagaTrail hält bewusst nur ein Offline-Paket gleichzeitig. Vor einem
+      // neuen Download werden alle bisher indexierten Pakete entfernt, damit
+      // alte Routen nicht weiter Speicher belegen oder versehentlich mit
+      // aktuellen Inhalten vermischt werden.
+      const previousDownloads = Object.values(downloads);
+      for (const previousDownload of previousDownloads) {
+        await deleteOfflinePayload(previousDownload);
+      }
+      if (previousDownloads.length > 0) {
+        await persist({});
+      }
+
       // Fuer Premium (KI-Erzaehlstimme) wird gsw nie als Dialekt-Text
       // heruntergeladen — siehe effectiveStoryLanguage.
       const lang = effectiveStoryLanguage(profile.language, premium);
@@ -251,6 +303,9 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           language: lang,
         });
         chapters = res.chapters as StoryChapter[];
+        if (chapters.length < MIN_SERVER_STORY_CHAPTERS) {
+          throw new Error("Server-Sage enthaelt zu wenige Kapitel");
+        }
         storySource = res.source ?? "server";
       } catch {
         chapters = generateStory(saga, profile.archetype, profile.ageTier, lang);
@@ -284,6 +339,8 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       // 3. POIs laden, Detail und Story fuer jeden POI vorladen.
       let hasPois = false;
       let poisFailed = false;
+      let panoramaFailed = false;
+      let safetyInfo = false;
       let panoramaDatabase: OfflinePanoramaDatenbank | null = null;
       const center = route.coordinates ?? saga.coordinates ?? null;
       if (center) {
@@ -309,20 +366,29 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
               terrainProfile,
               terrainModel,
             );
+            // Ohne gespeichertes DTM bleiben Gipfel zwar auffindbar, die
+            // Verdeckung ist offline aber nicht belastbar. Das Paket wird
+            // deshalb sichtbar als unvollständig markiert.
+            panoramaFailed = panoramaDatabase.coverage.terrainRadiusM == null;
           } catch {
-            panoramaDatabase = createOfflinePanoramaDatenbank(
-              pois,
-              terrainProfile,
-              terrainModel,
-            );
+            // Allgemeine POIs sind keine verlässliche Gipfelquelle. Eine
+            // fehlende Peak-Abfrage darf deshalb nicht stillschweigend durch
+            // einen gemischten POI-Bestand ersetzt werden.
+            panoramaFailed = true;
           }
-          await AsyncStorage.setItem(
-            panoramaKey(route.id),
-            JSON.stringify(panoramaDatabase),
-          ).catch(() => {});
-          if (pois.length > 0) {
+          if (panoramaDatabase) {
+            await AsyncStorage.setItem(
+              panoramaKey(route.id),
+              JSON.stringify(panoramaDatabase),
+            ).catch(() => {});
+          }
+          {
+            // Auch eine valide leere Antwort wird gespeichert. Sie bedeutet
+            // "keine thematischen POIs", nicht "offline nicht vorbereitet".
             await AsyncStorage.setItem(poisKey(route.id), JSON.stringify(pois)).catch(() => {});
             hasPois = true;
+          }
+          if (pois.length > 0) {
             // Detail und Story fuer jeden POI vorladen (total = 1 List + n Detail + n Story)
             const total = 1 + pois.length * 2;
             let done = 1;
@@ -366,10 +432,99 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         } catch {
           poisFailed = true;
         }
-        phaseStatus.pois = poisFailed ? "failed" : "complete";
+        phaseStatus.pois = poisFailed || panoramaFailed ? "failed" : "complete";
       }
 
-      // 4. Kartenkacheln laden — gesamte Route wenn Geometrie vorhanden,
+      // 4. Sicherheitsinformationen: Trinkwasser, sicherheitsrelevante POIs
+      // und Parkplätze werden als Teil des Pakets gespeichert. Diese Daten
+      // dürfen im Berggebiet nicht erst beim Öffnen der Karte online kommen.
+      try {
+        if (!center) throw new Error("Kein Routenmittelpunkt");
+        setProgress({ sagaId: saga.id, phase: "safety", done: 0, total: 4 });
+        const base = getApiBaseUrl() ?? "";
+        const geometry = route.geometry ?? [];
+        const first = geometry[0] ?? [center.lat, center.lng];
+        const last = geometry[geometry.length - 1] ?? first;
+        const readArray = async <T,>(url: string): Promise<T[]> => {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`Offline-Sicherheitsdaten: ${response.status}`);
+          const value: unknown = await response.json();
+          if (!Array.isArray(value)) throw new Error("Ungültige Offline-Sicherheitsdaten");
+          return value as T[];
+        };
+        const [water, safety, fromStart, fromEnd] = await Promise.all([
+          readArray<{ osmId: string; lat: number; lng: number; name: string | null }>(
+            `${base}/api/trinkwasser?lat=${center.lat}&lng=${center.lng}&radius=8000`,
+          ),
+          readArray<{
+            osmId: string;
+            category: string;
+            name: string;
+            lat: number;
+            lng: number;
+            description?: string | null;
+            phone?: string | null;
+            openingHours?: string | null;
+          }>(`${base}/api/safety-pois?lat=${center.lat}&lng=${center.lng}&radius=10000`),
+          readArray<{
+            osmId: string;
+            lat: number;
+            lng: number;
+            name: string | null;
+            address: string | null;
+            parkingType: string | null;
+            capacity: number | null;
+          }>(`${base}/api/parking?lat=${first[0]}&lng=${first[1]}&radius=800`),
+          readArray<{
+            osmId: string;
+            lat: number;
+            lng: number;
+            name: string | null;
+            address: string | null;
+            parkingType: string | null;
+            capacity: number | null;
+          }>(`${base}/api/parking?lat=${last[0]}&lng=${last[1]}&radius=800`),
+        ]);
+        const parking = [...fromStart, ...fromEnd]
+          .filter((item, index, all) => all.findIndex((other) => other.osmId === item.osmId) === index)
+          .map((item) => ({
+            id: item.osmId,
+            name: item.name ?? item.parkingType ?? "Parkplatz",
+            lat: item.lat,
+            lng: item.lng,
+            description: [item.parkingType, item.address, item.capacity ? `${item.capacity} Plätze` : null]
+              .filter(Boolean)
+              .join(" · ") || null,
+          }));
+        const safetyData: OfflineSafetyData = {
+          emergencyNumbers: ["1414", "144", "117", "112"],
+          waterSources: water
+            .filter((item) => Boolean(item.osmId))
+            .map((item) => ({ id: item.osmId, name: item.name ?? "Trinkwasser", lat: item.lat, lng: item.lng })),
+          safetyPois: safety
+            .filter((item) => Boolean(item.osmId))
+            .map((item) => ({
+              id: item.osmId,
+              name: item.name,
+              lat: item.lat,
+              lng: item.lng,
+              category: item.category,
+              description: [item.description, item.phone ? `Tel. ${item.phone}` : null, item.openingHours]
+                .filter(Boolean)
+                .join(" · ") || null,
+            })),
+          parkingSpots: parking,
+        };
+        await AsyncStorage.setItem(safetyKey(route.id), JSON.stringify(safetyData));
+        safetyInfo = true;
+        setProgress({ sagaId: saga.id, phase: "safety", done: 4, total: 4 });
+      } catch {
+        // Ein unvollständiges Paket wird sichtbar markiert und nicht als
+        // vollständig offline-tauglich ausgegeben.
+      }
+      phaseStatus.safety = safetyInfo ? "complete" : "failed";
+
+      // 5. Kartenkacheln laden — gesamte Route wenn Geometrie vorhanden,
       //    sonst nur Korridor um Startpunkt.
       let tileCount = 0;
       let sizeBytes = 0;
@@ -403,7 +558,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         sagaId: saga.id,
         routeId: route.id,
         routeName: route.name,
-        sagaTitle: saga.title,
+        sagaTitle: getLocalizedSagaTitle(saga, lang),
         archetype: profile.archetype,
         ageTier: profile.ageTier,
         language: lang,
@@ -416,6 +571,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         peakCount: panoramaDatabase?.peaks.length ?? 0,
         panoramaDatabaseVersion: panoramaDatabase?.version,
         panoramaSource: panoramaDatabase?.source,
+        safetyInfo,
         downloadedAt: Date.now(),
         status: Object.values(phaseStatus).some((s) => s === "failed" || s === "partial")
           ? "partial"
@@ -424,10 +580,10 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         failedPhase: Object.entries(phaseStatus).find(([, status]) => status !== "complete")?.[0] as DownloadPhase | undefined,
         routeSnapshot: route,
         sagaSnapshot: saga,
-        offlinePackageVersion: 5,
+        offlinePackageVersion: 7,
         emergencyNumbers: ["1414", "144", "117", "112"],
       };
-      await persist({ ...downloads, [saga.id]: record });
+      await persist({ [saga.id]: record });
       setProgress(null);
     },
     [downloads, persist]
@@ -437,22 +593,8 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
     async (sagaId: string) => {
       const rec = downloads[sagaId];
       if (rec) {
-        await AsyncStorage.removeItem(
-          storyKey(sagaId, rec.archetype, rec.ageTier, rec.language)
-        ).catch(() => {});
-        // POI-Detail- und Story-Caches loeschen
-      try {
-        const poisRaw = await AsyncStorage.getItem(poisKey(rec.routeId));
-        if (poisRaw) {
-          const pois = JSON.parse(poisRaw) as { id: string }[];
-          await deletePoiCaches(pois.map((p) => p.id));
-        }
-      } catch {}
-      await AsyncStorage.removeItem(poisKey(rec.routeId)).catch(() => {});
-      await AsyncStorage.removeItem(panoramaKey(rec.routeId)).catch(() => {});
+        await deleteOfflinePayload(rec);
       }
-      await deleteTiles(sagaId);
-      await deleteNarrationAudio(sagaId);
       const next = { ...downloads };
       delete next[sagaId];
       await persist(next);
@@ -480,6 +622,9 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           language: lang,
         });
         const chapters = res.chapters as StoryChapter[];
+        if (chapters.length < MIN_SERVER_STORY_CHAPTERS) {
+          throw new Error("Server-Sage enthaelt zu wenige Kapitel");
+        }
         AsyncStorage.setItem(
           storyKey(saga.id, profile.archetype, profile.ageTier, lang),
           JSON.stringify(chapters)
@@ -509,7 +654,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       // Tile-Dateien aus älteren Paketen stammen noch aus der CARTO-Zeit.
       // Nicht als swisstopo-Kacheln anzeigen — erst nach einem neuen Download
       // mit der aktuellen Paketversion wieder aktivieren.
-      if (downloads[sagaId]?.offlinePackageVersion !== 5) return Promise.resolve({});
+       if (downloads[sagaId]?.offlinePackageVersion !== 7) return Promise.resolve({});
       return loadTilesBase64(sagaId);
     },
     [downloads]
@@ -543,6 +688,26 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const loadOfflineSafety = useCallback(
+    async (routeId: string): Promise<OfflineSafetyData | null> => {
+      try {
+        const raw = await AsyncStorage.getItem(safetyKey(routeId));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as OfflineSafetyData;
+        return parsed &&
+          Array.isArray(parsed.emergencyNumbers) &&
+          Array.isArray(parsed.waterSources) &&
+          Array.isArray(parsed.safetyPois) &&
+          Array.isArray(parsed.parkingSpots)
+          ? parsed
+          : null;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
   const value = useMemo<DownloadContextValue>(
     () => ({
       ready,
@@ -555,6 +720,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       loadOfflineTiles,
       loadOfflinePois,
       loadOfflinePanorama,
+      loadOfflineSafety,
       resolveStory,
     }),
     [
@@ -568,6 +734,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       loadOfflineTiles,
       loadOfflinePois,
       loadOfflinePanorama,
+      loadOfflineSafety,
       resolveStory,
     ]
   );

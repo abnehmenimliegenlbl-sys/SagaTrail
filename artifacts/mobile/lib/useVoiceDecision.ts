@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 
 import { matchDecisionOption, VoiceMatchOption } from "./decisionVoiceMatch";
 import { NATIVE_MODULES_AVAILABLE } from "./nativeEnv";
+import { readSpeechPermissionWithRetry, isSpeechPermissionGranted } from "./speechPermission";
 import { Lang, SPEECH_LOCALE } from "./storyContent";
 
 /**
@@ -55,11 +57,17 @@ if (NATIVE_SPEECH_AVAILABLE) {
 // Zeitspanne abdecken, sonst ist das Mikrofon lange vor Ablauf tot.
 const MAX_LISTEN_RESTARTS = 40;
 
+type VoiceDecisionDebug = (
+  event: string,
+  details?: Record<string, unknown>,
+) => void;
+
 export function useVoiceDecision(
   active: boolean,
   lang: Lang,
   options: VoiceMatchOption[],
-  onMatch: (index: number) => void
+  onMatch: (index: number) => void,
+  onDebug?: VoiceDecisionDebug,
 ): {
   listening: boolean;
   supported: boolean;
@@ -71,16 +79,49 @@ export function useVoiceDecision(
   const [supported, setSupported] = useState(
     NATIVE_SPEECH_AVAILABLE && ExpoSpeechRecognitionModule != null
   );
+  const [permissionRevision, setPermissionRevision] = useState(0);
   const restartsRef = useRef(0);
   const matchedRef = useRef(false);
+  const permissionBlockedRef = useRef(false);
+  const listeningRef = useRef(false);
   const onMatchRef = useRef(onMatch);
   onMatchRef.current = onMatch;
+  const onDebugRef = useRef(onDebug);
+  onDebugRef.current = onDebug;
   const optionsRef = useRef(options);
   optionsRef.current = options;
   const langRef = useRef(lang);
   langRef.current = lang;
+  listeningRef.current = listening;
+  const previousActiveRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    if (previousActiveRef.current !== active) {
+      onDebugRef.current?.("active_changed", {
+        active,
+        supported,
+        listening: listeningRef.current,
+        optionCount: optionsRef.current.length,
+        lang: langRef.current,
+      });
+      previousActiveRef.current = active;
+    }
+  }, [active, supported]);
+
+  useEffect(() => {
+    if (!active) return;
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active" && !listeningRef.current) {
+        setPermissionRevision((value) => value + 1);
+      }
+    });
+    return () => subscription.remove();
+  }, [active]);
 
   const stopListening = useCallback(async () => {
+    onDebugRef.current?.("stop_requested", {
+      listening: listeningRef.current,
+    });
     try {
       ExpoSpeechRecognitionModule?.stop();
     } catch {
@@ -99,6 +140,9 @@ export function useVoiceDecision(
       // parallel with the confirmation audio.
       await new Promise<void>((resolve) => setTimeout(resolve, 500));
     }
+    onDebugRef.current?.("stop_completed", {
+      listening: listeningRef.current,
+    });
   }, []);
 
   useEffect(() => {
@@ -110,21 +154,44 @@ export function useVoiceDecision(
     let cancelled = false;
     restartsRef.current = 0;
     matchedRef.current = false;
+    permissionBlockedRef.current = false;
     setLastTranscript(null);
 
     (async () => {
       try {
-        // Kurze Pause damit laufende fire-and-forget Audio.setAudioModeAsync()-
+        onDebugRef.current?.("permission_check_started", {
+          lang: langRef.current,
+          optionCount: optionsRef.current.length,
+        });
+        // Kurze Pause damit laufende fire-and-forget setAudioModeAsync()-
         // Aufrufe (aus speak/didJustFinish) abgeschlossen sind, bevor die
-        // Spracherkennung allowsRecordingIOS:true setzt. Ohne diese Pause kann
+        // Spracherkennung allowsRecording:true setzt. Ohne diese Pause kann
         // ein verspäteter Reset das Mikrofon nach dem Start wieder deaktivieren.
         await new Promise<void>((r) => setTimeout(r, 250));
         if (cancelled) return;
-        const perm = await ExpoSpeechRecognitionModule!.requestPermissionsAsync();
+        const permissionState = await readSpeechPermissionWithRetry(
+          () => ExpoSpeechRecognitionModule!.getPermissionsAsync(),
+        );
+        onDebugRef.current?.("permission_check_completed", {
+          permissionState,
+        });
         if (cancelled) return;
-        if (!perm.granted) {
-          setSupported(false);
+        if (permissionState === "unknown") {
+          setListening(false);
           return;
+        }
+        if (permissionState === "denied") {
+          // The onboarding normally requests this already, but an OTA update
+          // or a stale native permission read can leave the decision flow
+          // without a confirmed grant. Ask once at the actual listening
+          // boundary instead of starting recognition blindly.
+          const perm = await ExpoSpeechRecognitionModule!.requestPermissionsAsync();
+          if (cancelled) return;
+          if (!isSpeechPermissionGranted(perm)) {
+            permissionBlockedRef.current = true;
+            setListening(false);
+            return;
+          }
         }
         ExpoSpeechRecognitionModule!.start({
           lang: SPEECH_LOCALE[langRef.current],
@@ -136,8 +203,16 @@ export function useVoiceDecision(
           continuous: true,
         });
         setListening(true);
+        onDebugRef.current?.("recognition_started", {
+          lang: SPEECH_LOCALE[langRef.current],
+          restart: restartsRef.current,
+        });
       } catch {
-        if (!cancelled) setSupported(false);
+        if (!cancelled) {
+          permissionBlockedRef.current = true;
+          setListening(false);
+          onDebugRef.current?.("recognition_start_failed");
+        }
       }
     })();
 
@@ -145,7 +220,7 @@ export function useVoiceDecision(
       cancelled = true;
       void stopListening();
     };
-  }, [active, supported, stopListening]);
+  }, [active, permissionRevision, supported, stopListening]);
 
   useSpeechRecognitionEvent("result", (event) => {
     if (!active || matchedRef.current) return;
@@ -157,6 +232,11 @@ export function useVoiceDecision(
       const index = matchDecisionOption(transcript, langRef.current, optionsRef.current);
       if (index != null) {
         matchedRef.current = true;
+          onDebugRef.current?.("option_matched", {
+            optionIndex: index,
+            transcriptLength: transcript.length,
+            transcriptCount: transcripts.length,
+          });
         // Native Recognition und Playback duerfen nicht gleichzeitig um die
         // iOS-Audiosession kaempfen. Erst nach dem kurzen Release-Fenster die
         // Auswahl bestaetigen und die Ack-Ansage starten.
@@ -173,11 +253,21 @@ export function useVoiceDecision(
       setListening(false);
       return;
     }
-    if (restartsRef.current >= MAX_LISTEN_RESTARTS) {
+    if (permissionBlockedRef.current) {
       setListening(false);
       return;
     }
+    if (restartsRef.current >= MAX_LISTEN_RESTARTS) {
+      setListening(false);
+      onDebugRef.current?.("restart_limit_reached", {
+        restartCount: restartsRef.current,
+      });
+      return;
+    }
     restartsRef.current += 1;
+    onDebugRef.current?.("recognition_end_restart", {
+      restartCount: restartsRef.current,
+    });
     try {
       ExpoSpeechRecognitionModule?.start({
         lang: SPEECH_LOCALE[langRef.current],
@@ -191,14 +281,20 @@ export function useVoiceDecision(
 
   useSpeechRecognitionEvent("error", (event) => {
     if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-      setSupported(false);
+      permissionBlockedRef.current = true;
       setListening(false);
+      onDebugRef.current?.("recognition_blocked", {
+        error: event.error,
+      });
       return;
     }
+    onDebugRef.current?.("recognition_transient_error", {
+      error: event.error,
+    });
     // Transiente Fehler ("no-speech", "network", "aborted" bei Session-Ende)
     // NICHT als "Zuhoeren beendet" werten: gleich danach feuert "end" und
     // startet die Erkennung neu. setListening(false) wuerde hier den
-    // Audio-Session-Reset im Hike-Screen ausloesen (allowsRecordingIOS:false)
+    // Audio-Session-Reset im Hike-Screen ausloesen (allowsRecording:false)
     // und das Mikrofon mitten im Entscheidungspunkt lahmlegen — genau der
     // Fehler, bei dem die App scheinbar "nicht zuhoert".
   });

@@ -121,19 +121,29 @@ export interface SwisstopoMapProps {
   label?: string;
   height?: number;
   geometry?: number[][] | null;
+  waypoints?: { lat: number; lng: number; number: number }[] | null;
   elevationProfile?: TerrainProfilePoint[] | null;
   altGeometry?: number[][] | null;
   offlineTiles?: Record<string, string> | null;
   aerialways?: { id: string; geometry: number[][] }[] | null;
   pois?: MapPoi[] | null;
+  /** Erst true, wenn die aktuelle POI-Abfrage mindestens einmal abgeschlossen ist. */
+  poisReady?: boolean;
   onPoiPress?: (id: string) => void;
   partners?: MapPoi[] | null;
   onPartnerPress?: (id: string) => void;
   waterSources?: MapPoi[] | null;
   parkingSpots?: MapPoi[] | null;
   safetyPois?: MapPoi[] | null;
+  /** Erst true, wenn die aktuelle Sicherheits-POI-Abfrage abgeschlossen ist. */
+  safetyPoisReady?: boolean;
   pickerMode?: boolean;
+  drawMode?: boolean;
+  zoom?: number;
+  /** Behält die aktuelle Leaflet-Ansicht bei, wenn die WebView neu aufgebaut wird. */
+  preserveViewOnReload?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
+  onMapDraw?: (points: { lat: number; lng: number }[]) => void;
   legend?: MapLegendLabels | null;
   /** Sicherer Bereich oben (iOS-Statusleiste). Schiebt den 2D/3D/Sat-Toggle
    *  nach unten damit er nicht hinter der Statusleiste verschwindet. */
@@ -237,10 +247,10 @@ export function buildSwisstopoHtml(
       rows += legendZeile('<span class="stt-linie-route-rot"></span>', legend.routeGrade30plus);
       if (altGeometry && altGeometry.length > 1)
         rows += legendZeile('<span class="stt-linie-altroute"></span>', legend.altRoute);
-      rows += legendZeile('<svg width="14" height="18" viewBox="0 0 30 38" style="display:block"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>', legend.start);
+      rows += legendZeile('<svg width="14" height="18" viewBox="0 0 30 38" style="display:block"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#CC0000"/></svg>', legend.start);
       rows += legendZeile('<svg width="14" height="18" viewBox="0 0 30 38" style="display:block"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><rect x="4" y="1" width="24" height="16" fill="#fff" stroke="#777" stroke-width=".5"/><rect x="4" y="1" width="8" height="5.3" fill="#111"/><rect x="20" y="1" width="8" height="5.3" fill="#111"/><rect x="12" y="6.3" width="8" height="5.4" fill="#111"/><rect x="4" y="11.7" width="8" height="5.3" fill="#111"/><rect x="20" y="11.7" width="8" height="5.3" fill="#111"/></svg>', legend.ziel);
     } else {
-      rows += legendZeile('<svg width="14" height="18" viewBox="0 0 30 38" style="display:block"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>', legend.start);
+      rows += legendZeile('<svg width="14" height="18" viewBox="0 0 30 38" style="display:block"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#CC0000"/></svg>', legend.start);
     }
     rows += legendZeile('<div class="stt-live"></div>', legend.position);
     if (aerialways && aerialways.length > 0) {
@@ -293,8 +303,8 @@ export function buildSwisstopoHtml(
   .stt-cluster-badge { position: absolute; transform: translate(-50%, -50%); color: #F5F3EC; font-size: 9px; font-weight: 700; font-family: -apple-system, system-ui, sans-serif; pointer-events: none; z-index: 10; opacity: .75; }
   .stt-safety-cluster { width: 26px; height: 26px; border-radius: 50%; background: #B21F2D; border: 1.5px solid #F5F3EC; box-shadow: 0 0 0 2.25px rgba(178,31,45,.25), 0 1.5px 6px rgba(0,0,0,.35); color: #F5F3EC; font: 800 9px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; opacity: .75; }
   /* --- Kartenmarker (unveraendert) --- */
-  .stt-start { width: 16px; height: 16px; border-radius: 50%; background: #DA291C; border: 2px solid #F5F3EC; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
-  .stt-ziel  { width: 16px; height: 16px; border-radius: 50%; background: #F5F3EC; border: 3px solid #DA291C; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
+  .stt-start { width: 16px; height: 16px; border-radius: 50%; background: #CC0000; border: 2px solid #F5F3EC; box-shadow: 0 0 0 4px rgba(204,0,0,0.25); }
+  .stt-ziel  { width: 16px; height: 16px; border-radius: 50%; background: #F5F3EC; border: 3px solid #CC0000; box-shadow: 0 0 0 4px rgba(204,0,0,0.25); }
   .stt-live  { width: 16px; height: 16px; border-radius: 50%; background: #00E676; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(0,230,118,0.30); }
   .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
   .stt-poi-tipp     { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
@@ -319,7 +329,7 @@ export function buildSwisstopoHtml(
   .stt-safety--toilet, .stt-safety--pharmacy, .stt-safety--clinic,
   .stt-safety--hospital, .stt-safety--shelter { border-color: #B21F2D; color: #B21F2D; }
   .stt-safety--legend { width: 24px; height: 20px; border-radius: 6px; background: #B21F2D; border-color: #F5F3EC; color: #F5F3EC; font-size: 8px; box-shadow: none; }
-  .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
+  .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #CC0000; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
   /* Saga-Pin */
   .stt-saga-tipp { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(255,255,255,0.60); border-radius: 20px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
   .stt-saga-tipp img { width: 28px; height: 28px; object-fit: contain; display: block; }
@@ -330,7 +340,7 @@ export function buildSwisstopoHtml(
     overflow: hidden; font-family: -apple-system, system-ui, sans-serif; }
   .stt-legende-kopf { display: flex; align-items: center; gap: 6px; padding: 7px 10px;
     cursor: pointer; user-select: none; -webkit-user-select: none;
-    font-weight: 600; color: #DA291C; }
+    font-weight: 600; color: #CC0000; }
   .stt-legende-pfeil { display: inline-block; transition: transform 0.15s ease; font-size: 10px; color: #F5F3EC; }
   #stt-legende.zu .stt-legende-pfeil { transform: rotate(-90deg); }
   .stt-legende-inhalt { padding: 0 10px 8px 10px; }
@@ -367,14 +377,30 @@ export function buildSwisstopoHtml(
     border: none; border-right: 1px solid rgba(255,255,255,0.08);
     -webkit-user-select: none; user-select: none; }
   .stt-mbtn:last-child { border-right: none; }
-  .stt-mbtn.active { background: #DA291C; color: #F5F3EC; }
+  .stt-mbtn.active { background: #CC0000; color: #F5F3EC; }
   /* MapLibre overrides */
   .maplibregl-ctrl-bottom-right,
   .maplibregl-ctrl-bottom-left { bottom: 0px !important; }
   .maplibregl-ctrl-attrib { background: rgba(16,24,26,0.7) !important; max-width: 140px !important; }
-  .maplibregl-ctrl-attrib a { color: #DA291C !important; }
+  .maplibregl-ctrl-attrib a { color: #CC0000 !important; }
   .maplibregl-ctrl-attrib-inner { color: #6B7568 !important; font-size: 9px !important;
     white-space: normal !important; word-break: break-word !important; line-height: 1.3 !important; }
+  /* Sicherheits-POI-Popup: SagaTrail-Schliessenbutton statt MapLibre-Standard-X */
+  .stt-safety-popup .maplibregl-popup-content { padding: 42px 14px 14px 14px !important; }
+  .stt-safety-popup .maplibregl-popup-close-button {
+    top: 7px !important; right: 7px !important; width: 30px !important; height: 30px !important;
+    padding: 0 !important; border: 1.5px solid #CC0000 !important; border-radius: 50% !important;
+    background: #F5F3EC !important; color: #000 !important; font-size: 0 !important;
+    line-height: 1 !important; display: flex !important; align-items: center; justify-content: center;
+    box-sizing: border-box; opacity: 1 !important;
+  }
+  .stt-safety-popup .maplibregl-popup-close-button::before,
+  .stt-safety-popup .maplibregl-popup-close-button::after {
+    content: ''; position: absolute; width: 14px; height: 2px; border-radius: 2px;
+    background: #000; left: 7px; top: 13px;
+  }
+  .stt-safety-popup .maplibregl-popup-close-button::before { transform: rotate(45deg); }
+  .stt-safety-popup .maplibregl-popup-close-button::after { transform: rotate(-45deg); }
 </style>
 </head>
 <body>
@@ -600,7 +626,7 @@ ${legendHtml}
       el.style.cssText = 'width:30px;height:38px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))';
       el.innerHTML = typ === 'ziel'
         ? '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><rect x="4" y="1" width="24" height="16" fill="#fff" stroke="#777" stroke-width=".5"/><rect x="4" y="1" width="8" height="5.3" fill="#111"/><rect x="20" y="1" width="8" height="5.3" fill="#111"/><rect x="12" y="6.3" width="8" height="5.4" fill="#111"/><rect x="4" y="11.7" width="8" height="5.3" fill="#111"/><rect x="20" y="11.7" width="8" height="5.3" fill="#111"/></svg>'
-        : '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>';
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#CC0000"/></svg>';
       return el;
     }
 
@@ -1065,7 +1091,7 @@ ${legendHtml}
         if (p.description) lines.push(p.description);
         if (p.phone) lines.push('Tel. ' + p.phone);
         if (p.openingHours) lines.push(p.openingHours);
-        new maplibregl.Popup({ offset: 12, maxWidth: '220px' })
+        new maplibregl.Popup({ offset: 12, maxWidth: '220px', className: 'stt-safety-popup' })
           .setLngLat(e.lngLat)
           .setText(lines.join('\n'))
           .addTo(map);

@@ -12,6 +12,12 @@ export interface Profile {
   /** Clerk-Benutzer-ID */
   id: string;
   name: string;
+  /** @maxLength 160 */
+  bio?: string | null;
+  /** Privater Objektpfad des Profilbilds */
+  avatarUrl?: string | null;
+  /** Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben */
+  dateOfBirth?: Date | null;
   archetype: ProfileArchetype;
   homeCanton?: string;
   language: string;

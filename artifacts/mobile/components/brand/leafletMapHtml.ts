@@ -8,11 +8,15 @@ type LeafletMapArgs = Pick<
   | "center"
   | "label"
   | "geometry"
+  | "waypoints"
   | "offlineTiles"
   | "aerialways"
   | "pois"
   | "partners"
   | "pickerMode"
+   | "drawMode"
+   | "zoom"
+   | "preserveViewOnReload"
   | "altGeometry"
   | "waterSources"
   | "parkingSpots"
@@ -20,7 +24,10 @@ type LeafletMapArgs = Pick<
   | "elevationProfile"
   | "sagaPin"
   | "safeAreaInsetTop"
->;
+> & {
+  /** Native WebViews erhalten POIs nach dem HTML-Ready-Signal per Injection. */
+  deferDynamicContent?: boolean;
+};
 
 function json(value: unknown): string {
   // Werte stammen teilweise aus externen OSM-Namen. Ein HTML-String darf
@@ -61,11 +68,15 @@ export function buildLeafletMapHtml(
     center,
     label = "Start",
     geometry,
+    waypoints,
     offlineTiles,
     aerialways,
     pois,
     partners,
     pickerMode,
+    drawMode,
+    zoom = 14,
+    preserveViewOnReload: _preserveViewOnReload,
     altGeometry,
     waterSources,
     parkingSpots,
@@ -73,6 +84,7 @@ export function buildLeafletMapHtml(
     elevationProfile: _elevationProfile,
     sagaPin,
     safeAreaInsetTop = 0,
+    deferDynamicContent = false,
   }: LeafletMapArgs,
   legend?: MapLegendLabels | null,
 ): string {
@@ -81,6 +93,14 @@ export function buildLeafletMapHtml(
     lng: Number.isFinite(center.lng) ? center.lng : 8.2,
   };
   const route = points(geometry);
+  const waypointData = json(
+    waypoints?.filter(
+      (point) =>
+        Number.isFinite(point.lat) &&
+        Number.isFinite(point.lng) &&
+        Number.isFinite(point.number),
+    ) ?? null,
+  );
   const routeGrades = json(buildRouteGradeSegments(geometry, _elevationProfile));
   const alternateRoute = points(altGeometry);
   const offline = json(offlineTiles);
@@ -106,7 +126,7 @@ export function buildLeafletMapHtml(
         const row = (symbol: string, text: string) =>
           `<div class="legend-row"><span class="legend-symbol">${symbol}</span><span>${escapeHtml(text)}</span></div>`;
         const startFlag =
-          '<svg width="14" height="18" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>';
+          '<svg width="14" height="18" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#CC0000"/></svg>';
         const finishFlag =
           '<svg width="14" height="18" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><rect x="4" y="1" width="24" height="16" fill="#fff" stroke="#777" stroke-width=".5"/><rect x="4" y="1" width="8" height="5.3" fill="#111"/><rect x="20" y="1" width="8" height="5.3" fill="#111"/><rect x="12" y="6.3" width="8" height="5.4" fill="#111"/><rect x="4" y="11.7" width="8" height="5.3" fill="#111"/><rect x="20" y="11.7" width="8" height="5.3" fill="#111"/></svg>';
         let rows = "";
@@ -168,7 +188,7 @@ export function buildLeafletMapHtml(
     .control-group { display: flex; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
     button { border: 0; border-right: 1px solid rgba(255,255,255,.08); padding: 6px 11px; background: rgba(16,24,26,.9); color: #8A9BA8; font: 600 12px -apple-system,system-ui,sans-serif; }
     button:last-child { border-right: 0; }
-    button.active { background: #DA291C; color: #fffaf0; }
+    button.active { background: #CC0000; color: #fffaf0; }
     #map.view-3d .leaflet-tile-pane,
     #map.view-3d .leaflet-overlay-pane,
     #map.view-3d .leaflet-shadow-pane,
@@ -182,6 +202,7 @@ export function buildLeafletMapHtml(
     #map:not(.view-3d) .leaflet-shadow-pane,
     #map:not(.view-3d) .leaflet-marker-pane { transition: transform .45s ease; }
     .flag { width: 30px; height: 38px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+    .waypoint-number { width: 28px; height: 28px; border-radius: 50%; background: #CC0000; border: 2px solid #F5F3EC; box-shadow: 0 1px 5px rgba(0,0,0,.5); color: #F5F3EC; font: 700 12px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
     .poi { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #2563A8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(37,99,168,.25); }
     .poi-tipp { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
     .poi-cluster { width: 24px; height: 24px; border-radius: 50%; background: #2563A8; border: 1.5px solid #F5F3EC; box-shadow: 0 0 0 2.25px rgba(37,99,168,.25), 0 1.5px 6px rgba(0,0,0,.35); color: #F5F3EC; font: 700 9px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; opacity: .75; }
@@ -202,7 +223,7 @@ export function buildLeafletMapHtml(
     .saga-tipp img { width: 28px; height: 28px; object-fit: contain; display: block; }
     #legend { position: absolute; bottom: 10px; left: 10px; z-index: 1000; color: #f5f3ec; font-size: 12px; line-height: 1.35; }
     #legend-toggle { width: auto; min-width: 76px; height: 28px; padding: 0 10px; border: 0; border-radius: 15px; background: rgba(16,24,26,.92); color: #F5F3EC; font: 600 12px -apple-system,system-ui,sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
-    #legend-toggle:active { background: #DA291C; }
+    #legend-toggle:active { background: #CC0000; }
     .legend-chevron { display: inline-block; margin-left: 4px; color: #9EAAA5; font-size: 13px; }
     #legend-panel { display: none; width: max-content; max-width: min(300px, 78vw); margin-bottom: 6px; padding: 8px 10px; border-radius: 10px; background: rgba(16,24,26,.92); box-shadow: 0 2px 10px rgba(0,0,0,.4); }
     #legend.expanded #legend-panel { display: block; }
@@ -266,6 +287,7 @@ export function buildLeafletMapHtml(
     }
     var center = [${safeCenter.lat}, ${safeCenter.lng}];
     var route = ${route};
+    var waypoints = ${waypointData};
     var routeGrades = ${routeGrades};
     var alternateRoute = ${alternateRoute};
     var offline = ${offline};
@@ -277,13 +299,25 @@ export function buildLeafletMapHtml(
     var safety = ${safetyData};
     var sagaPin = ${sagaData};
     var picker = ${pickerMode ? "true" : "false"};
-    var map = L.map("map", { zoomControl: false, attributionControl: false, tap: false }).setView(center, 14);
+    var drawingMode = ${drawMode ? "true" : "false"};
+    var initialZoom = Number.isFinite(${zoom}) ? Math.max(1, Math.min(19, ${zoom})) : 14;
+    var map = L.map("map", { zoomControl: false, attributionControl: false, tap: false }).setView(center, initialZoom);
+    // Bei einer echten Größenänderung (z. B. Rotation/Vollbild) muss Leaflet
+    // sein Pixelraster neu berechnen.
+    window.sttMapResize = function () {
+      map.invalidateSize({ animate: false, pan: false });
+    };
 
     function post(value) {
       var payload = JSON.stringify(value);
       if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) window.ReactNativeWebView.postMessage(payload);
       else if (window.parent) window.parent.postMessage(payload, "*");
     }
+    function postMapView() {
+      var current = map.getCenter();
+      post({ type: "stt-mapview", lat: current.lat, lng: current.lng, zoom: map.getZoom() });
+    }
+    map.on("moveend zoomend", postMapView);
     function icon(className, text, size) {
       return L.divIcon({ className: "", html: '<div class="' + className + '">' + (text || "") + '</div>', iconSize: size || [20, 20], iconAnchor: [(size || [20,20])[0] / 2, (size || [20,20])[1] / 2] });
     }
@@ -294,14 +328,77 @@ export function buildLeafletMapHtml(
       return text;
     }
     var topoUrl = "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png";
-    var carto = L.tileLayer(topoUrl, {
+    var topoSubdomains = ["a", "b", "c"];
+    var routeDecorationsReady = false;
+    var poiPayloadReceived = ${deferDynamicContent ? "false" : "true"};
+    var safetyPayloadReceived = ${deferDynamicContent ? "false" : "true"};
+    var htmlReady = false;
+    var pendingTileRetries = [];
+    function mapContentReady() {
+      return routeDecorationsReady && poiPayloadReceived && safetyPayloadReceived && htmlReady;
+    }
+    function retryTopoTile(tile, coords) {
+      if (!tile || !coords || !tile.parentNode) return;
+      var attempt = Number(tile.getAttribute("data-stt-topo-retry") || "0");
+      if (attempt >= 2) return;
+
+      // OpenTopoMap kann fuer einzelne gecachte Kacheln einen HTTP/1.1-Header
+      // ("Upgrade: h2c") auch ueber HTTP/2 ausliefern. WKWebView verwirft eine
+      // solche nominelle 200-Antwort mit 0 Bildbytes. Die Subdomains teilen
+      // diesen Cache; entscheidend ist deshalb der Query-Parameter, der einen
+      // sauberen Cache-Eintrag fuer exakt dieselbe z/x/y-Kachel erzwingt.
+      var currentSubdomain = "";
+      try {
+        currentSubdomain = new URL(tile.src).hostname.split(".")[0];
+      } catch (_) {}
+      var currentIndex = topoSubdomains.indexOf(currentSubdomain);
+      var nextIndex = currentIndex >= 0
+        ? (currentIndex + 1) % topoSubdomains.length
+        : attempt % topoSubdomains.length;
+      var nextAttempt = attempt + 1;
+      tile.setAttribute("data-stt-topo-retry", String(nextAttempt));
+      setTimeout(function () {
+        if (!tile.parentNode) return;
+        tile.src = L.Util.template(topoUrl, {
+          s: topoSubdomains[nextIndex],
+          z: coords.z,
+          x: coords.x,
+          y: coords.y
+        }) + "?stt_retry=" + nextAttempt;
+      }, nextAttempt * 180);
+    }
+    function flushPendingTileRetries() {
+      if (!mapContentReady() || !pendingTileRetries.length) return;
+      var queued = pendingTileRetries.slice();
+      pendingTileRetries = [];
+      queued.forEach(function (entry) {
+        retryTopoTile(entry.tile, entry.coords);
+      });
+    }
+    function addTopoTileRetry(layer) {
+      layer.on("tileerror", function (event) {
+        var tile = event && event.tile;
+        var coords = event && event.coords;
+        if (!tile || !coords) return;
+        if (!mapContentReady()) {
+          if (!pendingTileRetries.some(function (entry) { return entry.tile === tile; })) {
+            pendingTileRetries.push({ tile: tile, coords: coords });
+          }
+          return;
+        }
+        retryTopoTile(tile, coords);
+      });
+      return layer;
+    }
+    var topoLayer = L.tileLayer(topoUrl, {
       subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, tileSize: 256,
       attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> &copy; OpenStreetMap'
     });
+    addTopoTileRetry(topoLayer);
     var satellite = L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg", {
       maxZoom: 19, tileSize: 256, attribution: '&copy; swisstopo'
     });
-    var active = carto.addTo(map);
+    var active = topoLayer.addTo(map);
     if (offline && Object.keys(offline).length) {
       var offlineLayer = L.TileLayer.extend({
         getTileUrl: function (coords) {
@@ -310,7 +407,7 @@ export function buildLeafletMapHtml(
         }
       });
       active.remove();
-      active = new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" }).addTo(map);
+      active = addTopoTileRetry(new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" })).addTo(map);
     }
     var is3d = false;
     var isSat = false;
@@ -356,7 +453,7 @@ export function buildLeafletMapHtml(
     function flagIcon(type) {
       var svg = type === "finish"
         ? '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><rect x="4" y="1" width="24" height="16" fill="#fff" stroke="#777" stroke-width=".5"/><rect x="4" y="1" width="8" height="5.3" fill="#111"/><rect x="20" y="1" width="8" height="5.3" fill="#111"/><rect x="12" y="6.3" width="8" height="5.4" fill="#111"/><rect x="4" y="11.7" width="8" height="5.3" fill="#111"/><rect x="20" y="11.7" width="8" height="5.3" fill="#111"/></svg>'
-        : '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>';
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#CC0000"/></svg>';
       return L.divIcon({ className: "", html: '<div class="flag">' + svg + '</div>', iconSize: [30, 38], iconAnchor: [4, 38] });
     }
     function gradeColor(band) {
@@ -385,6 +482,12 @@ export function buildLeafletMapHtml(
     } else {
       addMarker({ lat: center[0], lng: center[1], name: ${json(label)} }, flagIcon("start"), null);
     }
+    (waypoints || []).forEach(function (point) {
+      var numberIcon = icon("waypoint-number", String(point.number), [28, 28]);
+      addMarker(point, numberIcon, null);
+    });
+    routeDecorationsReady = true;
+    flushPendingTileRetries();
     (aerialways || []).forEach(function (a) {
       if (!a.geometry || a.geometry.length < 2) return;
       L.polyline(a.geometry.map(function (p) { return [p[0], p[1]]; }), { color: "#5B6B78", weight: 2, dashArray: "4 5" }).addTo(map);
@@ -545,14 +648,125 @@ export function buildLeafletMapHtml(
       else liveMarker.setLatLng(position);
       map.panTo(position, { animate: false });
     };
-    window.sttSetPois = window.sttSetPartners = window.sttSetAerialways = window.sttSetSafetyPois = function () {};
+    window.sttSetPois = function (nextPois) {
+      pois = Array.isArray(nextPois) ? nextPois : [];
+      renderPoiClusters();
+      poiPayloadReceived = true;
+      flushPendingTileRetries();
+    };
+    window.sttSetSafetyPois = function (nextSafety) {
+      safety = Array.isArray(nextSafety) ? nextSafety : [];
+      renderSafetyClusters();
+      safetyPayloadReceived = true;
+      flushPendingTileRetries();
+    };
+    window.sttSetPartners = window.sttSetAerialways = function () {};
     if (pending) window.__sttApply(pending);
-    if (picker) {
+    if (drawingMode) {
+      var drawing = false;
+      var drawnPoints = [];
+      var drawnLine = null;
+      var drawContainer = map.getContainer();
+      drawContainer.style.touchAction = "none";
+      drawContainer.style.webkitUserSelect = "none";
+      drawContainer.style.userSelect = "none";
+       function pointFromClient(clientX, clientY) {
+        var rect = drawContainer.getBoundingClientRect();
+         var containerPoint = L.point(clientX - rect.left, clientY - rect.top);
+        var latLng = map.containerPointToLatLng(containerPoint);
+        return { lat: latLng.lat, lng: latLng.lng };
+      }
+       function startDrawingAt(clientX, clientY) {
+        drawing = true;
+         drawnPoints = [pointFromClient(clientX, clientY)];
+        drawnLine = L.polyline([[drawnPoints[0].lat, drawnPoints[0].lng]], {
+          color: "#CC0000", weight: 4, opacity: .95, lineCap: "round", lineJoin: "round"
+        }).addTo(map);
+      }
+       function continueDrawingAt(clientX, clientY) {
+        if (!drawing) return;
+         var next = pointFromClient(clientX, clientY);
+        var previous = drawnPoints[drawnPoints.length - 1];
+        if (previous && map.distance([previous.lat, previous.lng], [next.lat, next.lng]) < 8) return;
+        drawnPoints.push(next);
+        drawnLine.setLatLngs(drawnPoints.map(function (point) { return [point.lat, point.lng]; }));
+      }
+      function finishDrawing(event) {
+        if (!drawing) return;
+        if (event && event.preventDefault) event.preventDefault();
+         if (event && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+           continueDrawingAt(event.clientX, event.clientY);
+         }
+        drawing = false;
+        if (drawnPoints.length < 2) return;
+        var sampled = drawnPoints;
+        if (sampled.length > 100) {
+          sampled = [sampled[0]];
+          var stride = (drawnPoints.length - 1) / 99;
+          for (var i = 1; i < 99; i++) sampled.push(drawnPoints[Math.round(i * stride)]);
+          sampled.push(drawnPoints[drawnPoints.length - 1]);
+        }
+        post({ type: "stt-mapdraw", points: sampled });
+      }
+       function startPointerDrawing(event) {
+         if (event.pointerType === "touch") return;
+         if (event.pointerType === "mouse" && event.buttons !== 1) return;
+         if (event.preventDefault) event.preventDefault();
+         if (drawContainer.setPointerCapture && event.pointerId !== undefined) {
+           try { drawContainer.setPointerCapture(event.pointerId); } catch (_) {}
+         }
+         startDrawingAt(event.clientX, event.clientY);
+       }
+       function continuePointerDrawing(event) {
+         if (event.pointerType === "touch") return;
+         if (!drawing) return;
+         if (event.preventDefault) event.preventDefault();
+         continueDrawingAt(event.clientX, event.clientY);
+       }
+       function finishPointerDrawing(event) {
+         if (event.pointerType === "touch") return;
+         finishDrawing(event);
+       }
+       function firstTouch(event) {
+         return event.touches[0] || event.changedTouches[0];
+       }
+       function startTouchDrawing(event) {
+         var touch = firstTouch(event);
+         if (!touch) return;
+         if (event.preventDefault) event.preventDefault();
+         startDrawingAt(touch.clientX, touch.clientY);
+       }
+       function continueTouchDrawing(event) {
+         var touch = firstTouch(event);
+         if (!touch || !drawing) return;
+         if (event.preventDefault) event.preventDefault();
+         continueDrawingAt(touch.clientX, touch.clientY);
+       }
+       function finishTouchDrawing(event) {
+         var touch = firstTouch(event);
+         if (touch && drawing) continueDrawingAt(touch.clientX, touch.clientY);
+         finishDrawing();
+       }
+      map.dragging.disable();
+      map.scrollWheelZoom.disable();
+      drawContainer.style.cursor = "crosshair";
+       drawContainer.addEventListener("pointerdown", startPointerDrawing, { passive: false });
+       drawContainer.addEventListener("pointermove", continuePointerDrawing, { passive: false });
+       drawContainer.addEventListener("pointerup", finishPointerDrawing, { passive: false });
+       drawContainer.addEventListener("pointercancel", finishPointerDrawing, { passive: false });
+       drawContainer.addEventListener("touchstart", startTouchDrawing, { passive: false });
+       drawContainer.addEventListener("touchmove", continueTouchDrawing, { passive: false });
+       drawContainer.addEventListener("touchend", finishTouchDrawing, { passive: false });
+       drawContainer.addEventListener("touchcancel", finishTouchDrawing, { passive: false });
+    } else if (picker) {
       map.getContainer().style.cursor = "crosshair";
       map.on("click", function (event) { post({ type: "stt-mapclick", lat: event.latlng.lat, lng: event.latlng.lng }); });
     }
-    setTimeout(function () { map.invalidateSize(false); }, 100);
-    setTimeout(function () { map.invalidateSize(false); }, 500);
+    setTimeout(function () { window.sttMapResize(); }, 100);
+    setTimeout(function () { window.sttMapResize(); }, 500);
+    setTimeout(postMapView, 120);
+    htmlReady = true;
+    flushPendingTileRetries();
     post({ type: "stt-html-ready" });
   })();
   </script>

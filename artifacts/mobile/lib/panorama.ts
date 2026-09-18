@@ -72,11 +72,64 @@ export interface PanoramaGipfelDatensatz {
   lat: number;
   lng: number;
   elevationM: number | null;
+  /** Herkunft der Höhe; null bleibt ausdrücklich unbekannt. */
+  elevationSource: "osm.ele" | "unknown";
+}
+
+export interface PanoramaOfflineAbdeckung {
+  /** Radius der gespeicherten, benannten Gipfel um den Routen-Korridor. */
+  peakCorridorKm: number;
+  /** Radius des gespeicherten observer-zentrierten DTM-Modells. */
+  terrainRadiusM: number | null;
+}
+
+export function selectPanoramaPeaks(
+  candidates: readonly PanoramaGipfel[],
+  maxPeaks: number,
+): PanoramaGipfel[] {
+  const limit = Math.max(0, maxPeaks);
+  if (limit === 0) return [];
+  if (candidates.length <= limit) return [...candidates];
+
+  const selected = [candidates[0]];
+  const selectedIds = new Set([candidates[0]?.id]);
+  while (selected.length < limit) {
+    let bestCandidate: PanoramaGipfel | null = null;
+    let bestAngularDistance = -1;
+    for (const candidate of candidates) {
+      if (selectedIds.has(candidate.id)) continue;
+      const nearestDistance = selected.reduce((minimum, chosen) => {
+        const distance = Math.abs(
+          ((candidate.bearingDeg - chosen.bearingDeg + 540) % 360) - 180,
+        );
+        return Math.min(minimum, distance);
+      }, 180);
+      if (
+        nearestDistance > bestAngularDistance ||
+        (nearestDistance === bestAngularDistance &&
+          (!bestCandidate || candidate.distanceKm < bestCandidate.distanceKm))
+      ) {
+        bestCandidate = candidate;
+        bestAngularDistance = nearestDistance;
+      }
+    }
+    if (!bestCandidate) break;
+    selected.push(bestCandidate);
+    selectedIds.add(bestCandidate.id);
+  }
+  return selected.sort((a, b) => {
+    const aAngle = a.relativeBearingDeg == null ? 180 : Math.abs(a.relativeBearingDeg);
+    const bAngle = b.relativeBearingDeg == null ? 180 : Math.abs(b.relativeBearingDeg);
+    return aAngle - bAngle || a.distanceKm - b.distanceKm;
+  });
 }
 
 export interface OfflinePanoramaDatenbank {
   version: number;
   source: string;
+  elevationSource: "OpenStreetMap ele tag";
+  visibilitySource: "SwissTopo DTM radial profiles";
+  coverage: PanoramaOfflineAbdeckung;
   downloadedAt: number;
   peaks: PanoramaGipfelDatensatz[];
   /** Optionales SwissTopo-Routenprofil für die lokale 3D-Terrainansicht. */
@@ -85,10 +138,13 @@ export interface OfflinePanoramaDatenbank {
   terrainModel?: LocalTerrainModel;
 }
 
-export const PANORAMA_ROUTE_CORRIDOR_KM = 20;
-export const PANORAMA_OFFLINE_VERSION = 4;
+// Das Panorama zeigt die lokale Höhenverteilung. Entfernte Gipfel würden die
+// Winkelverteilung dominieren, obwohl sie für das Gelände direkt vor dem
+// Wanderer nicht repräsentativ sind.
+export const PANORAMA_ROUTE_CORRIDOR_KM = 5;
+export const PANORAMA_OFFLINE_VERSION = 5;
 export const PANORAMA_OFFLINE_SOURCE =
-  "OpenStreetMap natural=peak via Overpass; Höhe aus OSM ele; SwissTopo route and local terrain; 20 km route corridor";
+  "OpenStreetMap natural=peak via Overpass; SwissTopo DTM; 5 km Routen-Korridor";
 
 interface GipfelPoi {
   id: string;
@@ -136,6 +192,10 @@ export function createOfflinePanoramaDatenbank(
       lat: poi.lat,
       lng: poi.lng,
       elevationM: finiteNumber(poi.elevation ?? poi.elevationM),
+      elevationSource:
+        finiteNumber(poi.elevation ?? poi.elevationM) == null
+          ? "unknown"
+          : "osm.ele",
     });
   }
   const validTerrainProfile = (terrainProfile ?? [])
@@ -150,6 +210,15 @@ export function createOfflinePanoramaDatenbank(
   return {
     version: PANORAMA_OFFLINE_VERSION,
     source: PANORAMA_OFFLINE_SOURCE,
+    elevationSource: "OpenStreetMap ele tag",
+    visibilitySource: "SwissTopo DTM radial profiles",
+    coverage: {
+      peakCorridorKm: PANORAMA_ROUTE_CORRIDOR_KM,
+      terrainRadiusM:
+        terrainModel && isLocalTerrainModel(terrainModel)
+          ? terrainModel.radiusM
+          : null,
+    },
     downloadedAt,
     peaks,
     ...(validTerrainProfile.length >= 2
@@ -166,12 +235,51 @@ export function isOfflinePanoramaDatenbank(
 ): value is OfflinePanoramaDatenbank {
   if (!value || typeof value !== "object") return false;
   const data = value as Partial<OfflinePanoramaDatenbank>;
+  const coverage = data.coverage;
   return (
     data.version === PANORAMA_OFFLINE_VERSION &&
     data.source === PANORAMA_OFFLINE_SOURCE &&
+    data.elevationSource === "OpenStreetMap ele tag" &&
+    data.visibilitySource === "SwissTopo DTM radial profiles" &&
+    !!coverage &&
+    typeof coverage === "object" &&
+    coverage.peakCorridorKm === PANORAMA_ROUTE_CORRIDOR_KM &&
+    (coverage.terrainRadiusM === null ||
+      (typeof coverage.terrainRadiusM === "number" &&
+        Number.isFinite(coverage.terrainRadiusM) &&
+        coverage.terrainRadiusM > 0)) &&
     typeof data.downloadedAt === "number" &&
+    Number.isFinite(data.downloadedAt) &&
     Array.isArray(data.peaks) &&
-    (data.terrainProfile === undefined || Array.isArray(data.terrainProfile)) &&
+    data.peaks.every(
+      (peak) =>
+        !!peak &&
+        typeof peak.id === "string" &&
+        peak.id.length > 0 &&
+        typeof peak.name === "string" &&
+        peak.name.trim().length > 0 &&
+        typeof peak.lat === "number" &&
+        Number.isFinite(peak.lat) &&
+        typeof peak.lng === "number" &&
+        Number.isFinite(peak.lng) &&
+        (peak.elevationM === null ||
+          (typeof peak.elevationM === "number" &&
+            Number.isFinite(peak.elevationM))) &&
+        (peak.elevationSource === "osm.ele" ||
+          peak.elevationSource === "unknown") &&
+        ((peak.elevationM == null && peak.elevationSource === "unknown") ||
+          (peak.elevationM != null && peak.elevationSource === "osm.ele")),
+    ) &&
+    (data.terrainProfile === undefined ||
+      (Array.isArray(data.terrainProfile) &&
+        data.terrainProfile.every(
+          (point) =>
+            !!point &&
+            typeof point.distanceKm === "number" &&
+            Number.isFinite(point.distanceKm) &&
+            typeof point.altM === "number" &&
+            Number.isFinite(point.altM),
+        ))) &&
     (data.terrainModel === undefined || isLocalTerrainModel(data.terrainModel))
   );
 }
@@ -191,11 +299,12 @@ export function erkenneGipfel(
   position: LatLng | null,
   heading: number | null,
   observerElevationM: number | null = null,
+  maxPeaks: number = 8,
 ): PanoramaGipfel[] {
   if (!position) return [];
 
   const seen = new Set<string>();
-  return pois
+  const candidates = pois
     .filter((poi) => poi.kind === "natural=peak" && poi.name.trim().length > 0)
     .map((poi): PanoramaGipfel => {
       const target: LatLng = { lat: poi.lat, lng: poi.lng };
@@ -229,11 +338,14 @@ export function erkenneGipfel(
       seen.add(peak.id);
       return true;
     })
-    .filter((peak) => peak.distanceKm <= 20)
-    .sort((a, b) => {
-      const aAngle = a.relativeBearingDeg == null ? 180 : Math.abs(a.relativeBearingDeg);
-      const bAngle = b.relativeBearingDeg == null ? 180 : Math.abs(b.relativeBearingDeg);
-      return aAngle - bAngle || a.distanceKm - b.distanceKm;
-    })
-    .slice(0, 8);
+    .filter((peak) => peak.distanceKm <= PANORAMA_ROUTE_CORRIDOR_KM)
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+
+  const limit = Math.max(0, maxPeaks);
+  if (limit === 0 || candidates.length <= limit) return candidates;
+
+  // Immer den noch grössten vorhandenen Winkelabstand besetzen. Damit
+  // kommen echte Gipfel in unterrepräsentierte Richtungen, statt dass viele
+  // nahe Gipfel aus einer einzigen Richtung alle Plätze verbrauchen.
+  return selectPanoramaPeaks(candidates, limit);
 }

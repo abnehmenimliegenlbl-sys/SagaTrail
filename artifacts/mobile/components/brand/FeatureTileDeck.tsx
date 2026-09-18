@@ -13,20 +13,27 @@ import {
 
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
+import { CloseButton } from "@/components/brand/CloseButton";
+import { useThemeModeSafe } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export interface FeatureTile {
   id: string;
   title: string;
+  subtitle?: string;
+  highlightSubtitle?: boolean;
   icon: React.ComponentProps<typeof Feather>["name"];
   content: React.ReactNode;
   preview?: React.ReactNode;
   modalSize?: "large";
+  action?: boolean;
 }
 
 interface Props {
   tiles: FeatureTile[];
+  tileOrder?: readonly string[];
+  columns?: 3 | 4;
   closeLabel?: string;
   onTileOpen?: (tileId: string) => void;
   closeSignal?: number;
@@ -34,14 +41,27 @@ interface Props {
 
 export function FeatureTileDeck({
   tiles,
+  tileOrder,
+  columns = 3,
   closeLabel = "Schliessen",
   onTileOpen,
   closeSignal = 0,
 }: Props) {
   const colors = useColors();
+  const themeMode = useThemeModeSafe();
   const insets = useSafeAreaInsets();
+  const modalOverlay =
+    themeMode === "hell" ? "rgba(255,255,255,0.94)" : colors.glassBgStrong;
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeTile = tiles.find((tile) => tile.id === activeId);
+  const orderedTiles = tileOrder
+    ? [
+        ...tileOrder
+          .map((id) => tiles.find((tile) => tile.id === id))
+          .filter((tile): tile is FeatureTile => tile != null),
+        ...tiles.filter((tile) => !tileOrder.includes(tile.id)),
+      ]
+    : tiles;
 
   useEffect(() => {
     if (closeSignal > 0) setActiveId(null);
@@ -51,7 +71,8 @@ export function FeatureTileDeck({
     if (Platform.OS !== "web") {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     }
-    setActiveId(id);
+    const tile = tiles.find((candidate) => candidate.id === id);
+    if (!tile?.action) setActiveId(id);
     onTileOpen?.(id);
   };
 
@@ -60,17 +81,18 @@ export function FeatureTileDeck({
   return (
     <View style={styles.deck}>
       <View style={styles.tileRow}>
-        {tiles.map((tile) => {
-              const selected = tile.id === activeId;
+        {orderedTiles.map((tile) => {
+          const selected = tile.id === activeId;
           return (
             <Pressable
               key={tile.id}
               accessibilityRole="button"
               accessibilityState={{ expanded: selected }}
-              accessibilityLabel={tile.title}
+              accessibilityLabel={[tile.title, tile.subtitle].filter(Boolean).join(", ")}
               onPress={() => selectTile(tile.id)}
               style={({ pressed }) => [
                 styles.tile,
+                columns === 4 && styles.tileFour,
                 GLAS_3D,
                 {
                   backgroundColor: selected ? colors.primary + "18" : colors.glassBg,
@@ -95,13 +117,25 @@ export function FeatureTileDeck({
                 >
                   {tile.title}
                 </Text>
+                {tile.subtitle ? (
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.tileSubtitle,
+                      {
+                        color: tile.highlightSubtitle
+                          ? colors.destructive
+                          : selected
+                            ? colors.primary
+                            : colors.mutedForeground,
+                      },
+                    ]}
+                  >
+                    {tile.subtitle}
+                  </Text>
+                ) : null}
                 {tile.preview}
               </View>
-              <Feather
-                name={selected ? "chevron-up" : "chevron-down"}
-                size={14}
-                color={selected ? colors.primary : colors.mutedForeground}
-              />
             </Pressable>
           );
         })}
@@ -125,7 +159,7 @@ export function FeatureTileDeck({
                 // below the status bar explicitly.
                 marginTop: Math.max(18, insets.top + 12),
                 marginBottom: Math.max(12, insets.bottom + 8),
-                backgroundColor: "transparent",
+                backgroundColor: modalOverlay,
                 borderColor: colors.glassBorder,
                 borderRadius: colors.radius,
               },
@@ -136,7 +170,7 @@ export function FeatureTileDeck({
             <View
               style={[
                 StyleSheet.absoluteFill,
-                { backgroundColor: colors.glassBgStrong },
+                { backgroundColor: modalOverlay },
               ]}
             />
             <View style={[styles.modalAccent, { backgroundColor: colors.primary }]} />
@@ -162,15 +196,7 @@ export function FeatureTileDeck({
                   {activeTile?.title}
                 </Text>
               </View>
-              <Pressable
-                onPress={closeModal}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel={closeLabel}
-                style={[styles.closeButton, { borderColor: colors.glassBorder }]}
-              >
-                <Feather name="x" size={20} color={colors.foreground} />
-              </Pressable>
+              <CloseButton accessibilityLabel={closeLabel} onPress={closeModal} />
             </View>
             <View
               style={[
@@ -189,17 +215,23 @@ export function FeatureTileDeck({
 
 const styles = StyleSheet.create({
   deck: { marginTop: 14 },
-  tileRow: { flexDirection: "row", alignItems: "stretch", gap: 8 },
+  tileRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "stretch",
+    gap: 8,
+  },
   tile: {
-    flex: 1,
-    height: 86,
+    width: "31.5%",
+    height: 72,
     borderWidth: 1,
     paddingHorizontal: 9,
-    paddingVertical: 10,
+    paddingVertical: 7,
     alignItems: "center",
     justifyContent: "space-between",
     gap: 5,
   },
+  tileFour: { width: "23%" },
   tileText: {
     alignItems: "center",
     justifyContent: "center",
@@ -215,13 +247,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textTransform: "uppercase",
   },
+  tileSubtitle: {
+    marginTop: 2,
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    lineHeight: 14,
+    textAlign: "center",
+  },
   modalRoot: {
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 12,
     backgroundColor: "rgba(6,10,11,0.72)",
   },
-  modalBackdrop: { ...StyleSheet.absoluteFillObject },
+  modalBackdrop: { ...StyleSheet.absoluteFill },
   modalCard: {
     width: "100%",
     maxWidth: 560,
@@ -230,8 +269,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   modalCardLarge: {
-    minHeight: "82%",
-    maxHeight: "94%",
+    flex: 1,
   },
   modalAccent: { height: 3, width: "100%" },
   modalHeader: {
@@ -253,14 +291,6 @@ const styles = StyleSheet.create({
   },
   modalEyebrow: { fontFamily: fonts.monoBold, fontSize: 10, letterSpacing: 1.4 },
   modalTitle: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 3 },
-  closeButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   modalContent: { width: "100%", paddingHorizontal: 6, paddingBottom: 4 },
   modalContentLarge: { flex: 1 },
 });

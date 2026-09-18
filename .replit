@@ -1,4 +1,4 @@
-modules = ["nodejs-24", "python-3.11", "ruby-3.2", "postgresql-16"]
+modules = ["nodejs-24", "python-3.11", "ruby-3.2", "java-graalvm22.3", "postgresql-16"]
 
 [deployment]
 router = "application"
@@ -31,6 +31,10 @@ args = "EAS Android Build"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "EAS iOS Development Build"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "EAS Android Development Build"
 
 [[workflows.workflow]]
 name = "Stripe Webhook (Test)"
@@ -66,9 +70,20 @@ outputType = "console"
 name = "EAS iOS Development Build"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd artifacts/mobile && GIT_OPTIONAL_LOCKS=0 EAS_SKIP_AUTO_FINGERPRINT=1 EXPO_APPLE_TEAM_ID=R4254XKT8S npx eas build --platform ios --profile development --non-interactive 2>&1 | tee /tmp/eas-dev-build.log"
+args = "if [ ! -f /tmp/eas-ios-dev-go ]; then echo \"Sicherung: kein iOS-Dev-Build ausgelöst. Zum Bauen zuerst 'touch /tmp/eas-ios-dev-go', dann Workflow neu starten.\"; sleep 3600; exit 0; fi; rm -f /tmp/eas-ios-dev-go; cd artifacts/mobile && GIT_OPTIONAL_LOCKS=0 EAS_SKIP_AUTO_FINGERPRINT=1 EXPO_APPLE_TEAM_ID=R4254XKT8S npx eas build --platform ios --profile development --non-interactive 2>&1 | tee /tmp/eas-dev-build.log; echo EAS_DONE >> /tmp/eas-dev-build.log; sleep 3600"
+
+[[workflows.workflow]]
+name = "EAS Android Development Build"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "if [ ! -f /tmp/eas-android-dev-go ]; then echo 'Sicherung: kein Android-Dev-Build ausgelöst. Zum Bauen zuerst touch /tmp/eas-android-dev-go, dann Workflow neu starten.'; sleep 3600; exit 0; fi; rm -f /tmp/eas-android-dev-go; cd artifacts/mobile && GIT_OPTIONAL_LOCKS=0 EAS_SKIP_AUTO_FINGERPRINT=1 npx eas build --platform android --profile development --non-interactive 2>&1 | tee /tmp/eas-dev-android-build.log; echo EAS_DONE >> /tmp/eas-dev-android-build.log; sleep 3600"
 
 [workflows.workflow.metadata]
 outputType = "console"
@@ -84,6 +99,7 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+packages = ["llvm", "ffmpeg"]
 
 [userenv]
 

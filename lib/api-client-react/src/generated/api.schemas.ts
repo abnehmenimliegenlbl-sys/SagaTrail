@@ -5,6 +5,352 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export type CreateMeetupRequestPace = typeof CreateMeetupRequestPace[keyof typeof CreateMeetupRequestPace];
+
+
+export const CreateMeetupRequestPace = {
+  gemuetlich: 'gemuetlich',
+  normal: 'normal',
+  sportlich: 'sportlich',
+} as const;
+
+export interface CreateMeetupRequest {
+  routeId: string;
+  routeName: string;
+  canton: string;
+  startsAt: string;
+  /**
+     * @minimum 2
+     * @maximum 30
+     */
+  maxParticipants?: number;
+  pace?: CreateMeetupRequestPace;
+  /** @maxLength 500 */
+  note?: string | null;
+}
+
+export type MeetupLifecycleResponseStatus = typeof MeetupLifecycleResponseStatus[keyof typeof MeetupLifecycleResponseStatus];
+
+
+export const MeetupLifecycleResponseStatus = {
+  in_progress: 'in_progress',
+  completed: 'completed',
+} as const;
+
+export interface MeetupLifecycleResponse {
+  status: MeetupLifecycleResponseStatus;
+}
+
+export interface MeetupMessageRequest {
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  messageText: string;
+}
+
+export interface MeetupMessageResponse {
+  sent: boolean;
+}
+
+export interface MeetupMessage {
+  id: string;
+  senderUserId: string;
+  senderName: string;
+  /** @maxLength 500 */
+  messageText: string;
+  createdAt: string;
+}
+
+export type MeetupStatus = typeof MeetupStatus[keyof typeof MeetupStatus];
+
+
+export const MeetupStatus = {
+  scheduled: 'scheduled',
+  in_progress: 'in_progress',
+  completed: 'completed',
+  cancelled: 'cancelled',
+} as const;
+
+export interface Meetup {
+  id: string;
+  routeId: string;
+  routeName: string;
+  canton: string;
+  startsAt: string;
+  maxParticipants: number;
+  participantCount: number;
+  pace: string;
+  note?: string | null;
+  organizerName: string;
+  joined: boolean;
+  status: MeetupStatus;
+  cancellationReason?: string | null;
+  cancelledAt?: string | null;
+  isOrganizer: boolean;
+}
+
+export type MeetupParticipantAttendanceStatus = typeof MeetupParticipantAttendanceStatus[keyof typeof MeetupParticipantAttendanceStatus];
+
+
+export const MeetupParticipantAttendanceStatus = {
+  confirmed: 'confirmed',
+  delayed: 'delayed',
+  arrived: 'arrived',
+} as const;
+
+export type MeetupParticipantGroupAchievementsItem = {
+  id: string;
+  threshold: number;
+  title: string;
+};
+
+export interface MeetupParticipant {
+  /** Nur für authentifizierte, bereits beigetretene Teilnehmer sichtbar. */
+  userId?: string;
+  avatarUrl?: string | null;
+  /**
+     * @minimum 13
+     * @maximum 120
+     */
+  age?: number | null;
+  name: string;
+  joinedAt: string;
+  /** @maxLength 160 */
+  bio?: string | null;
+  attendanceStatus?: MeetupParticipantAttendanceStatus;
+  delayMinutes?: number | null;
+  statusUpdatedAt?: string;
+  /**
+     * Server-verifizierter Gruppenrang für Mitwandernde; nur für Teilnehmende oder den Organisator sichtbar.
+     * @minimum 0
+     * @maximum 9
+     */
+  rankLevel?: number;
+  /** Nur für Teilnehmende oder den Organisator sichtbar. */
+  groupAchievements?: MeetupParticipantGroupAchievementsItem[];
+}
+
+export interface CancelMeetupRequest {
+  /**
+     * @minLength 3
+     * @maxLength 300
+     */
+  reason: string;
+}
+
+export type MeetupAttendanceRequestStatus = typeof MeetupAttendanceRequestStatus[keyof typeof MeetupAttendanceRequestStatus];
+
+
+export const MeetupAttendanceRequestStatus = {
+  confirmed: 'confirmed',
+  delayed: 'delayed',
+  arrived: 'arrived',
+} as const;
+
+export interface MeetupAttendanceRequest {
+  status: MeetupAttendanceRequestStatus;
+  /**
+     * @minimum 5
+     * @maximum 180
+     */
+  delayMinutes?: number | null;
+}
+
+export type MeetupAttendanceResponseAttendanceStatus = typeof MeetupAttendanceResponseAttendanceStatus[keyof typeof MeetupAttendanceResponseAttendanceStatus];
+
+
+export const MeetupAttendanceResponseAttendanceStatus = {
+  confirmed: 'confirmed',
+  delayed: 'delayed',
+  arrived: 'arrived',
+} as const;
+
+export interface MeetupAttendanceResponse {
+  attendanceStatus: MeetupAttendanceResponseAttendanceStatus;
+  delayMinutes: number | null;
+  statusUpdatedAt: string;
+}
+
+export type MeetupDetail = Meetup & {
+  participants: MeetupParticipant[];
+  /** Nachrichten sind nur für den Organisator und eingeschriebene Teilnehmende sichtbar. */
+  messages: MeetupMessage[];
+};
+
+export interface MeetupListResponse {
+  meetups: Meetup[];
+}
+
+export interface MeetupJoinResponse {
+  joined: boolean;
+}
+
+export interface MeetupShareResponse {
+  token: string;
+  path: string;
+  expiresAt: string;
+}
+
+export type SharedMeetupStatus = typeof SharedMeetupStatus[keyof typeof SharedMeetupStatus];
+
+
+export const SharedMeetupStatus = {
+  scheduled: 'scheduled',
+  cancelled: 'cancelled',
+} as const;
+
+export interface SharedMeetup {
+  routeName: string;
+  canton: string;
+  startsAt: string;
+  participantCount: number;
+  maxParticipants: number;
+  status: SharedMeetupStatus;
+  expiresAt: string;
+}
+
+export type MeetupReportRequestReason = typeof MeetupReportRequestReason[keyof typeof MeetupReportRequestReason];
+
+
+export const MeetupReportRequestReason = {
+  safety: 'safety',
+  harassment: 'harassment',
+  spam: 'spam',
+  other: 'other',
+} as const;
+
+export interface MeetupReportRequest {
+  reason: MeetupReportRequestReason;
+  reportedUserId?: string;
+  /** @maxLength 500 */
+  note?: string;
+}
+
+export interface MeetupActionResponse {
+  ok: boolean;
+}
+
+export type TerrainCorridorRequestOptions = {
+  /**
+     * @minimum 12
+     * @maximum 80
+     */
+  rows?: number;
+  /**
+     * @minimum 5
+     * @maximum 13
+     */
+  columns?: number;
+  /**
+     * @minimum 100
+     * @maximum 1500
+     */
+  halfWidthM?: number;
+};
+
+export interface TerrainCorridorRequest {
+  /**
+     * @minItems 2
+     * @maxItems 500
+     * @items.minItems 2
+     * @items.maxItems 2
+     */
+  geometry: [number, number][];
+  options?: TerrainCorridorRequestOptions;
+}
+
+export type TerrainAreaRequestOptions = {
+  /**
+     * @minimum 12
+     * @maximum 40
+     */
+  rows?: number;
+  /**
+     * @minimum 12
+     * @maximum 40
+     */
+  columns?: number;
+  /**
+     * @minimum 500
+     * @maximum 5000
+     */
+  paddingM?: number;
+  /**
+     * @minimum 0.4
+     * @maximum 1
+     */
+  viewportAspect?: number;
+};
+
+export interface TerrainAreaRequest {
+  /**
+     * @minItems 2
+     * @maxItems 500
+     * @items.minItems 2
+     * @items.maxItems 2
+     */
+  geometry: [number, number][];
+  options?: TerrainAreaRequestOptions;
+}
+
+export interface TerrainCorridorCell {
+  lat: number;
+  lng: number;
+  /** @nullable */
+  elevationM: number | null;
+}
+
+export type TerrainCorridorResponseOrigin = {
+  lat: number;
+  lng: number;
+};
+
+export type TerrainCorridorResponseBounds = {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+};
+
+export interface TerrainCorridorResponse {
+  version: 1;
+  source: 'SwissTopo DTM corridor profiles';
+  rows: number;
+  columns: number;
+  halfWidthM: number;
+  routeLengthM: number;
+  origin: TerrainCorridorResponseOrigin;
+  bounds: TerrainCorridorResponseBounds;
+  fetchedAt: number;
+  grid: TerrainCorridorCell[][];
+}
+
+export type TerrainAreaResponseOrigin = {
+  lat: number;
+  lng: number;
+};
+
+export type TerrainAreaResponseBounds = {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+};
+
+export interface TerrainAreaResponse {
+  version: 1;
+  source: 'SwissTopo DTM rectangular route area';
+  rows: number;
+  columns: number;
+  paddingM: number;
+  viewportAspect: number;
+  origin: TerrainAreaResponseOrigin;
+  bounds: TerrainAreaResponseBounds;
+  fetchedAt: number;
+  grid: TerrainCorridorCell[][];
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -81,6 +427,35 @@ export interface GpxImportBody {
   name?: string;
 }
 
+export interface CustomRouteWaypoint {
+  /**
+     * @minimum 45
+     * @maximum 49
+     */
+  lat: number;
+  /**
+     * @minimum 5
+     * @maximum 11
+     */
+  lng: number;
+}
+
+export interface CustomWaypointsBody {
+  /**
+     * @minItems 2
+     * @maxItems 12
+     */
+  points: CustomRouteWaypoint[];
+}
+
+export interface CustomDrawnRouteBody {
+  /**
+     * @minItems 2
+     * @maxItems 100
+     */
+  points: CustomRouteWaypoint[];
+}
+
 export interface ClaimKantonspackBody {
   /** Kanton-Slug (z. B. "zuerich", wie kantonSlug(name)) */
   kanton: string;
@@ -116,6 +491,12 @@ export interface Profile {
   /** Clerk-Benutzer-ID */
   id: string;
   name: string;
+  /** @maxLength 160 */
+  bio?: string | null;
+  /** Privater Objektpfad des Profilbilds */
+  avatarUrl?: string | null;
+  /** Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben */
+  dateOfBirth?: string | null;
   archetype: ProfileArchetype;
   homeCanton?: string;
   language: string;
@@ -155,6 +536,9 @@ export const ProfileInputAgeTier = {
 export interface ProfileInput {
   /** @minLength 2 */
   name: string;
+  /** @maxLength 160 */
+  bio?: string | null;
+  dateOfBirth?: string | null;
   archetype: ProfileInputArchetype;
   /** @minLength 1 */
   homeCanton?: string;
@@ -238,6 +622,19 @@ export const CatalogRouteSeason = {
   nur_sommer: 'nur_sommer',
 } as const;
 
+export interface RouteDataSource {
+  label: string;
+  url: string | null;
+}
+
+export interface RouteDataSources {
+  route: RouteDataSource;
+  geometry: RouteDataSource;
+  distance: RouteDataSource;
+  ascent: RouteDataSource;
+  difficulty: RouteDataSource;
+}
+
 export interface CatalogRoute {
   id: string;
   sagaId: string;
@@ -278,6 +675,13 @@ export interface CatalogRoute {
   description?: string | null;
   /** URL des Wikipedia-Artikels, aus dem die Beschreibung stammt. */
   descriptionSource?: string | null;
+  /** Serverseitig geprüfte Themenbelege der Route. */
+  themeKeys?: string[];
+  /** Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified. */
+  qualityStatus?: string;
+  /** Zeitpunkt des letzten erfolgreichen Qualitätschecks. */
+  qualityCheckedAt?: string | null;
+  sources?: RouteDataSources;
 }
 
 /**
@@ -377,6 +781,12 @@ export interface Poi {
   wikidataTag?: string | null;
   /** Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt. */
   osmContext?: string | null;
+  /** Primärquelle des POIs. */
+  source?: string;
+  /** Direkter Nachweis des OSM-Objekts. */
+  sourceUrl?: string;
+  /** Zeitpunkt des erfolgreichen Quellenabrufs. */
+  checkedAt?: string | null;
 }
 
 /**
@@ -437,6 +847,17 @@ export type TransportStationboardStation = {
 export interface TransportStationboard {
   station?: TransportStationboardStation;
   departures: TransportDeparture[];
+}
+
+export type TransportNearbyResponseStation = {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+} | null;
+
+export interface TransportNearbyResponse {
+  station: TransportNearbyResponseStation;
 }
 
 export type TrailConditionReportCondition = typeof TrailConditionReportCondition[keyof typeof TrailConditionReportCondition];
@@ -847,6 +1268,11 @@ lat: number;
 lng: number;
 };
 
+export type GetTransportNearbyParams = {
+lat: number;
+lng: number;
+};
+
 export type GetWeatherParams = {
 lat: number;
 lng: number;
@@ -909,5 +1335,10 @@ export type ClaimReferralCode200 = {
 export type ClaimPackRewardBody = {
   /** @minLength 1 */
   packSlug: string;
+};
+
+export type GetMeetupsParams = {
+from?: string;
+routeId?: string;
 };
 

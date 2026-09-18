@@ -1,9 +1,9 @@
-import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { fonts } from "@/constants/typography";
+import { BackButton } from "@/components/brand/BackButton";
 import { useColors } from "@/hooks/useColors";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
 
@@ -21,14 +21,7 @@ export function ScreenHeader({ eyebrow, title, onBack, right }: ScreenHeaderProp
   return (
     <View style={styles.row}>
       {onBack ? (
-        <Pressable
-          accessibilityLabel={t.back}
-          onPress={() => router.back()}
-          hitSlop={12}
-          style={[styles.backBtn, { borderColor: colors.glassBorder }]}
-        >
-          <Feather name="chevron-left" size={22} color={colors.foreground} />
-        </Pressable>
+        <BackButton accessibilityLabel={t.back} onPress={() => router.back()} />
       ) : null}
       <View style={{ flex: 1 }}>
         {eyebrow ? (
@@ -45,14 +38,6 @@ export function ScreenHeader({ eyebrow, title, onBack, right }: ScreenHeaderProp
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   eyebrow: {
     fontFamily: fonts.mono,
     fontSize: 11,

@@ -4,6 +4,9 @@ export const ROUTES_EXPLORER_HTML = `<!DOCTYPE html>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Routen entdecken — SagaTrail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
@@ -26,6 +29,9 @@ body{
   -webkit-font-smoothing:antialiased;
   -webkit-overflow-scrolling:touch;
   overflow-y:scroll;
+}
+h1,h2,h3,h4,h5,h6{
+  font-family:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;
 }
 a{color:var(--red)!important;text-decoration:none}
 

@@ -1,9 +1,17 @@
 import type { Logger } from "pino";
+import { createHash } from "crypto";
 import { computeElevationStats } from "./elevation";
 import { deriveSacFromSwissTlm3d } from "./swisstopoHiking";
 import { deriveSeason } from "./season";
 import { reverseGeocode } from "./geocoding";
-import { downsample, estimateMinutes, pathDistanceKm, type LatLng } from "./geo";
+import {
+  downsample,
+  estimateMinutes,
+  haversineM,
+  pathDistanceKm,
+  rdpSimplify,
+  type LatLng,
+} from "./geo";
 
 /**
  * Berechnet eine Wanderroute zwischen zwei selbst gewaehlten Punkten
@@ -21,10 +29,12 @@ import { downsample, estimateMinutes, pathDistanceKm, type LatLng } from "./geo"
  */
 
 const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
+const VALHALLA_TRACE_URL = "https://valhalla1.openstreetmap.de/trace_route";
 const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion)";
 const STORED_GEOMETRY_POINTS = 80;
 const MIN_KM = 0.3;
 const MAX_KM = 60;
+const DRAWN_ROUTE_WAYPOINTS = 48;
 
 interface ValhallaResponse {
   trip?: {
@@ -65,9 +75,11 @@ function decodePolyline6(encoded: string): LatLng[] {
 export class CustomRouteError extends Error {}
 
 /** Baut einen deterministischen Bezeichner aus gerundeten Start-/Zielkoordinaten. */
-function customRouteId(start: LatLng, end: LatLng): string {
-  const r = (n: number) => n.toFixed(5);
-  return `custom-${r(start.lat)}-${r(start.lng)}-${r(end.lat)}-${r(end.lng)}`;
+function customRouteId(points: LatLng[]): string {
+  const fingerprint = points
+    .map((point) => `${point.lat.toFixed(5)},${point.lng.toFixed(5)}`)
+    .join(";");
+  return `custom-${createHash("sha256").update(fingerprint).digest("hex").slice(0, 16)}`;
 }
 
 export interface CustomRoute {
@@ -183,14 +195,152 @@ export async function buildCustomRoute(
   endLabel: string | undefined,
   log: Logger,
 ): Promise<CustomRoute> {
+  return buildPedestrianRoute(
+    [start, end],
+    startLabel,
+    endLabel,
+    "Eigene Route",
+    log,
+  );
+}
+
+/**
+ * Berechnet eine Fussweg-Route, die alle Wegpunkte in der angegebenen
+ * Reihenfolge passiert. Valhalla liefert dafuer einen Leg pro Abschnitt;
+ * die Legs werden ohne doppelte Verbindungspunkte zu einer Geometrie
+ * zusammengefuegt.
+ */
+export async function buildCustomRouteThroughWaypoints(
+  points: LatLng[],
+  log: Logger,
+): Promise<CustomRoute> {
+  return buildPedestrianRoute(points, undefined, undefined, "Eigene Wegpunkt-Route", log);
+}
+
+/**
+ * Mappt eine vom Benutzer gezeichnete Linie auf das Fusswegnetz. Anders als
+ * bei Wegpunkten wird die Linie nicht nur als Folge von Zielen behandelt:
+ * Valhallas trace_route folgt der gezeichneten Spur und liefert die reale
+ * Weggeometrie zurück.
+ */
+export async function buildCustomRouteFromDrawnPoints(
+  points: LatLng[],
+  log: Logger,
+): Promise<CustomRoute> {
+  if (points.length < 2 || points.length > 100) {
+    throw new CustomRouteError("Bitte eine Linie mit mindestens zwei Punkten zeichnen.");
+  }
+
+  const res = await fetch(VALHALLA_TRACE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "User-Agent": USER_AGENT },
+    body: JSON.stringify({
+      shape: points.map((point) => ({ lat: point.lat, lon: point.lng })),
+      costing: "pedestrian",
+      shape_match: "map_snap",
+      units: "kilometers",
+    }),
+  });
+  if (!res.ok && res.status !== 400) {
+    throw new Error(`Valhalla-Map-Matching: HTTP-Fehler ${res.status}`);
+  }
+  const data = (await res.json()) as ValhallaResponse;
+  const shapes = (data.trip?.legs ?? [])
+    .map((leg) => leg.shape)
+    .filter((shape): shape is string => Boolean(shape));
+
+  const routedPoints: LatLng[] = [];
+  for (const shape of shapes) {
+    for (const point of decodePolyline6(shape)) {
+      const previous = routedPoints[routedPoints.length - 1];
+      if (!previous || previous.lat !== point.lat || previous.lng !== point.lng) {
+        routedPoints.push(point);
+      }
+    }
+  }
+
+  const inputDistanceKm = pathDistanceKm(points);
+  const tracedDistanceKm = pathDistanceKm(routedPoints);
+  const firstInput = points[0]!;
+  const lastInput = points[points.length - 1]!;
+  const isClosedInput =
+    haversineM(firstInput, lastInput) <=
+    Math.max(50, Math.min(500, inputDistanceKm * 1000 * 0.05));
+  const tracedEndGapM =
+    routedPoints.length >= 2
+      ? haversineM(routedPoints[0]!, routedPoints[routedPoints.length - 1]!)
+      : Number.POSITIVE_INFINITY;
+  const traceLooksCollapsed =
+    routedPoints.length < 2 ||
+    tracedDistanceKm < Math.max(MIN_KM, inputDistanceKm * 0.45) ||
+    (isClosedInput && tracedEndGapM > Math.max(150, inputDistanceKm * 1000 * 0.12));
+
+  if (traceLooksCollapsed) {
+    // trace_route kann bei einer geschlossenen Handskizze einen Abschnitt
+    // mehrfach verwenden oder nach dem ersten Segment abbrechen. Die
+    // gleichmaessig verteilten Stuetzpunkte zwingen den normalen Router,
+    // alle gezeichneten Segmente in ihrer Reihenfolge zu verbinden.
+    // Nicht nur die ersten Wegpunkte verwenden: Die RDP-Vereinfachung
+    // bewahrt die Biegungen der gezeichneten Linie und begrenzt nur die
+    // Punktzahl, die der normale Valhalla-Router verarbeiten muss.
+    const waypointPoints = rdpSimplify(points, 8, DRAWN_ROUTE_WAYPOINTS);
+    if (waypointPoints.length >= 2) {
+      log.warn(
+        {
+          inputPoints: points.length,
+          waypointPoints: waypointPoints.length,
+          inputDistanceKm: Number(inputDistanceKm.toFixed(2)),
+          tracedDistanceKm: Number(tracedDistanceKm.toFixed(2)),
+          isClosedInput,
+        },
+        "Freihand-Map-Matching zu kurz — Wegpunkt-Fallback",
+      );
+      return buildPedestrianRoute(
+        waypointPoints,
+        undefined,
+        undefined,
+        "Freihand-Route",
+        log,
+        customRouteId(points),
+        DRAWN_ROUTE_WAYPOINTS,
+      );
+    }
+  }
+
+  if (routedPoints.length < 2) {
+    throw new CustomRouteError(
+      "Die gezeichnete Linie konnte keinem begehbaren Weg zugeordnet werden.",
+    );
+  }
+
+  return buildRouteFromPoints(
+    routedPoints,
+    {
+      id: customRouteId(points),
+      terrain: "Freihand-Route",
+    },
+    log,
+  );
+}
+
+async function buildPedestrianRoute(
+  points: LatLng[],
+  startLabel: string | undefined,
+  endLabel: string | undefined,
+  terrain: string,
+  log: Logger,
+  routeId = customRouteId(points),
+  maxWaypoints = 12,
+): Promise<CustomRoute> {
+  if (points.length < 2 || points.length > maxWaypoints) {
+    throw new CustomRouteError(`Bitte zwischen 2 und ${maxWaypoints} Wegpunkte setzen.`);
+  }
+
   const res = await fetch(VALHALLA_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json", "User-Agent": USER_AGENT },
     body: JSON.stringify({
-      locations: [
-        { lat: start.lat, lon: start.lng },
-        { lat: end.lat, lon: end.lng },
-      ],
+      locations: points.map((point) => ({ lat: point.lat, lon: point.lng })),
       // Fussgaengerprofil: Autobahnen/Schnellstrassen sind ausgeschlossen,
       // Wanderwege und Trails werden bevorzugt.
       costing: "pedestrian",
@@ -211,14 +361,23 @@ export async function buildCustomRoute(
     );
   }
 
-  const points: LatLng[] = shapes.flatMap((shape) => decodePolyline6(shape));
+  const routedPoints: LatLng[] = [];
+  for (const shape of shapes) {
+    const legPoints = decodePolyline6(shape);
+    for (const point of legPoints) {
+      const previous = routedPoints[routedPoints.length - 1];
+      if (!previous || previous.lat !== point.lat || previous.lng !== point.lng) {
+        routedPoints.push(point);
+      }
+    }
+  }
   return buildRouteFromPoints(
-    points,
+    routedPoints,
     {
-      id: customRouteId(start, end),
+      id: routeId,
       startLabel,
       endLabel,
-      terrain: "Eigene Route",
+      terrain,
     },
     log,
   );

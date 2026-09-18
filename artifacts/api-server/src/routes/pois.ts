@@ -22,6 +22,9 @@ function toPoi(p: EnrichedPoi) {
     wikipediaTag: p.wikipediaTag ?? undefined,
     wikidataTag: p.wikidataTag ?? undefined,
     osmContext: p.osmContext ?? undefined,
+    source: p.source ?? "OpenStreetMap",
+    sourceUrl: p.sourceUrl ?? `https://www.openstreetmap.org/${p.id}`,
+    checkedAt: p.checkedAt?.toISOString() ?? null,
   };
 }
 

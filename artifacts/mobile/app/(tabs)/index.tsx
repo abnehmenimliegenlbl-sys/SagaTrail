@@ -1,4 +1,6 @@
 import { Feather } from "@expo/vector-icons";
+import { Image as ExpoImage } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
@@ -17,6 +19,7 @@ import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { CantonWappen } from "@/components/brand/CantonWappen";
 import { PremiumUpsellBanner } from "@/components/brand/PremiumUpsellBanner";
+import { ProfileAvatar } from "@/components/brand/ProfileAvatar";
 import { Skeleton } from "@/components/brand/Skeleton";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { CantonWithRoutes } from "@/constants/routes";
@@ -35,6 +38,11 @@ import {
   packEntitlementFuerKanton,
 } from "@/lib/kantonSlug";
 import { hapticSelection } from "@/lib/haptics";
+import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
+import {
+  MEETUP_HOME_BANNER,
+  THEME_WORLD_HOME_BANNER,
+} from "@/lib/themeWorldVisuals";
 
 const WEB_TOP = 67;
 
@@ -47,14 +55,27 @@ export default function Entdecken() {
     language,
     activeHike,
     clearActiveHike,
-    lastHike,
-    hikeHistory,
     premium,
     freeHikeUsed,
     pendingPackRewards,
   } = useApp();
   const { isElite } = useSubscription();
   const t = useHomeStrings();
+  const meetupT = useMeetupStrings();
+  const recommendationCopy =
+    language === "de" || language === "gsw"
+      ? {
+          eyebrow: "DEIN TAG",
+          title: "Beste Route für heute",
+          hint: "Zeit, Begleitung, Wetter und ÖV zusammen entscheiden lassen",
+          cta: "Empfehlung öffnen",
+        }
+      : {
+          eyebrow: "YOUR DAY",
+          title: "Best route for today",
+          hint: "Choose with time, group, weather and transport together",
+          cta: "Open recommendation",
+        };
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const onboardingStrings = useOnboardingStrings();
@@ -73,12 +94,8 @@ export default function Entdecken() {
             .includes(query),
         )
       : cantons;
-    return [...filtered].sort((a, b) => {
-      const aHome = a.canton === profile?.homeCanton ? 0 : 1;
-      const bHome = b.canton === profile?.homeCanton ? 0 : 1;
-      return aHome - bHome || a.canton.localeCompare(b.canton, "de");
-    });
-  }, [cantonQuery, cantons, language, profile?.homeCanton]);
+    return [...filtered].sort((a, b) => a.canton.localeCompare(b.canton, "de"));
+  }, [cantonQuery, cantons, language]);
 
   return (
     <Background>
@@ -87,6 +104,7 @@ export default function Entdecken() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
+          <ProfileAvatar avatarUrl={profile?.avatarUrl} name={profile?.name} size={58} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.greeting, { color: colors.mutedForeground }]}>
               {t.welcomeBack}
@@ -100,30 +118,6 @@ export default function Entdecken() {
           </View>
         </View>
 
-        {/* Hero */}
-        <Animated.View
-          entering={FadeInDown.duration(500)}
-          style={[
-            styles.hero,
-            GLAS_3D,
-            {
-              backgroundColor: colors.glassBg,
-              borderColor: colors.glassBorder,
-              borderRadius: colors.radius,
-            },
-          ]}
-        >
-          <Text style={[styles.heroEyebrow, { color: colors.accent }]}>
-            {t.step1Title}
-          </Text>
-          <Text style={[styles.heroTitle, { color: colors.foreground }]}>
-            {t.whereStart}
-          </Text>
-          <Text style={[styles.heroBody, { color: colors.mutedForeground }]}>
-            {t.heroBody}
-          </Text>
-        </Animated.View>
-
         {activeHike && (
           <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
             <Pressable
@@ -134,6 +128,7 @@ export default function Entdecken() {
               }
               style={[
                 styles.resumeCard,
+                styles.resumeCardCompact,
                 { backgroundColor: colors.glassBgStrong, borderColor: colors.accent, borderRadius: colors.radius },
               ]}
             >
@@ -144,10 +139,7 @@ export default function Entdecken() {
                 <Text style={[styles.resumeName, { color: colors.foreground }]} numberOfLines={1}>
                   {activeHike.routeName}
                 </Text>
-                <Text style={[styles.resumeHint, { color: colors.mutedForeground }]}>
-                  {t.resumeHint(activeHike.chapterIndex + 1, activeHike.chapterCount)}
-                </Text>
-                <View style={styles.resumeCtaRow}>
+                <View style={styles.resumeCtaRowCompact}>
                   <Feather name="play" size={14} color={colors.accent} />
                   <Text style={[styles.resumeCta, { color: colors.accent }]}>{t.resumeCta}</Text>
                 </View>
@@ -164,34 +156,6 @@ export default function Entdecken() {
               >
                 <Feather name="x" size={16} color={colors.mutedForeground} />
               </Pressable>
-            </Pressable>
-          </Animated.View>
-        )}
-
-        {lastHike && (
-          <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
-            <Pressable
-              onPress={() => router.push(`/hike-history/${encodeURIComponent(lastHike.id)}`)}
-              style={[
-                styles.lastHikeCard,
-                { backgroundColor: colors.glassBg, borderColor: colors.glassBorder, borderRadius: colors.radius },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Letzte Wanderung öffnen"
-            >
-              <View style={styles.lastHikeIcon}>
-                <Feather name="book-open" size={17} color={colors.accent} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.resumeEyebrow, { color: colors.accent }]}>LETZTE WANDERUNG</Text>
-                <Text style={[styles.resumeName, { color: colors.foreground }]} numberOfLines={1}>
-                  {lastHike.routeName}
-                </Text>
-                <Text style={[styles.resumeHint, { color: colors.mutedForeground }]}>
-                  {hikeHistory.length} Eintrag{hikeHistory.length === 1 ? "" : "e"} im Wandertagebuch
-                </Text>
-              </View>
-              <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
             </Pressable>
           </Animated.View>
         )}
@@ -228,6 +192,139 @@ export default function Entdecken() {
           </Animated.View>
         )}
 
+        <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
+          <Pressable
+            onPress={() => router.push("/treffpunkte")}
+            style={[
+              styles.meetupCard,
+              {
+                borderColor: colors.glassBorder,
+                borderRadius: colors.radius,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={meetupT.title}
+          >
+            <ExpoImage
+              source={MEETUP_HOME_BANNER}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
+            <LinearGradient
+              colors={["rgba(7,16,20,0.08)", "rgba(7,16,20,0.84)"]}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.themeWorldCardContent}>
+              <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "D9" }]}>
+                <Feather name="users" size={19} color={colors.backgroundDeep} />
+              </View>
+              <View style={styles.themeWorldCardText}>
+                <Text style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}>
+                  {meetupT.title}
+                </Text>
+                <Text style={[styles.themeWorldHint, { color: "rgba(255,255,255,0.78)" }]} numberOfLines={2}>
+                  {meetupT.intro}
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={21} color="#FFFFFF" />
+            </View>
+          </Pressable>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.duration(400)} style={styles.themeWorldsSection}>
+          <Pressable
+            onPress={() => router.push("/themenwelten")}
+            accessibilityRole="button"
+            accessibilityLabel={t.themeWorldsTitle}
+            style={[
+              styles.themeWorldCard,
+              {
+                borderColor: colors.glassBorder,
+                borderRadius: colors.radius,
+              },
+            ]}
+          >
+            <ExpoImage
+              source={THEME_WORLD_HOME_BANNER}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
+            <LinearGradient
+              colors={["rgba(7,16,20,0.08)", "rgba(7,16,20,0.82)"]}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.themeWorldCardContent}>
+              <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "D9" }]}>
+                <Feather name="compass" size={19} color={colors.backgroundDeep} />
+              </View>
+              <View style={styles.themeWorldCardText}>
+                <Text style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}>
+                  {t.themeWorldsTitle}
+                </Text>
+                <Text style={[styles.themeWorldHint, { color: "rgba(255,255,255,0.78)" }]}>
+                  {t.themeWorldsHint}
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={21} color="#FFFFFF" />
+            </View>
+          </Pressable>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.duration(400)} style={styles.themeWorldsSection}>
+          <Pressable
+            onPress={() => router.push("/empfehlung")}
+            accessibilityRole="button"
+            accessibilityLabel={recommendationCopy.title}
+            style={[
+              styles.recommendationBanner,
+              {
+                borderColor: colors.accent,
+                borderRadius: colors.radius,
+              },
+            ]}
+          >
+            <LinearGradient
+              colors={[colors.accent + "18", colors.glassBgStrong, colors.glassBgStrong]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={[styles.recommendationBannerGlow, { backgroundColor: colors.accent + "18" }]} />
+            <View style={[styles.recommendationBannerRoute, { borderColor: colors.accent + "45" }]}>
+              <View style={[styles.recommendationBannerRouteDot, { backgroundColor: colors.accent }]} />
+            </View>
+            <View style={styles.recommendationBannerContent}>
+              <View
+                style={[
+                  styles.recommendationBannerIcon,
+                  { backgroundColor: colors.accent, borderColor: colors.accent },
+                ]}
+              >
+                <Feather name="sunrise" size={21} color={colors.accentForeground} />
+              </View>
+              <View style={styles.recommendationBannerText}>
+                <Text style={[styles.recommendationBannerEyebrow, { color: colors.accent }]}>
+                  {recommendationCopy.eyebrow}
+                </Text>
+                <Text style={[styles.recommendationBannerTitle, { color: colors.foreground }]} numberOfLines={1}>
+                  {recommendationCopy.title}
+                </Text>
+                <Text style={[styles.recommendationBannerHint, { color: colors.mutedForeground }]} numberOfLines={2}>
+                  {recommendationCopy.hint}
+                </Text>
+              </View>
+              <View style={styles.recommendationBannerAction}>
+                <Text style={[styles.recommendationBannerCta, { color: colors.accent }]} numberOfLines={1}>
+                  {recommendationCopy.cta}
+                </Text>
+                <View style={[styles.recommendationBannerArrow, { backgroundColor: colors.accent }]}>
+                  <Feather name="arrow-up-right" size={17} color={colors.accentForeground} />
+                </View>
+              </View>
+            </View>
+          </Pressable>
+        </Animated.View>
+
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
             {t.cantonsTitle}
@@ -242,14 +339,14 @@ export default function Entdecken() {
           <TextInput
             value={cantonQuery}
             onChangeText={setCantonQuery}
-            placeholder="Kanton suchen"
+            placeholder={t.searchCanton}
             placeholderTextColor={colors.mutedForeground}
             style={[styles.searchInput, { color: colors.foreground }]}
-            accessibilityLabel="Kanton suchen"
+            accessibilityLabel={t.searchCanton}
             returnKeyType="search"
           />
           {cantonQuery.length > 0 && (
-            <Pressable onPress={() => setCantonQuery("")} hitSlop={10} accessibilityLabel="Suche löschen">
+            <Pressable onPress={() => setCantonQuery("")} hitSlop={10} accessibilityLabel={t.clearSearch}>
               <Feather name="x-circle" size={17} color={colors.mutedForeground} />
             </Pressable>
           )}
@@ -406,28 +503,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
   },
+  resumeCardCompact: {
+    alignItems: "center",
+    paddingVertical: 11,
+  },
   resumeEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.5 },
   resumeName: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 4 },
   resumeHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 4 },
   resumeCtaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+  resumeCtaRowCompact: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
   resumeCta: { fontFamily: fonts.bodyBold, fontSize: 14 },
   resumeClose: { padding: 2 },
-  lastHikeCard: {
-    ...GLAS_3D,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderWidth: 1,
-    padding: 14,
-  },
-  lastHikeIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(216,168,78,0.12)",
-  },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -442,20 +528,115 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
+    gap: 14,
     paddingHorizontal: 20,
     marginBottom: 18,
   },
   greeting: { fontFamily: fonts.body, fontSize: 14 },
   name: { fontFamily: fonts.titleBold, fontSize: 30, marginTop: 2 },
   archetype: { fontFamily: fonts.story, fontSize: 14, marginTop: 2 },
-  hero: {
-    marginHorizontal: 20,
-    padding: 18,
+  meetupCard: {
+    aspectRatio: 3,
     borderWidth: 1,
+    overflow: "hidden",
+    ...GLAS_3D,
   },
-  heroEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
-  heroTitle: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 6 },
-  heroBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
+  themeWorldsSection: { marginTop: 8 },
+  recommendationBanner: {
+    marginHorizontal: 20,
+    aspectRatio: 3,
+    borderWidth: 1,
+    overflow: "hidden",
+    ...GLAS_3D_STARK,
+  },
+  recommendationBannerGlow: {
+    position: "absolute",
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    top: -100,
+    right: -35,
+  },
+  recommendationBannerRoute: {
+    position: "absolute",
+    width: 155,
+    height: 155,
+    borderRadius: 78,
+    borderWidth: 1,
+    right: -47,
+    bottom: -95,
+    transform: [{ rotate: "-24deg" }],
+  },
+  recommendationBannerRouteDot: {
+    position: "absolute",
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    top: 13,
+    left: 24,
+  },
+  recommendationBannerContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    padding: 15,
+  },
+  recommendationBannerIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  recommendationBannerText: { flex: 1, minWidth: 0 },
+  recommendationBannerEyebrow: { fontFamily: fonts.monoBold, fontSize: 9, letterSpacing: 1.5 },
+  recommendationBannerTitle: { fontFamily: fonts.titleBold, fontSize: 17, lineHeight: 21, marginTop: 3 },
+  recommendationBannerHint: { fontFamily: fonts.body, fontSize: 11, lineHeight: 15, marginTop: 3, maxWidth: 210 },
+  recommendationBannerAction: { alignItems: "center", gap: 5 },
+  recommendationBannerCta: { fontFamily: fonts.monoBold, fontSize: 8, letterSpacing: 0.5, maxWidth: 54, textAlign: "center" },
+  recommendationBannerArrow: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  themeWorldCard: {
+    aspectRatio: 3,
+    marginHorizontal: 20,
+    borderWidth: 1,
+    overflow: "hidden",
+    ...GLAS_3D,
+  },
+  themeWorldCardContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 12,
+    padding: 16,
+  },
+  themeWorldCardText: { flex: 1 },
+  themeWorldHint: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2,
+  },
+  themeWorldIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  themeWorldLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    lineHeight: 17,
+    marginTop: 10,
+  },
   section: { paddingHorizontal: 20, marginTop: 28, marginBottom: 14 },
   sectionTitle: { fontFamily: fonts.titleBold, fontSize: 22 },
   sectionHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 2 },
@@ -478,6 +659,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  cantonName: { fontFamily: fonts.titleBold, fontSize: 19 },
+  // Kantonsnamen bewusst in der nativen Systemschrift:
+  // iOS = San Francisco, Android = Roboto, Web = system-ui.
+  cantonName: { fontSize: 19 },
   cantonMeta: { fontFamily: fonts.mono, fontSize: 12, marginTop: 3 },
 });

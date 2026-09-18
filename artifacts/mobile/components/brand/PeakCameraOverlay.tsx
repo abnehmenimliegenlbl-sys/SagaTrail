@@ -1,8 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import { CameraView, useCameraPermissions } from "expo-camera";
 import { captureRef } from "react-native-view-shot";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   Modal,
   Platform,
   Pressable,
@@ -14,21 +15,39 @@ import type { DimensionValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { fonts } from "@/constants/typography";
+import { CloseButton } from "@/components/brand/CloseButton";
 import { useColors } from "@/hooks/useColors";
+import { hapticMedium, hapticSelection } from "@/lib/haptics";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
+import type { LatLng } from "@/types";
 import { persistJournalImage } from "@/lib/journalMedia";
+import { makeLogger } from "@/lib/debugLog";
 import type { RecognitionJournalEntry } from "@/types";
 import type { PeakPanoramaStrings } from "./PeakPanorama";
 import { PeakArNavigator } from "./PeakArNavigator";
 
+const peakCameraLog = makeLogger("[PeakCamera]", "peak_camera");
+
 interface PeakCameraOverlayProps {
   visible: boolean;
   peaks: readonly PanoramaGipfel[];
+  arCandidates?: readonly PanoramaGipfel[];
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
+  routeGeometry?: readonly number[][] | null;
+  observerPosition?: LatLng | null;
+  observerAccuracyM?: number | null;
+  observerFixAgeMs?: number | null;
+  observerRouteDistanceM?: number | null;
   heading: number | null;
+  nextTurn?: {
+    direction: "left" | "right";
+    distanceM: number;
+    title: string;
+    label: string;
+  } | null;
   observerElevationM?: number | null;
   strings: PeakPanoramaStrings;
   onClose: () => void;
@@ -38,9 +57,16 @@ interface PeakCameraOverlayProps {
 export function PeakCameraOverlay({
   visible,
   peaks,
+  arCandidates = peaks,
   terrainProfile = null,
   terrainModel = null,
+  routeGeometry = null,
+  observerPosition = null,
+  observerAccuracyM = null,
+  observerFixAgeMs = null,
+  observerRouteDistanceM = null,
   heading,
+  nextTurn = null,
   observerElevationM = null,
   strings,
   onClose,
@@ -48,36 +74,54 @@ export function PeakCameraOverlay({
 }: PeakCameraOverlayProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const [cameraPermission] = useCameraPermissions();
-  const [arEnabled, setArEnabled] = useState(false);
+  const [arEnabled, setArEnabled] = useState(true);
+  const [showPeaks, setShowPeaks] = useState(true);
+  const [trackingState, setTrackingState] = useState<
+    "initializing" | "ready" | "limited" | "unavailable"
+  >("initializing");
   const [capturing, setCapturing] = useState(false);
   const [contentMounted, setContentMounted] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
-  const cameraRef = useRef<CameraView>(null);
+  const [arPeaks, setArPeaks] = useState<readonly PanoramaGipfel[]>([]);
+  const lockPulse = useRef(new Animated.Value(0)).current;
   const cameraFrameRef = useRef<View>(null);
-  const arActivationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const switchNativeSurface = useCallback((nextMode: "camera" | "ar") => {
-    if (arActivationTimerRef.current) {
-      clearTimeout(arActivationTimerRef.current);
-      arActivationTimerRef.current = null;
-    }
-
-    // Never replace CameraView and Viro in the same render pass. CameraView
-    // releases AVCaptureSession asynchronously, so the old native surface
-    // must stay unmounted while the next one is created.
-    setContentMounted(false);
-    setArEnabled(nextMode === "ar");
-    arActivationTimerRef.current = setTimeout(() => {
-      arActivationTimerRef.current = null;
-      setContentMounted(true);
-    }, 700);
-  }, []);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const arStateRef = useRef({
+    visible,
+    arEnabled,
+    trackingState,
+    peakCount: arPeaks.length,
+    heading,
+    observerAccuracyM,
+    observerFixAgeMs,
+    observerRouteDistanceM,
+  });
+  arStateRef.current = {
+    visible,
+    arEnabled,
+    trackingState,
+    peakCount: arPeaks.length,
+    heading,
+    observerAccuracyM,
+    observerFixAgeMs,
+    observerRouteDistanceM,
+  };
   const handleArError = useCallback(() => {
-    switchNativeSurface("camera");
-  }, [switchNativeSurface]);
+    const state = arStateRef.current;
+    peakCameraLog("AR error received; closing camera", {
+      ...state,
+    });
+    setContentMounted(false);
+    setArEnabled(false);
+    setShowPeaks(false);
+    setTrackingState("unavailable");
+    setArPeaks([]);
+    onCloseRef.current();
+  }, []);
 
   const visiblePeaks =
-    heading == null
+    !showPeaks || heading == null
       ? []
       : peaks
           .filter((peak) => peak.relativeBearingDeg != null)
@@ -87,45 +131,186 @@ export function PeakCameraOverlay({
       peak.relativeBearingDeg != null &&
       Math.abs(peak.relativeBearingDeg) <= 18,
   );
+  const trackingOverlayReady = trackingState === "ready";
+  const selectablePeaks = trackingOverlayReady
+    ? showPeaks
+      ? arEnabled
+        ? arPeaks
+        : visiblePeaks
+      : []
+    : [];
   const targetPeak =
-    visiblePeaks.find((peak) => peak.id === selectedPeakId) ??
-    focusedPeak ??
-    visiblePeaks[0];
+    selectablePeaks.find((peak) => peak.id === selectedPeakId) ??
+    (trackingOverlayReady ? focusedPeak : undefined) ??
+    selectablePeaks[0];
   const status =
-    visiblePeaks.length > 0 ? `${strings.detected}: ${targetPeak?.name ?? ""}` : strings.noPeaks;
+    trackingOverlayReady && visiblePeaks.length > 0
+      ? `${strings.detected}: ${targetPeak?.name ?? ""}`
+      : strings.noPeaks;
+  const routeGuidanceReady =
+    observerPosition != null &&
+    heading != null &&
+    trackingState === "ready";
+  const routePauseReason =
+    observerPosition == null
+      ? strings.noGps
+      : heading == null
+        ? strings.needCompass
+        : trackingState === "initializing"
+          ? strings.arTrackingStarting
+          : trackingState === "limited"
+            ? strings.arTrackingLimited
+            : strings.arUnavailable;
+  const routePauseDetail =
+    observerPosition == null
+      ? strings.noGps
+      : heading == null
+        ? strings.needCompass
+        : trackingState === "unavailable"
+          ? strings.arUnavailable
+          : strings.arTrackingPaused;
+  const handleTrackingStateChange = useCallback(
+    (state: "initializing" | "ready" | "limited" | "unavailable") => {
+      setTrackingState(state);
+      peakCameraLog("AR tracking quality changed", {
+        state,
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    peakCameraLog("camera overlay lifecycle", {
+      visible,
+      contentMounted,
+      arEnabled,
+      showPeaks,
+      trackingState,
+      routeGuidanceReady,
+      peakCount: peaks.length,
+      arCandidateCount: arCandidates.length,
+      visiblePeakCount: visiblePeaks.length,
+      selectedPeakId,
+      targetPeakId: targetPeak?.id ?? null,
+      heading,
+      nextTurn: nextTurn
+        ? {
+            direction: nextTurn.direction,
+            distanceM: nextTurn.distanceM,
+            title: nextTurn.title,
+          }
+        : null,
+      routePointCount: routeGeometry?.length ?? 0,
+      terrainProfilePointCount: terrainProfile?.length ?? 0,
+      hasTerrainModel: Boolean(terrainModel),
+       hasObserverPosition: observerPosition != null,
+      observerAccuracyM,
+      observerFixAgeMs,
+      observerRouteDistanceM,
+    });
+  }, [
+    arCandidates.length,
+    arEnabled,
+    contentMounted,
+    heading,
+    nextTurn,
+    observerPosition,
+    observerAccuracyM,
+    observerFixAgeMs,
+    observerRouteDistanceM,
+    peaks.length,
+    routeGuidanceReady,
+    routeGeometry?.length,
+    selectedPeakId,
+    showPeaks,
+    targetPeak?.id,
+    terrainModel,
+    terrainProfile?.length,
+    trackingState,
+    visible,
+    visiblePeaks.length,
+  ]);
 
   useEffect(() => {
     if (!visible) {
+      peakCameraLog("camera overlay hidden; clearing AR state");
       setContentMounted(false);
       setArEnabled(false);
+      setShowPeaks(false);
+      setTrackingState("initializing");
+      setArPeaks([]);
       setSelectedPeakId(null);
-      if (arActivationTimerRef.current) {
-        clearTimeout(arActivationTimerRef.current);
-        arActivationTimerRef.current = null;
-      }
+    } else {
+      peakCameraLog("camera overlay shown; loading AR candidates", {
+        candidateCount: arCandidates.length,
+        peakCount: peaks.length,
+        heading,
+      });
+      setArEnabled(true);
+      setShowPeaks(true);
+      setTrackingState("initializing");
+      setArPeaks(arCandidates);
     }
-    return () => {
-      if (arActivationTimerRef.current) {
-        clearTimeout(arActivationTimerRef.current);
-        arActivationTimerRef.current = null;
-      }
-    };
-  }, [visible]);
+    // New candidates may update the fixed native marker slots while the
+    // camera stays mounted. Only close/open transitions change contentMounted.
+  }, [arCandidates, visible]);
+
+  useEffect(() => {
+    if (!arEnabled || !targetPeak) {
+      lockPulse.stopAnimation();
+      lockPulse.setValue(0);
+      return;
+    }
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(lockPulse, {
+          toValue: 1,
+          duration: 850,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(lockPulse, {
+          toValue: 0,
+          duration: 850,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [arEnabled, lockPulse, targetPeak?.id]);
 
   const closeCamera = () => {
+    peakCameraLog("camera close requested", {
+      visible,
+      contentMounted,
+      arEnabled,
+      arPeakCount: arPeaks.length,
+      selectedPeakId,
+    });
     // Unmount the native camera/AR surface before dismissing the only native
     // modal. This avoids tearing down Viro during the UIKit transition.
     setContentMounted(false);
     setArEnabled(false);
+    setShowPeaks(false);
+    setTrackingState("unavailable");
+    setArPeaks([]);
     onClose();
   };
 
-  const toggleAr = () => {
-    if (arEnabled) {
-      switchNativeSurface("camera");
-      return;
-    }
-    switchNativeSurface("ar");
+  const handlePeakPress = (peakId: string) => {
+    const peak = arPeaks.find((candidate) => candidate.id === peakId) ??
+      visiblePeaks.find((candidate) => candidate.id === peakId);
+    peakCameraLog("camera peak selected", {
+      peakId,
+      peakName: peak?.name ?? null,
+      distanceKm: peak?.distanceKm ?? null,
+      relativeBearingDeg: peak?.relativeBearingDeg ?? null,
+      arEnabled,
+    });
+    hapticSelection();
+    setSelectedPeakId(peakId);
   };
 
   const markerPosition = (relativeBearingDeg: number) => {
@@ -134,7 +319,18 @@ export function PeakCameraOverlay({
   };
 
   const capturePeakRecognition = async () => {
-    if (capturing || visiblePeaks.length === 0 || !onCaptured) return;
+    if (capturing || visiblePeaks.length === 0 || !onCaptured) {
+      peakCameraLog("camera capture skipped", {
+        capturing,
+        visiblePeakCount: visiblePeaks.length,
+        hasOnCaptured: Boolean(onCaptured),
+      });
+      return;
+    }
+    peakCameraLog("camera capture started", {
+      visiblePeakCount: visiblePeaks.length,
+      targetPeakId: targetPeak?.id ?? null,
+    });
     setCapturing(true);
     try {
       let snapshotUri: string | null = null;
@@ -147,16 +343,13 @@ export function PeakCameraOverlay({
           });
         }
       } catch {
+        peakCameraLog("camera snapshot failed");
         snapshotUri = null;
       }
-      if (!snapshotUri && cameraRef.current) {
-        const picture = await cameraRef.current.takePictureAsync({
-          quality: 0.82,
-          skipProcessing: true,
-        });
-        snapshotUri = picture?.uri ?? null;
+      if (!snapshotUri) {
+        peakCameraLog("camera capture stopped without snapshot");
+        return;
       }
-      if (!snapshotUri) return;
 
       const persistentUri = await persistJournalImage(snapshotUri, "peak");
       const peakText = visiblePeaks
@@ -170,9 +363,25 @@ export function PeakCameraOverlay({
         text: peakText,
         capturedAt: Date.now(),
       });
+      peakCameraLog("camera capture completed", {
+        targetPeakId: targetPeak?.id ?? null,
+        capturedPeakCount: visiblePeaks.length,
+      });
+    } catch (error) {
+      peakCameraLog("camera capture failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setCapturing(false);
+      peakCameraLog("camera capture finished", {
+        targetPeakId: targetPeak?.id ?? null,
+      });
     }
+  };
+
+  const formatTurnDistance = (distanceM: number) => {
+    if (distanceM >= 1000) return `${(distanceM / 1000).toFixed(1)} km`;
+    return `${Math.max(0, Math.round(distanceM))} m`;
   };
 
   if (Platform.OS === "web") return null;
@@ -180,40 +389,93 @@ export function PeakCameraOverlay({
   return (
     <Modal
       // PeakPanorama requests permission before opening this modal. Do not
-      // gate the native modal on a second useCameraPermissions() snapshot:
-      // on iOS that hook can still contain the pre-request value for the
-      // first render, which makes the parent modal close while this one never
-      // appears.
+      // The native modal owns the complete AR surface. Camera permission is
+      // requested by PeakPanorama before this modal is opened.
       visible={visible}
       animationType="fade"
       presentationStyle="fullScreen"
-      onShow={() => setContentMounted(true)}
+       onShow={() => {
+          peakCameraLog("native camera modal shown", {
+            candidateCount: arCandidates.length,
+            routePointCount: routeGeometry?.length ?? 0,
+            heading,
+          });
+         // Keep every candidate as a stable native Viro node. Do not
+         // replace/remove nodes while the AR session is running.
+         setArPeaks(arCandidates);
+         setArEnabled(true);
+          setShowPeaks(true);
+          setTrackingState("initializing");
+         setContentMounted(true);
+       }}
       onRequestClose={closeCamera}
-      onDismiss={() => setContentMounted(false)}
+       onDismiss={() => {
+         peakCameraLog("native camera modal dismissed");
+         setContentMounted(false);
+       }}
     >
       <View ref={cameraFrameRef} style={styles.fullscreenCamera} collapsable={false}>
         {contentMounted && (
-          arEnabled ? (
-            <PeakArNavigator
-              peaks={visiblePeaks}
-              terrainProfile={terrainProfile}
-              terrainModel={terrainModel}
-              heading={heading}
-              observerElevationM={observerElevationM}
-              onError={handleArError}
-            />
-          ) : (
-            <CameraView ref={cameraRef} facing="back" style={styles.camera} />
-          )
+          <PeakArNavigator
+            peaks={arPeaks}
+             showPeaks={showPeaks}
+             compassReady={heading != null}
+             observerAccuracyM={observerAccuracyM}
+             observerFixAgeMs={observerFixAgeMs}
+             observerRouteDistanceM={observerRouteDistanceM}
+            terrainProfile={terrainProfile}
+            terrainModel={terrainModel}
+            routeGeometry={routeGeometry}
+            observerPosition={observerPosition}
+            heading={heading}
+            observerElevationM={observerElevationM}
+            selectedPeakId={selectedPeakId}
+            onPeakPress={handlePeakPress}
+             onTrackingStateChange={handleTrackingStateChange}
+            onError={handleArError}
+          />
         )}
-        <View style={styles.imageScrim} />
+        <View pointerEvents="none" style={styles.imageScrim} />
         <View pointerEvents="none" style={styles.scanLines}>
           <View style={styles.scanLineTop} />
           <View style={styles.scanLineMiddle} />
           <View style={styles.scanLineBottom} />
         </View>
-        <View style={styles.horizon} />
+        {arEnabled && contentMounted && targetPeak && (
+          <Animated.View
+            style={[
+              styles.lockOnBadge,
+              {
+                borderColor: colors.accent,
+                backgroundColor: colors.glassBgStrong,
+                transform: [
+                  {
+                    scale: lockPulse.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.06],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <Feather name="triangle" size={14} color={colors.accent} />
+            <View>
+              <Text style={[styles.lockOnTitle, { color: colors.accent }]}>
+                {targetPeak.name}
+              </Text>
+              <Text style={[styles.lockOnDetail, { color: colors.photoScrimMuted }]}>
+                {targetPeak.distanceKm.toFixed(1)} km ·{" "}
+                {targetPeak.elevationM != null
+                  ? `${Math.round(targetPeak.elevationM)} m ü. M.`
+                  : strings.heightUnknown}
+              </Text>
+            </View>
+          </Animated.View>
+        )}
         {contentMounted &&
+          !arEnabled &&
+          trackingOverlayReady &&
           visiblePeaks.map((peak, index) => (
             <Pressable
               key={peak.id}
@@ -224,7 +486,7 @@ export function PeakCameraOverlay({
                   top: insets.top + 88 + (index % 3) * 12,
                 },
               ]}
-              onPress={() => setSelectedPeakId(peak.id)}
+              onPress={() => handlePeakPress(peak.id)}
               accessibilityRole="button"
               accessibilityLabel={`${peak.name}, ${
                 peak.elevationM != null
@@ -251,9 +513,6 @@ export function PeakCameraOverlay({
               </View>
             </Pressable>
           ))}
-        {heading != null && (
-          <View style={[styles.centerLine, { backgroundColor: colors.primary }]} />
-        )}
         <View style={[styles.fullscreenTopBar, { paddingTop: insets.top + 12 }]}>
           <View>
             <Text style={[styles.fullscreenTitle, { color: colors.photoScrimText }]}>
@@ -284,56 +543,100 @@ export function PeakCameraOverlay({
               </View>
             )}
             <Pressable
-              onPress={toggleAr}
+              onPress={() => {
+                hapticSelection();
+                setShowPeaks((current) => !current);
+              }}
               style={[
-                styles.arButton,
+                styles.peakToggle,
                 {
-                  backgroundColor: arEnabled ? colors.primary : colors.glassBgStrong,
-                  borderColor: arEnabled ? colors.primary : colors.glassBorder,
+                  backgroundColor: showPeaks
+                    ? colors.glassBgStrong
+                    : colors.destructive,
+                  borderColor: showPeaks ? colors.glassBorder : colors.destructive,
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={arEnabled ? "AR ausschalten" : "AR einschalten"}
+              accessibilityLabel={strings.detected}
+              accessibilityState={{ selected: showPeaks }}
             >
               <Feather
-                name="layers"
-                size={14}
-                color={arEnabled ? colors.primaryForeground : colors.photoScrimText}
+                name="triangle"
+                size={12}
+                color={showPeaks ? colors.tint : colors.primaryForeground}
               />
-              <Text
-                style={[
-                  styles.arButtonText,
-                  { color: arEnabled ? colors.primaryForeground : colors.photoScrimText },
-                ]}
-              >
-                AR
-              </Text>
             </Pressable>
-            <Pressable
-              onPress={closeCamera}
-              style={[
-                styles.closeButton,
-                { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
-              ]}
-              accessibilityRole="button"
+            <CloseButton
+              onPress={() => {
+                hapticSelection();
+                closeCamera();
+              }}
+              style={styles.closeButton}
               accessibilityLabel={strings.cameraOff}
-            >
-              <Feather name="x" size={20} color={colors.photoScrimText} />
-            </Pressable>
+            />
           </View>
         </View>
+        {!routeGuidanceReady && contentMounted && (
+          <View
+            style={[
+              styles.routePausedHint,
+              {
+                backgroundColor: colors.glassBgStrong,
+                borderColor: colors.destructive,
+              },
+            ]}
+          >
+            <Feather name="pause-circle" size={18} color={colors.destructive} />
+            <View style={styles.routePausedCopy}>
+              <Text style={[styles.routePausedTitle, { color: colors.photoScrimText }]}>
+                {routePauseReason}
+              </Text>
+              <Text style={[styles.routePausedDetail, { color: colors.photoScrimMuted }]}>
+                {routePauseDetail}
+              </Text>
+            </View>
+          </View>
+        )}
+        {routeGuidanceReady && nextTurn && (
+          <View
+            style={[
+              styles.turnHint,
+              {
+                backgroundColor: colors.glassBgStrong,
+                borderColor: colors.accent,
+              },
+            ]}
+          >
+            <Feather
+              name={nextTurn.direction === "left" ? "corner-up-left" : "corner-up-right"}
+              size={20}
+              color={colors.accent}
+            />
+            <View style={styles.turnHintCopy}>
+              <Text style={[styles.turnHintTitle, { color: colors.photoScrimText }]}>
+                {nextTurn.title}
+              </Text>
+              <Text style={[styles.turnHintLabel, { color: colors.photoScrimMuted }]}>
+                {nextTurn.label} · {formatTurnDistance(nextTurn.distanceM)}
+              </Text>
+            </View>
+          </View>
+        )}
         <View style={[styles.imageFooter, { paddingBottom: insets.bottom + 12 }]}>
           <Feather
-            name={targetPeak ? "crosshair" : "compass"}
+            name={targetPeak ? "triangle" : "compass"}
             size={15}
             color={colors.photoScrimText}
           />
           <Text style={[styles.status, { color: colors.photoScrimText }]} numberOfLines={2}>
-            {targetPeak ? `${strings.detected}: ${targetPeak.name}` : status}
+            {targetPeak && showPeaks ? `${strings.detected}: ${targetPeak.name}` : status}
           </Text>
           <View style={styles.captureArea}>
             <Pressable
-              onPress={() => void capturePeakRecognition()}
+              onPress={() => {
+                hapticMedium();
+                void capturePeakRecognition();
+              }}
               disabled={capturing || visiblePeaks.length === 0}
               style={[
                 styles.captureButton,
@@ -360,12 +663,63 @@ export function PeakCameraOverlay({
 
 const styles = StyleSheet.create({
   fullscreenCamera: { flex: 1, backgroundColor: "#000" },
-  camera: { ...StyleSheet.absoluteFillObject },
+  camera: { ...StyleSheet.absoluteFill },
   imageScrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.17)",
   },
-  scanLines: { ...StyleSheet.absoluteFillObject, opacity: 0.25 },
+  scanLines: { ...StyleSheet.absoluteFill, opacity: 0.25 },
+  turnHint: {
+    position: "absolute",
+    top: 112,
+    left: 18,
+    right: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderRadius: 14,
+  },
+  turnHintCopy: { flex: 1, gap: 2 },
+  turnHintTitle: {
+    fontFamily: fonts.titleBold,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  turnHintLabel: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  routePausedHint: {
+    position: "absolute",
+    top: 112,
+    left: 18,
+    right: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderRadius: 14,
+  },
+  routePausedCopy: { flex: 1, gap: 2 },
+  routePausedTitle: {
+    fontFamily: fonts.titleBold,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+  routePausedDetail: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   scanLineTop: {
     position: "absolute",
     left: 0,
@@ -390,13 +744,28 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.18)",
   },
-  horizon: {
+  lockOnBadge: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    top: "54%",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.45)",
+    top: "61%",
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    maxWidth: "86%",
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  lockOnTitle: {
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
+  lockOnDetail: {
+    marginTop: 2,
+    fontFamily: fonts.mono,
+    fontSize: 9,
   },
   fullscreenTopBar: {
     position: "absolute",
@@ -424,6 +793,14 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   fullscreenHeadingBadgeText: { fontFamily: fonts.monoBold, fontSize: 11 },
+  peakToggle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   arButton: {
     height: 42,
     flexDirection: "row",
@@ -466,13 +843,49 @@ const styles = StyleSheet.create({
     width: 126,
     transform: [{ rotate: "-90deg" }],
   },
-  centerLine: {
+  terrainLegend: {
     position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: "50%",
-    width: 1,
-    opacity: 0.9,
+    left: 18,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  terrainLegendTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  terrainLegendDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  terrainLegendTitleText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    letterSpacing: 1,
+  },
+  terrainLegendDetail: {
+    marginTop: 3,
+    fontFamily: fonts.mono,
+    fontSize: 9,
+  },
+  mapLayerSwitch: {
+    flexDirection: "row",
+    gap: 5,
+    marginTop: 7,
+  },
+  mapLayerButton: {
+    borderWidth: 1,
+    borderRadius: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  mapLayerButtonText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 9,
+    letterSpacing: 0.6,
   },
   imageFooter: {
     position: "absolute",

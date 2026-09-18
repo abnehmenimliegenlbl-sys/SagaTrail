@@ -7,7 +7,10 @@ import {
   synthesizeNarration,
   voiceCandidatesForLanguage,
 } from "./elevenlabs";
-import { synthesizeOpenAiNarrationWithPacing } from "./narrationPacing";
+import {
+  OPENAI_NARRATION_SPEED,
+  synthesizeOpenAiNarrationWithPacing,
+} from "./narrationPacing";
 
 /**
  * Wird geworfen, wenn ein Nutzer das tagesaktuelle Zeichen-Budget fuer
@@ -121,7 +124,7 @@ function narrationObjectName(hash: string): string {
 // alten OpenAI-Narrations-Caches automatisch invalidiert (anderer Hash),
 // ohne ElevenLabs-Eintraege zu beruehren. Erhoehen, wenn sich OpenAI-
 // Synthesis-Parameter aendern (z.B. Lautstaerke, Tempo, Stimme).
-const OPENAI_CACHE_VERSION = "v3";
+const OPENAI_CACHE_VERSION = "v4";
 
 export function hashNarrationText(
   text: string,
@@ -242,7 +245,12 @@ export async function getOrCreateNarrationAudio(
       log.warn({ err }, "OpenAI-Cache-Lesezugriff fehlgeschlagen, synthetisiere ohne Cache");
     }
     log.info({ chars: text.length, language }, "OpenAI-Narration direkt synthetisieren");
-    const audio = await synthesizeOpenAiNarrationWithPacing(text, "onyx", 0.95, log);
+    const audio = await synthesizeOpenAiNarrationWithPacing(
+      text,
+      "onyx",
+      OPENAI_NARRATION_SPEED,
+      log,
+    );
     await writeToCache(bucket, text, language, OPENAI_FALLBACK_VOICE_ID, audio, log);
     return audio;
   }

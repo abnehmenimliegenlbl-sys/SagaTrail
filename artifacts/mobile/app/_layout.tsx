@@ -14,8 +14,15 @@ import {
   Karla_700Bold,
   useFonts,
 } from "@expo-google-fonts/karla";
+import {
+  AlbertSans_500Medium,
+  AlbertSans_700Bold,
+  AlbertSans_900Black,
+} from "@expo-google-fonts/albert-sans";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ClerkProvider, useAuth } from "@clerk/expo";
+import Constants from "expo-constants";
+import * as Updates from "expo-updates";
 import {
   clearKeychainOnFreshInstall,
   clerkTokenCache,
@@ -28,8 +35,13 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
-import React, { useEffect } from "react";
-import { Platform } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  AppState,
+  Platform,
+  View,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -41,14 +53,22 @@ import { usePushToken } from "@/hooks/usePushToken";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { CatalogProvider } from "@/contexts/CatalogContext";
 import { DownloadProvider } from "@/contexts/DownloadContext";
+import {
+  RequiredPermissionsContext,
+  RequiredPermissionsGateState,
+} from "@/contexts/RequiredPermissionsContext";
 import { configureApiClient } from "@/lib/apiConfig";
 import "@/lib/backgroundLocation";
 import { alert, AppAlertProvider } from "@/lib/appAlert";
 import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
 import { hapticMedium, hapticWarning } from "@/lib/haptics";
+import { makeLogger } from "@/lib/debugLog";
+import { getRuntimeDiagnostics } from "@/lib/runtimeDiagnostics";
+import { readRequiredPermissionSnapshot } from "@/lib/requiredPermissions";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 const CRASH_KEY = "__sagatrail_last_crash__";
+const appRuntimeLog = makeLogger("[APP-RUNTIME]", "app_runtime");
 
 async function checkPreviousCrash() {
   try {
@@ -86,7 +106,10 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY as string;
+const CLERK_PUBLISHABLE_KEY =
+  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+  (Constants.expoConfig?.extra?.clerkPublishableKey as string | undefined) ||
+  "";
 const CLERK_PROXY_URL = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
 
 function AuthTokenBridge({ children }: { children: React.ReactNode }) {
@@ -104,10 +127,118 @@ function ClerkGuard({ children }: { children: React.ReactNode }) {
 function RootLayoutNav() {
   const { hydrated, profile } = useApp();
   const { isLoaded, isSignedIn } = useAuth();
+  const updatesState = Updates.useUpdates();
   usePushToken();
   const segments = useSegments();
   const router = useRouter();
   const c = useColors();
+  const [permissionGateState, setPermissionGateState] =
+    useState<RequiredPermissionsGateState>("idle");
+  const permissionCheckGenerationRef = useRef(0);
+  const updateReloadStartedRef = useRef(false);
+  const shouldCheckPermissions = hydrated && isLoaded && isSignedIn && Boolean(profile);
+
+  const refreshRequiredPermissions = useCallback(async (reason = "app-start") => {
+    const generation = ++permissionCheckGenerationRef.current;
+    setPermissionGateState("checking");
+    const snapshot = await readRequiredPermissionSnapshot(reason);
+    if (generation === permissionCheckGenerationRef.current) {
+      setPermissionGateState(snapshot.allGranted ? "granted" : "missing");
+    }
+    return snapshot.allGranted;
+  }, []);
+
+  const permissionContextValue = useMemo(
+    () => ({
+      state: permissionGateState,
+      refresh: refreshRequiredPermissions,
+    }),
+    [permissionGateState, refreshRequiredPermissions],
+  );
+
+  useEffect(() => {
+    if (!shouldCheckPermissions) {
+      permissionCheckGenerationRef.current += 1;
+      setPermissionGateState("idle");
+      return;
+    }
+    void refreshRequiredPermissions("app-start");
+  }, [refreshRequiredPermissions, shouldCheckPermissions]);
+
+  useEffect(() => {
+    if (!shouldCheckPermissions) return;
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        void refreshRequiredPermissions("app-foreground");
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [refreshRequiredPermissions, shouldCheckPermissions]);
+
+  useEffect(() => {
+    appRuntimeLog("runtime snapshot", {
+      ...getRuntimeDiagnostics(),
+      appState: AppState.currentState,
+    });
+
+    const appStateSubscription = AppState.addEventListener("change", (nextState) => {
+      appRuntimeLog("app state", {
+        state: nextState,
+        ...getRuntimeDiagnostics(),
+      });
+    });
+    const updateSubscription = Updates.addUpdatesStateChangeListener(({ context }) => {
+      appRuntimeLog("updates state", {
+        ...getRuntimeDiagnostics(),
+        isStartupProcedureRunning: context.isStartupProcedureRunning,
+        isUpdateAvailable: context.isUpdateAvailable,
+        isUpdatePending: context.isUpdatePending,
+        isChecking: context.isChecking,
+        isDownloading: context.isDownloading,
+        isRestarting: context.isRestarting,
+        restartCount: context.restartCount,
+        sequenceNumber: context.sequenceNumber,
+        downloadProgress: context.downloadProgress,
+        hasCheckError: Boolean(context.checkError),
+        hasDownloadError: Boolean(context.downloadError),
+      });
+    });
+
+    return () => {
+      appStateSubscription.remove();
+      updateSubscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      __DEV__ ||
+      !Updates.isEnabled ||
+      !updatesState.isUpdatePending ||
+      updatesState.isRestarting ||
+      updateReloadStartedRef.current
+    ) {
+      return;
+    }
+    updateReloadStartedRef.current = true;
+    appRuntimeLog("activating downloaded update", {
+      ...getRuntimeDiagnostics(),
+      restartCount: updatesState.restartCount,
+    });
+    void Updates.reloadAsync().catch((error) => {
+      updateReloadStartedRef.current = false;
+      appRuntimeLog("downloaded update activation failed", {
+        ...getRuntimeDiagnostics(),
+        message: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }, [
+    updatesState.isRestarting,
+    updatesState.isUpdatePending,
+    updatesState.restartCount,
+  ]);
 
   // Globale Notification-Listener fuer Haptik-Feedback.
   // Deckt Remote-Push-Nachrichten (Wetter, Marketing) ab, die ankommen
@@ -137,6 +268,7 @@ function RootLayoutNav() {
     if (!hydrated || !isLoaded) return;
     const inAuth = segments[0] === "(auth)";
     const inOnboarding = segments[0] === "onboarding";
+    const inPermissions = segments[0] === "permissions";
 
     if (!isSignedIn) {
       if (!inAuth) router.replace("/(auth)/sign-in");
@@ -146,35 +278,72 @@ function RootLayoutNav() {
       if (!inOnboarding) router.replace("/onboarding");
       return;
     }
-    if (inAuth || inOnboarding) {
+    if (permissionGateState === "idle" || permissionGateState === "checking") {
+      return;
+    }
+    if (permissionGateState === "missing") {
+      if (!inPermissions) router.replace("/permissions");
+      return;
+    }
+    if (inAuth || inOnboarding || inPermissions) {
       router.replace("/");
     }
-  }, [hydrated, isLoaded, isSignedIn, profile, segments, router]);
+  }, [
+    hydrated,
+    isLoaded,
+    isSignedIn,
+    profile,
+    permissionGateState,
+    segments,
+    router,
+  ]);
 
   if (!isLoaded) return null;
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: c.talschatten },
-        animation: "fade",
-      }}
-    >
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="onboarding" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="saga/[id]" />
-      <Stack.Screen name="route/[id]" />
-      <Stack.Screen name="route/[id]/saga" />
-      <Stack.Screen name="hike/[id]" options={{ animation: "slide_from_bottom" }} />
-      <Stack.Screen name="summary" />
-      <Stack.Screen
-        name="paywall"
-        options={{ presentation: "modal", animation: "slide_from_bottom" }}
-      />
-      <Stack.Screen name="legal/[doc]" />
-    </Stack>
+    <RequiredPermissionsContext.Provider value={permissionContextValue}>
+      <View style={{ flex: 1 }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: c.talschatten },
+            animation: "fade",
+          }}
+        >
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="permissions" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="saga/[id]" />
+          <Stack.Screen name="route/[id]" />
+          <Stack.Screen name="route/[id]/saga" />
+          <Stack.Screen name="hike/[id]" options={{ animation: "slide_from_bottom" }} />
+          <Stack.Screen name="summary" />
+          <Stack.Screen
+            name="paywall"
+            options={{ presentation: "modal", animation: "slide_from_bottom" }}
+          />
+          <Stack.Screen name="legal/[doc]" />
+        </Stack>
+        {shouldCheckPermissions && permissionGateState === "checking" && (
+          <View
+            style={{
+              alignItems: "center",
+              backgroundColor: c.talschatten,
+              bottom: 0,
+              justifyContent: "center",
+              left: 0,
+              position: "absolute",
+              right: 0,
+              top: 0,
+              zIndex: 1000,
+            }}
+          >
+            <ActivityIndicator color={c.accent} size="large" />
+          </View>
+        )}
+      </View>
+    </RequiredPermissionsContext.Provider>
   );
 }
 
@@ -183,6 +352,9 @@ export default function RootLayout() {
     BigShouldersDisplay_500Medium,
     BigShouldersDisplay_700Bold,
     BigShouldersDisplay_900Black,
+    AlbertSans_500Medium,
+    AlbertSans_700Bold,
+    AlbertSans_900Black,
     Karla_400Regular,
     Karla_400Regular_Italic,
     Karla_500Medium,

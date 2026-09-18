@@ -17,15 +17,15 @@ const hell = {
   nachthimmel: "#FFFFFF",
   talschatten: "#F4F5F7",
   gletscherweiss: "#181A1E",
-  almrausch: "#DA291C", // Schweizer Rot — Primäraktion
+  almrausch: "#CC0000", // SagaTrail-Markenrot — Primäraktion
   moosgrau: "#6B7280",
-  accent: "#DA291C", // Schweizer Rot — Raender, Trennlinien, Akzenttext/-icons
+  accent: "#CC0000", // SagaTrail-Markenrot — Raender, Trennlinien, Akzenttext/-icons
   accentForeground: "#FFFFFF",
 
   // Frosted-Glass-Werte (helles Glas)
   glassBg: "rgba(255,255,255,0.55)",
   glassBgStrong: "rgba(255,255,255,0.75)",
-  glassBorder: "rgba(218,41,28,0.35)",
+  glassBorder: "rgba(204,0,0,0.35)",
   glassHighlight: "rgba(255,255,255,0.6)",
   trackGroove: "rgba(24,26,30,0.12)",
   photoScrimText: "#FFFFFF",
@@ -44,16 +44,16 @@ const hell = {
   foreground: "#181A1E",
   card: "#FFFFFF",
   cardForeground: "#181A1E",
-  primary: "#DA291C",
+  primary: "#CC0000",
   primaryForeground: "#FFFFFF",
   secondary: "#FFFFFF",
   secondaryForeground: "#181A1E",
   muted: "#EDEEF1",
   mutedForeground: "#6B7280",
-  destructive: "#DA291C",
+  destructive: "#CC0000",
   destructiveForeground: "#FFFFFF",
-  border: "rgba(218,41,28,0.35)",
-  input: "rgba(218,41,28,0.2)",
+  border: "rgba(204,0,0,0.35)",
+  input: "rgba(204,0,0,0.2)",
 };
 
 const dunkel = {

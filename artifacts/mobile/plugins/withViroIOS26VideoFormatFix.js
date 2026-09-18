@@ -98,7 +98,33 @@ module.exports = function withViroIOS26VideoFormatFix(config) {
     }
 
     let contents = config.modResults.contents;
+    contents = contents.replace(/^import Expo$/m, "internal import Expo");
+    contents = contents.replace(
+      /^public class AppDelegate/m,
+      "class AppDelegate",
+    );
+    contents = contents.replace(
+      /^  public override func/mg,
+      "  override func",
+    );
+    contents = contents.replace(
+      /\n  var reactNativeDelegate: ExpoReactNativeFactoryDelegate\?\n  var reactNativeFactory: RCTReactNativeFactory\?\n/,
+      "\n",
+    );
+    contents = contents.replace(
+      /\n    reactNativeDelegate = delegate\n    reactNativeFactory = factory\n    bindReactNativeFactory\(factory\)\n/,
+      "\n",
+    );
+
     if (contents.includes("private enum SagaTrailARVideoFormatGuard")) {
+      if (!contents.includes("SagaTrailPhoneWatchConnection.shared.activate()")) {
+        contents = contents.replace(
+          "    SagaTrailARVideoFormatGuard.install()",
+          `    SagaTrailARVideoFormatGuard.install()
+    SagaTrailPhoneWatchConnection.shared.activate()`,
+        );
+      }
+      config.modResults.contents = contents;
       return config;
     }
 
@@ -127,6 +153,7 @@ module.exports = function withViroIOS26VideoFormatFix(config) {
       launchMarker,
       `  ) -> Bool {
     SagaTrailARVideoFormatGuard.install()
+    SagaTrailPhoneWatchConnection.shared.activate()
 
     let delegate = ReactNativeDelegate()`
     );

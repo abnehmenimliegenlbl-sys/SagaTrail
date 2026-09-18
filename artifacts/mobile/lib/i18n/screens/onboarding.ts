@@ -7,6 +7,9 @@ export interface OnboardingStrings {
   intro: string;
   nameLabel: string;
   namePlaceholder: string;
+  bioLabel: string;
+  bioPlaceholder: string;
+  bioHint: string;
   stepOf: (step: number, total: number) => string;
   archetypeTitle: string;
   archetypeHint: string;
@@ -32,6 +35,7 @@ export interface OnboardingStrings {
     motion: { title: string; message: string; allow: string };
     notifications: { title: string; message: string; allow: string };
   };
+  permissionAllowAll: string;
   permissionSkip: string;
   permissionStatusGranted: string;
   permissionStatusDenied: string;
@@ -45,6 +49,9 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "Du wanderst als Zeuge durch uralte Schweizer Legenden. Sie werden dir erzählt, während du gehst — Schritt für Schritt, Ort für Ort.",
     nameLabel: "Wie dürfen wir dich nennen?",
     namePlaceholder: "Dein Name",
+    bioLabel: "Erzähl kurz von dir (optional)",
+    bioPlaceholder: "Was sollten andere über dich wissen?",
+    bioHint: "Bis zu 160 Zeichen",
     stepOf: (step, total) => `Schritt ${step} von ${total}`,
     archetypeTitle: "Dein Archetyp",
     archetypeHint:
@@ -144,6 +151,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
         allow: "Benachrichtigungen erlauben",
       },
     },
+    permissionAllowAll: "Alle Berechtigungen erlauben",
     permissionSkip: "Überspringen",
     permissionStatusGranted: "Erlaubt",
     permissionStatusDenied: "Abgelehnt",
@@ -155,6 +163,9 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "Du wanderisch als Züüge dur uralti Schwiizer Sage. Si wärdet dir verzelt, während du gasch — Schritt für Schritt, Ort für Ort.",
     nameLabel: "Wie dörfemer dich nenne?",
     namePlaceholder: "Dis Name",
+    bioLabel: "Erzähl churz vo dir (optional)",
+    bioPlaceholder: "Was sölle anderi über dich wüsse?",
+    bioHint: "Bis zu 160 Zeiche",
     stepOf: (step, total) => `Schritt ${step} vo ${total}`,
     archetypeTitle: "Dis Archetyp",
     archetypeHint:
@@ -254,6 +265,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
         allow: "Benachrichtigunge erlaube",
       },
     },
+    permissionAllowAll: "Alli Berächtigige erlaube",
     permissionSkip: "Überspringe",
     permissionStatusGranted: "Erlaubt",
     permissionStatusDenied: "Abgleent",
@@ -265,6 +277,9 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "Tu marches en témoin à travers d'anciennes légendes suisses. Elles te sont racontées pendant que tu avances — pas à pas, lieu par lieu.",
     nameLabel: "Comment devons-nous t'appeler ?",
     namePlaceholder: "Ton prénom",
+    bioLabel: "Parle un peu de toi (facultatif)",
+    bioPlaceholder: "Que devraient savoir les autres sur toi ?",
+    bioHint: "160 caractères maximum",
     stepOf: (step, total) => `Étape ${step} sur ${total}`,
     archetypeTitle: "Ton archétype",
     archetypeHint:
@@ -364,6 +379,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
         allow: "Autoriser les notifications",
       },
     },
+    permissionAllowAll: "Autoriser toutes les permissions",
     permissionSkip: "Ignorer",
     permissionStatusGranted: "Autorisé",
     permissionStatusDenied: "Refusé",
@@ -375,6 +391,9 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "Cammini come testimone attraverso antiche leggende svizzere. Ti vengono raccontate mentre procedi — passo dopo passo, luogo dopo luogo.",
     nameLabel: "Come possiamo chiamarti?",
     namePlaceholder: "Il tuo nome",
+    bioLabel: "Parlaci brevemente di te (facoltativo)",
+    bioPlaceholder: "Cosa dovrebbero sapere gli altri di te?",
+    bioHint: "Massimo 160 caratteri",
     stepOf: (step, total) => `Passo ${step} di ${total}`,
     archetypeTitle: "Il tuo archetipo",
     archetypeHint:
@@ -474,6 +493,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
         allow: "Consenti notifiche",
       },
     },
+    permissionAllowAll: "Consenti tutte le autorizzazioni",
     permissionSkip: "Salta",
     permissionStatusGranted: "Consentito",
     permissionStatusDenied: "Rifiutato",
@@ -485,6 +505,9 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "You walk as a witness through ancient Swiss legends. They are told to you as you go — step by step, place by place.",
     nameLabel: "What should we call you?",
     namePlaceholder: "Your name",
+    bioLabel: "Tell us briefly about yourself (optional)",
+    bioPlaceholder: "What should others know about you?",
+    bioHint: "Up to 160 characters",
     stepOf: (step, total) => `Step ${step} of ${total}`,
     archetypeTitle: "Your archetype",
     archetypeHint:
@@ -583,6 +606,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
         allow: "Allow notifications",
       },
     },
+    permissionAllowAll: "Allow all permissions",
     permissionSkip: "Skip",
     permissionStatusGranted: "Granted",
     permissionStatusDenied: "Denied",
@@ -594,6 +618,9 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "你将作为见证者穿行于古老的瑞士传说之中。故事会随着你的前行被娓娓道来——一步一步，一处一处。",
     nameLabel: "我们该怎么称呼你？",
     namePlaceholder: "你的名字",
+    bioLabel: "简单介绍一下自己（可选）",
+    bioPlaceholder: "你希望别人了解你什么？",
+    bioHint: "最多 160 个字符",
     stepOf: (step, total) => `第 ${step} 步，共 ${total} 步`,
     archetypeTitle: "你的原型",
     archetypeHint: "你的原型会改变叙事的基调以及你的形象——但绝不会改变传说的结局。",
@@ -682,6 +709,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
         allow: "允许通知",
       },
     },
+    permissionAllowAll: "允许所有权限",
     permissionSkip: "跳过",
     permissionStatusGranted: "已允许",
     permissionStatusDenied: "已拒绝",
@@ -693,6 +721,9 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "Caminas como testigo a través de antiguas leyendas suizas. Se te van contando mientras avanzas — paso a paso, lugar a lugar.",
     nameLabel: "¿Cómo debemos llamarte?",
     namePlaceholder: "Tu nombre",
+    bioLabel: "Cuéntanos brevemente sobre ti (opcional)",
+    bioPlaceholder: "¿Qué deberían saber los demás sobre ti?",
+    bioHint: "Hasta 160 caracteres",
     stepOf: (step, total) => `Paso ${step} de ${total}`,
     archetypeTitle: "Tu arquetipo",
     archetypeHint:
@@ -791,6 +822,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
         allow: "Permitir notificaciones",
       },
     },
+    permissionAllowAll: "Permitir todos los permisos",
     permissionSkip: "Omitir",
     permissionStatusGranted: "Concedido",
     permissionStatusDenied: "Denegado",
@@ -802,6 +834,9 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "Você caminha como testemunha por antigas lendas suíças. Elas são contadas enquanto você avança — passo a passo, lugar a lugar.",
     nameLabel: "Como devemos te chamar?",
     namePlaceholder: "Seu nome",
+    bioLabel: "Fale brevemente sobre você (opcional)",
+    bioPlaceholder: "O que os outros deveriam saber sobre você?",
+    bioHint: "Até 160 caracteres",
     stepOf: (step, total) => `Etapa ${step} de ${total}`,
     archetypeTitle: "Seu arquétipo",
     archetypeHint:
@@ -900,6 +935,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
         allow: "Permitir notificações",
       },
     },
+    permissionAllowAll: "Permitir todas as permissões",
     permissionSkip: "Pular",
     permissionStatusGranted: "Concedido",
     permissionStatusDenied: "Negado",
@@ -911,6 +947,9 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "Ты идёшь свидетелем сквозь древние швейцарские легенды. Они рассказываются по мере твоего продвижения — шаг за шагом, место за местом.",
     nameLabel: "Как нам к тебе обращаться?",
     namePlaceholder: "Твоё имя",
+    bioLabel: "Коротко расскажи о себе (необязательно)",
+    bioPlaceholder: "Что другим стоит знать о тебе?",
+    bioHint: "До 160 символов",
     stepOf: (step, total) => `Шаг ${step} из ${total}`,
     archetypeTitle: "Твой архетип",
     archetypeHint:
@@ -1009,6 +1048,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
         allow: "Разрешить уведомления",
       },
     },
+    permissionAllowAll: "Разрешить все разрешения",
     permissionSkip: "Пропустить",
     permissionStatusGranted: "Разрешено",
     permissionStatusDenied: "Отклонено",

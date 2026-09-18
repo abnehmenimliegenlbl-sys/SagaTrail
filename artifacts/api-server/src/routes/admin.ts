@@ -3,7 +3,7 @@ import { sendPartnerVertrag } from "../lib/partnerEmail";
 import { sendMagicLink } from "../lib/partnerWebhookHandler";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
-import { desc, eq, or, ilike, isNotNull, isNull, inArray, notInArray, ne, sql, count, and, lt } from "drizzle-orm";
+import { desc, eq, or, ilike, isNotNull, isNull, inArray, notInArray, ne, sql, count, and, gte, lt } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   db,
@@ -26,6 +26,7 @@ import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION, restoreMissingSchweizMobilGeometries, MISSING_SCHWEIZMOBIL_LWN_REFS, SCHWEIZMOBIL_WANDERLAND_SOURCE, auditSchweizMobilDifficulties, syncOfficialSchweizMobilHandicap } from "../lib/routeService";
+import { refreshCantonRouteThemes } from "../lib/routeThemeRefresh";
 import { reverseGeocode } from "../lib/geocoding";
 import { estimateMinutes } from "../lib/geo";
 import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchRouteLoopAuditOsm, fetchWikiEtappen, reverseLoopExplanation, type WikiEtappe, searchOsmRouteByFromTo, searchOsmRouteByName } from "../lib/overpass";
@@ -40,9 +41,36 @@ import {
   makeUnsubToken, verifyUnsubToken,
   type LeadRow,
 } from "../lib/leadMailer";
-import { partnerEmailLogTable, partnerEmailBlocklistTable, partnerLeadsTable } from "@workspace/db";
+import { mediaContactsTable, partnerEmailLogTable, partnerEmailBlocklistTable, partnerLeadsTable } from "@workspace/db";
 
 const router: IRouter = Router();
+
+const MediaContactCreateBody = z.object({
+  name: z.string().trim().min(1).max(200),
+  email: z.string().trim().toLowerCase().email().max(320),
+  typ: z.string().trim().max(100).default(""),
+  kanton: z.string().trim().max(200).default(""),
+});
+
+const MediaContactUpdateBody = z.object({
+  name: z.string().trim().min(1).max(200).optional(),
+  email: z.string().trim().toLowerCase().email().max(320).optional(),
+  typ: z.string().trim().max(100).optional(),
+  kanton: z.string().trim().max(200).optional(),
+  active: z.boolean().optional(),
+});
+
+function mediaContactToLead(contact: typeof mediaContactsTable.$inferSelect) {
+  return {
+    name: contact.name,
+    email: contact.email,
+    kanton: contact.kanton,
+    sprache: "DE",
+    route: "",
+    typ: contact.typ,
+    satz: "",
+  };
+}
 
 const PremiumFreischaltenBody = z.object({
   email: z.string().email(),
@@ -1261,6 +1289,96 @@ router.post("/admin/routes/warm-canton", async (req, res): Promise<void> => {
       req.log.error({ canton, err }, "Slow-warm fehlgeschlagen");
     }
   })();
+});
+
+let routeThemeRefreshRunning = false;
+let routeThemeRefreshLastResult: {
+  startedAt: string;
+  finishedAt?: string;
+  canton: string;
+  routeCount: number;
+  result?: { checked: number; updated: number; skipped: number; failed: number };
+  error?: string;
+} | null = null;
+
+// POST /admin/routes/refresh-themes – Themenbelege und Qualitätsstand für
+// vorhandene Routen neu aus den Quellen ableiten. Geometrien, Namen, Sagen und
+// sonstige Routendaten bleiben unverändert. Bei erfolgreichem POI-Abruf wird
+// der routebezogene Belegbestand ersetzt, damit verschwundene POIs automatisch
+// nicht weiter als Themenbeleg sichtbar bleiben.
+router.post("/admin/routes/refresh-themes", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const parsed = z
+    .object({ canton: z.string().trim().min(1).optional() })
+    .safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: "Ungültiger Kanton" });
+    return;
+  }
+  if (routeThemeRefreshRunning) {
+    res.status(409).json({
+      error: "Themen-Refresh läuft bereits",
+      status: routeThemeRefreshLastResult,
+    });
+    return;
+  }
+
+  const { canton } = parsed.data;
+  const conditions = [gte(externalRoutesTable.geometryVersion, 1)];
+  if (canton) conditions.push(eq(externalRoutesTable.canton, canton));
+  const routes = await db
+    .select()
+    .from(externalRoutesTable)
+    .where(and(...conditions));
+
+  routeThemeRefreshRunning = true;
+  routeThemeRefreshLastResult = {
+    startedAt: new Date().toISOString(),
+    canton: canton ?? "alle",
+    routeCount: routes.length,
+  };
+  res.status(202).json({
+    ok: true,
+    canton: canton ?? "alle",
+    routeCount: routes.length,
+    message: "Themen-Refresh gestartet; der Lauf erfolgt im Hintergrund.",
+  });
+
+  void (async () => {
+    try {
+      const result = await refreshCantonRouteThemes(routes, req.log);
+      routeThemeRefreshLastResult = {
+        ...routeThemeRefreshLastResult!,
+        finishedAt: new Date().toISOString(),
+        result,
+      };
+      req.log.info(
+        { canton: canton ?? "alle", routeCount: routes.length, ...result },
+        "Manueller Prod-Themen-Refresh abgeschlossen",
+      );
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      routeThemeRefreshLastResult = {
+        ...routeThemeRefreshLastResult!,
+        finishedAt: new Date().toISOString(),
+        error,
+      };
+      req.log.error(
+        { canton: canton ?? "alle", routeCount: routes.length, err },
+        "Manueller Prod-Themen-Refresh fehlgeschlagen",
+      );
+    } finally {
+      routeThemeRefreshRunning = false;
+    }
+  })();
+});
+
+router.get("/admin/routes/refresh-themes/status", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  res.json({
+    running: routeThemeRefreshRunning,
+    status: routeThemeRefreshLastResult,
+  });
 });
 
 // POST /admin/routes/warm-all – Alle 26 Kantone sequenziell langsam laden
@@ -2531,6 +2649,157 @@ router.post("/admin/leads/send", async (req, res): Promise<void> => {
   res.json({ ok: true, total: leads.length, campaignId: campaignState.campaignId });
 });
 
+// ─── Medienkontakte / eigene E-Mail-Kampagne ────────────────────────────────
+
+router.get("/admin/media-contacts/list", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const contacts = await db
+    .select()
+    .from(mediaContactsTable)
+    .orderBy(desc(mediaContactsTable.active), mediaContactsTable.name);
+  res.json({
+    contacts,
+    total: contacts.length,
+    activeTotal: contacts.filter((contact) => contact.active).length,
+  });
+});
+
+router.post("/admin/media-contacts", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const parsed = MediaContactCreateBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  try {
+    const [contact] = await db.insert(mediaContactsTable).values(parsed.data).returning();
+    res.status(201).json(contact);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Kontakt konnte nicht angelegt werden";
+    if (/duplicate key|unique/i.test(message)) {
+      res.status(409).json({ error: "Diese E-Mail-Adresse ist bereits vorhanden" });
+      return;
+    }
+    res.status(500).json({ error: message });
+  }
+});
+
+router.patch("/admin/media-contacts/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const parsed = MediaContactUpdateBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  if (!Object.keys(parsed.data).length) {
+    res.status(400).json({ error: "Keine Änderungen übergeben" });
+    return;
+  }
+  try {
+    const [contact] = await db
+      .update(mediaContactsTable)
+      .set({ ...parsed.data, updatedAt: new Date() })
+      .where(eq(mediaContactsTable.id, req.params.id))
+      .returning();
+    if (!contact) {
+      res.status(404).json({ error: "Medienkontakt nicht gefunden" });
+      return;
+    }
+    res.json(contact);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Kontakt konnte nicht aktualisiert werden";
+    if (/duplicate key|unique/i.test(message)) {
+      res.status(409).json({ error: "Diese E-Mail-Adresse ist bereits vorhanden" });
+      return;
+    }
+    res.status(500).json({ error: message });
+  }
+});
+
+router.post("/admin/media-contacts/preview", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { bodyText, sampleContact } = req.body ?? {};
+  if (typeof bodyText !== "string" || !bodyText.trim()) {
+    res.status(400).send("bodyText erforderlich");
+    return;
+  }
+  const [storedSample] = await db
+    .select()
+    .from(mediaContactsTable)
+    .where(eq(mediaContactsTable.active, true))
+    .orderBy(mediaContactsTable.name)
+    .limit(1);
+  const sample = sampleContact ?? (storedSample ? mediaContactToLead(storedSample) : {});
+  res.type("html").send(buildPreviewHtml(bodyText, sample, "https://sagatrail.ch"));
+});
+
+router.post("/admin/media-contacts/send", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (campaignState.status === "running") {
+    res.status(409).json({ error: "Kampagne läuft bereits" });
+    return;
+  }
+
+  const { subject, bodyText } = req.body ?? {};
+  if (typeof subject !== "string" || !subject.trim() ||
+      typeof bodyText !== "string" || !bodyText.trim()) {
+    res.status(400).json({ error: "subject und bodyText erforderlich" });
+    return;
+  }
+
+  const activeContacts = await db
+    .select()
+    .from(mediaContactsTable)
+    .where(eq(mediaContactsTable.active, true))
+    .orderBy(mediaContactsTable.name);
+  const seenEmails = new Set<string>();
+  const leads = activeContacts
+    .map(mediaContactToLead)
+    .filter((contact) => {
+      const email = contact.email.toLowerCase();
+      if (seenEmails.has(email)) return false;
+      seenEmails.add(email);
+      return true;
+    });
+  if (!leads.length) {
+    res.status(400).json({ error: "Keine aktiven Medienkontakte vorhanden" });
+    return;
+  }
+
+  const proto = req.headers["x-forwarded-proto"] as string ?? req.protocol;
+  const host = req.get("host")!;
+  await startCampaign({
+    subject,
+    bodyText,
+    leads,
+    apiBase: `${proto}://${host}`,
+    infoUrl: "https://sagatrail.ch",
+  });
+  res.json({ ok: true, total: leads.length, campaignId: campaignState.campaignId });
+});
+
+router.get("/admin/media-contacts/log", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const page = Math.max(1, parseInt(String(req.query["page"] ?? "1"), 10));
+  const perPage = Math.min(200, Math.max(10, parseInt(String(req.query["perPage"] ?? "100"), 10)));
+  const offset = (page - 1) * perPage;
+  const rows = await db.execute(sql`
+    SELECT id, campaign_id, subject, email, recipient_name, status, error, sent_at
+    FROM partner_email_log
+    WHERE lower(email) IN (SELECT lower(email) FROM media_contacts)
+    ORDER BY sent_at DESC
+    LIMIT ${perPage} OFFSET ${offset}
+  `);
+  const count = await db.execute(sql`
+    SELECT COUNT(*) FROM partner_email_log
+    WHERE lower(email) IN (SELECT lower(email) FROM media_contacts)
+  `);
+  res.json({
+    rows: rows.rows,
+    total: Number((count.rows[0] as Record<string, unknown>)["count"]),
+  });
+});
+
 // GET /admin/orgs/meta – Kategorien, Typen, Kantone (aus Postgres)
 router.get("/admin/orgs/meta", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
@@ -2816,9 +3085,16 @@ router.post("/admin/routes/import", async (req, res): Promise<void> => {
     return;
   }
   try {
+    const values = rows.map((row) => ({
+      ...row,
+      wheelchairAccessibleCheckedAt:
+        typeof row.wheelchairAccessibleCheckedAt === "string"
+          ? new Date(row.wheelchairAccessibleCheckedAt)
+          : row.wheelchairAccessibleCheckedAt,
+    }));
     await db
       .insert(externalRoutesTable)
-      .values(rows as any)
+      .values(values as any)
       .onConflictDoUpdate({
         target: externalRoutesTable.id,
         set: {
@@ -2833,13 +3109,25 @@ router.post("/admin/routes/import", async (req, res): Promise<void> => {
           maxElevationM: sql`excluded.max_elevation_m`,
           minutes: sql`excluded.minutes`,
           sac: sql`excluded.sac`,
+          sacSource: sql`excluded.sac_source`,
+          schweizMobilCondition: sql`excluded.schweizmobil_condition`,
+          schweizMobilTechnique: sql`excluded.schweizmobil_technique`,
           terrain: sql`excluded.terrain`,
+          familyFriendly: sql`excluded.family_friendly`,
+          childFriendly: sql`excluded.child_friendly`,
+          dogsAllowed: sql`excluded.dogs_allowed`,
+          wheelchairAccessible: sql`excluded.wheelchair_accessible`,
+          wheelchairAccessibleSource: sql`excluded.wheelchair_accessible_source`,
+          wheelchairAccessibleCheckedAt: sql`excluded.wheelchair_accessible_checked_at`,
+          technicalDifficulty: sql`excluded.technical_difficulty`,
           lat: sql`excluded.lat`,
           lng: sql`excluded.lng`,
           geometry: sql`excluded.geometry`,
           geometryVersion: sql`excluded.geometry_version`,
           source: sql`excluded.source`,
           featured: sql`excluded.featured`,
+          routeType: sql`excluded.route_type`,
+          isEtappe: sql`excluded.is_etappe`,
           photoUrl: sql`COALESCE(excluded.photo_url, ${externalRoutesTable.photoUrl})`,
           photoAttribution: sql`COALESCE(excluded.photo_attribution, ${externalRoutesTable.photoAttribution})`,
           description: sql`COALESCE(excluded.description, ${externalRoutesTable.description})`,

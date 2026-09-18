@@ -1,4 +1,5 @@
 import type { Saga } from "@/types";
+import { LOCALIZED_SAGA_TITLES } from "./localizedSagaTitles";
 
 /**
  * Sagentitel zeigen nur den eigentlichen Namen. Orts-, Sprach- oder
@@ -36,4 +37,16 @@ export function normalizeSagaTitle(saga: Saga): Saga {
 
 export function normalizeSagaTitles(sagas: Saga[]): Saga[] {
   return sagas.map(normalizeSagaTitle);
+}
+
+export function getLocalizedSagaTitle(
+  saga: Saga,
+  languageCode?: string,
+): string {
+  const normalized = languageCode?.trim().toLowerCase().split("-")[0] || "de";
+  const language = normalized;
+  const curatedTitle = LOCALIZED_SAGA_TITLES[saga.id]?.[language];
+  return ohneKlammerzusatz(
+    curatedTitle ?? saga.summaries?.[language]?.title ?? saga.title,
+  );
 }

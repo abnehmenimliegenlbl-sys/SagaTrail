@@ -41,7 +41,7 @@ async function blobToBase64(blob: Blob): Promise<string> {
  * Schreibt einen von der Narration-API gelieferten MP3-Blob in eine
  * temporaere Datei und gibt die file://-URI zurueck.
  *
- * Hintergrund: expo-av (AVPlayer) auf iOS unterstuetzt keine data:-URIs
+ * Hintergrund: Der native Audio-Player auf iOS unterstuetzt keine data:-URIs
  * fuer Audio. Der Blob muss zuerst auf den Geraetespeicher geschrieben
  * werden, bevor er abgespielt werden kann.
  *
@@ -102,7 +102,7 @@ export async function deleteNarrationAudio(sagaId: string): Promise<void> {
   await FileSystem.deleteAsync(narrationDir(sagaId), { idempotent: true }).catch(() => {});
 }
 
-/** @deprecated Nutze blobToTempFileUri — data:-URIs werden von expo-av auf iOS nicht unterstuetzt. */
+/** @deprecated Nutze blobToTempFileUri — data:-URIs werden auf iOS nicht unterstuetzt. */
 export function blobToDataUri(blob: Blob): Promise<string> {
   return blobToTempFileUri(blob);
 }

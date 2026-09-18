@@ -41,11 +41,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { CloseButton } from "@/components/brand/CloseButton";
 import { Glass } from "@/components/brand/Glass";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { poiDisplayName } from "@/lib/poiDisplay";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
+import RouteTerrain3D from "@/components/brand/RouteTerrain3D";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { RouteAccordionCard } from "@/components/brand/RouteAccordionCard";
 import { Wegweiser } from "@/components/Wegweiser";
@@ -72,6 +74,15 @@ import { bboxAroundGeometry, distanzZuSegmentKm, filterByRouteCorridor, haversin
 import { sagaLokalisierung, allCantonSagasSorted, SagaWithMeta, SagaProximityCategory } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
 import { hapticMedium, hapticSelection } from "@/lib/haptics";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
+import {
+  deriveRouteThemes,
+  ROUTE_THEME_KEYS,
+  routeThemeLabel,
+  type RouteThemeKey,
+} from "@/lib/routeThemes";
+import { formatQualityDate, routeQualityLabels } from "@/lib/routeQualityLabels";
+import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 
 const WEB_TOP = 67;
 
@@ -123,6 +134,7 @@ const AVALANCHE_COLORS: Record<number, string> = {
 
 export default function Routenplanung() {
   const t = useRouteStrings();
+  const meetupT = useMeetupStrings();
   const ts = useSharedStrings();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -139,12 +151,19 @@ export default function Routenplanung() {
   const hasPremiumAccess = premium || isSubscribed || isElite;
   const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, sagas } = useCatalog();
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
+  const qualityT = routeQualityLabels(language);
 
   // Ein vollständiges Offline-Paket enthält einen Routensnapshot. Der
   // Katalog darf online-only bleiben; nach einem Kaltstart kommt die Detail-
   // ansicht trotzdem ohne Netz wieder hoch.
   const offlineRecord = getRecord(id);
   const route = getRoute(id) ?? offlineRecord?.routeSnapshot;
+  const qualityDate = formatQualityDate(route?.qualityCheckedAt, language);
+  const qualityStatusText =
+    route?.qualityStatus === "verified" ? qualityT.verified :
+    route?.qualityStatus === "partial" ? qualityT.partial :
+    route?.qualityStatus === "invalid" ? qualityT.invalid :
+    qualityT.unverified;
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   // Routentyp aus der Geometrie ableiten: liegen Start und Ziel nahe
@@ -313,19 +332,63 @@ export default function Routenplanung() {
   // Höhenprofil der Route
   const [elevProfile, setElevProfile] = useState<ElevationPoint[] | null>(null);
   const [elevProfileLoading, setElevProfileLoading] = useState(false);
+  const [routeTerrain3dOpen, setRouteTerrain3dOpen] = useState(false);
   // Trinkwasserquellen entlang der Route (für die Karte)
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
   // Parkplaetze am Start- und Endpunkt der Route (für die Karte)
   const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
   // Toiletten und sicherheitsrelevante Einrichtungen entlang der Route
   const [safetyPois, setSafetyPois] = useState<MapPoi[]>([]);
+  const safetyPoisRequestKey = useMemo(() => {
+    if (!route?.coordinates) return null;
+    const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
+    const first = geom[0];
+    const middle = geom[Math.floor(geom.length / 2)];
+    const last = geom[geom.length - 1];
+    return [
+      route.id,
+      geom.length,
+      first?.[0],
+      first?.[1],
+      middle?.[0],
+      middle?.[1],
+      last?.[0],
+      last?.[1],
+    ].join(":");
+  }, [route?.id, route?.coordinates, route?.geometry, effectiveGeom]);
+  const [loadedSafetyPoisKey, setLoadedSafetyPoisKey] = useState<string | null>(null);
+  const safetyPoisReady =
+    safetyPoisRequestKey !== null && loadedSafetyPoisKey === safetyPoisRequestKey;
   // Historische / touristische POIs entlang der Route (für die Karte)
   const [pois, setPois] = useState<MapPoi[]>([]);
+  const poisRequestKey = route?.coordinates ? route.id : null;
+  const [loadedPoisKey, setLoadedPoisKey] = useState<string | null>(null);
+  const poisReady = poisRequestKey !== null && loadedPoisKey === poisRequestKey;
   // Vollständige POI-Objekte (id → Poi) für die Detail-Ansicht beim Antippen
   const poisVollRef = useRef<Map<string, Poi>>(new Map());
+  const [poisDetails, setPoisDetails] = useState<Poi[]>([]);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   // undefined = lädt, null = nichts gefunden, WikiSummary = fertig
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
+  const routeThemes = useMemo(
+    () => {
+      const serverThemes = (route?.themeKeys ?? []).filter(
+        (theme): theme is RouteThemeKey =>
+          ROUTE_THEME_KEYS.includes(theme as RouteThemeKey),
+      );
+      // A quality check with an empty array is authoritative too: it means
+      // the server checked the route and found no matching theme. Only fall
+      // back to locally loaded POIs for legacy snapshots without evidence.
+      if (route?.qualityCheckedAt) {
+        return serverThemes;
+      }
+      return deriveRouteThemes(
+        poisDetails,
+        route ?? { familyFriendly: null, geometry: [] },
+      );
+    },
+    [poisDetails, route?.familyFriendly, route?.geometry, route?.qualityCheckedAt, route?.themeKeys],
+  );
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   // Vollbild-Karte: Zustand + Signal zum Schliessen von aussen (POI-Tap im
   // Vollbild → erst Karte schliessen, dann Detail öffnen — sonst Doppel-Modal).
@@ -431,11 +494,15 @@ export default function Routenplanung() {
   // Anreicherung. Der Mittelpunkt-Radius ist bewusst begrenzt, damit
   // Overpass-Abfragen auf langen Routen schnell und best effort bleiben.
   useEffect(() => {
+    setSafetyPois([]);
+    setLoadedSafetyPoisKey(null);
     if (!route?.coordinates) return;
     let cancelled = false;
+    const requestKey = safetyPoisRequestKey;
+    if (requestKey === null) return;
     const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
     if (geom.length < 2) {
-      setSafetyPois([]);
+      setLoadedSafetyPoisKey(requestKey);
       return;
     }
     const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
@@ -459,9 +526,12 @@ export default function Routenplanung() {
           }));
         setSafetyPois(filterByRouteCorridor(mapped, geom, 0.75));
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadedSafetyPoisKey(requestKey);
+      });
     return () => { cancelled = true; };
-  }, [route?.id, effectiveGeom, route?.geometry]);
+  }, [safetyPoisRequestKey]);
 
   // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) entlang der Route
   // laden — best effort, gleiche Bounding Box wie die Seilbahnen.
@@ -484,8 +554,13 @@ export default function Routenplanung() {
   // Historische/touristische POIs entlang der Route laden (fire-and-forget:
   // Server gibt sofort [] zurueck und füllt den Cache; nach 35 s Retry).
   useEffect(() => {
+    setPois([]);
+    setLoadedPoisKey(null);
     if (!route?.coordinates) return;
     let cancelled = false;
+    const requestKey = poisRequestKey;
+    if (requestKey === null) return;
+    setPoisDetails([]);
     // 0.5 km Rand um die Geometrie (wie im Hike-Screen) — verhindert
     // Overpass-Timeouts in dichten Staedten wie Basel.
     // 2 km Rand damit alpine Gipfel (natural=peak) und Pässe (natural=saddle)
@@ -533,6 +608,7 @@ export default function Routenplanung() {
           : [];
       if (!cancelled) {
         poisVollRef.current = new Map(gefiltert.map((p) => [p.id, p]));
+        setPoisDetails(gefiltert);
         setPois(gefiltert.map((p) => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng })));
       }
     };
@@ -541,12 +617,16 @@ export default function Routenplanung() {
       getPois(bbox)
         .then((result) => {
           filterAndSet(result);
+          if (!cancelled) setLoadedPoisKey(requestKey);
           if (result.length === 0 && !cancelled) {
             retryTimer = setTimeout(tryLoad, 35_000);
           }
         })
         .catch(() => {
-          if (!cancelled) retryTimer = setTimeout(tryLoad, 35_000);
+          if (!cancelled) {
+            setLoadedPoisKey(requestKey);
+            retryTimer = setTimeout(tryLoad, 35_000);
+          }
         });
     };
     tryLoad();
@@ -555,7 +635,7 @@ export default function Routenplanung() {
       cancelled = true;
       if (retryTimer !== null) clearTimeout(retryTimer);
     };
-  }, [route?.id]);
+  }, [poisRequestKey]);
 
   // Live-Wetter + abgeleiteter Wegzustand fuer den Ausgangspunkt der Route.
   useEffect(() => {
@@ -725,7 +805,7 @@ export default function Routenplanung() {
       let lng: number | null = null;
 
       try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
+        const { status } = await Location.getForegroundPermissionsAsync();
         if (status === "granted") {
           const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
           lat = pos.coords.latitude;
@@ -1014,12 +1094,14 @@ export default function Routenplanung() {
                   elevationProfile={elevProfile}
                   aerialways={aerialways}
                   pois={pois.length > 0 ? pois : null}
+                  poisReady={poisReady}
                   partners={partners}
                   waterSources={waterSources.length > 0 ? waterSources : null}
                   parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
                   safetyPois={safetyPois.length > 0 ? safetyPois : null}
+                  safetyPoisReady={safetyPoisReady}
                   safeAreaInsetTop={safeAreaTop}
-                  sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: saga.title } : null}
+                  sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: getLocalizedSagaTitle(saga, profile?.language) } : null}
                   onPoiPress={(id) => {
                     const poi = poisVollRef.current.get(id);
                     if (!poi) return;
@@ -1058,6 +1140,175 @@ export default function Routenplanung() {
           <StatTile icon="clock"       label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`}         unit="h"  />
           <StatTile icon="shield"      label={t.sacScale} value={meta.sac}                                     unit=""   />
         </Animated.View>
+
+        <View style={[styles.qualityCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+          <View style={styles.qualityHeader}>
+            <Feather
+              name={route?.qualityStatus === "invalid" ? "alert-triangle" : "check-circle"}
+              size={16}
+              color={route?.qualityStatus === "invalid" ? colors.accent : colors.mutedForeground}
+            />
+            <Text style={[styles.qualityTitle, { color: colors.foreground }]}>
+              {qualityT.title}
+            </Text>
+          </View>
+          <Text style={[styles.qualityStatus, { color: colors.mutedForeground }]}>
+            {qualityDate ? qualityT.checkedAt(qualityDate) : qualityStatusText}
+          </Text>
+          {qualityDate && (
+            <Text style={[styles.qualityStatus, { color: colors.mutedForeground }]}>
+              {qualityStatusText}
+            </Text>
+          )}
+          {!!route?.sources && (
+            <View style={styles.qualitySources}>
+              {Object.entries(route.sources).map(([key, source]) => (
+                <Pressable
+                  key={key}
+                  disabled={!source.url}
+                  onPress={() => source.url && void Linking.openURL(source.url)}
+                  accessibilityRole={source.url ? "link" : undefined}
+                  style={styles.qualitySourceRow}
+                >
+                  <Text style={[styles.qualitySourceKind, { color: colors.mutedForeground }]}>
+                    {key}
+                  </Text>
+                  <Text style={[styles.qualitySourceLabel, { color: colors.foreground }]}>
+                    {source.label}
+                  </Text>
+                  {!!source.url && <Feather name="external-link" size={12} color={colors.accent} />}
+                </Pressable>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {routeThemes.length > 0 && (
+          <View style={styles.routeThemes} accessibilityLabel="Themen dieser Route">
+            {routeThemes.map((theme) => (
+              <View
+                key={theme}
+                style={[
+                  styles.routeThemeChip,
+                  { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                ]}
+              >
+                <Feather name="tag" size={12} color={colors.accent} />
+                <Text style={[styles.routeThemeText, { color: colors.foreground }]}>
+                  {routeThemeLabel(theme, language)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <Pressable
+          onPress={() =>
+            router.push(
+              `/treffpunkte/neu?routeId=${encodeURIComponent(route.id)}&routeName=${encodeURIComponent(route.name)}&canton=${encodeURIComponent(route.canton ?? route.region)}`,
+            )
+          }
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            styles.meetupCta,
+            {
+              borderColor: colors.accent,
+              backgroundColor: colors.accent + "14",
+              opacity: pressed ? 0.78 : 1,
+            },
+          ]}
+        >
+          <Feather name="users" size={18} color={colors.accent} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.meetupCtaTitle, { color: colors.foreground }]}>
+              {meetupT.create}
+            </Text>
+            <Text style={[styles.meetupCtaText, { color: colors.mutedForeground }]}>
+              {meetupT.intro}
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color={colors.accent} />
+        </Pressable>
+
+        <Pressable
+          onPress={() => setRouteTerrain3dOpen(true)}
+          disabled={
+            (effectiveGeom.length < 2 && (route.geometry?.length ?? 0) < 2) ||
+            !elevProfile ||
+            elevProfile.length < 2
+          }
+          accessibilityRole="button"
+          accessibilityLabel="Diese Route virtuell ansehen"
+          accessibilityHint="Öffnet die Route als dreidimensionale Landschaft"
+          style={({ pressed }) => [
+            styles.virtualRouteCard,
+            {
+              borderColor: colors.glassBorder,
+              backgroundColor: colors.glassBg,
+              opacity:
+                !elevProfile || elevProfile.length < 2
+                  ? 0.58
+                  : pressed
+                    ? 0.82
+                    : 1,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.virtualRouteIcon,
+              { backgroundColor: colors.accent + "1F" },
+            ]}
+          >
+            <Feather name="box" size={22} color={colors.accent} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={[
+                styles.virtualRouteEyebrow,
+                { color: colors.accent },
+              ]}
+            >
+              3D ROUTE
+            </Text>
+            <Text
+              style={[
+                styles.virtualRouteTitle,
+                { color: colors.foreground },
+              ]}
+            >
+              Diese Route virtuell ansehen
+            </Text>
+            <Text
+              style={[
+                styles.virtualRouteSubtitle,
+                { color: colors.mutedForeground },
+              ]}
+            >
+              {elevProfile && elevProfile.length >= 2
+                ? "Übersicht, Gehen und Flug"
+                : "Wird vorbereitet …"}
+            </Text>
+          </View>
+          {elevProfileLoading && !elevProfile ? (
+            <ActivityIndicator size="small" color={colors.accent} />
+          ) : (
+            <Feather
+              name="chevron-right"
+              size={20}
+              color={colors.mutedForeground}
+            />
+          )}
+        </Pressable>
+
+        <RouteTerrain3D
+          visible={routeTerrain3dOpen}
+          onClose={() => setRouteTerrain3dOpen(false)}
+          geometry={
+            effectiveGeom.length >= 2 ? effectiveGeom : route.geometry ?? []
+          }
+          terrainProfile={elevProfile}
+        />
 
         {/* ── Höhenprofil ────────────────────────────────────────────── */}
         {(elevProfile || elevProfileLoading) && (
@@ -1761,7 +2012,7 @@ export default function Routenplanung() {
                           {s.coreMotif.toUpperCase()}
                         </Text>
                         <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
-                          {s.summaries?.[(profile?.language ?? "de") as string]?.title ?? s.title}
+                          {getLocalizedSagaTitle(s, profile?.language)}
                         </Text>
                         <Text style={[styles.sagaMood, { color: colors.mutedForeground }]} numberOfLines={1}>
                           {s.mood}
@@ -1856,7 +2107,7 @@ export default function Routenplanung() {
                     {saga.coreMotif.toUpperCase()}
                   </Text>
                   <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
-                    {saga.summaries?.[(profile?.language ?? 'de') as string]?.title ?? saga.title}
+                    {getLocalizedSagaTitle(saga, profile?.language)}
                   </Text>
                   <Text
                     style={[styles.sagaMood, { color: colors.mutedForeground }]}
@@ -1949,7 +2200,7 @@ export default function Routenplanung() {
           >
             <ShareCard
               ref={shareCardRef}
-              sagaTitle={saga.title}
+              sagaTitle={getLocalizedSagaTitle(saga, profile?.language)}
               routeName={route.name}
               distanceKm={meta.distanceKm}
               ascentM={meta.ascentM}
@@ -1990,19 +2241,28 @@ export default function Routenplanung() {
                     {poiDisplayName(selectedPoi.name, selectedPoi.kind)}
                   </Text>
                 </View>
-                <Pressable
-                  onPress={() => setSelectedPoi(null)}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel={ts.close}
-                >
-                  <Feather name="x" size={16} color={colors.mutedForeground} />
-                </Pressable>
+                <CloseButton accessibilityLabel={ts.close} onPress={() => setSelectedPoi(null)} />
               </View>
               {!!(selectedPoiWiki?.extract) && (
                 <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 10 }]}>
                   {selectedPoiWiki.extract}
                 </Text>
+              )}
+              {!!selectedPoi.source && (
+                <Pressable
+                  disabled={!selectedPoi.sourceUrl}
+                  onPress={() => selectedPoi.sourceUrl && void Linking.openURL(selectedPoi.sourceUrl)}
+                  accessibilityRole={selectedPoi.sourceUrl ? "link" : undefined}
+                  style={styles.poiSourceRow}
+                >
+                  <Feather name="database" size={13} color={colors.mutedForeground} />
+                  <Text style={[styles.poiSourceText, { color: colors.mutedForeground }]}>
+                    {selectedPoi.source}
+                    {formatQualityDate(selectedPoi.checkedAt, language)
+                      ? ` · ${qualityT.checkedAt(formatQualityDate(selectedPoi.checkedAt, language)!)}` : ""}
+                  </Text>
+                  {!!selectedPoi.sourceUrl && <Feather name="external-link" size={12} color={colors.accent} />}
+                </Pressable>
               )}
             </Glass>
           </Pressable>
@@ -2038,14 +2298,10 @@ export default function Routenplanung() {
                     {selectedPartner.name}
                   </Text>
                 </View>
-                <Pressable
-                  onPress={() => setSelectedPartner(null)}
-                  hitSlop={10}
-                  accessibilityRole="button"
+                <CloseButton
                   accessibilityLabel={ts.close}
-                >
-                  <Feather name="x" size={16} color={colors.mutedForeground} />
-                </Pressable>
+                  onPress={() => setSelectedPartner(null)}
+                />
               </View>
 
               {selectedPartner.istOffen != null && (
@@ -2184,6 +2440,16 @@ const styles = StyleSheet.create({
   poiRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   poiTitle: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
   poiSummary: { fontFamily: fonts.story, fontSize: 18, marginTop: 8, lineHeight: 28 },
+  poiSourceRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 14 },
+  poiSourceText: { flex: 1, fontFamily: fonts.mono, fontSize: 11, lineHeight: 16 },
+  qualityCard: { marginTop: 14, borderWidth: 1, borderRadius: 14, padding: 14 },
+  qualityHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  qualityTitle: { fontFamily: fonts.bodyBold, fontSize: 14 },
+  qualityStatus: { fontFamily: fonts.mono, fontSize: 11, marginTop: 6, lineHeight: 16 },
+  qualitySources: { marginTop: 10, gap: 7 },
+  qualitySourceRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  qualitySourceKind: { width: 74, fontFamily: fonts.mono, fontSize: 10, textTransform: "uppercase" },
+  qualitySourceLabel: { flex: 1, fontFamily: fonts.body, fontSize: 12 },
   poiModalImage: { width: "100%", height: 200, borderRadius: 10, marginBottom: 12 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   retryChip: {
@@ -2226,6 +2492,33 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: 14,
   },
+  routeThemes: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 12,
+  },
+  routeThemeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  routeThemeText: { fontFamily: fonts.bodyBold, fontSize: 11 },
+  meetupCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 14,
+  },
+  meetupCtaTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
+  meetupCtaText: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
   statTile: {
     ...GLAS_3D,
     flex: 1,
@@ -2265,6 +2558,39 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   elevChartTitle: { fontFamily: fonts.bodyBold, fontSize: 14, marginBottom: 10 },
+  virtualRouteCard: {
+    ...GLAS_3D,
+    marginTop: 14,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  virtualRouteIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  virtualRouteEyebrow: {
+    fontFamily: fonts.monoBold,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    marginBottom: 2,
+  },
+  virtualRouteTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    lineHeight: 19,
+  },
+  virtualRouteSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    marginTop: 2,
+  },
   stat: { ...GLAS_3D,
     width: "47.5%",
     borderWidth: 1,

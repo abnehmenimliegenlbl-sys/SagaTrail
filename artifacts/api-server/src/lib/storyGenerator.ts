@@ -25,6 +25,7 @@ export interface StorySagaInput {
 
 const MODEL = "claude-sonnet-4-6";
 const MAX_TOKENS = 8192;
+const MIN_GENERATED_CHAPTERS = 8;
 
 export interface GeneratedDecisionOption {
   label: string;
@@ -161,8 +162,10 @@ function normalizeChapters(parsed: unknown): GeneratedChapter[] {
     return chapter;
   });
 
-  if (result.length < 3) {
-    throw new Error("KI-Antwort liefert zu wenige Kapitel");
+  if (result.length < MIN_GENERATED_CHAPTERS) {
+    throw new Error(
+      `KI-Antwort liefert zu wenige Kapitel (mindestens ${MIN_GENERATED_CHAPTERS} erwartet)`,
+    );
   }
   return result;
 }

@@ -24,39 +24,60 @@ export function SwisstopoMap({
   label = "Start",
   height = 220,
   geometry,
+  waypoints,
   elevationProfile,
   altGeometry,
   offlineTiles,
   aerialways,
   pois,
+  poisReady = true,
   onPoiPress,
   partners,
   onPartnerPress,
   waterSources,
   parkingSpots,
   safetyPois,
+  safetyPoisReady = true,
   pickerMode,
+  drawMode,
+  zoom = 14,
+  preserveViewOnReload = false,
   onMapClick,
+  onMapDraw,
   safeAreaInsetTop = 0,
   sagaPin,
 }: SwisstopoMapProps) {
   const ref = useRef<WebView>(null);
+  const lastMapViewRef = useRef<{ lat: number; lng: number; zoom: number } | null>(null);
   const [ready, setReady] = useState(false);
   const t = useMapStrings();
+  const initialView = preserveViewOnReload && lastMapViewRef.current
+    ? {
+        lat: lastMapViewRef.current.lat,
+        lng: lastMapViewRef.current.lng,
+      }
+    : center;
+  const initialZoom = preserveViewOnReload && lastMapViewRef.current
+    ? lastMapViewRef.current.zoom
+    : zoom;
 
   // HTML erzeugen — OHNE pois/partners/aerialways (die werden per inject nachgeliefert).
   const html = useMemo(
     () =>
       buildLeafletMapHtml(
         {
-          center,
+          center: initialView,
           label,
           geometry,
+          waypoints,
           offlineTiles,
           aerialways,
           pois,
           partners,
           pickerMode,
+          drawMode,
+          zoom: initialZoom,
+          preserveViewOnReload,
           altGeometry,
           waterSources,
           parkingSpots,
@@ -64,6 +85,7 @@ export function SwisstopoMap({
           safetyPois,
           sagaPin,
           safeAreaInsetTop,
+          deferDynamicContent: true,
         },
         {
           title: t.legendTitle,
@@ -94,8 +116,9 @@ export function SwisstopoMap({
       ),
     // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [center.lat, center.lng, label, geometry, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, safetyPois, pickerMode, safeAreaInsetTop, t]
+    [initialView.lat, initialView.lng, initialZoom, label, geometry, waypoints, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, drawMode, preserveViewOnReload, safeAreaInsetTop, t]
   );
+  const webViewSource = useMemo(() => ({ html }), [html]);
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen.
   useEffect(() => {
@@ -112,12 +135,12 @@ export function SwisstopoMap({
 
   // POIs per injectJavaScript einspielen (kein Reload).
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !poisReady) return;
     const json = pois && pois.length > 0 ? JSON.stringify(pois) : "null";
     ref.current?.injectJavaScript(
       `window.sttSetPois && window.sttSetPois(${json}); true;`
     );
-  }, [ready, pois]);
+  }, [ready, pois, poisReady]);
 
   // Partner per injectJavaScript einspielen (kein Reload).
   useEffect(() => {
@@ -140,12 +163,12 @@ export function SwisstopoMap({
   // Sicherheits-POIs werden nachgeladen, damit die Karte bei Overpass-Latenz
   // nicht neu aufgebaut werden muss.
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !safetyPoisReady) return;
     const json = safetyPois && safetyPois.length > 0 ? JSON.stringify(safetyPois) : "null";
     ref.current?.injectJavaScript(
       `window.sttSetSafetyPois && window.sttSetSafetyPois(${json}); true;`
     );
-  }, [ready, safetyPois]);
+  }, [ready, safetyPois, safetyPoisReady]);
 
   // Saga-Pin per injectJavaScript einspielen.
   useEffect(() => {
@@ -172,11 +195,10 @@ export function SwisstopoMap({
       <WebView
         ref={ref}
         originWhitelist={["*"]}
-        source={{ html }}
+        source={webViewSource}
         // Wenn das native Layout der WebView sich ändert (z.B. Vollbild-Übergang
         // oder erster Render), schicken wir ein explizites map.resize() rein —
-        // MapLibre kennt sonst die tatsächliche Canvas-Grösse nicht und lädt
-        // nur Kacheln für einen falschen (oft 0x0) Viewport.
+        // Leaflet kennt sonst die tatsächliche Kartengrösse nicht zuverlässig.
         onLayout={() => {
           ref.current?.injectJavaScript(
             "if(window.sttMapResize) window.sttMapResize(); true;"
@@ -190,6 +212,9 @@ export function SwisstopoMap({
               // Daten — onLoadEnd feuert bei WKWebView auch fuer Zwischen-
               // Dokumente und die Injektion ginge dann verloren.
               setReady(true);
+              ref.current?.injectJavaScript(
+                "window.sttMapResize && window.sttMapResize(); true;"
+              );
             }
             if (data?.type === "stt-poi-press" && typeof data.id === "string") {
               onPoiPress?.(data.id);
@@ -203,6 +228,29 @@ export function SwisstopoMap({
               typeof data.lng === "number"
             ) {
               onMapClick?.(data.lat, data.lng);
+            }
+            if (data?.type === "stt-mapdraw" && Array.isArray(data.points)) {
+              const points = data.points.filter(
+                (point: unknown): point is { lat: number; lng: number } =>
+                  !!point &&
+                  typeof point === "object" &&
+                  Number.isFinite((point as { lat?: unknown }).lat) &&
+                  Number.isFinite((point as { lng?: unknown }).lng),
+              );
+              onMapDraw?.(points);
+            }
+            if (
+              preserveViewOnReload &&
+              data?.type === "stt-mapview" &&
+              Number.isFinite(data.lat) &&
+              Number.isFinite(data.lng) &&
+              Number.isFinite(data.zoom)
+            ) {
+              lastMapViewRef.current = {
+                lat: data.lat,
+                lng: data.lng,
+                zoom: data.zoom,
+              };
             }
           } catch {
             // Ignoriere Nachrichten, die kein gueltiges JSON sind.

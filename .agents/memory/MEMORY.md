@@ -1,31 +1,26 @@
 - [Route grade smoothing](sagatrail-route-grade-smoothing.md) — map slope colors must use smoothed ~50 m windows; point-to-point DTM values can create false red segments.
+- [Terrain grade color perception](sagatrail-grade-color-perception.md) — additive bloom makes yellow-green values look yellow; use an unambiguous neon green for flat route segments.
 - [Terrain speech density](sagatrail-terrain-speech-density.md) — keep detailed map coloring separate from voice density; nearby terrain cues are thinned, with very steep sections prioritized.
 - [SwissTopo profile request size](sagatrail-swisstopo-profile-chunking.md) — the profile GET URL breaks above roughly 125 LV95 points; preserve geometry with overlapping chunks and rebased distances.
 - [Xcode MARKETING_VERSION sync](xcode-marketing-version.md) — EAS ignoriert app.json version wenn ios/ vorhanden; MARKETING_VERSION im pbxproj per sed setzen (Edit-Tool versagt wegen Tab-Mix).
+- [App Store Connect version train](sagatrail-asc-version-train.md) — bei CLOSED_VERSION_TRAIN den versteckten JobRun-Fehler abfragen, Version erhöhen, native Targets synchronisieren und neu bauen.
 - [async-IIFE cancelled race](async-iife-cancelled-race.md) — await vor Netzwerk-Call in useEffect IIFE lässt React canceln bevor Call startet; nie `if(cancelled) return` vor dem Call, nur in .then/.finally.
-- [API server route path prefix](sagatrail-api-route-prefix.md) — routes/**.ts use paths WITHOUT /api/ prefix (e.g. "/transport"); main router mounts at /api so full URL is /api/transport.
 - [Canton geocoding robustness](sagatrail-canton-geocoding.md) — Nominatim can return canton via ISO3166-2-lvl4 ("CH-BL") even when address.state is absent/unparseable; always check ISO code first, then state, then county; + midpoint fallback in buildRouteFromPoints when start canton is null.
 - [Metro cache after orval codegen clean](metro-orval-cache.md) — orval clean:true deletes+recreates generated/*.ts; Metro file watcher sees deletion but misses recreation; always restart Expo workflow after codegen.
 - [SBB Transport API](sagatrail-sbb-transport.md) — transport.opendata.ch ist vom Replit-Netzwerk geblockt; stattdessen timetable.search.ch (latlon + stationboard by name).
+- [OpenTopoMap HTTP/2 tile cache](opentopomap-http2-tile-cache.md) — a cached `Upgrade: h2c` header can break one WKWebView tile; retry same z/x/y with a query cache-buster.
 - [opendata arrivals at small stops](sagatrail-opendata-arrivals.md) — type=arrival gives arrival=null at small stops; must fall back to departure time or board is empty; lookups use route coords, not user GPS.
 - [EAWS avalanche API](sagatrail-eaws-avalanche.md) — EAWS v6 Connect-JSON; empty body in summer = correct no-bulletin; HikingRoute has no .canton; get canton via sagas.find(s=>s.id===route.sagaId)?.canton + kantonSlug().
 - [DB schema dist rebuild](db-schema-dist-rebuild.md) — after adding columns to profiles.ts, run `cd lib/db && npx tsc -p tsconfig.json` to regenerate dist/*.d.ts; without this api-server typecheck sees stale types (property does not exist errors).
 - [Drizzle dev schema push](drizzle-dev-schema-push.md) — new tables and existing constraint conflicts can require a pseudo-TTY; choose create/no-truncate, then restart the API.
-- [Python i18n batch-insert double-comma](sagatrail-python-i18n-insert.md) — inserting after `},` with a string starting with `,` creates `},,`; fix by omitting the leading comma in the insert string.
-- [SagaTrail content model](sagatrail-content-model.md) — curated public-domain sagas only (no AI gen), routes resolve to NEAREST saga; routes are ONLINE-ONLY (no route seed/offline fallback); missing per-lang summary silently falls back to German.
-- [SagaTrail map & live GPS](sagatrail-map-gps.md) — Carto Voyager + Waymarked Trails Leaflet map (not swisstopo) in WebView/iframe + real GPS narration; OSM overlays must be fetched server-side, not from the client.
 - [SagaTrail route fetching](sagatrail-route-fetching.md) — per-canton OSM routes use a bbox pre-scan (lower-bound length) to surface short routes; cap goes AFTER the distance filter, never before.
 - [OSM stitching lessons](sagatrail-stitching-ordered-traversal.md) — stitch in OSM member order (greedy fails on loops); kink-optimizers need a length budget; version-gate cleanups; never grep for literal version numbers left behind.
-- [SagaTrail route cache warm-up](sagatrail-route-cache-warmup.md) — cold Overpass search looked like "Server nicht erreichbar"; server now pre-warms all 26 canton caches at startup, background/staggered.
 - [SagaTrail Swiss geo/hiking data](sagatrail-swiss-geo-data.md) — SAC difficulty from swissTLM3D identify (hikingtype), tolerance is in pixels, ASTRA Wanderland is WMS-only (not identifiable).
 - [Orval query params -> api-zod barrel clash](orval-query-params-barrel.md) — first endpoint with query params breaks the api-zod barrel (TS2308); fix by `export * as types` in its index.ts.
 - [SagaTrail online catalog + offline download](sagatrail-offline-download.md) — SAGAS are three-tier offline-first; ROUTES are online-only per-canton OSM/swisstopo (no seed, `source:"error"` on failure) matched to nearest curated saga; native-only offline tiles.
-- [SagaTrail Clerk account swap](sagatrail-clerk-account-swap.md) — app now uses the user's OWN Clerk instance (vast-shiner-71); keys in Secrets only; Apple login needs Native Application registered in their dashboard.
 - [Clerk Expo hook API](clerk-expo-hook-api.md) — `@clerk/expo`'s default `useSignIn`/`useSignUp` are the new signals API; classic imperative hooks live at `@clerk/expo/legacy`.
-- [react-native-web Alert.alert is a no-op](rn-web-alert-noop.md) — confirm dialogs (logout/delete/reset) silently do nothing on web; expected, not a regression.
 - [WebSocket testing hits HTTP/2 proxy quirk](websocket-proxy-http2.md) — browser e2e WS tests can fail via the shared proxy even when server WS auth is correct; verify with curl --http1.1 + a minted token before assuming an app bug.
 - [SagaTrail UI-chrome i18n](sagatrail-ui-chrome-i18n.md) — app chrome (all 8 langs) is separate from narration i18n; per-screen strings dict pattern, permanent language override once user picks one.
-- [SagaTrail navigation cues](sagatrail-navigation-cues.md) — turn cues are woven client-side from real route geometry at hike-start, after story resolution, not baked into stored/AI-generated chapters.
 - [Clerk OAuth testing block](clerk-oauth-testing-block.md) — `runTest` refuses to proceed past a Clerk login screen with a visible Google/SSO button, even for a programmatic Clerk-auth-only flow; fall back to typecheck + curl + code review.
 - [SagaTrail background narration/GPS](sagatrail-background-audio.md) — audio needs `staysActiveInBackground`, GPS needs expo-task-manager foreground-service task; both require a dev/EAS build, NOT Expo Go.
 - [On-demand AI text rewrite pattern](ai-rewrite-on-demand-cache.md) — rewrite-on-tap (not eager/bulk) + in-memory cache keyed by source-text hash; avoids AI cost for content that's cheap to fetch but expensive to restyle.
@@ -34,48 +29,42 @@
 - [Public routers without API key](public-routers-no-key.md) — OSRM demo serves car-only regardless of URL profile; use FOSSGIS Valhalla pedestrian (polyline6 shapes) for foot routing.
 - [Clerk iOS SPM + CocoaPods build crash](clerk-ios-spm-cocoapods.md) — iOS EAS build with Clerk's SPM-linked SDK only works with `expo-build-properties` `useFrameworks: "static"` (dynamic triggers validator crashes).
 - [Clerk OTA Keychain Login-Block](clerk-ota-keychain.md) — nach OTA/Reinstall: AFTER_FIRST_UNLOCK nötig, kein zirkulärer Import aus _layout.tsx, kein Timeout-Auto-Clear; Utils in lib/clerkAuth.ts.
-- [Prod premium admin endpoint](prod-premium-admin.md) — prod DB is read-only from workspace; grant premium via ADMIN_TOKEN-protected /admin/premium after publish; self-upgrade deliberately blocked.
 - [Prod push URL + minutes recompute](sagatrail-prod-push.md) — PROD_URL=https://saga-trail.replit.app; push script recomputes minutes from distanceTagKm at push time (Naismith); schweizmobil-nwn/rwn parent routes get minutes fixed this way.
-- [SagaTrail group hike sync](sagatrail-group-hike-sync.md) — leader-only enforced server-side; non-fatal WS errors must not close the socket; late joiners resync via member-count rebroadcast.
 - [Kantonspack architecture](sagatrail-kantonspack-claim.md) — pack access lives in `profiles.purchased_packs TEXT[]` (DB), NOT RC entitlements; RC connector key is read-only (403 on grant); mobile checks `profile.purchasedPacks.includes(slug)` as primary + `hatEntitlement` as fallback; admin: POST /admin/pack-grant.
 - [Profile hydration ordering](sagatrail-profile-hydration.md) — server profile must apply after AsyncStorage hydration or purchased packs can disappear and show a false lock.
+- [Profile date wire format](sagatrail-profile-date-wire-format.md) — OpenAPI date schemas coerce server values to Date; profile responses must serialize birthdays back as YYYY-MM-DD.
 - [SagaTrail admin premium vs RC sync](sagatrail-admin-premium-sync.md) — removed `lockPremium()` from auto-sync effect so admin-granted premium is not erased when RC has no active subscription; POST /me/premium/sync only upgrades, never downgrades by design.
 - [Env vars land im Klartext in .replit](replit-env-plaintext.md) — setEnvVars schreibt ALLE Scopes versioniert in .replit; Tokens/Keys nur als Secret (requestEnvVar), nie als Env-Variable.
 - [SagaTrail "keine POI gefunden"](sagatrail-poi-not-found.md) — drei Ursachen: Kartenmitte faellt auf Sagen-Koordinate falls Route nicht vorab gecacht; Overpass-Timeouts bis 6 Min statt ~12s; fehlender POI-Kontext = poi-story/Anthropic-Endpoint pruefen, nicht Wikipedia.
 - [Zwei RN Modals gleichzeitig offen](rn-double-modal-stacking.md) — Vollbildkarte + POI-Detail als separate RN `Modal`s ueberlappen sich plattformabhaengig; vor Oeffnen des zweiten immer das erste per Callback schliessen.
 - [Replit AI Integrations Proxy Ausfall](ai-integrations-proxy-fallback.md) — Anthropic-Proxy kann "not configured" liefern trotz korrekt gesetzter Env-Vars und 3x Neuprovisionierung; Fallback auf direkten ANTHROPIC_API_KEY im Client eingebaut.
 - [SagaTrail walk-to-trailhead hint](sagatrail-walk-to-start.md) — pre-hike banner is straight-line distance+compass to route start, deliberately not real pedestrian routing (that's a separate, bigger feature).
+- [Start choice GPS gate](sagatrail-start-choice-gps-gate.md) — story readiness must not set startReached; start-point/fastest-route choice depends on real GPS distance and off-route state.
 - [SagaTrail compass pointer](sagatrail-compass-pointer.md) — dedicated star-and-mountain needle rotates as one unit so the star always points outward; do not substitute SparkMountain.
-- [SagaTrail Kantonswappen-Assets](sagatrail-canton-wappen.md) — Wikimedia blockiert diese Sandbox komplett (429 überall); echte Wappen-SVGs kommen von GitHub `nzzdev/ch-canton-symbols`.
+- [Compass permission retry](sagatrail-compass-permission-retry.md) — retry native heading after location permission resolves; the initial iOS watch can race the OS permission prompt.
 - [SagaTrail step counter](sagatrail-step-counter.md) — expo-sensors Pedometer, per-hike only, silent no-op fallback when sensor unavailable (mirrors GPS-unavailable pattern).
 - [SagaTrail TTS OpenAI-Rueckfall](sagatrail-tts-openai-fallback.md) — wenn ALLE ElevenLabs-Stimmen scheitern (Kontingent/Key), springt OpenAI (gpt-audio, neutral, kein Akzent) automatisch ein.
 - [RN border-color precedence](rn-border-color-precedence.md) — per-side border*Color in a shared glass/3D mixin always beats a call site's borderColor; caused app-wide "black border" bug despite correct theme color.
 - [SagaTrail hardcoded colors.dark.*](sagatrail-theme-hardcoded-dark.md) — pre-theme files bypass Hell/Dunkel by referencing colors.dark.* directly; grep for it if a screen ignores the theme toggle.
 - [SagaTrail App-Design-Dialoge statt native Alerts](sagatrail-app-dialogs.md) — `Alert.alert` app-weit durch gestyltes `AppModal`/`appAlert`-Singleton ersetzt; Permission-Priming ebenfalls im App-Design vor dem echten OS-Dialog.
-- [SagaTrail per-saga hero photo](sagatrail-saga-photo.md) — saga detail hero image reuses the route Commons-photo endpoint keyed by saga coordinates, not a new AI-generated image per saga.
 - [SagaTrail saga image = motif not place](sagatrail-image-motif.md) — saga hero photos search by curated `bildmotiv` text (e.g. "Vogel Gryff Basel", "Braunbär"), not saga coordinates; coreMotif itself is too abstract to search Commons with.
 - [SagaTrail premium "already subscribed"](sagatrail-premium-already-subscribed.md) — a StoreKit "already subscribed" purchase error must be treated as success (refetch + sync), not shown as a failure; RC identity-linking also needs retry, not just one-shot at cold start.
 - [SagaTrail native Modal after IAP freeze](sagatrail-iap-modal-freeze.md) — presenting our own native Modal right after StoreKit purchase sheet closes, or after screen unmount, can deadlock iOS UIKit into a full app freeze (no crash log).
 - [SagaTrail progress sync + Zod stripping](sagatrail-progress-sync.md) — hikeHistory preserves full objects; orval Zod strips to {id} despite additionalProperties:true; server uses req.body directly + no SyncMyProgressResponse.parse(); client merges local-first.
-- [Profile schema + purchasedPacks missing](sagatrail-profile-purchasedpacks.md) — GetMyProfileResponse Zod schema lacked purchasedPacks; Zod stripped it before sending to client; fix: add to openapi.yaml Profile schema + re-run codegen.
-- [Profile rebuild wipes optional fields](sagatrail-profile-rebuild-wipes-fields.md) — rebuilding local Profile from a server response without copying purchasedPacks silently wipes pack access; copy ALL fields in every rebuild path.
 - [Stripe Partner-Onboarding](sagatrail-stripe-partner.md) — Vollflow: WP-Formular → Stripe-Checkout → Webhook → DB-Insert + Magic-Link; Produkte by Name suchen, nie hardcoded Price-IDs.
 - [Partner-Öffnungszeiten Datenmodell](sagatrail-partner-oeffnungszeiten.md) — JSON in TEXT-Feld; Wochenplan+Saison+19 Feiertage; API gibt istOffen/schliesstUm/oeffnetAmTag/oeffnetUm zurück.
-- [SagaTrail partner admin](sagatrail-partner-admin.md) — restaurants/shops CRUD lives in `partners` table + `/api/admin/partner*`, reusing existing ADMIN_TOKEN pattern; no public read endpoint yet.
 - [SagaTrail Sagenpakete workflow](sagatrail-sagenpakete-workflow.md) — 10-Schritt-Prozess für neue Kantone: JSON analysieren, Duplikate entfernen, auf 8 auffüllen, bildmotiv motif-focused, Python-Script + write-Tool (kein Heredoc).
 - [Balanced brace JSON extraction](sagatrail-json-multiline-extraction.md) — never use `re.search(r'\{.+\}')` on curatedSagasPakete.ts summaries; some span multiple lines; use balanced-brace tracker or risk erasing all but 2 languages silently.
 - [RC Test key vs iOS key in dev builds](sagatrail-rc-key-devbuild.md) — `__DEV__` is true in TestFlight dev builds; using it to route to the web test key breaks native StoreKit receipt validation ("The receipt is not valid"); only route to test key on `Platform.OS==="web"` or `executionEnvironment==="storeClient"`.
 - [SagaTrail Herzfrequenz-basierte Pausen](sagatrail-heartrate-pause.md) — Stufe 1 (GPS/Kadenz, kein Framework) vs Stufe 2 (HealthKit/Apple Watch live HR); Garmin/Fitbit liefern KEIN Real-time HR während Workout.
 - [Routenfoto Geo-Filter + Dedupe](sagatrail-photo-geo-dedupe.md) — Commons-Textsuche braucht CH/FL-Bbox-Filter + URL-Dedupe; sonst landet 1 generisches Bild auf hunderten Code-Routen (K11…).
-- [SagaTrail route photo DB writeback](sagatrail-route-photo-writeback.md) — photos found via /routes/photo persist to external_routes.photo_url; routes now serve photoUrl inline → zero extra requests for cached routes.
 - [Driving decision gate](sagatrail-driving-decision-gate.md) — GPS chapter progression pauses while a perception decision is open, preventing duplicate prompts during fast-distance jumps.
+- [Start-route choice atomicity](sagatrail-start-route-choice-atomicity.md) — route recalculation must wait until the start mode is set; position and choice can arrive in separate React renders.
 - [Drizzle fire-and-forget needs .execute()](drizzle-execute-required.md) — fire-and-forget DB writes must call .execute().catch(...); plain .catch() on a query builder without .execute() silently does nothing in Drizzle.
 - [EAS build/submit from workspace](eas-build-from-workspace.md) — temp-workflow pattern (bash 120s limit), EXPO_APPLE_TEAM_ID pflicht (TTY-Prompt haengt sonst), ERRORED-Submission ohne Fehlertext = meist doppelte buildNumber in ASC; autoIncrement anlassen.
-- [Panorama-Assets als JPEG](sagatrail-panorama-jpeg.md) — 8 Panorama-PNGs (13MB) zu JPEG Q82 konvertiert (→1.4MB); panorama.ts referenziert jetzt .jpg; .easignore schließt .tsbuildinfo/server/scripts/build.js aus.
+- [EAS Xcode log compression](eas-xcode-log-compression.md) — signed EAS Xcode logs arrive Brotli-compressed despite text/plain; decode before grepping compiler diagnostics.
 - [WP lead booking action](sagatrail-wp-lead-book.md) — POST /admin/partner-leads/wp-book sendet einzelne PartnerLeads an WP via action=sagatrail_book_lead; WP-Plugin muss diesen Handler implementieren; sagatrail_book_all läuft im Hintergrund (202).
-- [Unenrichable name-search Phase 4](sagatrail-enrich-phase4.md) — enrich-all Phase 4 versucht geometry_version=-1 Routen per Namen in OSM zu finden (searchOsmRouteByName); max 30/Lauf, 3s Pause; auch als POST /admin/routes/enrich-by-name manuell auslösbar.
 - [SagaTrail free-hike gating](sagatrail-free-hike-gating.md) — non-premium gate is `!premium && freeHikeUsed`, NIE `isAnchorPlace`; Regel in kanton-, route- und saga-Screen synchron halten.
-- [CopyPodModuleMaps ist SCHÄDLICH](xcode16-archive-module-map-fix.md) — der frühere Workaround kopierte modulemaps ohne umbrella headers → "umbrella header not found"; entfernt, echte Ursache war UUID-Kollision (siehe clerk-ios-spm-cocoapods.md).
 - [Route canton = start point only](sagatrail-canton-startpoint-only.md) — user rejected multi-canton; one canton per route (start point); cantons TEXT[] column is inert, don't re-add backfill.
 - [Overpass chunked geometry fallback](overpass-chunked-fallback.md) — huge relations timing out on `out geom;`: load member list, expand Etappen, fetch ways in batches; node-only relations → geometry_version=-1.
 - [Server-side background jobs](background-jobs-server-side.md) — nohup/setsid shell jobs get killed & /tmp wiped on restart; long batch loops must run im API-Server (warm-all-Muster, z.B. /admin/routes/enrich-all).
@@ -88,39 +77,82 @@
 - [Amtliche SchweizMobil-Werte aus OSM-Tags](sagatrail-official-tag-values.md) — distance/ascent-Tags haben Vorrang; tag-sweep (POST /admin/routes/tag-sweep) füllt distance_tag_km für osm-* mit gv≥1 nach; parseNumericTag-Caps: 5000 km / 100000 m.
 - [Restitch gerade Linien ausschließen](sagatrail-restitch-straight-exclusion.md) — restitch_parents.cjs muss schweizmobil-* aus allEtappen ausschließen (verhindert dass falsch benannte Parents sich selbst stitchen) + wiki-* mit ≤2 Punkten (verhindert Gerade-Linien einfrieren).
 - [Legacy-Routen-IDs ohne OSM-ID](sagatrail-legacy-route-ids.md) — schweizmobil-*/placeholder-* IDs werden per gecachtem Netzwerk-Index (network+ref) auf OSM-Relationen aufgelöst; 54 dauerhaft -1, Liste in docs/unenrichable-routes.md.
-- [SuperDeep Enrich + enrich-super Endpoint](superdeep-enrich.md) — fetchRouteSuperDeep (2-Ebenen) als 3. Fallback in enrichOneRoute; POST /admin/routes/enrich-super; 9 placeholder-Etappen bleiben dauerhaft -1 (Etappen > was OSM/WP haben).
 - [SagaTrail R2 Object Storage](sagatrail-r2-storage.md) — Narrations-Cache auf Cloudflare R2 migriert; GCS-Sidecar in Prod war 401; R2 via @aws-sdk/client-s3, Bucket "sagatrail", Account ae2d32c2f9bc47f08cca887f689853b5.
 - [SagaTrail Route Naming & Sorting](sagatrail-route-naming-sorting.md) — nwn+1-9/rwn+10-99/lwn+100-999 bestimmt Nummer; K-Routen: "K4 AG Name" sequentiell pro Kanton; Sort 4-stellig; Etappen-Labels VOR Sort anwenden.
-- [SagaTrail Referral System](sagatrail-referral-system.md) — profiles.referral_code + pending_pack_rewards; referrals table; reward triggers on first premium purchase in POST /me/premium/sync; claim via /referral-reward screen.
 - [Anthropic image url-source](anthropic-image-url-source.md) — Vision mit source type "url" scheitert an Wikimedia-Bildern (400); serverseitig laden und als base64 schicken, fail-open.
-- [SagaTrail Leads in Postgres](sagatrail-leads-postgres.md) — partner_leads Tabelle ist single source of truth; WP MySQL nicht mehr Quelle; Import via POST /admin/leads/import-wp; OSM-Suche speichert direkt in PG.
+- [Localized saga titles](sagatrail-localized-saga-titles.md) — sichtbare Sagentitel kommen aus einer versionierten lokalen Zuordnung, damit Übersetzungen per OTA ohne nativen Build ausgerollt werden können.
+- [UI translation audit](sagatrail-ui-translation-audit.md) — StringsDict prüft Pflichtschlüssel, aber optionale Felder und direkte JSX-Texte müssen separat auf sichtbare Fallbacks geprüft werden.
 - [Nominatim jsonv2 category](nominatim-jsonv2-category.md) — format=jsonv2 liefert "category" statt "class"; Filter auf r.class verwirft lautlos alle Treffer.
 - [Prod-Routen und -Sagen verboten](prod-routes-sagas-forbidden.md) — external_routes + sagas in Prod NIEMALS schreiben; kein push-script, kein warm-all, kein import ohne explizite Freigabe.
 - [Reverse-loop overlap guard](reverse-loop-overlap.md) — symmetric matching must stop at the shared turning point or palindromic out-and-back routes self-overlap in the report.
 - [Voice decision confirmation audio](sagatrail-voice-confirmation-audio.md) — claim choices once and await the native DuckOthers transition before device TTS to avoid duplicate feedback and stuck ducking.
 - [Official SchweizMobil route logos](sagatrail-official-route-logos.md) — national Wanderland SVGs come from the official image host; routes 1–7 stay unchanged and separate from cantonal emblems.
 - [Official SchweizMobil geometry export](sagatrail-schweizmobil-official-gpkg.md) — missing local routes use the official LV95 Wanderland GeoPackage; ordered Etappen beat aggregate Route parts.
+- [Official Wanderland catalog imports](sagatrail-official-catalog-import.md) — order multipart geometry by shared endpoints; foreign-start stages use their first Swiss/LI point for catalog canton.
 - [Local regional route logos](sagatrail-local-route-logos.md) — Expo must bundle available regional/local SVGs locally; images.schweizmobil.ch returns 403 to runtime SvgUri requests.
-- [Route 28 geometry source](sagatrail-route28-geometry.md) — current dev track is the real Freiburg Tourismus Saane-Trails GPX fallback; replace when an authoritative SchweizMobil export is available.
 - [Premium partner proximity](sagatrail-premium-partner-proximity.md) — mark partner announcements completed only after a successful generated text; transient failures must remain retryable.
 - [POI approach categories](sagatrail-poi-approach-categories.md) — a POI can load and be tappable yet miss the 200/50 m flow when its OSM kind is absent from the mobile approach set.
 - [POI tile closing](sagatrail-poi-tile-closing.md) — auto-opened POI tiles close after three clear consecutive distance increases, with a 5 m GPS-noise tolerance.
+- [POI story deduplication](sagatrail-poi-story-dedup.md) — general and approach POI flows share one physical-place claim so leaving/re-entering cannot replay a full story.
 - [EAS OTA release](eas-ota-release.md) — direct platform-specific eas update is the reliable fallback when workflow archives or GitHub-linked EAS triggers fail.
+- [EAS OTA concurrent export](eas-ota-concurrent-export.md) — cold-cache iOS and Android exports can SIGKILL when run concurrently; publish platforms sequentially.
 - [EAS workspace archive exclusions](sagatrail-eas-workspace-ignore.md) — builds from artifacts/mobile can archive the Git root; root .easignore must exclude workspace caches and local data.
-- [Persistente GPS-Prüfung](sagatrail-gps-persistence.md) — GPS-Status liegt dauerhaft in catalog_sagas; Startup-Seeding darf Koordinaten und Sicherheitsstatus nicht überschreiben.
 - [Prod-Secret-Dialog-Fallback](prod-secret-dialog-fallback.md) — requestSecrets kann trotz Bestätigung false liefern; gewährte Secrets ggf. nur als Boolean im Workflow-Env prüfen, nie ausgeben.
-- [Viro/Expo compatibility](sagatrail-viro-expo-compatibility.md) — Expo 54/RN0.81 nutzt Viro 2.54.0; native AR braucht einen Development-/EAS-Build, nicht Expo Go.
+- [Viro/Expo compatibility](sagatrail-viro-expo-compatibility.md) — main uses Viro 2.54.0; isolated Expo57/RN0.86 uses 2.58.1 plus plugin-based config and native-build validation.
 - [Viro iOS 26 camera crash](sagatrail-viro-ios26-crash.md) — ARKit can abort natively before JS errors; verify the physical-device crash report before further Viro changes.
+- [Viro initial scene data](viro-initial-scene-data.md) — initialScene is captured only once; live marker data must flow through viroAppProps without remounting the AR navigator.
+- [AR tracking callback stability](sagatrail-ar-tracking-callback-stability.md) — keep support/error callbacks stable; parent inline callbacks can restart Viro support checks before native tracking becomes ready.
 - [Object recognition premium](sagatrail-object-recognition-premium.md) — Foto-basierte Erkennung beliebiger Objekte ist Premium, on-demand und zeigt bestätigbare Treffer statt automatischer Gewissheiten.
 - [Object recognition geo context](sagatrail-object-recognition-geo-context.md) — Foto-Kontext darf nur Live-POIs im 500-m-Radius verwenden, nie entfernte POIs aus dem Routen-Korridor.
 - [Cloud Vision authentication](sagatrail-cloud-vision-auth.md) — Cloud Vision uses a dedicated service account; keep it separate from EAS/Google Play submission credentials.
 - [Live-GPS safety gate](sagatrail-gps-safety.md) — stale or unavailable GPS must pause route progress, POI triggers, turn cues, and terrain narration; never show a simulated point as live.
+- [Location permission reads](sagatrail-location-permission-cold-start.md) — distinguish transient native read errors from confirmed denial; update-specific root cause still needs bundle/status evidence.
 - [Group location consent](sagatrail-group-location-consent.md) — member location sharing must be explicit opt-in, foreground-only, and immediately clearable.
 - [Safety share links](sagatrail-safety-share-links.md) — public links expose only route/status/latest fresh GPS; token hashes are stored server-side and expiry/revocation are authoritative.
-- [Watch companion](sagatrail-watch-companion.md) — native notification mirroring covers direction, distance and SOS; heart rate stays unavailable until a real health bridge exists.
+- [Safety check-in durability](sagatrail-safety-checkin-durability.md) — expiry alerts must be native scheduled notifications with durable reconciliation; a JS timer alone is never sufficient.
+- [Watch companion](sagatrail-watch-companion.md) — phone remains authoritative; Watch now receives a simplified MapKit route/current point and fresh HealthKit heart rate, never simulated values.
+- [Watch active-state source](sagatrail-watch-active-state.md) — native bridge derives Watch isHiking from sessionStatus; route changes must not restart story preparation and push the Watch back to waiting.
+- [Catalog resume and Watch GPS](sagatrail-catalog-resume-watch-gps.md) — catalog resumes must carry resume=1 and force the first fresh GPS snapshot past the publish throttle.
+- [Watch property-list payloads](watchconnectivity-property-list.md) — WatchConnectivity and UserDefaults accept only property-list values; strip nulls and omit absent optionals.
+- [Watch wire-number safety](watch-wire-number-safety.md) — validate finite bounds before rendering or Double-to-Int conversion; malformed live data can terminate the Watch app.
+- [Watch build version synchronization](sagatrail-watch-build-version.md) — set the embedded Watch target to the upcoming EAS iOS build number; remote auto-increment does not advance it automatically.
 - [Offline peak database](sagatrail-offline-peak-database.md) — versioned OSM peak data powers honest offline panorama angles; missing heights stay unknown, never simulated.
 - [Local terrain AR](sagatrail-local-terrain-ar.md) — observer-centered SwissTopo terrain is live-refreshed with throttling; offline downloads keep one route-start model and never hide peaks without evidence.
 - [Transparent modal safe area](rn-transparent-modal-safe-area.md) — explicit top/bottom margins are needed because iOS transparent Modals may ignore native SafeAreaView insets.
 - [Lazy panorama peaks](sagatrail-panorama-peaks-lazy.md) — query named peaks separately on panorama open around live GPS; keep normal POIs small and offline peak downloads independent.
 - [Saga pack order](sagatrail-saga-pack-order.md) — canton progress is x/1 by default and x/9 with a pack; pack indices must follow curated catalog order.
 - [Route suitability sources](sagatrail-route-suitability-sources.md) — OSM lacks dependable suitability flags; SchweizMobil `Typ_TR=handicap` is authoritative for accessibility, other filters stay recommendations.
+- [GPS-based recommendations](sagatrail-recommendation-gps.md) — onboarding must not ask for a home canton; recommendations use live GPS across all cantons with an explicit fallback.
+- [Shared GL terrain renderer](sagatrail-gl-terrain.md) — normal panorama and future full-route animation share Expo GL/Three; Viro stays AR-only and SVG remains fallback.
+- [Native Three texture and props](native-three-texture-props.md) — avoid browser TextureLoader and mutable Vector3 JSX props in Expo GL; both fail only on physical devices.
+- [Swissimage border coverage](sagatrail-swissimage-border.md) — near borders, SwissTopo detail can be sharp toward Switzerland and weaker across the national border despite complete 360° meshes.
+- [SagaTrail exclusive speech](sagatrail-exclusive-speech.md) — audible narration and navigation clips must share one exclusive channel; route changes await complete cancellation.
+- [SagaTrail OpenAPI codegen](sagatrail-openapi-codegen.md) — OpenAPI changes must be codegenerated before mobile hooks or server Zod types are used.
+- [Production narration ffmpeg fallback](sagatrail-prod-ffmpeg-fallback.md) — published API lacks ffmpeg; pacing falls back to single TTS while requests still return cached audio successfully.
+- [Watch target provisioning](sagatrail-watch-provisioning.md) — embedded Watch apps need their own provisioning profile; non-interactive EAS cannot create the first one.
+- [Modern watchOS product type](modern-watchos-product-type.md) — single-target SwiftUI Watch apps use application + watchOS SDK; legacy watchapp2 causes duplicate executable output.
+- [WatchConnectivity watchOS callbacks](watchconnectivity-watchos-callbacks.md) — `sessionDidDeactivate` is unavailable in the Watch target; keep iPhone-only session reactivation in the phone bridge.
+- [WatchConnectivity live-state delivery](watchconnectivity-live-state-delivery.md) — persist live state with applicationContext, but also send directly when reachable; returning after context update delays active-state delivery.
+- [Connect IQ SDK 9.2 Linux build](sagatrail-connectiq-sdk-92-build.md) — Windows SDK needs CRLF-safe launcher handling; jungle keeps only project.manifest and Garmin transmit APIs require typed listeners.
+- [Garmin Android companion callbacks](sagatrail-garmin-android-sdk.md) — SDK 2.2.0 app messages arrive as List<Object>; unwrap the first map before parsing SOS payloads.
+- [Garmin Connect IQ signing](sagatrail-garmin-signing.md) — PRG packaging needs the actual private DER key; secret aliases alone are not evidence that a valid signing key is available.
+- [Garmin Horizon UI](sagatrail-garmin-horizon-ui.md) — selected round-safe design uses a ridge horizon, small brand mark, and only simple left/right/straight/U-turn arrows.
+- [Garmin simulator header rendering](sagatrail-garmin-svg-rendering.md) — keep the first header render text-only; decorative logo calls crashed the SDK 9.2 simulator.
+- [Garmin page-button callbacks](sagatrail-garmin-page-buttons.md) — BehaviorDelegate needs page/mode callbacks; raw KEY_UP/KEY_DOWN alone may do nothing in the simulator.
+- [Garmin iOS SDK imports](sagatrail-garmin-ios-sdk-imports.md) — official SPM repo is connectiq-companion-app-sdk-ios; Swift imports rename selection/app APIs and use UUID/store labels.
+- [Modern Watch app lifecycle](sagatrail-watch-frontmost-timeout.md) — never instantiate WKExtension in a single-target SwiftUI Watch app; use scenePhase for foreground state.
+- [Watch live-state finite values](sagatrail-watch-live-state-finite.md) — one NaN in an active derived field rejects the complete HikeLiveState before WatchConnectivity.
+- [Watch action remote diagnostics](sagatrail-watch-action-diagnostics.md) — safety actions need privacy-safe remote logs at every Watch→phone→JS boundary; JS-only logs cannot locate pre-JS failures.
+- [Watch alert/live-state ordering](sagatrail-watch-alert-live-state-order.md) — Watch alerts and live-state payloads can arrive separately; action confirmations must queue navigation until the state page exists.
+- [Watch JS action readiness](watch-js-action-readiness.md) — mark the native action bridge ready explicitly after DeviceEventEmitter listeners attach; RCTEventEmitter startObserving can lag and strand safety commands.
+- [Speech permission status](sagatrail-speech-permission-status.md) — iOS speech-permission responses use status, not always granted; normalize before starting automatic decision listening.
+- [Required permission gate](sagatrail-required-permission-gate.md) — every authenticated foreground entry trusts live OS status; stored grants are diagnostic evidence only.
+- [Safety link personal messaging](sagatrail-safety-personal-messaging.md) — personal WhatsApp/SMS uses a prefilled contact message and requires the hiker’s final send tap.
+- [Native map WebView source identity](native-map-webview-source.md) — memoize `{html}` sources; a fresh object per GPS render makes WKWebView reload the whole map.
+- [Native OTA API base URL](sagatrail-native-ota-api-base.md) — native OTA bundles need a static production API fallback; dev-only EXPO_PUBLIC_DOMAIN can be absent during EAS Update.
+- [Watch localization fallback](sagatrail-watch-localization-fallback.md) — exhaust the selected language across all Watch copy tables before falling back to German.
+- [Watch turn-distance rounding](sagatrail-watch-turn-distance-rounding.md) — show turn distances as km/100 m, 10 m, or 5 m based on range, including the complication.
+- [Watch battery strategy](sagatrail-watch-battery-strategy.md) — iPhone owns GPS; Watch HR workout must not request outdoor location, and routine live snapshots stay at 15 s.
+- [Treffpunkt vs. Gruppenwanderung](sagatrail-meetup-group-separation.md) — public meetup attendance/safety and private synchronized group hiking must remain separate systems.
+- [Treffpunkt-Nachrichtenhistorie](sagatrail-meetup-message-history.md) — echte Nachrichten einmal speichern; Push-Outbox pro Empfänger verteilen und Limits nur auf Historieneinträge anwenden.
+- [Route quality provenance](sagatrail-route-quality-provenance.md) — route APIs expose check status/date and independent source links; successful POI refresh replaces evidence, failures preserve it.

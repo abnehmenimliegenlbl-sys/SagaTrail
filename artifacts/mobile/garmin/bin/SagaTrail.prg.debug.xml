@@ -1,0 +1,1217 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<debugInfo>
+    <manifest filename="/home/runner/workspace/artifacts/mobile/garmin/manifest.xml"/>
+    <pcToLineNum>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="1" lineNum="27" parent="globals/SagaTrailApp" pc="268435460" symbol="&lt;init&gt;"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="2" lineNum="3" parent="globals/SagaTrailMenuDelegate" pc="268435472" symbol="&lt;init&gt;"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/bin/gen/no-device/source/Rez.mcgen" id="3" lineNum="7" parent="globals/Rez" pc="268435484" symbol="&lt;init&gt;"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailCommandTransmitListener.mc" id="4" lineNum="3" parent="globals/SagaTrailCommandTransmitListener" pc="268435504" symbol="&lt;init&gt;"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="5" lineNum="4" parent="globals/SagaTrailDelegate" pc="268435516" symbol="&lt;init&gt;"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="6" lineNum="12" parent="globals/SagaTrailHorizonView" pc="268435528" symbol="&lt;init&gt;"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="7" lineNum="10" parent="globals/SagaTrailTransmitListener" pc="268435540" symbol="&lt;init&gt;"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="8" lineNum="47" parent="globals/SagaTrailApp" pc="268435552" symbol="getInitialView"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="8" lineNum="48" parent="globals/SagaTrailApp" pc="268435554" symbol="getInitialView"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="8" lineNum="49" parent="globals/SagaTrailApp" pc="268435580" symbol="getInitialView"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="9" lineNum="148" parent="globals/SagaTrailApp" pc="268435615" symbol="sendHikeCommand"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="9" lineNum="149" parent="globals/SagaTrailApp" pc="268435618" symbol="sendHikeCommand"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="9" lineNum="155" parent="globals/SagaTrailApp" pc="268435651" symbol="sendHikeCommand"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="10" lineNum="176" parent="globals/SagaTrailApp" pc="268435686" symbol="confirmSafetyCheckin"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="10" lineNum="177" parent="globals/SagaTrailApp" pc="268435688" symbol="confirmSafetyCheckin"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="11" lineNum="247" parent="globals/SagaTrailApp" pc="268435703" symbol="isPhoneCompanionReady"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="11" lineNum="248" parent="globals/SagaTrailApp" pc="268435705" symbol="isPhoneCompanionReady"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="12" lineNum="43" parent="globals/SagaTrailApp" pc="268435711" symbol="onStart"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="12" lineNum="44" parent="globals/SagaTrailApp" pc="268435713" symbol="onStart"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="13" lineNum="243" parent="globals/SagaTrailApp" pc="268435740" symbol="getSosMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="13" lineNum="244" parent="globals/SagaTrailApp" pc="268435742" symbol="getSosMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="14" lineNum="251" parent="globals/SagaTrailApp" pc="268435748" symbol="setSosConfirmation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="14" lineNum="252" parent="globals/SagaTrailApp" pc="268435750" symbol="setSosConfirmation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="14" lineNum="253" parent="globals/SagaTrailApp" pc="268435759" symbol="setSosConfirmation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="14" lineNum="254" parent="globals/SagaTrailApp" pc="268435768" symbol="setSosConfirmation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="191" parent="globals/SagaTrailApp" pc="268435788" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="192" parent="globals/SagaTrailApp" pc="268435791" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="193" parent="globals/SagaTrailApp" pc="268435828" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="195" parent="globals/SagaTrailApp" pc="268435832" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="196" parent="globals/SagaTrailApp" pc="268435848" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="197" parent="globals/SagaTrailApp" pc="268435868" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="198" parent="globals/SagaTrailApp" pc="268435885" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="200" parent="globals/SagaTrailApp" pc="268435889" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="201" parent="globals/SagaTrailApp" pc="268435897" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="202" parent="globals/SagaTrailApp" pc="268435904" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="204" parent="globals/SagaTrailApp" pc="268435908" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="205" parent="globals/SagaTrailApp" pc="268435927" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="206" parent="globals/SagaTrailApp" pc="268435946" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="207" parent="globals/SagaTrailApp" pc="268435958" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="209" parent="globals/SagaTrailApp" pc="268435990" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="211" parent="globals/SagaTrailApp" pc="268435994" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="212" parent="globals/SagaTrailApp" pc="268436014" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="15" lineNum="213" parent="globals/SagaTrailApp" pc="268436034" symbol="transmitLocalHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="16" lineNum="158" parent="globals/SagaTrailApp" pc="268436108" symbol="toggleHike"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="16" lineNum="159" parent="globals/SagaTrailApp" pc="268436111" symbol="toggleHike"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="16" lineNum="160" parent="globals/SagaTrailApp" pc="268436124" symbol="toggleHike"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="16" lineNum="161" parent="globals/SagaTrailApp" pc="268436135" symbol="toggleHike"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="16" lineNum="162" parent="globals/SagaTrailApp" pc="268436152" symbol="toggleHike"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="16" lineNum="163" parent="globals/SagaTrailApp" pc="268436163" symbol="toggleHike"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="16" lineNum="164" parent="globals/SagaTrailApp" pc="268436180" symbol="toggleHike"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="16" lineNum="165" parent="globals/SagaTrailApp" pc="268436191" symbol="toggleHike"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="52" parent="globals/SagaTrailApp" pc="268436209" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="53" parent="globals/SagaTrailApp" pc="268436212" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="54" parent="globals/SagaTrailApp" pc="268436220" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="56" parent="globals/SagaTrailApp" pc="268436263" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="59" parent="globals/SagaTrailApp" pc="268436267" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="60" parent="globals/SagaTrailApp" pc="268436280" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="61" parent="globals/SagaTrailApp" pc="268436293" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="62" parent="globals/SagaTrailApp" pc="268436306" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="63" parent="globals/SagaTrailApp" pc="268436319" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="64" parent="globals/SagaTrailApp" pc="268436340" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="66" parent="globals/SagaTrailApp" pc="268436365" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="67" parent="globals/SagaTrailApp" pc="268436369" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="68" parent="globals/SagaTrailApp" pc="268436379" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="69" parent="globals/SagaTrailApp" pc="268436395" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="70" parent="globals/SagaTrailApp" pc="268436411" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="71" parent="globals/SagaTrailApp" pc="268436427" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="72" parent="globals/SagaTrailApp" pc="268436443" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="73" parent="globals/SagaTrailApp" pc="268436459" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="74" parent="globals/SagaTrailApp" pc="268436475" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="75" parent="globals/SagaTrailApp" pc="268436491" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="76" parent="globals/SagaTrailApp" pc="268436507" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="77" parent="globals/SagaTrailApp" pc="268436523" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="78" parent="globals/SagaTrailApp" pc="268436539" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="79" parent="globals/SagaTrailApp" pc="268436555" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="80" parent="globals/SagaTrailApp" pc="268436571" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="81" parent="globals/SagaTrailApp" pc="268436587" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="82" parent="globals/SagaTrailApp" pc="268436603" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="83" parent="globals/SagaTrailApp" pc="268436619" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="84" parent="globals/SagaTrailApp" pc="268436635" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="85" parent="globals/SagaTrailApp" pc="268436651" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="86" parent="globals/SagaTrailApp" pc="268436667" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="87" parent="globals/SagaTrailApp" pc="268436683" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="88" parent="globals/SagaTrailApp" pc="268436699" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="89" parent="globals/SagaTrailApp" pc="268436715" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="90" parent="globals/SagaTrailApp" pc="268436731" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="91" parent="globals/SagaTrailApp" pc="268436747" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="92" parent="globals/SagaTrailApp" pc="268436763" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="93" parent="globals/SagaTrailApp" pc="268436779" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="94" parent="globals/SagaTrailApp" pc="268436795" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="95" parent="globals/SagaTrailApp" pc="268436811" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="96" parent="globals/SagaTrailApp" pc="268436827" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="97" parent="globals/SagaTrailApp" pc="268436843" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="98" parent="globals/SagaTrailApp" pc="268436859" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="99" parent="globals/SagaTrailApp" pc="268436875" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="101" parent="globals/SagaTrailApp" pc="268436891" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="103" parent="globals/SagaTrailApp" pc="268436932" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="104" parent="globals/SagaTrailApp" pc="268436941" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="106" parent="globals/SagaTrailApp" pc="268436948" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="108" parent="globals/SagaTrailApp" pc="268436997" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="109" parent="globals/SagaTrailApp" pc="268437019" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="111" parent="globals/SagaTrailApp" pc="268437067" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="117" parent="globals/SagaTrailApp" pc="268437211" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="120" parent="globals/SagaTrailApp" pc="268437260" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="121" parent="globals/SagaTrailApp" pc="268437277" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="122" parent="globals/SagaTrailApp" pc="268437289" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="123" parent="globals/SagaTrailApp" pc="268437304" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="124" parent="globals/SagaTrailApp" pc="268437321" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="125" parent="globals/SagaTrailApp" pc="268437333" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="17" lineNum="127" parent="globals/SagaTrailApp" pc="268437348" symbol="onPhoneMessage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="18" lineNum="230" parent="globals/SagaTrailApp" pc="268437356" symbol="getLiveState"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="18" lineNum="231" parent="globals/SagaTrailApp" pc="268437358" symbol="getLiveState"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="19" lineNum="268" parent="globals/SagaTrailApp" pc="268437364" symbol="refresh"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="19" lineNum="269" parent="globals/SagaTrailApp" pc="268437366" symbol="refresh"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="19" lineNum="270" parent="globals/SagaTrailApp" pc="268437375" symbol="refresh"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="20" lineNum="239" parent="globals/SagaTrailApp" pc="268437391" symbol="getSosState"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="20" lineNum="240" parent="globals/SagaTrailApp" pc="268437393" symbol="getSosState"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="21" lineNum="234" parent="globals/SagaTrailApp" pc="268437399" symbol="valueOrDefault"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="21" lineNum="235" parent="globals/SagaTrailApp" pc="268437402" symbol="valueOrDefault"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="21" lineNum="236" parent="globals/SagaTrailApp" pc="268437409" symbol="valueOrDefault"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="22" lineNum="258" parent="globals/SagaTrailApp" pc="268437423" symbol="isSosConfirmationArmed"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="22" lineNum="259" parent="globals/SagaTrailApp" pc="268437425" symbol="isSosConfirmationArmed"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="23" lineNum="35" parent="globals/SagaTrailApp" pc="268437431" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="23" lineNum="36" parent="globals/SagaTrailApp" pc="268437433" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="23" lineNum="37" parent="globals/SagaTrailApp" pc="268437445" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="23" lineNum="38" parent="globals/SagaTrailApp" pc="268437469" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="23" lineNum="39" parent="globals/SagaTrailApp" pc="268437478" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="24" lineNum="180" parent="globals/SagaTrailApp" pc="268437491" symbol="sendHikeCommandWithDuration"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="24" lineNum="181" parent="globals/SagaTrailApp" pc="268437494" symbol="sendHikeCommandWithDuration"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="24" lineNum="188" parent="globals/SagaTrailApp" pc="268437535" symbol="sendHikeCommandWithDuration"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="25" lineNum="221" parent="globals/SagaTrailApp" pc="268437570" symbol="onSosTransport"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="25" lineNum="223" parent="globals/SagaTrailApp" pc="268437572" symbol="onSosTransport"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="25" lineNum="224" parent="globals/SagaTrailApp" pc="268437592" symbol="onSosTransport"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="25" lineNum="225" parent="globals/SagaTrailApp" pc="268437604" symbol="onSosTransport"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="25" lineNum="226" parent="globals/SagaTrailApp" pc="268437616" symbol="onSosTransport"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="130" parent="globals/SagaTrailApp" pc="268437627" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="131" parent="globals/SagaTrailApp" pc="268437630" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="132" parent="globals/SagaTrailApp" pc="268437639" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="133" parent="globals/SagaTrailApp" pc="268437651" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="134" parent="globals/SagaTrailApp" pc="268437663" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="135" parent="globals/SagaTrailApp" pc="268437670" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="137" parent="globals/SagaTrailApp" pc="268437674" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="138" parent="globals/SagaTrailApp" pc="268437686" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="139" parent="globals/SagaTrailApp" pc="268437698" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="144" parent="globals/SagaTrailApp" pc="268437723" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="26" lineNum="145" parent="globals/SagaTrailApp" pc="268437758" symbol="requestSos"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="27" lineNum="262" parent="globals/SagaTrailApp" pc="268437766" symbol="changeInfoPage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="27" lineNum="263" parent="globals/SagaTrailApp" pc="268437768" symbol="changeInfoPage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="27" lineNum="264" parent="globals/SagaTrailApp" pc="268437777" symbol="changeInfoPage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="28" lineNum="169" parent="globals/SagaTrailApp" pc="268437797" symbol="startSafetyCheckin"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="28" lineNum="170" parent="globals/SagaTrailApp" pc="268437799" symbol="startSafetyCheckin"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="28" lineNum="171" parent="globals/SagaTrailApp" pc="268437823" symbol="startSafetyCheckin"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="28" lineNum="173" parent="globals/SagaTrailApp" pc="268437827" symbol="startSafetyCheckin"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="11" parent="globals/SagaTrailMenuDelegate" pc="268437844" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="12" parent="globals/SagaTrailMenuDelegate" pc="268437846" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="13" parent="globals/SagaTrailMenuDelegate" pc="268437857" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="14" parent="globals/SagaTrailMenuDelegate" pc="268437872" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="15" parent="globals/SagaTrailMenuDelegate" pc="268437883" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="16" parent="globals/SagaTrailMenuDelegate" pc="268437902" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="17" parent="globals/SagaTrailMenuDelegate" pc="268437913" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="18" parent="globals/SagaTrailMenuDelegate" pc="268437932" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="19" parent="globals/SagaTrailMenuDelegate" pc="268437943" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="20" parent="globals/SagaTrailMenuDelegate" pc="268437962" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="21" parent="globals/SagaTrailMenuDelegate" pc="268437973" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="22" parent="globals/SagaTrailMenuDelegate" pc="268437988" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="23" parent="globals/SagaTrailMenuDelegate" pc="268437999" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="29" lineNum="24" parent="globals/SagaTrailMenuDelegate" pc="268438014" symbol="onMenuItem"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="30" lineNum="6" parent="globals/SagaTrailMenuDelegate" pc="268438032" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="30" lineNum="7" parent="globals/SagaTrailMenuDelegate" pc="268438034" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailMenuDelegate.mc" id="30" lineNum="8" parent="globals/SagaTrailMenuDelegate" pc="268438046" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailCommandTransmitListener.mc" id="33" lineNum="4" parent="globals/SagaTrailCommandTransmitListener" pc="268438056" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailCommandTransmitListener.mc" id="33" lineNum="5" parent="globals/SagaTrailCommandTransmitListener" pc="268438058" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="38" parent="globals/SagaTrailDelegate" pc="268438075" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="39" parent="globals/SagaTrailDelegate" pc="268438078" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="40" parent="globals/SagaTrailDelegate" pc="268438102" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="41" parent="globals/SagaTrailDelegate" pc="268438117" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="42" parent="globals/SagaTrailDelegate" pc="268438137" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="43" parent="globals/SagaTrailDelegate" pc="268438157" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="44" parent="globals/SagaTrailDelegate" pc="268438177" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="45" parent="globals/SagaTrailDelegate" pc="268438197" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="46" parent="globals/SagaTrailDelegate" pc="268438217" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="47" parent="globals/SagaTrailDelegate" pc="268438237" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="34" lineNum="48" parent="globals/SagaTrailDelegate" pc="268438276" symbol="onMenu"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="35" lineNum="7" parent="globals/SagaTrailDelegate" pc="268438278" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="35" lineNum="8" parent="globals/SagaTrailDelegate" pc="268438280" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="35" lineNum="9" parent="globals/SagaTrailDelegate" pc="268438292" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="12" parent="globals/SagaTrailDelegate" pc="268438302" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="13" parent="globals/SagaTrailDelegate" pc="268438304" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="14" parent="globals/SagaTrailDelegate" pc="268438312" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="15" parent="globals/SagaTrailDelegate" pc="268438326" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="16" parent="globals/SagaTrailDelegate" pc="268438341" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="18" parent="globals/SagaTrailDelegate" pc="268438356" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="19" parent="globals/SagaTrailDelegate" pc="268438402" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="21" parent="globals/SagaTrailDelegate" pc="268438417" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="23" parent="globals/SagaTrailDelegate" pc="268438422" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="24" parent="globals/SagaTrailDelegate" pc="268438444" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="25" parent="globals/SagaTrailDelegate" pc="268438459" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="27" parent="globals/SagaTrailDelegate" pc="268438464" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="28" parent="globals/SagaTrailDelegate" pc="268438472" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="29" parent="globals/SagaTrailDelegate" pc="268438488" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="31" parent="globals/SagaTrailDelegate" pc="268438493" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="32" parent="globals/SagaTrailDelegate" pc="268438501" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="33" parent="globals/SagaTrailDelegate" pc="268438517" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" id="36" lineNum="35" parent="globals/SagaTrailDelegate" pc="268438522" symbol="onKey"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="37" lineNum="430" parent="globals/SagaTrailHorizonView" pc="268438524" symbol="formatDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="37" lineNum="431" parent="globals/SagaTrailHorizonView" pc="268438526" symbol="formatDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="37" lineNum="432" parent="globals/SagaTrailHorizonView" pc="268438535" symbol="formatDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="37" lineNum="434" parent="globals/SagaTrailHorizonView" pc="268438566" symbol="formatDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="38" lineNum="403" parent="globals/SagaTrailHorizonView" pc="268438587" symbol="gpsFresh"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="38" lineNum="404" parent="globals/SagaTrailHorizonView" pc="268438589" symbol="gpsFresh"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="39" lineNum="408" parent="globals/SagaTrailHorizonView" pc="268438625" symbol="displayHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="39" lineNum="409" parent="globals/SagaTrailHorizonView" pc="268438628" symbol="displayHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="39" lineNum="411" parent="globals/SagaTrailHorizonView" pc="268438663" symbol="displayHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="39" lineNum="412" parent="globals/SagaTrailHorizonView" pc="268438679" symbol="displayHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="39" lineNum="413" parent="globals/SagaTrailHorizonView" pc="268438699" symbol="displayHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="39" lineNum="414" parent="globals/SagaTrailHorizonView" pc="268438728" symbol="displayHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="39" lineNum="417" parent="globals/SagaTrailHorizonView" pc="268438742" symbol="displayHeartRate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="40" lineNum="521" parent="globals/SagaTrailHorizonView" pc="268438759" symbol="centered"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="40" lineNum="522" parent="globals/SagaTrailHorizonView" pc="268438761" symbol="centered"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="40" lineNum="523" parent="globals/SagaTrailHorizonView" pc="268438778" symbol="centered"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="41" lineNum="527" parent="globals/SagaTrailHorizonView" pc="268438825" symbol="footer"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="41" lineNum="528" parent="globals/SagaTrailHorizonView" pc="268438827" symbol="footer"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="41" lineNum="529" parent="globals/SagaTrailHorizonView" pc="268438844" symbol="footer"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="42" lineNum="474" parent="globals/SagaTrailHorizonView" pc="268438898" symbol="pageTitle"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="42" lineNum="475" parent="globals/SagaTrailHorizonView" pc="268438900" symbol="pageTitle"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="42" lineNum="476" parent="globals/SagaTrailHorizonView" pc="268438910" symbol="pageTitle"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="42" lineNum="478" parent="globals/SagaTrailHorizonView" pc="268438919" symbol="pageTitle"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="42" lineNum="479" parent="globals/SagaTrailHorizonView" pc="268438930" symbol="pageTitle"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="42" lineNum="481" parent="globals/SagaTrailHorizonView" pc="268438939" symbol="pageTitle"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="42" lineNum="482" parent="globals/SagaTrailHorizonView" pc="268438950" symbol="pageTitle"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="42" lineNum="484" parent="globals/SagaTrailHorizonView" pc="268438959" symbol="pageTitle"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="215" parent="globals/SagaTrailHorizonView" pc="268438965" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="216" parent="globals/SagaTrailHorizonView" pc="268438968" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="217" parent="globals/SagaTrailHorizonView" pc="268438986" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="218" parent="globals/SagaTrailHorizonView" pc="268439006" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="220" parent="globals/SagaTrailHorizonView" pc="268439031" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="221" parent="globals/SagaTrailHorizonView" pc="268439051" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="222" parent="globals/SagaTrailHorizonView" pc="268439099" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="223" parent="globals/SagaTrailHorizonView" pc="268439131" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="224" parent="globals/SagaTrailHorizonView" pc="268439163" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="227" parent="globals/SagaTrailHorizonView" pc="268439198" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="228" parent="globals/SagaTrailHorizonView" pc="268439218" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="230" parent="globals/SagaTrailHorizonView" pc="268439266" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="231" parent="globals/SagaTrailHorizonView" pc="268439272" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="233" parent="globals/SagaTrailHorizonView" pc="268439296" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="234" parent="globals/SagaTrailHorizonView" pc="268439320" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="235" parent="globals/SagaTrailHorizonView" pc="268439344" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="238" parent="globals/SagaTrailHorizonView" pc="268439348" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="240" parent="globals/SagaTrailHorizonView" pc="268439406" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="241" parent="globals/SagaTrailHorizonView" pc="268439446" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="43" lineNum="242" parent="globals/SagaTrailHorizonView" pc="268439475" symbol="drawStory"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="44" lineNum="460" parent="globals/SagaTrailHorizonView" pc="268439503" symbol="terrainDirection"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="44" lineNum="461" parent="globals/SagaTrailHorizonView" pc="268439505" symbol="terrainDirection"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="69" parent="globals/SagaTrailHorizonView" pc="268439530" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="70" parent="globals/SagaTrailHorizonView" pc="268439533" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="71" parent="globals/SagaTrailHorizonView" pc="268439562" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="72" parent="globals/SagaTrailHorizonView" pc="268439575" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="75" parent="globals/SagaTrailHorizonView" pc="268439579" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="76" parent="globals/SagaTrailHorizonView" pc="268439594" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="77" parent="globals/SagaTrailHorizonView" pc="268439619" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="78" parent="globals/SagaTrailHorizonView" pc="268439643" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="79" parent="globals/SagaTrailHorizonView" pc="268439666" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="80" parent="globals/SagaTrailHorizonView" pc="268439680" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="81" parent="globals/SagaTrailHorizonView" pc="268439705" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="84" parent="globals/SagaTrailHorizonView" pc="268439709" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="85" parent="globals/SagaTrailHorizonView" pc="268439731" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="87" parent="globals/SagaTrailHorizonView" pc="268439753" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="88" parent="globals/SagaTrailHorizonView" pc="268439765" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="89" parent="globals/SagaTrailHorizonView" pc="268439786" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="90" parent="globals/SagaTrailHorizonView" pc="268439806" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="92" parent="globals/SagaTrailHorizonView" pc="268439826" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="93" parent="globals/SagaTrailHorizonView" pc="268439838" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="94" parent="globals/SagaTrailHorizonView" pc="268439864" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="95" parent="globals/SagaTrailHorizonView" pc="268439883" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="97" parent="globals/SagaTrailHorizonView" pc="268439903" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="98" parent="globals/SagaTrailHorizonView" pc="268439921" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="99" parent="globals/SagaTrailHorizonView" pc="268439927" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="100" parent="globals/SagaTrailHorizonView" pc="268439945" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="102" parent="globals/SagaTrailHorizonView" pc="268439966" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="103" parent="globals/SagaTrailHorizonView" pc="268439985" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="107" parent="globals/SagaTrailHorizonView" pc="268440047" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="110" parent="globals/SagaTrailHorizonView" pc="268440103" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="111" parent="globals/SagaTrailHorizonView" pc="268440117" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="113" parent="globals/SagaTrailHorizonView" pc="268440133" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="114" parent="globals/SagaTrailHorizonView" pc="268440177" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="115" parent="globals/SagaTrailHorizonView" pc="268440221" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="117" parent="globals/SagaTrailHorizonView" pc="268440276" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="120" parent="globals/SagaTrailHorizonView" pc="268440325" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="121" parent="globals/SagaTrailHorizonView" pc="268440343" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="45" lineNum="122" parent="globals/SagaTrailHorizonView" pc="268440349" symbol="drawNavigation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="386" parent="globals/SagaTrailHorizonView" pc="268440408" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="387" parent="globals/SagaTrailHorizonView" pc="268440411" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="388" parent="globals/SagaTrailHorizonView" pc="268440429" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="389" parent="globals/SagaTrailHorizonView" pc="268440447" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="390" parent="globals/SagaTrailHorizonView" pc="268440454" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="391" parent="globals/SagaTrailHorizonView" pc="268440461" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="393" parent="globals/SagaTrailHorizonView" pc="268440466" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="394" parent="globals/SagaTrailHorizonView" pc="268440485" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="395" parent="globals/SagaTrailHorizonView" pc="268440492" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="397" parent="globals/SagaTrailHorizonView" pc="268440497" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="398" parent="globals/SagaTrailHorizonView" pc="268440505" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="46" lineNum="400" parent="globals/SagaTrailHorizonView" pc="268440511" symbol="routeProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="47" lineNum="491" parent="globals/SagaTrailHorizonView" pc="268440514" symbol="safeInset"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="47" lineNum="492" parent="globals/SagaTrailHorizonView" pc="268440516" symbol="safeInset"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="48" lineNum="487" parent="globals/SagaTrailHorizonView" pc="268440538" symbol="charsPerLine"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="48" lineNum="488" parent="globals/SagaTrailHorizonView" pc="268440540" symbol="charsPerLine"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="49" lineNum="24" parent="globals/SagaTrailHorizonView" pc="268440562" symbol="setSosConfirmation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="49" lineNum="25" parent="globals/SagaTrailHorizonView" pc="268440564" symbol="setSosConfirmation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="49" lineNum="26" parent="globals/SagaTrailHorizonView" pc="268440573" symbol="setSosConfirmation"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="50" lineNum="296" parent="globals/SagaTrailHorizonView" pc="268440581" symbol="thickLine"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="50" lineNum="297" parent="globals/SagaTrailHorizonView" pc="268440583" symbol="thickLine"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="50" lineNum="298" parent="globals/SagaTrailHorizonView" pc="268440601" symbol="thickLine"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="51" lineNum="443" parent="globals/SagaTrailHorizonView" pc="268440626" symbol="directionLabel"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="51" lineNum="444" parent="globals/SagaTrailHorizonView" pc="268440628" symbol="directionLabel"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="51" lineNum="445" parent="globals/SagaTrailHorizonView" pc="268440639" symbol="directionLabel"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="51" lineNum="447" parent="globals/SagaTrailHorizonView" pc="268440648" symbol="directionLabel"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="51" lineNum="448" parent="globals/SagaTrailHorizonView" pc="268440659" symbol="directionLabel"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="51" lineNum="450" parent="globals/SagaTrailHorizonView" pc="268440668" symbol="directionLabel"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="51" lineNum="452" parent="globals/SagaTrailHorizonView" pc="268440701" symbol="directionLabel"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="51" lineNum="454" parent="globals/SagaTrailHorizonView" pc="268440710" symbol="directionLabel"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="51" lineNum="455" parent="globals/SagaTrailHorizonView" pc="268440721" symbol="directionLabel"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="51" lineNum="457" parent="globals/SagaTrailHorizonView" pc="268440730" symbol="directionLabel"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="273" parent="globals/SagaTrailHorizonView" pc="268440736" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="274" parent="globals/SagaTrailHorizonView" pc="268440738" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="275" parent="globals/SagaTrailHorizonView" pc="268440755" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="276" parent="globals/SagaTrailHorizonView" pc="268440766" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="277" parent="globals/SagaTrailHorizonView" pc="268440791" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="278" parent="globals/SagaTrailHorizonView" pc="268440819" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="279" parent="globals/SagaTrailHorizonView" pc="268440850" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="280" parent="globals/SagaTrailHorizonView" pc="268440861" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="281" parent="globals/SagaTrailHorizonView" pc="268440886" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="282" parent="globals/SagaTrailHorizonView" pc="268440914" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="283" parent="globals/SagaTrailHorizonView" pc="268440945" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="285" parent="globals/SagaTrailHorizonView" pc="268440978" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="286" parent="globals/SagaTrailHorizonView" pc="268441009" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="287" parent="globals/SagaTrailHorizonView" pc="268441040" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="288" parent="globals/SagaTrailHorizonView" pc="268441071" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="290" parent="globals/SagaTrailHorizonView" pc="268441102" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="291" parent="globals/SagaTrailHorizonView" pc="268441127" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="52" lineNum="292" parent="globals/SagaTrailHorizonView" pc="268441155" symbol="drawDirectionArrow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="53" lineNum="495" parent="globals/SagaTrailHorizonView" pc="268441184" symbol="shortText"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="53" lineNum="496" parent="globals/SagaTrailHorizonView" pc="268441186" symbol="shortText"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="53" lineNum="497" parent="globals/SagaTrailHorizonView" pc="268441192" symbol="shortText"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="53" lineNum="499" parent="globals/SagaTrailHorizonView" pc="268441201" symbol="shortText"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="53" lineNum="500" parent="globals/SagaTrailHorizonView" pc="268441214" symbol="shortText"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="53" lineNum="502" parent="globals/SagaTrailHorizonView" pc="268441220" symbol="shortText"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="505" parent="globals/SagaTrailHorizonView" pc="268441242" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="506" parent="globals/SagaTrailHorizonView" pc="268441245" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="507" parent="globals/SagaTrailHorizonView" pc="268441257" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="508" parent="globals/SagaTrailHorizonView" pc="268441260" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="509" parent="globals/SagaTrailHorizonView" pc="268441263" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="510" parent="globals/SagaTrailHorizonView" pc="268441287" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="511" parent="globals/SagaTrailHorizonView" pc="268441294" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="512" parent="globals/SagaTrailHorizonView" pc="268441307" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="514" parent="globals/SagaTrailHorizonView" pc="268441319" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="516" parent="globals/SagaTrailHorizonView" pc="268441354" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="54" lineNum="517" parent="globals/SagaTrailHorizonView" pc="268441358" symbol="drawWrapped"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="169" parent="globals/SagaTrailHorizonView" pc="268441369" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="170" parent="globals/SagaTrailHorizonView" pc="268441372" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="171" parent="globals/SagaTrailHorizonView" pc="268441397" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="172" parent="globals/SagaTrailHorizonView" pc="268441415" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="173" parent="globals/SagaTrailHorizonView" pc="268441422" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="174" parent="globals/SagaTrailHorizonView" pc="268441429" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="175" parent="globals/SagaTrailHorizonView" pc="268441436" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="176" parent="globals/SagaTrailHorizonView" pc="268441471" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="178" parent="globals/SagaTrailHorizonView" pc="268441514" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="179" parent="globals/SagaTrailHorizonView" pc="268441540" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="181" parent="globals/SagaTrailHorizonView" pc="268441573" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="182" parent="globals/SagaTrailHorizonView" pc="268441590" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="183" parent="globals/SagaTrailHorizonView" pc="268441614" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="184" parent="globals/SagaTrailHorizonView" pc="268441638" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="185" parent="globals/SagaTrailHorizonView" pc="268441659" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="187" parent="globals/SagaTrailHorizonView" pc="268441677" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="188" parent="globals/SagaTrailHorizonView" pc="268441695" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="189" parent="globals/SagaTrailHorizonView" pc="268441717" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="190" parent="globals/SagaTrailHorizonView" pc="268441739" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="191" parent="globals/SagaTrailHorizonView" pc="268441745" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="192" parent="globals/SagaTrailHorizonView" pc="268441771" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="194" parent="globals/SagaTrailHorizonView" pc="268441823" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="195" parent="globals/SagaTrailHorizonView" pc="268441834" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="196" parent="globals/SagaTrailHorizonView" pc="268441859" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="198" parent="globals/SagaTrailHorizonView" pc="268441901" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="199" parent="globals/SagaTrailHorizonView" pc="268441912" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="200" parent="globals/SagaTrailHorizonView" pc="268441937" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="203" parent="globals/SagaTrailHorizonView" pc="268441979" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="207" parent="globals/SagaTrailHorizonView" pc="268442003" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="208" parent="globals/SagaTrailHorizonView" pc="268442023" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="209" parent="globals/SagaTrailHorizonView" pc="268442073" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="55" lineNum="211" parent="globals/SagaTrailHorizonView" pc="268442114" symbol="drawSafety"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="56" lineNum="425" parent="globals/SagaTrailHorizonView" pc="268442139" symbol="value"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="56" lineNum="426" parent="globals/SagaTrailHorizonView" pc="268442142" symbol="value"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="56" lineNum="427" parent="globals/SagaTrailHorizonView" pc="268442149" symbol="value"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="57" lineNum="464" parent="globals/SagaTrailHorizonView" pc="268442163" symbol="safetyStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="57" lineNum="465" parent="globals/SagaTrailHorizonView" pc="268442165" symbol="safetyStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="57" lineNum="466" parent="globals/SagaTrailHorizonView" pc="268442176" symbol="safetyStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="57" lineNum="468" parent="globals/SagaTrailHorizonView" pc="268442185" symbol="safetyStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="57" lineNum="469" parent="globals/SagaTrailHorizonView" pc="268442196" symbol="safetyStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="57" lineNum="471" parent="globals/SagaTrailHorizonView" pc="268442205" symbol="safetyStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="58" lineNum="337" parent="globals/SagaTrailHorizonView" pc="268442211" symbol="drawBottomStat"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="58" lineNum="338" parent="globals/SagaTrailHorizonView" pc="268442214" symbol="drawBottomStat"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="58" lineNum="339" parent="globals/SagaTrailHorizonView" pc="268442258" symbol="drawBottomStat"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="58" lineNum="340" parent="globals/SagaTrailHorizonView" pc="268442271" symbol="drawBottomStat"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="58" lineNum="341" parent="globals/SagaTrailHorizonView" pc="268442290" symbol="drawBottomStat"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="128" parent="globals/SagaTrailHorizonView" pc="268442319" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="129" parent="globals/SagaTrailHorizonView" pc="268442322" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="130" parent="globals/SagaTrailHorizonView" pc="268442347" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="132" parent="globals/SagaTrailHorizonView" pc="268442395" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="134" parent="globals/SagaTrailHorizonView" pc="268442410" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="137" parent="globals/SagaTrailHorizonView" pc="268442492" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="140" parent="globals/SagaTrailHorizonView" pc="268442555" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="144" parent="globals/SagaTrailHorizonView" pc="268442627" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="145" parent="globals/SagaTrailHorizonView" pc="268442645" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="147" parent="globals/SagaTrailHorizonView" pc="268442672" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="150" parent="globals/SagaTrailHorizonView" pc="268442700" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="151" parent="globals/SagaTrailHorizonView" pc="268442718" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="152" parent="globals/SagaTrailHorizonView" pc="268442736" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="153" parent="globals/SagaTrailHorizonView" pc="268442748" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="156" parent="globals/SagaTrailHorizonView" pc="268442842" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="157" parent="globals/SagaTrailHorizonView" pc="268442848" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="161" parent="globals/SagaTrailHorizonView" pc="268442927" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="59" lineNum="163" parent="globals/SagaTrailHorizonView" pc="268442951" symbol="drawStatus"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="60" lineNum="364" parent="globals/SagaTrailHorizonView" pc="268443018" symbol="drawHiker"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="60" lineNum="365" parent="globals/SagaTrailHorizonView" pc="268443020" symbol="drawHiker"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="60" lineNum="366" parent="globals/SagaTrailHorizonView" pc="268443037" symbol="drawHiker"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="60" lineNum="367" parent="globals/SagaTrailHorizonView" pc="268443059" symbol="drawHiker"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="60" lineNum="368" parent="globals/SagaTrailHorizonView" pc="268443089" symbol="drawHiker"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="60" lineNum="369" parent="globals/SagaTrailHorizonView" pc="268443116" symbol="drawHiker"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="60" lineNum="370" parent="globals/SagaTrailHorizonView" pc="268443146" symbol="drawHiker"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="60" lineNum="371" parent="globals/SagaTrailHorizonView" pc="268443176" symbol="drawHiker"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="61" lineNum="420" parent="globals/SagaTrailHorizonView" pc="268443207" symbol="heartRateText"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="61" lineNum="421" parent="globals/SagaTrailHorizonView" pc="268443210" symbol="heartRateText"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="61" lineNum="422" parent="globals/SagaTrailHorizonView" pc="268443222" symbol="heartRateText"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="62" lineNum="437" parent="globals/SagaTrailHorizonView" pc="268443258" symbol="formatTime"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="62" lineNum="438" parent="globals/SagaTrailHorizonView" pc="268443261" symbol="formatTime"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="62" lineNum="439" parent="globals/SagaTrailHorizonView" pc="268443269" symbol="formatTime"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="62" lineNum="440" parent="globals/SagaTrailHorizonView" pc="268443280" symbol="formatTime"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="63" lineNum="247" parent="globals/SagaTrailHorizonView" pc="268443316" symbol="drawCompletion"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="63" lineNum="248" parent="globals/SagaTrailHorizonView" pc="268443318" symbol="drawCompletion"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="63" lineNum="249" parent="globals/SagaTrailHorizonView" pc="268443342" symbol="drawCompletion"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="63" lineNum="251" parent="globals/SagaTrailHorizonView" pc="268443386" symbol="drawCompletion"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="63" lineNum="252" parent="globals/SagaTrailHorizonView" pc="268443399" symbol="drawCompletion"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="63" lineNum="254" parent="globals/SagaTrailHorizonView" pc="268443482" symbol="drawCompletion"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="64" lineNum="258" parent="globals/SagaTrailHorizonView" pc="268443541" symbol="drawHeader"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="64" lineNum="259" parent="globals/SagaTrailHorizonView" pc="268443544" symbol="drawHeader"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="64" lineNum="260" parent="globals/SagaTrailHorizonView" pc="268443556" symbol="drawHeader"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="64" lineNum="261" parent="globals/SagaTrailHorizonView" pc="268443565" symbol="drawHeader"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="64" lineNum="263" parent="globals/SagaTrailHorizonView" pc="268443587" symbol="drawHeader"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="64" lineNum="264" parent="globals/SagaTrailHorizonView" pc="268443606" symbol="drawHeader"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="64" lineNum="266" parent="globals/SagaTrailHorizonView" pc="268443631" symbol="drawHeader"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="64" lineNum="267" parent="globals/SagaTrailHorizonView" pc="268443655" symbol="drawHeader"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="64" lineNum="269" parent="globals/SagaTrailHorizonView" pc="268443706" symbol="drawHeader"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="64" lineNum="270" parent="globals/SagaTrailHorizonView" pc="268443726" symbol="drawHeader"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="301" parent="globals/SagaTrailHorizonView" pc="268443759" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="302" parent="globals/SagaTrailHorizonView" pc="268443762" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="303" parent="globals/SagaTrailHorizonView" pc="268443771" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="304" parent="globals/SagaTrailHorizonView" pc="268443790" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="305" parent="globals/SagaTrailHorizonView" pc="268443814" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="306" parent="globals/SagaTrailHorizonView" pc="268443838" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="307" parent="globals/SagaTrailHorizonView" pc="268443862" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="308" parent="globals/SagaTrailHorizonView" pc="268443886" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="309" parent="globals/SagaTrailHorizonView" pc="268443908" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="310" parent="globals/SagaTrailHorizonView" pc="268443931" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="311" parent="globals/SagaTrailHorizonView" pc="268443957" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="312" parent="globals/SagaTrailHorizonView" pc="268443983" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="313" parent="globals/SagaTrailHorizonView" pc="268444011" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="314" parent="globals/SagaTrailHorizonView" pc="268444031" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="315" parent="globals/SagaTrailHorizonView" pc="268444055" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="316" parent="globals/SagaTrailHorizonView" pc="268444079" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="317" parent="globals/SagaTrailHorizonView" pc="268444103" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="318" parent="globals/SagaTrailHorizonView" pc="268444128" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="319" parent="globals/SagaTrailHorizonView" pc="268444154" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="320" parent="globals/SagaTrailHorizonView" pc="268444182" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="321" parent="globals/SagaTrailHorizonView" pc="268444202" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="65" lineNum="322" parent="globals/SagaTrailHorizonView" pc="268444226" symbol="drawHorizon"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="66" lineNum="29" parent="globals/SagaTrailHorizonView" pc="268444254" symbol="changePage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="66" lineNum="30" parent="globals/SagaTrailHorizonView" pc="268444256" symbol="changePage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="66" lineNum="31" parent="globals/SagaTrailHorizonView" pc="268444271" symbol="changePage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="66" lineNum="32" parent="globals/SagaTrailHorizonView" pc="268444281" symbol="changePage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="66" lineNum="33" parent="globals/SagaTrailHorizonView" pc="268444293" symbol="changePage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="66" lineNum="34" parent="globals/SagaTrailHorizonView" pc="268444304" symbol="changePage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="66" lineNum="36" parent="globals/SagaTrailHorizonView" pc="268444315" symbol="changePage"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="67" lineNum="325" parent="globals/SagaTrailHorizonView" pc="268444323" symbol="drawRouteProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="67" lineNum="326" parent="globals/SagaTrailHorizonView" pc="268444326" symbol="drawRouteProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="67" lineNum="327" parent="globals/SagaTrailHorizonView" pc="268444341" symbol="drawRouteProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="67" lineNum="328" parent="globals/SagaTrailHorizonView" pc="268444356" symbol="drawRouteProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="67" lineNum="329" parent="globals/SagaTrailHorizonView" pc="268444380" symbol="drawRouteProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="67" lineNum="330" parent="globals/SagaTrailHorizonView" pc="268444400" symbol="drawRouteProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="67" lineNum="331" parent="globals/SagaTrailHorizonView" pc="268444418" symbol="drawRouteProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="67" lineNum="332" parent="globals/SagaTrailHorizonView" pc="268444425" symbol="drawRouteProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="67" lineNum="333" parent="globals/SagaTrailHorizonView" pc="268444445" symbol="drawRouteProgress"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="68" lineNum="344" parent="globals/SagaTrailHorizonView" pc="268444467" symbol="drawMetricRow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="68" lineNum="345" parent="globals/SagaTrailHorizonView" pc="268444470" symbol="drawMetricRow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="68" lineNum="346" parent="globals/SagaTrailHorizonView" pc="268444485" symbol="drawMetricRow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="68" lineNum="347" parent="globals/SagaTrailHorizonView" pc="268444504" symbol="drawMetricRow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="68" lineNum="348" parent="globals/SagaTrailHorizonView" pc="268444523" symbol="drawMetricRow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="68" lineNum="350" parent="globals/SagaTrailHorizonView" pc="268444549" symbol="drawMetricRow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="68" lineNum="351" parent="globals/SagaTrailHorizonView" pc="268444568" symbol="drawMetricRow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="68" lineNum="353" parent="globals/SagaTrailHorizonView" pc="268444591" symbol="drawMetricRow"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="69" lineNum="357" parent="globals/SagaTrailHorizonView" pc="268444622" symbol="drawPlayMark"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="69" lineNum="358" parent="globals/SagaTrailHorizonView" pc="268444624" symbol="drawPlayMark"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="69" lineNum="359" parent="globals/SagaTrailHorizonView" pc="268444641" symbol="drawPlayMark"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="69" lineNum="360" parent="globals/SagaTrailHorizonView" pc="268444665" symbol="drawPlayMark"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="69" lineNum="361" parent="globals/SagaTrailHorizonView" pc="268444689" symbol="drawPlayMark"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="70" lineNum="374" parent="globals/SagaTrailHorizonView" pc="268444714" symbol="nextManeuverDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="70" lineNum="375" parent="globals/SagaTrailHorizonView" pc="268444717" symbol="nextManeuverDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="70" lineNum="376" parent="globals/SagaTrailHorizonView" pc="268444736" symbol="nextManeuverDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="70" lineNum="377" parent="globals/SagaTrailHorizonView" pc="268444748" symbol="nextManeuverDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="70" lineNum="378" parent="globals/SagaTrailHorizonView" pc="268444768" symbol="nextManeuverDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="70" lineNum="379" parent="globals/SagaTrailHorizonView" pc="268444774" symbol="nextManeuverDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="70" lineNum="382" parent="globals/SagaTrailHorizonView" pc="268444783" symbol="nextManeuverDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="70" lineNum="383" parent="globals/SagaTrailHorizonView" pc="268444801" symbol="nextManeuverDistance"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="71" lineNum="18" parent="globals/SagaTrailHorizonView" pc="268444818" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="71" lineNum="19" parent="globals/SagaTrailHorizonView" pc="268444820" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="71" lineNum="20" parent="globals/SagaTrailHorizonView" pc="268444832" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="71" lineNum="21" parent="globals/SagaTrailHorizonView" pc="268444841" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="39" parent="globals/SagaTrailHorizonView" pc="268444880" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="40" parent="globals/SagaTrailHorizonView" pc="268444883" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="41" parent="globals/SagaTrailHorizonView" pc="268444896" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="42" parent="globals/SagaTrailHorizonView" pc="268444915" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="44" parent="globals/SagaTrailHorizonView" pc="268444923" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="45" parent="globals/SagaTrailHorizonView" pc="268444936" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="46" parent="globals/SagaTrailHorizonView" pc="268444946" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="47" parent="globals/SagaTrailHorizonView" pc="268444962" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="48" parent="globals/SagaTrailHorizonView" pc="268444973" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="49" parent="globals/SagaTrailHorizonView" pc="268444989" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="50" parent="globals/SagaTrailHorizonView" pc="268445000" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="52" parent="globals/SagaTrailHorizonView" pc="268445016" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="55" parent="globals/SagaTrailHorizonView" pc="268445029" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="56" parent="globals/SagaTrailHorizonView" pc="268445042" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="57" parent="globals/SagaTrailHorizonView" pc="268445050" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="58" parent="globals/SagaTrailHorizonView" pc="268445074" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="59" parent="globals/SagaTrailHorizonView" pc="268445085" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="60" parent="globals/SagaTrailHorizonView" pc="268445109" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="61" parent="globals/SagaTrailHorizonView" pc="268445120" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="62" parent="globals/SagaTrailHorizonView" pc="268445144" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="63" parent="globals/SagaTrailHorizonView" pc="268445155" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailHorizonView.mc" id="72" lineNum="65" parent="globals/SagaTrailHorizonView" pc="268445178" symbol="onUpdate"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="73" lineNum="18" parent="globals/SagaTrailTransmitListener" pc="268445199" symbol="onError"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="73" lineNum="19" parent="globals/SagaTrailTransmitListener" pc="268445201" symbol="onError"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="74" lineNum="22" parent="globals/SagaTrailTransmitListener" pc="268445217" symbol="onComplete"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="74" lineNum="23" parent="globals/SagaTrailTransmitListener" pc="268445219" symbol="onComplete"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="75" lineNum="13" parent="globals/SagaTrailTransmitListener" pc="268445235" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="75" lineNum="14" parent="globals/SagaTrailTransmitListener" pc="268445237" symbol="initialize"/>
+        <entry filename="/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" id="75" lineNum="15" parent="globals/SagaTrailTransmitListener" pc="268445253" symbol="initialize"/>
+    </pcToLineNum>
+    <symbolTable>
+        <entry field="true" id="21" symbol="phoneCompanionReady"/>
+        <entry id="16" method="true" symbol="isPhoneCompanionReady"/>
+        <entry id="8388639" module="true" symbol="Graphics"/>
+        <entry id="9" object="true" symbol="SagaTrailMenuDelegate"/>
+        <entry field="true" id="8389346" symbol="text"/>
+        <entry field="true" id="28" symbol="sosMessage"/>
+        <entry id="72" symbol="safetyText"/>
+        <entry id="59" method="true" symbol="heartRateText"/>
+        <entry id="100" symbol="language"/>
+        <entry id="58" method="true" symbol="gpsFresh"/>
+        <entry id="8388632" method="true" symbol="&lt;init&gt;"/>
+        <entry id="87" symbol="alertKind"/>
+        <entry id="33" method="true" symbol="valueOrDefault"/>
+        <entry id="110" symbol="status"/>
+        <entry field="true" id="29" symbol="sosState"/>
+        <entry id="75" symbol="poiStory"/>
+        <entry id="111" symbol="remainingSec"/>
+        <entry id="112" symbol="arrivalAfterSunset"/>
+        <entry id="8389702" method="true" symbol="getHeartRateHistory"/>
+        <entry id="108" symbol="imageUrl"/>
+        <entry id="42" method="true" symbol="drawBottomStat"/>
+        <entry field="true" id="27" symbol="sosConfirmationArmed"/>
+        <entry field="true" id="8392160" symbol="page"/>
+        <entry id="79" symbol="nextInstruction"/>
+        <entry id="8390424" module="true" symbol="Storage"/>
+        <entry id="6" object="true" symbol="SagaTrailCommandTransmitListener"/>
+        <entry id="41" method="true" symbol="displayHeartRate"/>
+        <entry id="80" symbol="remainingKm"/>
+        <entry id="20" method="true" symbol="onSosTransport"/>
+        <entry id="25" method="true" symbol="sendHikeCommandWithDuration"/>
+        <entry id="44" method="true" symbol="drawDirectionArrow"/>
+        <entry id="53" method="true" symbol="drawStatus"/>
+        <entry id="109" symbol="distanceM"/>
+        <entry field="true" id="8388611" module="true" symbol="Toybox"/>
+        <entry id="64" method="true" symbol="safeInset"/>
+        <entry id="84" symbol="ascentM"/>
+        <entry field="true" id="35" symbol="app"/>
+        <entry field="true" id="70" symbol="AppName"/>
+        <entry id="4" module="true" symbol="globals/Rez/Strings"/>
+        <entry id="57" method="true" symbol="formatTime"/>
+        <entry id="8389080" method="true" symbol="onMenu"/>
+        <entry id="26" method="true" symbol="setSosConfirmation"/>
+        <entry id="51" method="true" symbol="drawRouteProgress"/>
+        <entry id="71" symbol="sessionStatus"/>
+        <entry field="true" id="8388912" symbol="steps"/>
+        <entry id="48" method="true" symbol="drawMetricRow"/>
+        <entry id="49" method="true" symbol="drawNavigation"/>
+        <entry field="true" id="8388947" method="true" symbol="value"/>
+        <entry id="8388648" module="true" symbol="WatchUi"/>
+        <entry id="94" symbol="upcomingNavigations"/>
+        <entry id="2" module="true" symbol="globals/Rez"/>
+        <entry field="true" id="60" symbol="logo"/>
+        <entry id="55" method="true" symbol="drawWrapped"/>
+        <entry id="76" symbol="hasFreshGps"/>
+        <entry id="78" symbol="updatedAtMs"/>
+        <entry id="8389124" method="true" symbol="onUpdate"/>
+        <entry id="32" method="true" symbol="transmitLocalHeartRate"/>
+        <entry id="30" method="true" symbol="startSafetyCheckin"/>
+        <entry id="15" method="true" symbol="getSosState"/>
+        <entry id="50" method="true" symbol="drawPlayMark"/>
+        <entry field="true" id="39" symbol="confirmSos"/>
+        <entry id="8388771" module="true" object="true" symbol="Drawables"/>
+        <entry id="88" symbol="sosAcknowledgement"/>
+        <entry id="106" symbol="safetyConfirm"/>
+        <entry id="8" object="true" symbol="SagaTrailHorizonView"/>
+        <entry id="17" method="true" symbol="isSosConfirmationArmed"/>
+        <entry id="77" symbol="protocolVersion"/>
+        <entry id="107" symbol="sos"/>
+        <entry id="89" symbol="remainingDistanceM"/>
+        <entry id="68" method="true" symbol="thickLine"/>
+        <entry id="101" symbol="id"/>
+        <entry id="13" method="true" symbol="getLiveState"/>
+        <entry id="91" symbol="arrivalAtEpochMs"/>
+        <entry id="62" method="true" symbol="pageTitle"/>
+        <entry id="10" object="true" symbol="SagaTrailTransmitListener"/>
+        <entry id="97" symbol="offRoute"/>
+        <entry id="66" method="true" symbol="shortText"/>
+        <entry id="8388637" module="true" symbol="Communications"/>
+        <entry id="3" module="true" symbol="globals/Rez/Drawables"/>
+        <entry id="7" object="true" symbol="SagaTrailDelegate"/>
+        <entry id="8388828" method="true" symbol="onError"/>
+        <entry id="46" method="true" symbol="drawHiker"/>
+        <entry id="86" symbol="audioPlaying"/>
+        <entry id="14" method="true" symbol="getSosMessage"/>
+        <entry id="73" symbol="narrationText"/>
+        <entry id="38" method="true" symbol="charsPerLine"/>
+        <entry id="8388644" module="true" symbol="System"/>
+        <entry id="5" object="true" symbol="SagaTrailApp"/>
+        <entry id="114" symbol="temperatureC"/>
+        <entry id="8388645" module="true" symbol="Time"/>
+        <entry id="8388769" module="true" object="true" symbol="Rez"/>
+        <entry id="102" symbol="hike"/>
+        <entry id="47" method="true" symbol="drawHorizon"/>
+        <entry id="81" symbol="heartRateBpm"/>
+        <entry id="82" symbol="elapsedS"/>
+        <entry field="true" id="8388965" symbol="heading"/>
+        <entry id="61" method="true" symbol="nextManeuverDistance"/>
+        <entry id="8388640" module="true" symbol="Lang"/>
+        <entry id="43" method="true" symbol="drawCompletion"/>
+        <entry id="19" method="true" symbol="onPhoneMessage"/>
+        <entry id="36" method="true" symbol="centered"/>
+        <entry id="52" method="true" symbol="drawSafety"/>
+        <entry field="true" id="69" symbol="LauncherIcon"/>
+        <entry id="8388610" symbol="statics"/>
+        <entry id="56" method="true" symbol="formatDistance"/>
+        <entry id="85" symbol="freshnessS"/>
+        <entry id="99" symbol="daylight"/>
+        <entry id="113" symbol="gradePct"/>
+        <entry id="8389350" module="true" symbol="globals"/>
+        <entry id="12" method="true" symbol="confirmSafetyCheckin"/>
+        <entry id="8388770" module="true" object="true" symbol="Strings"/>
+        <entry id="65" method="true" symbol="safetyStatus"/>
+        <entry id="83" symbol="totalDistanceM"/>
+        <entry id="92" symbol="plannedAscentM"/>
+        <entry id="8388702" method="true" symbol="initialize"/>
+        <entry id="11" method="true" symbol="changeInfoPage"/>
+        <entry id="8389279" method="true" symbol="onStart"/>
+        <entry id="22" method="true" symbol="refresh"/>
+        <entry field="true" id="34" symbol="view"/>
+        <entry id="45" method="true" symbol="drawHeader"/>
+        <entry id="93" symbol="remainingAscentM"/>
+        <entry field="true" id="8388892" symbol="name"/>
+        <entry id="54" method="true" symbol="drawStory"/>
+        <entry id="8390753" method="true" symbol="footer"/>
+        <entry id="115" symbol="windKmh"/>
+        <entry id="37" method="true" symbol="changePage"/>
+        <entry id="23" method="true" symbol="requestSos"/>
+        <entry id="8389280" method="true" symbol="getInitialView"/>
+        <entry id="90" symbol="remainingSeconds"/>
+        <entry id="8389109" method="true" symbol="onMenuItem"/>
+        <entry id="104" symbol="safety60"/>
+        <entry id="8389781" module="true" symbol="SensorHistory"/>
+        <entry id="8389097" method="true" symbol="onKey"/>
+        <entry id="103" symbol="safety30"/>
+        <entry id="24" method="true" symbol="sendHikeCommand"/>
+        <entry id="96" symbol="safetyCheckin"/>
+        <entry id="8388829" method="true" symbol="onComplete"/>
+        <entry id="31" method="true" symbol="toggleHike"/>
+        <entry id="67" method="true" symbol="terrainDirection"/>
+        <entry id="8388636" module="true" symbol="Attention"/>
+        <entry id="98" symbol="weather"/>
+        <entry field="true" id="18" symbol="liveState"/>
+        <entry id="8392203" symbol="direction"/>
+        <entry id="105" symbol="safety120"/>
+        <entry id="63" method="true" symbol="routeProgress"/>
+        <entry id="8388635" module="true" symbol="Application"/>
+        <entry id="74" symbol="alertText"/>
+        <entry id="40" method="true" symbol="directionLabel"/>
+        <entry id="95" symbol="terrainSection"/>
+    </symbolTable>
+    <localVars>
+        <entry arg="true" endPc="268435685" name="command" stackId="1" startPc="268435615"/>
+        <entry endPc="268435684" name="request" stackId="2" startPc="268435618"/>
+        <entry arg="true" endPc="268435739" name="state" stackId="1" startPc="268435711"/>
+        <entry arg="true" endPc="268435787" name="value" stackId="1" startPc="268435748"/>
+        <entry endPc="268436106" name="history" stackId="1" startPc="268435791"/>
+        <entry endPc="268436106" name="sample" stackId="2" startPc="268435791"/>
+        <entry endPc="268436106" name="bpm" stackId="3" startPc="268435791"/>
+        <entry endPc="268436106" name="lastSent" stackId="4" startPc="268435791"/>
+        <entry endPc="268436106" name="lastAt" stackId="5" startPc="268435791"/>
+        <entry endPc="268436106" name="now" stackId="6" startPc="268435791"/>
+        <entry endPc="268436207" name="status" stackId="1" startPc="268436111"/>
+        <entry arg="true" endPc="268437355" name="message" stackId="1" startPc="268436209"/>
+        <entry endPc="268437354" name="payload" stackId="2" startPc="268436212"/>
+        <entry endPc="268437354" name="previousSafety" stackId="3" startPc="268436212"/>
+        <entry endPc="268437354" name="previousNarration" stackId="4" startPc="268436212"/>
+        <entry endPc="268437354" name="previousAlert" stackId="5" startPc="268436212"/>
+        <entry endPc="268437354" name="previousPoi" stackId="6" startPc="268436212"/>
+        <entry endPc="268437354" name="previousGpsFresh" stackId="7" startPc="268436212"/>
+        <entry endPc="268437354" name="previousDirection" stackId="8" startPc="268436212"/>
+        <entry endPc="268437354" name="next" stackId="9" startPc="268436212"/>
+        <entry endPc="268437354" name="poiChanged" stackId="10" startPc="268436212"/>
+        <entry endPc="268437354" name="gpsWentStale" stackId="11" startPc="268436212"/>
+        <entry endPc="268437354" name="turnChanged" stackId="12" startPc="268436212"/>
+        <entry arg="true" endPc="268437422" name="state" stackId="1" startPc="268437399"/>
+        <entry arg="true" endPc="268437422" name="key" stackId="2" startPc="268437399"/>
+        <entry arg="true" endPc="268437422" name="fallback" stackId="3" startPc="268437399"/>
+        <entry endPc="268437422" name="candidate" stackId="4" startPc="268437402"/>
+        <entry arg="true" endPc="268437569" name="command" stackId="1" startPc="268437491"/>
+        <entry arg="true" endPc="268437569" name="durationMinutes" stackId="2" startPc="268437491"/>
+        <entry endPc="268437568" name="request" stackId="3" startPc="268437494"/>
+        <entry arg="true" endPc="268437626" name="success" stackId="1" startPc="268437570"/>
+        <entry endPc="268437764" name="request" stackId="1" startPc="268437630"/>
+        <entry arg="true" endPc="268437796" name="delta" stackId="1" startPc="268437766"/>
+        <entry arg="true" endPc="268437843" name="durationMinutes" stackId="1" startPc="268437797"/>
+        <entry arg="true" endPc="268438031" name="item" stackId="1" startPc="268437844"/>
+        <entry arg="true" endPc="268438055" name="appRef" stackId="1" startPc="268438032"/>
+        <entry endPc="268438277" name="menu" stackId="1" startPc="268438078"/>
+        <entry arg="true" endPc="268438301" name="appRef" stackId="1" startPc="268438278"/>
+        <entry arg="true" endPc="268438523" name="key" stackId="1" startPc="268438302"/>
+        <entry arg="true" endPc="268438586" name="meters" stackId="1" startPc="268438524"/>
+        <entry arg="true" endPc="268438624" name="state" stackId="1" startPc="268438587"/>
+        <entry arg="true" endPc="268438758" name="state" stackId="1" startPc="268438625"/>
+        <entry endPc="268438738" name="history" stackId="2" startPc="268438663"/>
+        <entry endPc="268438738" name="sample" stackId="3" startPc="268438663"/>
+        <entry arg="true" endPc="268438824" name="dc" stackId="1" startPc="268438759"/>
+        <entry arg="true" endPc="268438824" name="y" stackId="2" startPc="268438759"/>
+        <entry arg="true" endPc="268438824" name="text" stackId="3" startPc="268438759"/>
+        <entry arg="true" endPc="268438824" name="font" stackId="4" startPc="268438759"/>
+        <entry arg="true" endPc="268438824" name="color" stackId="5" startPc="268438759"/>
+        <entry arg="true" endPc="268438897" name="dc" stackId="1" startPc="268438825"/>
+        <entry arg="true" endPc="268438897" name="text" stackId="2" startPc="268438825"/>
+        <entry arg="true" endPc="268438897" name="color" stackId="3" startPc="268438825"/>
+        <entry arg="true" endPc="268439502" name="dc" stackId="1" startPc="268438965"/>
+        <entry arg="true" endPc="268439502" name="state" stackId="2" startPc="268438965"/>
+        <entry endPc="268439501" name="story" stackId="3" startPc="268438968"/>
+        <entry endPc="268439501" name="audioPlaying" stackId="4" startPc="268438968"/>
+        <entry arg="true" endPc="268439529" name="direction" stackId="1" startPc="268439503"/>
+        <entry arg="true" endPc="268440407" name="dc" stackId="1" startPc="268439530"/>
+        <entry arg="true" endPc="268440407" name="state" stackId="2" startPc="268439530"/>
+        <entry endPc="268440406" name="direction" stackId="3" startPc="268439533"/>
+        <entry endPc="268440406" name="label" stackId="4" startPc="268439533"/>
+        <entry endPc="268440406" name="labelFont" stackId="5" startPc="268439533"/>
+        <entry endPc="268440406" name="maneuverM" stackId="6" startPc="268439533"/>
+        <entry endPc="268440406" name="maneuverText" stackId="7" startPc="268439533"/>
+        <entry endPc="268440406" name="remainingM" stackId="8" startPc="268439533"/>
+        <entry endPc="268439962" name="remainingKm" stackId="9" startPc="268439927"/>
+        <entry endPc="268440406" name="offRoute" stackId="10" startPc="268439533"/>
+        <entry arg="true" endPc="268440513" name="state" stackId="1" startPc="268440408"/>
+        <entry endPc="268440513" name="walked" stackId="2" startPc="268440411"/>
+        <entry endPc="268440513" name="remaining" stackId="3" startPc="268440411"/>
+        <entry endPc="268440513" name="total" stackId="4" startPc="268440411"/>
+        <entry endPc="268440513" name="progress" stackId="5" startPc="268440411"/>
+        <entry arg="true" endPc="268440537" name="dc" stackId="1" startPc="268440514"/>
+        <entry arg="true" endPc="268440561" name="dc" stackId="1" startPc="268440538"/>
+        <entry arg="true" endPc="268440580" name="value" stackId="1" startPc="268440562"/>
+        <entry arg="true" endPc="268440625" name="dc" stackId="1" startPc="268440581"/>
+        <entry arg="true" endPc="268440625" name="x1" stackId="2" startPc="268440581"/>
+        <entry arg="true" endPc="268440625" name="y1" stackId="3" startPc="268440581"/>
+        <entry arg="true" endPc="268440625" name="x2" stackId="4" startPc="268440581"/>
+        <entry arg="true" endPc="268440625" name="y2" stackId="5" startPc="268440581"/>
+        <entry arg="true" endPc="268440735" name="direction" stackId="1" startPc="268440626"/>
+        <entry arg="true" endPc="268441183" name="dc" stackId="1" startPc="268440736"/>
+        <entry arg="true" endPc="268441183" name="x" stackId="2" startPc="268440736"/>
+        <entry arg="true" endPc="268441183" name="y" stackId="3" startPc="268440736"/>
+        <entry arg="true" endPc="268441183" name="direction" stackId="4" startPc="268440736"/>
+        <entry arg="true" endPc="268441183" name="color" stackId="5" startPc="268440736"/>
+        <entry arg="true" endPc="268441241" name="text" stackId="1" startPc="268441184"/>
+        <entry arg="true" endPc="268441241" name="maxChars" stackId="2" startPc="268441184"/>
+        <entry arg="true" endPc="268441368" name="dc" stackId="1" startPc="268441242"/>
+        <entry arg="true" endPc="268441368" name="y" stackId="2" startPc="268441242"/>
+        <entry arg="true" endPc="268441368" name="text" stackId="3" startPc="268441242"/>
+        <entry arg="true" endPc="268441368" name="maxLines" stackId="4" startPc="268441242"/>
+        <entry arg="true" endPc="268441368" name="color" stackId="5" startPc="268441242"/>
+        <entry endPc="268441367" name="maxChars" stackId="6" startPc="268441245"/>
+        <entry endPc="268441367" name="index" stackId="7" startPc="268441245"/>
+        <entry endPc="268441367" name="row" stackId="8" startPc="268441245"/>
+        <entry endPc="268441364" name="endIndex" stackId="9" startPc="268441287"/>
+        <entry arg="true" endPc="268442138" name="dc" stackId="1" startPc="268441369"/>
+        <entry arg="true" endPc="268442138" name="state" stackId="2" startPc="268441369"/>
+        <entry endPc="268442137" name="checkin" stackId="3" startPc="268441372"/>
+        <entry endPc="268442137" name="checkColor" stackId="4" startPc="268441372"/>
+        <entry endPc="268442137" name="checkText" stackId="5" startPc="268441372"/>
+        <entry endPc="268442137" name="checkLabel" stackId="6" startPc="268441372"/>
+        <entry endPc="268442137" name="offRoute" stackId="7" startPc="268441372"/>
+        <entry endPc="268442137" name="alertText" stackId="8" startPc="268441372"/>
+        <entry endPc="268442137" name="safetyText" stackId="9" startPc="268441372"/>
+        <entry arg="true" endPc="268442162" name="state" stackId="1" startPc="268442139"/>
+        <entry arg="true" endPc="268442162" name="key" stackId="2" startPc="268442139"/>
+        <entry arg="true" endPc="268442162" name="fallback" stackId="3" startPc="268442139"/>
+        <entry endPc="268442162" name="candidate" stackId="4" startPc="268442142"/>
+        <entry arg="true" endPc="268442210" name="status" stackId="1" startPc="268442163"/>
+        <entry arg="true" endPc="268442318" name="dc" stackId="1" startPc="268442211"/>
+        <entry arg="true" endPc="268442318" name="y" stackId="2" startPc="268442211"/>
+        <entry arg="true" endPc="268442318" name="left" stackId="3" startPc="268442211"/>
+        <entry arg="true" endPc="268442318" name="text" stackId="4" startPc="268442211"/>
+        <entry arg="true" endPc="268442318" name="label" stackId="5" startPc="268442211"/>
+        <entry endPc="268442317" name="x" stackId="6" startPc="268442214"/>
+        <entry endPc="268442317" name="justify" stackId="7" startPc="268442214"/>
+        <entry arg="true" endPc="268443017" name="dc" stackId="1" startPc="268442319"/>
+        <entry arg="true" endPc="268443017" name="state" stackId="2" startPc="268442319"/>
+        <entry endPc="268443016" name="daylight" stackId="3" startPc="268442322"/>
+        <entry endPc="268443016" name="terrain" stackId="4" startPc="268442700"/>
+        <entry endPc="268443016" name="weather" stackId="5" startPc="268442700"/>
+        <entry endPc="268442947" name="environmentText" stackId="6" startPc="268442748"/>
+        <entry arg="true" endPc="268443206" name="dc" stackId="1" startPc="268443018"/>
+        <entry arg="true" endPc="268443206" name="x" stackId="2" startPc="268443018"/>
+        <entry arg="true" endPc="268443206" name="y" stackId="3" startPc="268443018"/>
+        <entry arg="true" endPc="268443206" name="color" stackId="4" startPc="268443018"/>
+        <entry arg="true" endPc="268443257" name="state" stackId="1" startPc="268443207"/>
+        <entry endPc="268443257" name="heartRate" stackId="2" startPc="268443210"/>
+        <entry arg="true" endPc="268443315" name="seconds" stackId="1" startPc="268443258"/>
+        <entry endPc="268443315" name="hours" stackId="2" startPc="268443261"/>
+        <entry endPc="268443315" name="minutes" stackId="3" startPc="268443261"/>
+        <entry arg="true" endPc="268443540" name="dc" stackId="1" startPc="268443316"/>
+        <entry arg="true" endPc="268443540" name="state" stackId="2" startPc="268443316"/>
+        <entry arg="true" endPc="268443758" name="dc" stackId="1" startPc="268443541"/>
+        <entry arg="true" endPc="268443758" name="state" stackId="2" startPc="268443541"/>
+        <entry endPc="268443757" name="inset" stackId="3" startPc="268443544"/>
+        <entry arg="true" endPc="268444253" name="dc" stackId="1" startPc="268443759"/>
+        <entry arg="true" endPc="268444253" name="y" stackId="2" startPc="268443759"/>
+        <entry endPc="268444252" name="w" stackId="3" startPc="268443762"/>
+        <entry arg="true" endPc="268444322" name="delta" stackId="1" startPc="268444254"/>
+        <entry arg="true" endPc="268444466" name="dc" stackId="1" startPc="268444323"/>
+        <entry arg="true" endPc="268444466" name="y" stackId="2" startPc="268444323"/>
+        <entry arg="true" endPc="268444466" name="state" stackId="3" startPc="268444323"/>
+        <entry endPc="268444465" name="inset" stackId="4" startPc="268444326"/>
+        <entry endPc="268444465" name="width" stackId="5" startPc="268444326"/>
+        <entry endPc="268444465" name="fillWidth" stackId="6" startPc="268444326"/>
+        <entry arg="true" endPc="268444621" name="dc" stackId="1" startPc="268444467"/>
+        <entry arg="true" endPc="268444621" name="y" stackId="2" startPc="268444467"/>
+        <entry arg="true" endPc="268444621" name="leftLabel" stackId="3" startPc="268444467"/>
+        <entry arg="true" endPc="268444621" name="leftValue" stackId="4" startPc="268444467"/>
+        <entry arg="true" endPc="268444621" name="rightLabel" stackId="5" startPc="268444467"/>
+        <entry arg="true" endPc="268444621" name="rightValue" stackId="6" startPc="268444467"/>
+        <entry endPc="268444620" name="inset" stackId="7" startPc="268444470"/>
+        <entry arg="true" endPc="268444713" name="dc" stackId="1" startPc="268444622"/>
+        <entry arg="true" endPc="268444713" name="x" stackId="2" startPc="268444622"/>
+        <entry arg="true" endPc="268444713" name="y" stackId="3" startPc="268444622"/>
+        <entry arg="true" endPc="268444713" name="color" stackId="4" startPc="268444622"/>
+        <entry arg="true" endPc="268444817" name="state" stackId="1" startPc="268444714"/>
+        <entry endPc="268444817" name="upcoming" stackId="2" startPc="268444717"/>
+        <entry endPc="268444779" name="distance" stackId="3" startPc="268444748"/>
+        <entry endPc="268444817" name="km" stackId="4" startPc="268444717"/>
+        <entry arg="true" endPc="268444879" name="appRef" stackId="1" startPc="268444818"/>
+        <entry arg="true" endPc="268445198" name="dc" stackId="1" startPc="268444880"/>
+        <entry endPc="268445197" name="state" stackId="2" startPc="268444883"/>
+        <entry endPc="268445197" name="sos" stackId="3" startPc="268444883"/>
+        <entry arg="true" endPc="268445262" name="appRef" stackId="1" startPc="268445235"/>
+    </localVars>
+    <annotations>
+        <annotationEntry annotation="initialized" class="Drawables" module="globals/Rez" symbol="LauncherIcon"/>
+        <annotationEntry annotation="initialized" class="Strings" module="globals/Rez" symbol="AppName"/>
+    </annotations>
+    <dataEntryOffsetMappings>
+        <dataEntry label="globals" offset="49" parentId="" symbolId="globals" type="module"/>
+        <dataEntry label="globals/SagaTrailApp" offset="143" parentId="globals" symbolId="SagaTrailApp" type="class"/>
+        <dataEntry label="globals/SagaTrailMenuDelegate" offset="421" parentId="globals" symbolId="SagaTrailMenuDelegate" type="class"/>
+        <dataEntry label="globals/Rez" offset="483" parentId="globals" symbolId="Rez" type="module"/>
+        <dataEntry label="globals/SagaTrailCommandTransmitListener" offset="527" parentId="globals" symbolId="SagaTrailCommandTransmitListener" type="class"/>
+        <dataEntry label="globals/SagaTrailDelegate" offset="589" parentId="globals" symbolId="SagaTrailDelegate" type="class"/>
+        <dataEntry label="globals/SagaTrailHorizonView" offset="660" parentId="globals" symbolId="SagaTrailHorizonView" type="class"/>
+        <dataEntry label="globals/SagaTrailTransmitListener" offset="1055" parentId="globals" symbolId="SagaTrailTransmitListener" type="class"/>
+        <dataEntry label="globals/Rez/Drawables" offset="1126" parentId="Rez" symbolId="Drawables" type="module"/>
+        <dataEntry label="globals/Rez/Strings" offset="1161" parentId="Rez" symbolId="Strings" type="module"/>
+    </dataEntryOffsetMappings>
+    <functions>
+        <functionEntry accessMode="public" endPc="268435471" name="&lt;init&gt;" parent="SagaTrailApp" startPc="268435460">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435483" name="&lt;init&gt;" parent="SagaTrailMenuDelegate" startPc="268435472">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435503" name="&lt;init&gt;" parent="Rez" startPc="268435484">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435515" name="&lt;init&gt;" parent="SagaTrailCommandTransmitListener" startPc="268435504">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435527" name="&lt;init&gt;" parent="SagaTrailDelegate" startPc="268435516">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435539" name="&lt;init&gt;" parent="SagaTrailHorizonView" startPc="268435528">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435551" name="&lt;init&gt;" parent="SagaTrailTransmitListener" startPc="268435540">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435614" name="getInitialView" parent="SagaTrailApp" startPc="268435552">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435685" name="sendHikeCommand" parent="SagaTrailApp" startPc="268435615">
+            <param id="command"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435702" name="confirmSafetyCheckin" parent="SagaTrailApp" startPc="268435686">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435710" name="isPhoneCompanionReady" parent="SagaTrailApp" startPc="268435703">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435739" name="onStart" parent="SagaTrailApp" startPc="268435711">
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435747" name="getSosMessage" parent="SagaTrailApp" startPc="268435740">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268435787" name="setSosConfirmation" parent="SagaTrailApp" startPc="268435748">
+            <param id="value"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268436107" name="transmitLocalHeartRate" parent="SagaTrailApp" startPc="268435788">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268436208" name="toggleHike" parent="SagaTrailApp" startPc="268436108">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437355" name="onPhoneMessage" parent="SagaTrailApp" startPc="268436209">
+            <param id="message"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437363" name="getLiveState" parent="SagaTrailApp" startPc="268437356">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437390" name="refresh" parent="SagaTrailApp" startPc="268437364">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437398" name="getSosState" parent="SagaTrailApp" startPc="268437391">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437422" name="valueOrDefault" parent="SagaTrailApp" startPc="268437399">
+            <param id="state"/>
+            <param id="key"/>
+            <param id="fallback"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437430" name="isSosConfirmationArmed" parent="SagaTrailApp" startPc="268437423">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437490" name="initialize" parent="SagaTrailApp" startPc="268437431">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437569" name="sendHikeCommandWithDuration" parent="SagaTrailApp" startPc="268437491">
+            <param id="command"/>
+            <param id="durationMinutes"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437626" name="onSosTransport" parent="SagaTrailApp" startPc="268437570">
+            <param id="success"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437765" name="requestSos" parent="SagaTrailApp" startPc="268437627">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437796" name="changeInfoPage" parent="SagaTrailApp" startPc="268437766">
+            <param id="delta"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268437843" name="startSafetyCheckin" parent="SagaTrailApp" startPc="268437797">
+            <param id="durationMinutes"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438031" name="onMenuItem" parent="SagaTrailMenuDelegate" startPc="268437844">
+            <param id="item"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438055" name="initialize" parent="SagaTrailMenuDelegate" startPc="268438032">
+            <param id="appRef"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="&lt;init&gt;" parent="Drawables">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="&lt;init&gt;" parent="Strings">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="onError" parent="SagaTrailCommandTransmitListener">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" name="onComplete" parent="SagaTrailCommandTransmitListener">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438074" name="initialize" parent="SagaTrailCommandTransmitListener" startPc="268438056">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438277" name="onMenu" parent="SagaTrailDelegate" startPc="268438075">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438301" name="initialize" parent="SagaTrailDelegate" startPc="268438278">
+            <param id="appRef"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438523" name="onKey" parent="SagaTrailDelegate" startPc="268438302">
+            <param id="key"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438586" name="formatDistance" parent="SagaTrailHorizonView" startPc="268438524">
+            <param id="meters"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438624" name="gpsFresh" parent="SagaTrailHorizonView" startPc="268438587">
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438758" name="displayHeartRate" parent="SagaTrailHorizonView" startPc="268438625">
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438824" name="centered" parent="SagaTrailHorizonView" startPc="268438759">
+            <param id="dc"/>
+            <param id="y"/>
+            <param id="text"/>
+            <param id="font"/>
+            <param id="color"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438897" name="footer" parent="SagaTrailHorizonView" startPc="268438825">
+            <param id="dc"/>
+            <param id="text"/>
+            <param id="color"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268438964" name="pageTitle" parent="SagaTrailHorizonView" startPc="268438898">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268439502" name="drawStory" parent="SagaTrailHorizonView" startPc="268438965">
+            <param id="dc"/>
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268439529" name="terrainDirection" parent="SagaTrailHorizonView" startPc="268439503">
+            <param id="direction"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268440407" name="drawNavigation" parent="SagaTrailHorizonView" startPc="268439530">
+            <param id="dc"/>
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268440513" name="routeProgress" parent="SagaTrailHorizonView" startPc="268440408">
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268440537" name="safeInset" parent="SagaTrailHorizonView" startPc="268440514">
+            <param id="dc"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268440561" name="charsPerLine" parent="SagaTrailHorizonView" startPc="268440538">
+            <param id="dc"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268440580" name="setSosConfirmation" parent="SagaTrailHorizonView" startPc="268440562">
+            <param id="value"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268440625" name="thickLine" parent="SagaTrailHorizonView" startPc="268440581">
+            <param id="dc"/>
+            <param id="x1"/>
+            <param id="y1"/>
+            <param id="x2"/>
+            <param id="y2"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268440735" name="directionLabel" parent="SagaTrailHorizonView" startPc="268440626">
+            <param id="direction"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268441183" name="drawDirectionArrow" parent="SagaTrailHorizonView" startPc="268440736">
+            <param id="dc"/>
+            <param id="x"/>
+            <param id="y"/>
+            <param id="direction"/>
+            <param id="color"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268441241" name="shortText" parent="SagaTrailHorizonView" startPc="268441184">
+            <param id="text"/>
+            <param id="maxChars"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268441368" name="drawWrapped" parent="SagaTrailHorizonView" startPc="268441242">
+            <param id="dc"/>
+            <param id="y"/>
+            <param id="text"/>
+            <param id="maxLines"/>
+            <param id="color"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268442138" name="drawSafety" parent="SagaTrailHorizonView" startPc="268441369">
+            <param id="dc"/>
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268442162" name="value" parent="SagaTrailHorizonView" startPc="268442139">
+            <param id="state"/>
+            <param id="key"/>
+            <param id="fallback"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268442210" name="safetyStatus" parent="SagaTrailHorizonView" startPc="268442163">
+            <param id="status"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268442318" name="drawBottomStat" parent="SagaTrailHorizonView" startPc="268442211">
+            <param id="dc"/>
+            <param id="y"/>
+            <param id="left"/>
+            <param id="text"/>
+            <param id="label"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268443017" name="drawStatus" parent="SagaTrailHorizonView" startPc="268442319">
+            <param id="dc"/>
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268443206" name="drawHiker" parent="SagaTrailHorizonView" startPc="268443018">
+            <param id="dc"/>
+            <param id="x"/>
+            <param id="y"/>
+            <param id="color"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268443257" name="heartRateText" parent="SagaTrailHorizonView" startPc="268443207">
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268443315" name="formatTime" parent="SagaTrailHorizonView" startPc="268443258">
+            <param id="seconds"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268443540" name="drawCompletion" parent="SagaTrailHorizonView" startPc="268443316">
+            <param id="dc"/>
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268443758" name="drawHeader" parent="SagaTrailHorizonView" startPc="268443541">
+            <param id="dc"/>
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268444253" name="drawHorizon" parent="SagaTrailHorizonView" startPc="268443759">
+            <param id="dc"/>
+            <param id="y"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268444322" name="changePage" parent="SagaTrailHorizonView" startPc="268444254">
+            <param id="delta"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268444466" name="drawRouteProgress" parent="SagaTrailHorizonView" startPc="268444323">
+            <param id="dc"/>
+            <param id="y"/>
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268444621" name="drawMetricRow" parent="SagaTrailHorizonView" startPc="268444467">
+            <param id="dc"/>
+            <param id="y"/>
+            <param id="leftLabel"/>
+            <param id="leftValue"/>
+            <param id="rightLabel"/>
+            <param id="rightValue"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268444713" name="drawPlayMark" parent="SagaTrailHorizonView" startPc="268444622">
+            <param id="dc"/>
+            <param id="x"/>
+            <param id="y"/>
+            <param id="color"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268444817" name="nextManeuverDistance" parent="SagaTrailHorizonView" startPc="268444714">
+            <param id="state"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268444879" name="initialize" parent="SagaTrailHorizonView" startPc="268444818">
+            <param id="appRef"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268445198" name="onUpdate" parent="SagaTrailHorizonView" startPc="268444880">
+            <param id="dc"/>
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268445216" name="onError" parent="SagaTrailTransmitListener" startPc="268445199">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268445234" name="onComplete" parent="SagaTrailTransmitListener" startPc="268445217">
+            <documentation/>
+        </functionEntry>
+        <functionEntry accessMode="public" endPc="268445262" name="initialize" parent="SagaTrailTransmitListener" startPc="268445235">
+            <param id="appRef"/>
+            <documentation/>
+        </functionEntry>
+    </functions>
+</debugInfo>

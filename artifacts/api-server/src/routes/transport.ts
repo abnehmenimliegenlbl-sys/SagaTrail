@@ -19,8 +19,22 @@ const CACHE_TTL_MS = 2 * 60 * 1000;
 
 /** Wählt unter den Kandidaten die nächste echte Haltestelle (mit ID, nicht Adresse). */
 function bestStation(
-  candidates: Array<{ id?: string; label: string; dist?: number; iconclass?: string }>,
-): { id: string; label: string; dist?: number; iconclass?: string } | null {
+  candidates: Array<{
+    id?: string;
+    label: string;
+    dist?: number;
+    iconclass?: string;
+    lat?: number;
+    lon?: number;
+  }>,
+): {
+  id: string;
+  label: string;
+  dist?: number;
+  iconclass?: string;
+  lat?: number;
+  lon?: number;
+} | null {
   const withId = candidates.filter((s): s is typeof s & { id: string } => !!s.id);
   if (!withId.length) return null;
   // Züge bevorzugen, dann S-Bahn, dann beliebig — jeweils nächste (dist aufsteigend)
@@ -70,8 +84,8 @@ const cacheAnreise = new Map<string, AnreiseCacheEntry>();
 async function nearestStation(
   lat: number,
   lng: number,
-): Promise<{ id: string; name: string } | null> {
-  const url = `${SEARCH_BASE}/completion.json?latlon=${lat},${lng}&show_ids=1`;
+): Promise<{ id: string; name: string; lat?: number; lng?: number } | null> {
+  const url = `${SEARCH_BASE}/completion.json?latlon=${lat},${lng}&show_ids=1&show_coordinates=1`;
   const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`completion HTTP ${res.status}`);
   const json = (await res.json()) as Array<{
@@ -79,10 +93,42 @@ async function nearestStation(
     label: string;
     dist?: number;
     iconclass?: string;
+    lat?: number;
+    lon?: number;
   }>;
   const station = bestStation(json);
-  return station ? { id: station.id, name: station.label } : null;
+  return station
+    ? {
+        id: station.id,
+        name: station.label,
+        ...(Number.isFinite(station.lat) && Number.isFinite(station.lon)
+          ? { lat: station.lat, lng: station.lon }
+          : {}),
+      }
+    : null;
 }
+
+router.get("/transport/nearby", async (req, res): Promise<void> => {
+  const lat = parseFloat(req.query.lat as string);
+  const lng = parseFloat(req.query.lng as string);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    res.status(400).json({ error: "lat und lng sind erforderlich" });
+    return;
+  }
+
+  try {
+    const station = await nearestStation(lat, lng);
+    res.json({
+      station:
+        station && station.lat != null && station.lng != null
+          ? station
+          : null,
+    });
+  } catch (err) {
+    log.warn({ err }, "naechster Verkehrshalt konnte nicht geladen werden");
+    res.status(502).json({ error: "Verkehrshalte nicht verfügbar" });
+  }
+});
 
 /** Typ-Code aus dem search.ch connection-Objekt (z.B. "S", "IR", "IC"). */
 function connCategory(conn: { "*G"?: string; type?: string }): string {

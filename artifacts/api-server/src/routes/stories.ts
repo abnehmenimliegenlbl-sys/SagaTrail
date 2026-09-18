@@ -10,7 +10,7 @@ const router: IRouter = Router();
 // muessen diese Kennung mitbumpen, damit alte, im Stil ueberholte Kapitel
 // nicht ewig aus dem Cache bedient werden. Alte Zeilen werden beim naechsten
 // Abruf lazy ueberschrieben.
-const STORY_SOURCE = "ai-v2";
+const STORY_SOURCE = "ai-v4";
 
 router.post("/stories", async (req, res): Promise<void> => {
   const parsed = CreateStoryBody.safeParse(req.body);

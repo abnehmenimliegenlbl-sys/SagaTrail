@@ -6,6 +6,15 @@ import { join } from "path";
 import type { Logger } from "pino";
 import { textToSpeech as openaiTextToSpeech } from "@workspace/integrations-openai-ai-server/audio";
 
+// 1.0 = Originaltempo. Der Wert wird auch in den Cache-Key einbezogen
+// (ueber OPENAI_CACHE_VERSION in narrationCache.ts).
+export const OPENAI_NARRATION_SPEED = 1.0;
+
+// gpt-audio hat keinen separaten Expressiveness-/Style-Regler. Diese Anweisung
+// steuert die Prosodie, ohne den eigentlichen Sage-Text veraendern zu duerfen.
+const OPENAI_NARRATION_INSTRUCTIONS =
+  "You are a warm, lively storyteller. Speak with natural energy, varied intonation, and clear emphasis, while keeping a natural conversational pace. Repeat the provided text exactly; do not add, remove, paraphrase, or explain anything.";
+
 // Lautstaerke-Boost fuer OpenAI-Narration (relativ zu ElevenLabs).
 // 2.0 = doppelte Signal-Amplitude. Ueberschreibbar per Env-Variable
 // OPENAI_NARRATION_VOLUME.
@@ -61,7 +70,7 @@ async function generateSilenceMp3(dir: string, seconds: number): Promise<string>
  * Erzeugt OpenAI-Erzaehlaudio mit Betonungspausen und Tempoanpassung:
  * jeder Satz wird einzeln synthetisiert, dramatische Saetze (Ausrufe,
  * Ellipsen) bekommen eine laengere Pause danach, alles wird
- * zusammengefuehrt und am Ende auf `speed` (z.B. 0.95 = 5% langsamer)
+ * zusammengefuehrt und am Ende auf `speed` (1.0 = Originaltempo)
  * abgespielt. Kostet pro Wanderungs-Schnipsel mehrere kleine
  * gpt-audio-Aufrufe statt einem grossen — bewusster Trade-off fuer die
  * hoerbare Dramaturgie.
@@ -77,7 +86,12 @@ export async function synthesizeOpenAiNarrationWithPacing(
   // Ein einzelner Satz (oder Erkennung fehlgeschlagen): kein Concat noetig,
   // nur Tempoanpassung + Lautstaerke.
   if (sentences.length <= 1) {
-    const audio = await openaiTextToSpeech(text, voice, "mp3");
+    const audio = await openaiTextToSpeech(
+      text,
+      voice,
+      "mp3",
+      OPENAI_NARRATION_INSTRUCTIONS,
+    );
     return applyAudioProcessing(audio, speed, OPENAI_VOLUME_BOOST);
   }
 
@@ -87,7 +101,12 @@ export async function synthesizeOpenAiNarrationWithPacing(
 
     for (let i = 0; i < sentences.length; i++) {
       const { text: satzText, dramatic } = sentences[i];
-      const audio = await openaiTextToSpeech(satzText, voice, "mp3");
+      const audio = await openaiTextToSpeech(
+        satzText,
+        voice,
+        "mp3",
+        OPENAI_NARRATION_INSTRUCTIONS,
+      );
       const segPath = join(dir, `seg-${i}-${randomUUID()}.mp3`);
       await writeFile(segPath, audio);
       segmentPaths.push(segPath);
@@ -121,7 +140,12 @@ export async function synthesizeOpenAiNarrationWithPacing(
       { err },
       "Satzweise Pacing-Synthese fehlgeschlagen, Rueckfall auf einfache TTS ohne Pausen",
     );
-    const audio = await openaiTextToSpeech(text, voice, "mp3");
+    const audio = await openaiTextToSpeech(
+      text,
+      voice,
+      "mp3",
+      OPENAI_NARRATION_INSTRUCTIONS,
+    );
     return applyAudioProcessing(audio, speed, OPENAI_VOLUME_BOOST);
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});

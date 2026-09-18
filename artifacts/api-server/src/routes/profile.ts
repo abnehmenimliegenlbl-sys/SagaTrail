@@ -1,6 +1,7 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import express, { Router, type IRouter, type Request, type Response } from "express";
 import { getAuth, clerkClient } from "@clerk/express";
 import { and, eq, sql } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { db, profilesTable, referralsTable } from "@workspace/db";
 import {
@@ -12,6 +13,7 @@ import {
   SyncMyProgressBody,
   SyncMyProgressResponse,
 } from "@workspace/api-zod";
+import { ObjectStorageService } from "../lib/objectStorage";
 
 import { purgeUserData } from "./accountDeletion";
 import { istPremiumAktiv } from "../lib/premiumStatus";
@@ -25,6 +27,7 @@ const WelcomeSagenpaketResponse = z.object({
 });
 
 const router: IRouter = Router();
+const storage = new ObjectStorageService();
 
 function requireUserId(req: Request, res: Response): string | null {
   const auth = getAuth(req);
@@ -62,9 +65,12 @@ async function rewardReferralInviter(inviteeId: string): Promise<void> {
 }
 
 function toProfile(row: typeof profilesTable.$inferSelect) {
-  return GetMyProfileResponse.parse({
+  const parsed = GetMyProfileResponse.parse({
     id: row.id,
     name: row.name,
+    bio: row.bio ?? null,
+    avatarUrl: row.avatarUrl ?? null,
+    dateOfBirth: row.dateOfBirth ?? null,
     archetype: row.archetype,
     homeCanton: row.homeCanton,
     language: row.language,
@@ -76,6 +82,13 @@ function toProfile(row: typeof profilesTable.$inferSelect) {
     subscriptionTier: row.subscriptionTier,
     pendingPackRewards: row.pendingPackRewards ?? 0,
   });
+  // The generated response schema coerces OpenAPI `format: date` values to a
+  // JavaScript Date. Keep the wire format date-only so mobile profile editing
+  // can round-trip `YYYY-MM-DD` without exposing a timezone timestamp.
+  return {
+    ...parsed,
+    dateOfBirth: row.dateOfBirth ?? null,
+  };
 }
 
 router.get("/me", async (req, res): Promise<void> => {
@@ -98,18 +111,33 @@ router.put("/me", async (req, res): Promise<void> => {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
-  const parsed = SaveMyProfileBody.safeParse(req.body);
+  const hasBio =
+    req.body != null &&
+    typeof req.body === "object" &&
+    Object.prototype.hasOwnProperty.call(req.body, "bio");
+  const normalizedBody =
+    req.body && typeof req.body === "object"
+      ? {
+          ...req.body,
+          ...(typeof req.body.bio === "string"
+            ? { bio: req.body.bio.trim() || null }
+            : {}),
+        }
+      : req.body;
+  const parsed = SaveMyProfileBody.safeParse(normalizedBody);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { name, archetype, homeCanton, language, ageTier, navAnnouncementsEnabled } = parsed.data;
+  const { name, bio, archetype, homeCanton, language, ageTier, dateOfBirth, navAnnouncementsEnabled } = parsed.data;
 
   const [row] = await db
     .insert(profilesTable)
     .values({
       id: userId,
       name,
+      bio: bio ?? null,
+      dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().slice(0, 10) : null,
       archetype,
       homeCanton: homeCanton ?? "",
       language,
@@ -120,6 +148,8 @@ router.put("/me", async (req, res): Promise<void> => {
       target: profilesTable.id,
       set: {
         name,
+        ...(hasBio ? { bio: bio ?? null } : {}),
+        dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().slice(0, 10) : null,
         archetype,
         homeCanton: homeCanton ?? "",
         language,
@@ -132,6 +162,42 @@ router.put("/me", async (req, res): Promise<void> => {
 
   res.json(toProfile(row));
 });
+
+router.post(
+  "/me/avatar",
+  express.raw({ type: ["image/jpeg", "image/png", "image/webp", "application/octet-stream"], limit: "5mb" }),
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = requireUserId(req, res);
+    if (!userId) return;
+    const contentType = String(req.headers["content-type"] ?? "").split(";")[0];
+    if (!["image/jpeg", "image/png", "image/webp"].includes(contentType)) {
+      res.status(400).json({ error: "Nur JPEG-, PNG- oder WebP-Bilder sind erlaubt" });
+      return;
+    }
+    const buffer = req.body as Buffer;
+    if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+      res.status(400).json({ error: "Kein Bild empfangen" });
+      return;
+    }
+    const extension = contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg";
+    try {
+      const objectPath = await storage.uploadBuffer(buffer, contentType, `profile-avatars/${userId}-${randomUUID()}.${extension}`);
+      const [row] = await db
+        .update(profilesTable)
+        .set({ avatarUrl: objectPath, updatedAt: new Date() })
+        .where(eq(profilesTable.id, userId))
+        .returning();
+      if (!row) {
+        res.status(404).json({ error: "Kein Profil vorhanden" });
+        return;
+      }
+      res.json(toProfile(row));
+    } catch (err) {
+      req.log.error({ err }, "Profilbild-Upload fehlgeschlagen");
+      res.status(500).json({ error: "Profilbild konnte nicht gespeichert werden" });
+    }
+  },
+);
 
 router.patch("/me/premium", async (req, res): Promise<void> => {
   const userId = requireUserId(req, res);
@@ -293,12 +359,15 @@ router.post("/me/packs/claim", async (req, res): Promise<void> => {
 
 function mergeById<T extends { id: string }>(
   serverItems: unknown,
-  clientItems: T[]
+  clientItems: T[],
+  immutableId: (id: string) => boolean = () => false,
 ): T[] {
   const serverArr = Array.isArray(serverItems) ? (serverItems as T[]) : [];
   const merged = new Map<string, T>();
   for (const item of serverArr) merged.set(item.id, item);
-  for (const item of clientItems) merged.set(item.id, item);
+  for (const item of clientItems) {
+    if (!immutableId(item.id)) merged.set(item.id, item);
+  }
   return Array.from(merged.values());
 }
 
@@ -321,35 +390,50 @@ router.post("/me/progress/sync", async (req, res): Promise<void> => {
   const rawAchievements: { id: string; sagaTitle: string; unlockedAt: number }[] =
     Array.isArray(req.body?.achievements) ? req.body.achievements : [];
 
-  const [existing] = await db
-    .select()
-    .from(profilesTable)
-    .where(eq(profilesTable.id, userId));
-  if (!existing) {
+  const row = await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(profilesTable)
+      .where(eq(profilesTable.id, userId))
+      .for("update");
+    if (!existing) return null;
+
+    // Vereinigung statt Ueberschreiben: ein Geraet, das nach einem Ab-/Anmelden
+    // (oder auf einem anderen Geraet) mit leerem oder aelterem lokalen Zustand
+    // synct, darf bereits serverseitig bekannte Wanderungen/Errungenschaften
+    // nie loeschen. Merge erfolgt ausschliesslich ueber die id.
+    // Server-authoritative group records cannot be replaced by stale client
+    // payloads; all other client entries retain the existing merge semantics.
+    const isAuthoritativeGroupId = (id: string) =>
+      id.startsWith("group_") || id.startsWith("group_hikes_");
+    const mergedHikeHistory = mergeById(
+      existing.hikeHistory,
+      rawHikeHistory,
+      isAuthoritativeGroupId,
+    )
+      .sort((a: any, b: any) => (b.startedAt ?? 0) - (a.startedAt ?? 0))
+      .slice(0, 200);
+    const mergedAchievements = mergeById(
+      existing.achievements,
+      rawAchievements,
+      isAuthoritativeGroupId,
+    );
+
+    const [updated] = await tx
+      .update(profilesTable)
+      .set({
+        hikeHistory: mergedHikeHistory,
+        achievements: mergedAchievements,
+        updatedAt: new Date(),
+      })
+      .where(eq(profilesTable.id, userId))
+      .returning();
+    return updated;
+  });
+  if (!row) {
     res.status(404).json({ error: "Kein Profil vorhanden" });
     return;
   }
-
-  // Vereinigung statt Ueberschreiben: ein Geraet, das nach einem Ab-/Anmelden
-  // (oder auf einem anderen Geraet) mit leerem oder aelterem lokalen Zustand
-  // synct, darf bereits serverseitig bekannte Wanderungen/Errungenschaften
-  // nie loeschen. Merge erfolgt ausschliesslich ueber die id.
-  // Client-Eintraege gewinnen (neuere Daten), DB-Eintraege fuer unbekannte IDs
-  // werden ergaenzt — so bleiben volle Objekte (sagaId, routeName…) erhalten.
-  const mergedHikeHistory = mergeById(existing.hikeHistory, rawHikeHistory)
-    .sort((a: any, b: any) => (b.startedAt ?? 0) - (a.startedAt ?? 0))
-    .slice(0, 200);
-  const mergedAchievements = mergeById(existing.achievements, rawAchievements);
-
-  const [row] = await db
-    .update(profilesTable)
-    .set({
-      hikeHistory: mergedHikeHistory,
-      achievements: mergedAchievements,
-      updatedAt: new Date(),
-    })
-    .where(eq(profilesTable.id, userId))
-    .returning();
 
   // Antwort direkt ohne SyncMyProgressResponse.parse() senden: das Zod-Schema
   // wuerde hikeHistory ebenfalls auf { id } reduzieren und sagaId etc. loeschen.

@@ -1,11 +1,11 @@
 import { useAuth } from "@clerk/expo";
 import { Feather } from "@expo/vector-icons";
 import { createNarration } from "@workspace/api-client-react";
-import { Audio } from "expo-av";
 import Constants from "expo-constants";
 import * as Application from "expo-application";
 import * as StoreReview from "expo-store-review";
 import { hapticRigid } from "@/lib/haptics";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -28,6 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
+import { ProfileAvatar } from "@/components/brand/ProfileAvatar";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { AGE_TIERS, ARCHETYPES } from "@/constants/onboarding";
@@ -42,8 +43,10 @@ import {
 } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 import { getApiBaseUrl } from "@/lib/apiConfig";
+import { createAudioSound, type AudioSound } from "@/lib/audioPlayer";
 import { blobToTempFileUri } from "@/lib/narrationAudio";
 import { resolveLang } from "@/lib/storyContent";
+import { canSelectGarminDevice, selectGarminDevice } from "@/lib/watchCompanion";
 import { AgeTier, Archetype } from "@/types";
 
 const WEB_TOP = 67;
@@ -64,6 +67,22 @@ const VOICE_SAMPLES: Record<string, string> = {
   ru: "Так звучит голос, который расскажет тебе легенды в пути.",
 };
 
+function normalizeBirthDateForProfile(value: string): string | null {
+  const input = value.trim();
+  if (!input) return null;
+  const match = input.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  let iso = input;
+  if (match) {
+    const [, day, month, year] = match;
+    iso = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+  const date = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== iso) return null;
+  const age = new Date().getUTCFullYear() - date.getUTCFullYear();
+  return age >= 13 && age <= 120 ? iso : null;
+}
+
 export default function Einstellungen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -79,6 +98,7 @@ export default function Einstellungen() {
     setThemeMode,
     emergencyContact,
     updateProfile,
+    uploadProfileAvatar,
     setEnergiesparmodus,
     saveEmergencyContact,
     exportData,
@@ -153,10 +173,54 @@ export default function Einstellungen() {
   const [previewUnavailable, setPreviewUnavailable] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(profile?.name ?? "");
+  const [bioInput, setBioInput] = useState(profile?.bio ?? "");
+  const [birthInput, setBirthInput] = useState(profile?.dateOfBirth ?? "");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
 
-  // Vorschau-Sound (KI-Stimme via expo-av); Generation-Zaehler verhindert,
+  const pickProfileAvatar = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.82,
+    });
+    if (result.canceled || !result.assets[0]?.uri) return;
+    setAvatarUploading(true);
+    try {
+      await uploadProfileAvatar(result.assets[0].uri);
+    } catch (error) {
+      alert("Profilbild konnte nicht gespeichert werden", error instanceof Error ? error.message : "Bitte später erneut versuchen.");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  const saveCommunityProfile = useCallback(async () => {
+    if (!nameInput.trim()) return;
+    const normalizedBirthDate = normalizeBirthDateForProfile(birthInput);
+    if (birthInput.trim() && !normalizedBirthDate) {
+      alert("Geburtsdatum prüfen", "Bitte ein gültiges Datum zwischen 13 und 120 Jahren eingeben.");
+      return;
+    }
+    setProfileSaving(true);
+    try {
+      await updateProfile({
+        name: nameInput.trim(),
+        bio: bioInput.trim() || null,
+        dateOfBirth: normalizedBirthDate,
+      });
+      setEditingName(false);
+    } catch (error) {
+      alert("Profil konnte nicht gespeichert werden", error instanceof Error ? error.message : "Bitte später erneut versuchen.");
+    } finally {
+      setProfileSaving(false);
+    }
+  }, [bioInput, birthInput, nameInput, updateProfile]);
+
+  // Vorschau-Sound (KI-Stimme via expo-audio); Generation-Zaehler verhindert,
   // dass eine langsame alte Anfrage eine neuere Vorschau ueberschreibt.
-  const previewSoundRef = useRef<Audio.Sound | null>(null);
+  const previewSoundRef = useRef<AudioSound | null>(null);
   const previewGenRef = useRef(0);
 
   const stopPreview = useCallback(async () => {
@@ -214,7 +278,7 @@ export default function Einstellungen() {
       const blob = await createNarration({ text: sample, language: profile?.language });
       const uri = await blobToTempFileUri(blob);
       if (gen !== previewGenRef.current) return;
-      const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
+      const { sound } = await createAudioSound({ uri }, { shouldPlay: true });
       if (gen !== previewGenRef.current) {
         void sound.unloadAsync();
         return;
@@ -298,15 +362,51 @@ export default function Einstellungen() {
         <ScreenHeader eyebrow={t.eyebrow} title={t.title} />
 
         <Section title={t.sectionProfil}>
+          <View style={styles.profileSummary}>
+            <ProfileAvatar avatarUrl={profile?.avatarUrl} name={profile?.name} size={76} />
+            <View style={styles.profileSummaryText}>
+              <Text style={[styles.profileSummaryName, { color: colors.foreground }]}>
+                {profile?.name ?? "-"}
+              </Text>
+              <Text style={[styles.profileSummaryHint, { color: colors.mutedForeground }]}>
+                {t.avatarHint}
+              </Text>
+            </View>
+          </View>
           <RowButton
             label={t.nameLabel}
             value={profile?.name ?? "-"}
             icon="edit-2"
             onPress={() => {
               setNameInput(profile?.name ?? "");
+              setBioInput(profile?.bio ?? "");
+              setBirthInput(profile?.dateOfBirth ?? "");
               setEditingName(true);
             }}
           />
+          <RowButton
+            label={t.bioLabel}
+            value={profile?.bio || "-"}
+            icon="edit-2"
+            onPress={() => {
+              setNameInput(profile?.name ?? "");
+              setBioInput(profile?.bio ?? "");
+              setBirthInput(profile?.dateOfBirth ?? "");
+              setEditingName(true);
+            }}
+          />
+          <RowButton
+            label={t.avatarLabel}
+            value={avatarUploading ? t.avatarUploading : t.avatarSelect}
+            icon="camera"
+            onPress={() => void pickProfileAvatar()}
+          />
+          <RowButton label="Geburtsdatum" value={profile?.dateOfBirth ?? "Nicht angegeben"} icon="gift" onPress={() => {
+            setNameInput(profile?.name ?? "");
+            setBioInput(profile?.bio ?? "");
+            setBirthInput(profile?.dateOfBirth ?? "");
+            setEditingName(true);
+          }} />
           <RowButton label={t.archetypeLabel} value={archLabel ?? "-"} onPress={cycleArchetype} />
           <RowButton label={t.ageTierLabel} value={ageLabel ?? "-"} onPress={cycleAge} />
           <View style={[styles.langBlock, { borderColor: colors.glassBorder }]}>
@@ -453,6 +553,32 @@ export default function Einstellungen() {
             />
           </View>
         </Section>
+
+        {Platform.OS !== "web" && canSelectGarminDevice() && (
+          <Section title={t.sectionGeraete}>
+            <View style={[styles.deviceCard, { borderColor: colors.glassBorder }]}>
+              <View style={styles.deviceCardCopy}>
+                <Feather name="watch" size={18} color={colors.accent} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.rowLabel, { color: colors.foreground }]}>
+                    {t.garminLabel}
+                  </Text>
+                  <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>
+                    {t.garminHint}
+                  </Text>
+                </View>
+              </View>
+              <PrimaryButton
+                label={t.garminConnectButton}
+                variant="secondary"
+                onPress={() => {
+                  hapticRigid();
+                  selectGarminDevice();
+                }}
+              />
+            </View>
+          </Section>
+        )}
 
         <Section title={t.sectionNotfallkontakt}>
           <TextInput
@@ -739,26 +865,44 @@ export default function Einstellungen() {
               style={[styles.modalInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
               returnKeyType="done"
               onSubmitEditing={() => {
-                if (nameInput.trim()) {
-                  updateProfile({ name: nameInput.trim() });
-                }
-                setEditingName(false);
+                void saveCommunityProfile();
               }}
+            />
+            <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>
+              {t.bioLabel} · {t.bioHint}
+            </Text>
+            <TextInput
+              value={bioInput}
+              onChangeText={setBioInput}
+              placeholder={t.bioPlaceholder}
+              placeholderTextColor={colors.mutedForeground}
+              maxLength={160}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+              style={[styles.modalInput, styles.bioModalInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
+            />
+            <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>Geburtsdatum (TT.MM.JJJJ oder JJJJ-MM-TT)</Text>
+            <TextInput
+              value={birthInput}
+              onChangeText={setBirthInput}
+              placeholder="TT.MM.JJJJ"
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="numbers-and-punctuation"
+              style={[styles.modalInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
             />
             <View style={styles.modalButtons}>
               <Pressable onPress={() => setEditingName(false)} style={styles.modalCancelBtn}>
                 <Text style={[styles.modalBtnText, { color: colors.mutedForeground }]}>{t.cancel}</Text>
               </Pressable>
               <Pressable
-                onPress={() => {
-                  if (nameInput.trim()) {
-                    updateProfile({ name: nameInput.trim() });
-                  }
-                  setEditingName(false);
-                }}
+                onPress={() => void saveCommunityProfile()}
+                disabled={profileSaving}
                 style={[styles.modalSaveBtn, { backgroundColor: colors.primary }]}
               >
-                <Text style={[styles.modalBtnText, { color: colors.primaryForeground }]}>{t.saveLabel}</Text>
+                <Text style={[styles.modalBtnText, { color: colors.primaryForeground }]}>
+                  {profileSaving ? "Speichert …" : t.saveLabel}
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -828,6 +972,27 @@ function RowButton({
 
 const styles = StyleSheet.create({
   sectionTitle: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, marginBottom: 8 },
+  profileSummary: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 14,
+    marginBottom: 14,
+    paddingHorizontal: 4,
+  },
+  profileSummaryText: { flex: 1 },
+  profileSummaryName: { fontFamily: fonts.titleBold, fontSize: 20 },
+  profileSummaryHint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  deviceCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    gap: 14,
+  },
+  deviceCardCopy: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -938,6 +1103,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 20,
   },
+  bioModalInput: { minHeight: 84, marginTop: 8 },
   modalButtons: {
     flexDirection: "row",
     gap: 12,

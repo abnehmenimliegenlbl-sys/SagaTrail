@@ -19,7 +19,9 @@ import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { fonts } from "@/constants/typography";
 import { GLAS_3D } from "@/constants/depth";
+import { CloseButton } from "@/components/brand/CloseButton";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { RouteAccordionCard } from "@/components/brand/RouteAccordionCard";
 
 export interface SacHuette {
@@ -85,6 +87,7 @@ function StatusBadge({ isOpen, t }: { isOpen: boolean | null; t: ReturnType<type
 
 function DetailModal({ huette, onClose, t }: { huette: SacHuette; onClose: () => void; t: ReturnType<typeof useRouteStrings> }) {
   const colors = useColors();
+  const ts = useSharedStrings();
   const { width } = useWindowDimensions();
   const isOpen = parseOpenStatus(huette.openingHours, huette.elevation);
 
@@ -99,7 +102,7 @@ function DetailModal({ huette, onClose, t }: { huette: SacHuette; onClose: () =>
       <Animated.View
         entering={FadeIn.duration(160)}
         exiting={FadeOut.duration(160)}
-        style={[StyleSheet.absoluteFillObject, styles.backdrop]}
+        style={[StyleSheet.absoluteFill, styles.backdrop]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
@@ -197,13 +200,11 @@ function DetailModal({ huette, onClose, t }: { huette: SacHuette; onClose: () =>
             </ScrollView>
 
             {/* Schliessen-Button */}
-            <Pressable
+            <CloseButton
+              accessibilityLabel={ts.close}
               onPress={onClose}
-              hitSlop={12}
-              style={({ pressed }) => [styles.closeBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder, opacity: pressed ? 0.7 : 1 }]}
-            >
-              <Feather name="x" size={18} color={colors.foreground} />
-            </Pressable>
+              style={styles.closeBtn}
+            />
           </View>
         </Animated.View>
       </Animated.View>

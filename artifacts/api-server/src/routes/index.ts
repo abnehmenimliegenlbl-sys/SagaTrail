@@ -30,6 +30,7 @@ import storageRouter from "./storage";
 import waypointPhotosRouter from "./waypointPhotos";
 import sacHuettenRouter from "./sacHuetten";
 import elevationProfileRouter from "./elevationProfile";
+import panoramaProfilesRouter from "./panoramaProfiles";
 import terrainSurfaceRouter from "./terrainSurface";
 import trinkwasserRouter from "./trinkwasser";
 import waypointAnnounceRouter from "./waypointAnnounce";
@@ -44,6 +45,7 @@ import androidBetaRouter from "./androidBeta";
 import objectRecognitionRouter from "./objectRecognition";
 import safetySharesRouter from "./safetyShares";
 import safetyPoisRouter from "./safetyPois";
+import meetupsRouter from "./meetups";
 
 const router: IRouter = Router();
 
@@ -78,6 +80,7 @@ router.use(storageRouter);
 router.use(waypointPhotosRouter);
 router.use(sacHuettenRouter);
 router.use(elevationProfileRouter);
+router.use(panoramaProfilesRouter);
 router.use(terrainSurfaceRouter);
 router.use(trinkwasserRouter);
 router.use(waypointAnnounceRouter);
@@ -92,5 +95,6 @@ router.use(androidBetaRouter);
 router.use(objectRecognitionRouter);
 router.use(safetySharesRouter);
 router.use(safetyPoisRouter);
+router.use(meetupsRouter);
 
 export default router;

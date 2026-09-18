@@ -21,26 +21,23 @@ import { hapticHeavy, hapticWarning } from "./haptics";
 // Notification Center und werden von watchOS nicht gespiegelt.
 if (Platform.OS !== "web") {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
+    handleNotification: async (notification) => ({
       shouldShowBanner: true,
       // Muss true sein: Apple Watch spiegelt nur Mitteilungen,
       // die im Notification Center (Liste) landen.
       shouldShowList: true,
-      shouldPlaySound: false,
+      shouldPlaySound: notification.request.content.data?.type === "safety-checkin",
       shouldSetBadge: false,
     }),
   });
 }
 
-/** Fragt (nativ) die Mitteilungs-Berechtigung an; liefert true bei Erlaubnis. */
+/** Liest die im Onboarding gesetzte Mitteilungs-Berechtigung. */
 export async function bereiteAbbiegeMitteilungenVor(): Promise<boolean> {
   if (Platform.OS === "web") return false;
   try {
     const existing = await Notifications.getPermissionsAsync();
-    if (existing.granted) return true;
-    if (!existing.canAskAgain) return false;
-    const asked = await Notifications.requestPermissionsAsync();
-    return asked.granted;
+    return existing.granted;
   } catch {
     // Best effort — ohne Berechtigung bleiben die Hinweise Teil der Erzaehlung.
     return false;

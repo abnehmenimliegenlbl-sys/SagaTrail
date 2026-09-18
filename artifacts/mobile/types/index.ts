@@ -9,6 +9,9 @@ export interface LatLng {
 export interface Profile {
   id: string;
   name: string;
+  bio: string | null;
+  avatarUrl?: string | null;
+  dateOfBirth?: string | null;
   archetype: Archetype;
   homeCanton?: string;
   language: string;

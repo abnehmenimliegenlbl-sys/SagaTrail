@@ -7,6 +7,7 @@
     "hello": "tsx ./src/hello.ts",
     "seed-revenuecat": "tsx ./src/seedRevenueCat.ts",
     "kantonspack-umbau": "tsx ./src/kantonspackUmbau.ts",
+    "index-route-themes": "node ../scripts/index_route_themes.cjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

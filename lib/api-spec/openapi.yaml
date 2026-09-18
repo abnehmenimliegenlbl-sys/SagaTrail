@@ -244,6 +244,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /themes/{theme}/routes:
+    get:
+      operationId: getThemeRoutes
+      tags: [routes]
+      summary: Serverseitig geprüfte Routen einer Themenwelt
+      description: >
+        Liefert die Routen einer Themenwelt direkt aus den serverseitig
+        geprüften Themenbelegen. Die Abfrage erfolgt kantonsübergreifend in
+        einer Datenbankabfrage.
+      parameters:
+        - name: theme
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - wasserwege
+              - burgen_ruinen_alte_wege
+              - gipfel_panorama
+              - geologie_eiszeit
+              - hoehlen_grotten
+              - wald_wildtiere
+              - alpen_landwirtschaft
+              - pilger_handelswege
+              - industriekultur
+              - familien_entdecker
+              - nacht_sterne
+              - flora_jahreszeiten
+              - bahn_seilbahn
+      responses:
+        "200":
+          description: Themenwelt-Routen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Unbekannte Themenwelt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Themenwelt-Routen konnten nicht geladen werden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/pois:
     get:
       operationId: getPois
@@ -619,6 +669,36 @@ paths:
           description: Fehlende lat/lng Parameter
         "502":
           description: Upstream-Fehler von transport.opendata.ch
+  /transport/nearby:
+    get:
+      operationId: getTransportNearby
+      tags: [routes]
+      summary: Naechsten Verkehrshalt mit Koordinaten finden
+      description: >
+        Liefert den naechsten oeffentlichen Verkehrshalt zu einem GPS-Punkt.
+        Die Koordinaten werden fuer eine anschliessende Fusswegroute verwendet.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Naechster Verkehrshalt oder null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransportNearbyResponse"
+        "400":
+          description: Fehlende lat/lng Parameter
+        "502":
+          description: Upstream-Fehler bei der Haltestellensuche
   /routes/weather:
     get:
       operationId: getWeather
@@ -862,6 +942,73 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/custom-waypoints:
+    post:
+      operationId: planCustomRoute
+      tags: [routes]
+      summary: Berechnet eine Wanderroute ueber mehrere selbst gesetzte Wegpunkte
+      description: >
+        Verbindet zwei bis zwoelf geordnete Wegpunkte ueber begehbare Wege
+        (Valhalla pedestrian) und reichert die Route mit swisstopo-Hoehenmetern,
+        SAC-Grad und Saison-Heuristik an. Die Route wird nicht persistiert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomWaypointsBody"
+      responses:
+        "200":
+          description: Berechnete Route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Ungueltige Wegpunkte, keine Route gefunden oder Distanz ausserhalb des sinnvollen Bereichs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/custom-drawn:
+    post:
+      operationId: planDrawnRoute
+      tags: [routes]
+      summary: Mappt eine frei gezeichnete Linie auf begehbare Wege
+      description: >
+        Nimmt eine vereinfachte, geordnete Freihandlinie entgegen und mappt sie
+        mit Valhalla pedestrian auf reale Wanderwege. Die Route wird nicht persistiert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomDrawnRouteBody"
+      responses:
+        "200":
+          description: Gemappte Route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Ungueltige Linie oder kein begehbarer Weg gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/gpx:
     post:
       operationId: importGpxRoute
@@ -988,6 +1135,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /me/avatar:
+    post:
+      operationId: uploadMyAvatar
+      tags: [profile]
+      summary: Eigenes Profilbild hochladen
+      requestBody:
+        required: true
+        content:
+          image/jpeg: {}
+          image/png: {}
+          image/webp: {}
+      responses:
+        "200":
+          description: Aktualisiertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Ungültiges Bild
+        "401":
+          description: Nicht authentifiziert
   /me/premium:
     patch:
       operationId: updateMyPremium
@@ -1490,12 +1659,949 @@ paths:
           description: Nicht authentifiziert
         "404":
           description: Nicht gefunden
+  /terrain-corridor:
+    post:
+      operationId: createTerrainCorridor
+      tags: [routes]
+      summary: Echten SwissTopo-DTM-Korridor entlang einer Route laden
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TerrainCorridorRequest"
+      responses:
+        "200":
+          description: Routenkorridor mit echten DTM-Höhen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerrainCorridorResponse"
+        "400":
+          description: Ungültige Routengeometrie
+        "502":
+          description: Zu wenige verfügbare SwissTopo-Höhenwerte
+  /terrain-area:
+    post:
+      operationId: createTerrainArea
+      tags: [routes]
+      summary: Rechteckiges SwissTopo-DTM-Gelände um eine vollständige Route laden
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TerrainAreaRequest"
+      responses:
+        "200":
+          description: Bildschirmfüllende Route-Terrainfläche mit echten DTM-Höhen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerrainAreaResponse"
+        "400":
+          description: Ungültige Routengeometrie
+        "502":
+          description: Zu wenige verfügbare SwissTopo-Höhenwerte
+  /meetups:
+    get:
+      operationId: getMeetups
+      tags: [meetups]
+      summary: Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: routeId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Kommende Treffpunkte
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupListResponse"
+    post:
+      operationId: createMeetup
+      tags: [meetups]
+      summary: Treffpunkt fuer eine Route erstellen
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMeetupRequest"
+      responses:
+        "201":
+          description: Treffpunkt erstellt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meetup"
+        "400":
+          description: Ungueltige Treffpunkt-Daten
+        "401":
+          description: Anmeldung erforderlich
+  /meetups/{id}:
+    get:
+      operationId: getMeetup
+      tags: [meetups]
+      summary: Treffpunkt mit Teilnehmern laden
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Treffpunkt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupDetail"
+        "404":
+          description: Treffpunkt nicht gefunden
+    delete:
+      operationId: deleteMeetup
+      tags: [meetups]
+      summary: Eigenen Treffpunkt loeschen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Treffpunkt geloescht
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt nicht gefunden oder nicht berechtigt
+  /meetups/{id}/cancel:
+    post:
+      operationId: cancelMeetup
+      tags: [meetups]
+      summary: Eigenen Treffpunkt absagen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelMeetupRequest"
+      responses:
+        "204":
+          description: Treffpunkt abgesagt
+        "400":
+          description: Ungültiger Absagegrund
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt nicht gefunden oder nicht berechtigt
+  /meetups/{id}/start:
+    post:
+      operationId: startMeetup
+      tags: [meetups]
+      summary: Treffpunkt starten
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Treffpunkt gestartet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetupLifecycleResponse" }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Nur der Organisator darf starten }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Ungültiger Treffpunktstatus }
+  /meetups/{id}/complete:
+    post:
+      operationId: completeMeetup
+      tags: [meetups]
+      summary: Treffpunkt abschliessen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Treffpunkt abgeschlossen
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetupLifecycleResponse" }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Nur der Organisator darf abschliessen }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Ungültiger Treffpunktstatus }
+  /meetups/{id}/messages:
+    post:
+      operationId: sendMeetupMessage
+      tags: [meetups]
+      summary: Nachricht an Treffpunktteilnehmer senden
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetupMessageRequest" }
+      responses:
+        "201":
+          description: Nachricht in die Zustellung eingereiht
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetupMessageResponse" }
+        "400": { description: Ungültiger Nachrichtentext }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Kein Treffpunktmitglied }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Treffpunkt beendet oder noch nicht gestartet }
+        "429": { description: Nachrichtenlimit erreicht }
+  /meetups/{id}/join:
+    post:
+      operationId: joinMeetup
+      tags: [meetups]
+      summary: Bei einem Treffpunkt mitwandern
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Teilnahme bestaetigt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupJoinResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "409":
+          description: Treffpunkt voll oder bereits gestartet
+    delete:
+      operationId: leaveMeetup
+      tags: [meetups]
+      summary: Teilnahme an einem Treffpunkt aufheben
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Teilnahme aufgehoben
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupJoinResponse"
+        "401":
+          description: Anmeldung erforderlich
+  /meetups/{id}/attendance:
+    patch:
+      operationId: updateMeetupAttendance
+      tags: [meetups]
+      summary: Eigenen Anwesenheitsstatus aktualisieren
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetupAttendanceRequest"
+      responses:
+        "200":
+          description: Anwesenheitsstatus aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupAttendanceResponse"
+        "400":
+          description: Ungültiger Anwesenheitsstatus
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt oder Teilnahme nicht gefunden
+        "409":
+          description: Status kann nicht mehr geändert werden
+        "429":
+          description: Status wurde vor weniger als fünf Minuten geändert
+  /meetups/{id}/share:
+    post:
+      operationId: createMeetupShare
+      tags: [meetups]
+      summary: Sicheren Treffpunkt-Link erstellen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Temporärer Freigabelink
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupShareResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "403":
+          description: Nur Teilnehmende dürfen teilen
+        "404":
+          description: Treffpunkt nicht gefunden
+  /meetups/shared/{token}:
+    get:
+      operationId: getSharedMeetup
+      tags: [meetups]
+      summary: Öffentlichen Treffpunkt-Link laden
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Datenschutzreduzierter Treffpunkt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedMeetup"
+        "404":
+          description: Link unbekannt, abgelaufen oder widerrufen
+  /meetups/{id}/report:
+    post:
+      operationId: reportMeetup
+      tags: [meetups]
+      summary: Treffpunkt oder Nutzer melden
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetupReportRequest"
+      responses:
+        "201":
+          description: Meldung gespeichert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupActionResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt nicht gefunden
+  /meetups/{id}/block-organizer:
+    post:
+      operationId: blockMeetupOrganizer
+      tags: [meetups]
+      summary: Organisator eines Treffpunkts blockieren
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Organisator blockiert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupActionResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt nicht gefunden
+  /meetups/users/{userId}/block:
+    post:
+      operationId: blockMeetupUser
+      tags: [meetups]
+      summary: Nutzer für Treffpunkte blockieren
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Nutzer blockiert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupActionResponse"
+        "400":
+          description: Selbstblockierung nicht möglich
+        "401":
+          description: Anmeldung erforderlich
+    delete:
+      operationId: unblockMeetupUser
+      tags: [meetups]
+      summary: Nutzerblockierung aufheben
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Nutzerblockierung aufgehoben
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupActionResponse"
+        "401":
+          description: Anmeldung erforderlich
+  /meetups/{id}/participants/{userId}:
+    delete:
+      operationId: removeMeetupParticipant
+      tags: [meetups]
+      summary: Teilnehmer als Organisator entfernen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Teilnehmer entfernt
+        "401":
+          description: Anmeldung erforderlich
+        "403":
+          description: Nur der Organisator darf Teilnehmer entfernen
+        "404":
+          description: Treffpunkt oder Teilnehmer nicht gefunden
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
   schemas:
+    CreateMeetupRequest:
+      type: object
+      required: [routeId, routeName, canton, startsAt]
+      properties:
+        routeId:
+          type: string
+        routeName:
+          type: string
+        canton:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        maxParticipants:
+          type: integer
+          minimum: 2
+          maximum: 30
+          default: 8
+        pace:
+          type: string
+          enum: [gemuetlich, normal, sportlich]
+          default: gemuetlich
+        note:
+          type: string
+          nullable: true
+          maxLength: 500
+    MeetupLifecycleResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [in_progress, completed]
+    MeetupMessageRequest:
+      type: object
+      required: [messageText]
+      properties:
+        messageText:
+          type: string
+          minLength: 1
+          maxLength: 500
+    MeetupMessageResponse:
+      type: object
+      required: [sent]
+      properties:
+        sent:
+          type: boolean
+    MeetupMessage:
+      type: object
+      required: [id, senderUserId, senderName, messageText, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        senderUserId:
+          type: string
+        senderName:
+          type: string
+        messageText:
+          type: string
+          maxLength: 500
+        createdAt:
+          type: string
+          format: date-time
+    Meetup:
+      type: object
+      required: [id, routeId, routeName, canton, startsAt, maxParticipants, participantCount, pace, organizerName, joined, status, isOrganizer]
+      properties:
+        id:
+          type: string
+          format: uuid
+        routeId:
+          type: string
+        routeName:
+          type: string
+        canton:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        maxParticipants:
+          type: integer
+        participantCount:
+          type: integer
+        pace:
+          type: string
+        note:
+          type: string
+          nullable: true
+        organizerName:
+          type: string
+        joined:
+          type: boolean
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+        cancellationReason:
+          type: string
+          nullable: true
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+        isOrganizer:
+          type: boolean
+    MeetupParticipant:
+      type: object
+      required: [name, joinedAt]
+      properties:
+        userId:
+          type: string
+          description: Nur für authentifizierte, bereits beigetretene Teilnehmer sichtbar.
+        avatarUrl:
+          type: string
+          nullable: true
+        age:
+          type: integer
+          minimum: 13
+          maximum: 120
+          nullable: true
+        name:
+          type: string
+        joinedAt:
+          type: string
+          format: date-time
+        bio:
+          type: string
+          maxLength: 160
+          nullable: true
+        attendanceStatus:
+          type: string
+          enum: [confirmed, delayed, arrived]
+        delayMinutes:
+          type: integer
+          nullable: true
+        statusUpdatedAt:
+          type: string
+          format: date-time
+        rankLevel:
+          type: integer
+          minimum: 0
+          maximum: 9
+          description: Server-verifizierter Gruppenrang für Mitwandernde; nur für Teilnehmende oder den Organisator sichtbar.
+        groupAchievements:
+          type: array
+          description: Nur für Teilnehmende oder den Organisator sichtbar.
+          items:
+            type: object
+            required: [id, threshold, title]
+            properties:
+              id:
+                type: string
+              threshold:
+                type: integer
+              title:
+                type: string
+    CancelMeetupRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 300
+    MeetupAttendanceRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [confirmed, delayed, arrived]
+        delayMinutes:
+          type: integer
+          minimum: 5
+          maximum: 180
+          nullable: true
+    MeetupAttendanceResponse:
+      type: object
+      required: [attendanceStatus, delayMinutes, statusUpdatedAt]
+      properties:
+        attendanceStatus:
+          type: string
+          enum: [confirmed, delayed, arrived]
+        delayMinutes:
+          type: integer
+          nullable: true
+        statusUpdatedAt:
+          type: string
+          format: date-time
+    MeetupDetail:
+      allOf:
+        - $ref: "#/components/schemas/Meetup"
+        - type: object
+          required: [participants, messages]
+          properties:
+            participants:
+              type: array
+              items:
+                $ref: "#/components/schemas/MeetupParticipant"
+            messages:
+              type: array
+              description: Nachrichten sind nur für den Organisator und eingeschriebene Teilnehmende sichtbar.
+              items:
+                $ref: "#/components/schemas/MeetupMessage"
+    MeetupListResponse:
+      type: object
+      required: [meetups]
+      properties:
+        meetups:
+          type: array
+          items:
+            $ref: "#/components/schemas/Meetup"
+    MeetupJoinResponse:
+      type: object
+      required: [joined]
+      properties:
+        joined:
+          type: boolean
+    MeetupShareResponse:
+      type: object
+      required: [token, path, expiresAt]
+      properties:
+        token:
+          type: string
+        path:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    SharedMeetup:
+      type: object
+      required: [routeName, canton, startsAt, participantCount, maxParticipants, status, expiresAt]
+      properties:
+        routeName:
+          type: string
+        canton:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        participantCount:
+          type: integer
+        maxParticipants:
+          type: integer
+        status:
+          type: string
+          enum: [scheduled, cancelled]
+        expiresAt:
+          type: string
+          format: date-time
+    MeetupReportRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          enum: [safety, harassment, spam, other]
+        reportedUserId:
+          type: string
+        note:
+          type: string
+          maxLength: 500
+    MeetupActionResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+    TerrainCorridorRequest:
+      type: object
+      required: [geometry]
+      properties:
+        geometry:
+          type: array
+          minItems: 2
+          maxItems: 500
+          items:
+            type: array
+            prefixItems:
+              - type: number
+              - type: number
+            minItems: 2
+            maxItems: 2
+        options:
+          type: object
+          properties:
+            rows:
+              type: integer
+              minimum: 12
+              maximum: 80
+              default: 32
+            columns:
+              type: integer
+              minimum: 5
+              maximum: 13
+              default: 9
+            halfWidthM:
+              type: number
+              minimum: 100
+              maximum: 1500
+              default: 500
+    TerrainAreaRequest:
+      type: object
+      required: [geometry]
+      properties:
+        geometry:
+          type: array
+          minItems: 2
+          maxItems: 500
+          items:
+            type: array
+            prefixItems:
+              - type: number
+              - type: number
+            minItems: 2
+            maxItems: 2
+        options:
+          type: object
+          properties:
+            rows:
+              type: integer
+              minimum: 12
+              maximum: 40
+              default: 24
+            columns:
+              type: integer
+              minimum: 12
+              maximum: 40
+              default: 24
+            paddingM:
+              type: number
+              minimum: 500
+              maximum: 5000
+              default: 2000
+            viewportAspect:
+              type: number
+              minimum: 0.4
+              maximum: 1
+              default: 0.4615384615
+    TerrainCorridorCell:
+      type: object
+      required: [lat, lng, elevationM]
+      properties:
+        lat:
+          type: number
+        lng:
+          type: number
+        elevationM:
+          type: [number, "null"]
+    TerrainCorridorResponse:
+      type: object
+      required:
+        [version, source, rows, columns, halfWidthM, routeLengthM, origin, bounds, fetchedAt, grid]
+      properties:
+        version:
+          type: integer
+          const: 1
+        source:
+          type: string
+          const: SwissTopo DTM corridor profiles
+        rows:
+          type: integer
+        columns:
+          type: integer
+        halfWidthM:
+          type: number
+        routeLengthM:
+          type: number
+        origin:
+          type: object
+          required: [lat, lng]
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        bounds:
+          type: object
+          required: [north, south, east, west]
+          properties:
+            north:
+              type: number
+            south:
+              type: number
+            east:
+              type: number
+            west:
+              type: number
+        fetchedAt:
+          type: number
+        grid:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/TerrainCorridorCell"
+    TerrainAreaResponse:
+      type: object
+      required:
+        [version, source, rows, columns, paddingM, viewportAspect, origin, bounds, fetchedAt, grid]
+      properties:
+        version:
+          type: integer
+          const: 1
+        source:
+          type: string
+          const: SwissTopo DTM rectangular route area
+        rows:
+          type: integer
+        columns:
+          type: integer
+        paddingM:
+          type: number
+        viewportAspect:
+          type: number
+        origin:
+          type: object
+          required: [lat, lng]
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        bounds:
+          type: object
+          required: [north, south, east, west]
+          properties:
+            north:
+              type: number
+            south:
+              type: number
+            east:
+              type: number
+            west:
+              type: number
+        fetchedAt:
+          type: number
+        grid:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/TerrainCorridorCell"
     HealthStatus:
       type: object
       properties:
@@ -1595,6 +2701,42 @@ components:
           description: Optionaler Anzeigename (z. B. Dateiname ohne Endung)
       required:
         - gpx
+    CustomRouteWaypoint:
+      type: object
+      properties:
+        lat:
+          type: number
+          minimum: 45
+          maximum: 49
+        lng:
+          type: number
+          minimum: 5
+          maximum: 11
+      required:
+        - lat
+        - lng
+    CustomWaypointsBody:
+      type: object
+      properties:
+        points:
+          type: array
+          minItems: 2
+          maxItems: 12
+          items:
+            $ref: "#/components/schemas/CustomRouteWaypoint"
+      required:
+        - points
+    CustomDrawnRouteBody:
+      type: object
+      properties:
+        points:
+          type: array
+          minItems: 2
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/CustomRouteWaypoint"
+      required:
+        - points
     ClaimKantonspackBody:
       type: object
       properties:
@@ -1623,6 +2765,19 @@ components:
           description: Clerk-Benutzer-ID
         name:
           type: string
+        bio:
+          type: string
+          maxLength: 160
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+          description: Privater Objektpfad des Profilbilds
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Eigenes Geburtsdatum; wird nie in Community-Antworten ausgegeben
         archetype:
           type: string
           enum: [reisende, hueterin, gewitzte, senn]
@@ -1680,6 +2835,14 @@ components:
         name:
           type: string
           minLength: 2
+        bio:
+          type: string
+          maxLength: 160
+          nullable: true
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
         archetype:
           type: string
           enum: [reisende, hueterin, gewitzte, senn]
@@ -1893,6 +3056,23 @@ components:
           type: string
           nullable: true
           description: URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.
+        themeKeys:
+          type: array
+          items:
+            type: string
+          description: Serverseitig geprüfte Themenbelege der Route.
+        qualityStatus:
+          type: string
+          description: >
+            Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid
+            oder unverified.
+        qualityCheckedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Zeitpunkt des letzten erfolgreichen Qualitätschecks.
+        sources:
+          $ref: "#/components/schemas/RouteDataSources"
       required:
         - id
         - sagaId
@@ -1908,6 +3088,30 @@ components:
         - terrain
         - coordinates
         - featured
+    RouteDataSource:
+      type: object
+      properties:
+        label:
+          type: string
+        url:
+          type: string
+          format: uri
+          nullable: true
+      required: [label, url]
+    RouteDataSources:
+      type: object
+      properties:
+        route:
+          $ref: "#/components/schemas/RouteDataSource"
+        geometry:
+          $ref: "#/components/schemas/RouteDataSource"
+        distance:
+          $ref: "#/components/schemas/RouteDataSource"
+        ascent:
+          $ref: "#/components/schemas/RouteDataSource"
+        difficulty:
+          $ref: "#/components/schemas/RouteDataSource"
+      required: [route, geometry, distance, ascent, difficulty]
     Aerialway:
       type: object
       description: >
@@ -2066,6 +3270,18 @@ components:
           type: string
           nullable: true
           description: "Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt."
+        source:
+          type: string
+          description: "Primärquelle des POIs."
+        sourceUrl:
+          type: string
+          format: uri
+          description: "Direkter Nachweis des OSM-Objekts."
+        checkedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Zeitpunkt des erfolgreichen Quellenabrufs."
       required:
         - id
         - name
@@ -2166,6 +3382,28 @@ components:
             $ref: "#/components/schemas/TransportDeparture"
       required:
         - departures
+    TransportNearbyResponse:
+      type: object
+      properties:
+        station:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            lat:
+              type: number
+            lng:
+              type: number
+          required:
+            - id
+            - name
+            - lat
+            - lng
+      required:
+        - station
     TrailConditionReport:
       type: object
       description: >-

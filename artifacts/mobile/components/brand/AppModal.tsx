@@ -15,6 +15,7 @@ import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
+import { CloseButton } from "@/components/brand/CloseButton";
 import { useColors } from "@/hooks/useColors";
 
 /**
@@ -41,6 +42,7 @@ interface AppModalProps {
   backdropStyle?: StyleProp<ViewStyle>;
   cardStyle?: StyleProp<ViewStyle>;
   scrollable?: boolean;
+  closeLabel?: string;
 }
 
 export function AppModal({
@@ -54,6 +56,7 @@ export function AppModal({
   backdropStyle,
   cardStyle,
   scrollable = false,
+  closeLabel = "Schliessen",
 }: AppModalProps) {
   const colors = useColors();
 
@@ -67,13 +70,13 @@ export function AppModal({
 
   return (
     <View
-      style={[StyleSheet.absoluteFillObject, styles.root]}
+      style={[StyleSheet.absoluteFill, styles.root]}
       pointerEvents="box-none"
     >
       <Animated.View
         entering={FadeIn.duration(150)}
         exiting={FadeOut.duration(150)}
-        style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}
+        style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onRequestClose} />
         <Animated.View
@@ -101,6 +104,11 @@ export function AppModal({
                 StyleSheet.absoluteFill,
                 { backgroundColor: colors.glassBgStrong },
               ]}
+            />
+            <CloseButton
+              accessibilityLabel={closeLabel}
+              onPress={onRequestClose}
+              style={styles.closeButton}
             />
             <View
               style={[styles.content, scrollable && styles.scrollableContent]}
@@ -236,9 +244,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 26,
   },
   card: { width: "100%", maxWidth: 400, borderWidth: 1 },
-  clip: { borderRadius: 17, overflow: "hidden" },
+  clip: { borderRadius: 17, overflow: "hidden", position: "relative" },
   scrollableClip: { flex: 1, minHeight: 0 },
-  content: { padding: 22, alignItems: "center" },
+  content: { padding: 22, paddingTop: 58, alignItems: "center" },
   scrollableContent: { flex: 1, minHeight: 0 },
   scrollBody: { width: "100%", flex: 1 },
   scrollBodyContent: { alignItems: "center", paddingBottom: 4 },
@@ -264,4 +272,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: { fontFamily: fonts.bodyBold, fontSize: 15 },
+  closeButton: { position: "absolute", top: 10, right: 10, zIndex: 2 },
 });

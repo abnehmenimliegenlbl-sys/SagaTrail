@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Logger } from "pino";
-import { computeElevationProfile } from "./elevation";
+import {
+  computeElevationProfile,
+  computeRouteTerrainArea,
+  computeRouteTerrainAreaBounds,
+  createRouteTerrainAreaCoordinateGrid,
+} from "./elevation";
 
 const log = {
   warn: () => undefined,
@@ -46,6 +51,138 @@ function profileResponse(request: string | URL | Request, altitudeOffset: number
     { headers: { "content-type": "application/json" } },
   );
 }
+
+test("computes rectangular route bounds with a real metre padding", () => {
+  const bounds = computeRouteTerrainAreaBounds(
+    [
+      { lat: 47.5, lng: 7.5 },
+      { lat: 47.52, lng: 7.54 },
+      { lat: 47.51, lng: 7.48 },
+    ],
+    1000,
+  );
+
+  assert.ok(bounds);
+  assert.ok(bounds.south < 47.5);
+  assert.ok(bounds.north > 47.52);
+  assert.ok(bounds.west < 7.48);
+  assert.ok(bounds.east > 7.54);
+  assert.ok(Math.abs((47.5 - bounds.south) - 0.009) < 0.0002);
+  assert.ok(Math.abs((7.48 - bounds.west) - 0.0133) < 0.0004);
+});
+
+test("rejects invalid rectangular route bounds", () => {
+  assert.equal(computeRouteTerrainAreaBounds([{ lat: 47.5, lng: 7.5 }], 1000), null);
+  assert.equal(
+    computeRouteTerrainAreaBounds(
+      [
+        { lat: 47.5, lng: 7.5 },
+        { lat: Number.NaN, lng: 7.6 },
+      ],
+      1000,
+    ),
+    null,
+  );
+});
+
+test("creates a north-to-south and west-to-east rectangular coordinate grid", () => {
+  const grid = createRouteTerrainAreaCoordinateGrid(
+    { north: 47.52, south: 47.48, west: 7.46, east: 7.54 },
+    3,
+    5,
+  );
+
+  assert.ok(grid);
+  assert.equal(grid.length, 3);
+  assert.equal(grid[0]!.length, 5);
+  assert.deepEqual(grid[0]![0], {
+    lat: 47.52,
+    lng: 7.46,
+    elevationM: null,
+  });
+  assert.deepEqual(grid[2]![4], {
+    lat: 47.48,
+    lng: 7.54,
+    elevationM: null,
+  });
+  assert.equal(grid[1]![2]!.lat, 47.5);
+  assert.equal(grid[1]![2]!.lng, 7.5);
+  assert.ok(grid.every((row) => row.every((cell) => cell.elevationM === null)));
+});
+
+test("rejects invalid rectangular coordinate grids", () => {
+  assert.equal(
+    createRouteTerrainAreaCoordinateGrid(
+      { north: 47.48, south: 47.52, west: 7.46, east: 7.54 },
+      3,
+      5,
+    ),
+    null,
+  );
+  assert.equal(
+    createRouteTerrainAreaCoordinateGrid(
+      { north: 47.52, south: 47.48, west: 7.46, east: 7.54 },
+      1,
+      5,
+    ),
+    null,
+  );
+});
+
+test("preserves interior, leading, and trailing SwissTopo gaps in route terrain areas", async () => {
+  const originalFetch = globalThis.fetch;
+  const route = [
+    { lat: 47.5, lng: 7.5 },
+    { lat: 47.51, lng: 7.52 },
+  ];
+
+  try {
+    for (const gap of ["leading", "interior", "trailing"] as const) {
+      globalThis.fetch = async (request) => {
+        const url = new URL(request.toString());
+        const geometry = JSON.parse(url.searchParams.get("geom") ?? "{}") as {
+          coordinates: [number, number][];
+        };
+        const [start, end] = [
+          geometry.coordinates[0]!,
+          geometry.coordinates.at(-1)!,
+        ];
+        const totalM = Math.hypot(end[0] - start[0], end[1] - start[1]);
+        return new Response(
+          JSON.stringify(
+            [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.2].map(
+              (fraction) => ({
+                dist: totalM * fraction,
+                alts:
+                  (gap === "leading" && fraction === 0) ||
+                  (gap === "interior" && fraction === 0.5) ||
+                  (gap === "trailing" && fraction === 1.2)
+                    ? {}
+                    : { COMB: 500 + fraction * 20 },
+              }),
+            ),
+          ),
+          { headers: { "content-type": "application/json" } },
+        );
+      };
+
+      const area = await computeRouteTerrainArea(route, log, {
+        rows: 2,
+        columns: 5,
+        paddingM: 100,
+        viewportAspect: 0.5,
+      });
+      assert.ok(area, `${gap} gap should leave enough real cells`);
+      for (const row of area.grid) {
+        if (gap === "leading") assert.equal(row[0]!.elevationM, null);
+        if (gap === "interior") assert.equal(row[2]!.elevationM, null);
+        if (gap === "trailing") assert.equal(row[4]!.elevationM, null);
+      }
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test("splits long routes into overlapping chunks and merges them from zero", async () => {
   const originalFetch = globalThis.fetch;

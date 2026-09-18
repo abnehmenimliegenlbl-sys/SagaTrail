@@ -40,6 +40,7 @@ export default function SignUpScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -175,18 +176,34 @@ export default function SignUpScreen() {
                 { color: colors.foreground, borderColor: colors.glassBorder },
               ]}
             />
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder={t.passwordPlaceholder}
-              placeholderTextColor={colors.mutedForeground}
-              secureTextEntry
-              autoComplete="new-password"
-              style={[
-                styles.input,
-                { color: colors.foreground, borderColor: colors.glassBorder },
-              ]}
-            />
+            <View style={styles.passwordField}>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder={t.passwordPlaceholder}
+                placeholderTextColor={colors.mutedForeground}
+                secureTextEntry={!showPassword}
+                autoComplete="new-password"
+                style={[
+                  styles.input,
+                  styles.passwordInput,
+                  { color: colors.foreground, borderColor: colors.glassBorder },
+                ]}
+              />
+              <Pressable
+                onPress={() => setShowPassword((visible) => !visible)}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? t.hidePassword : t.showPassword}
+                hitSlop={10}
+                style={styles.passwordToggle}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={colors.mutedForeground}
+                />
+              </Pressable>
+            </View>
 
             {error && (
               <Text style={[styles.error, { color: colors.destructive }]}>
@@ -298,6 +315,16 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 16,
     marginBottom: 12,
+  },
+  passwordField: { position: "relative", marginBottom: 12 },
+  passwordInput: { marginBottom: 0, paddingRight: 52 },
+  passwordToggle: {
+    position: "absolute",
+    top: 0,
+    right: 12,
+    bottom: 0,
+    justifyContent: "center",
+    padding: 4,
   },
   error: { fontFamily: fonts.body, fontSize: 13, marginBottom: 8 },
   dividerRow: {

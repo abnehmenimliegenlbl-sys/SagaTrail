@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { hapticSelection } from "@/lib/haptics";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -36,6 +36,7 @@ export default function Gruppe() {
   const {
     premium,
     groupSession,
+    groupHikeEvent,
     groupConnectionStatus,
     groupError,
     createGroupSession,
@@ -62,6 +63,25 @@ export default function Gruppe() {
     const order = { kinder: 0, jugendliche: 1, erwachsene: 2 } as Record<string, number>;
     return order[m.ageTier] < order[acc] ? m.ageTier : acc;
   }, "erwachsene" as string);
+
+  // Der Start der Leitung ist die einzige verbindliche Quelle fuer Sage und
+  // Route. Die Aktivitaet der Leitung bleibt als Vorschau sichtbar, bis das
+  // signierte/validierte Start-Ereignis eingetroffen ist.
+  const canonicalStart =
+    groupHikeEvent?.event.kind === "start" ? groupHikeEvent.event : null;
+  const leader = groupSession?.members.find((member) => member.isLeader);
+  const plannedStart =
+    canonicalStart ??
+    (leader?.activity.type === "wandert" &&
+    leader.activity.sagaId &&
+    leader.activity.routeId
+      ? {
+          kind: "start" as const,
+          sagaId: leader.activity.sagaId,
+          routeId: leader.activity.routeId,
+          routeName: leader.activity.sagaTitle,
+        }
+      : null);
 
   const buzz = () => hapticSelection();
 
@@ -91,37 +111,6 @@ export default function Gruppe() {
       : groupConnectionStatus === "getrennt" && groupSession
         ? colors.destructive
         : colors.mutedForeground;
-
-  // Letzter Zeitpunkt, zu dem jedes Mitglied seine Aktivitaet geaendert hat —
-  // clientseitig getrackt, um veraltete Synchronisation sichtbar zu machen.
-  const memberActivitySnapshotRef = useRef<Record<string, string>>({});
-  const memberLastSeenRef = useRef<Record<string, number>>({});
-
-  useEffect(() => {
-    if (!groupSession) {
-      memberActivitySnapshotRef.current = {};
-      memberLastSeenRef.current = {};
-      return;
-    }
-    const now = Date.now();
-    for (const m of groupSession.members) {
-      const snapshot = JSON.stringify(m.activity);
-      if (memberActivitySnapshotRef.current[m.id] !== snapshot) {
-        memberActivitySnapshotRef.current[m.id] = snapshot;
-        memberLastSeenRef.current[m.id] = now;
-      } else if (memberLastSeenRef.current[m.id] == null) {
-        memberLastSeenRef.current[m.id] = now;
-      }
-    }
-  }, [groupSession]);
-
-  // Pruefen, ob Mitglieder laenger als 90s keine Aktivitaets-Aenderung hatten
-  // (moegliches Verbindungsproblem) — nur wenn die Session aktiv ist.
-  const memberOutOfSync = (memberId: string): boolean => {
-    const lastSeen = memberLastSeenRef.current[memberId];
-    if (!lastSeen) return false;
-    return Date.now() - lastSeen > 90_000;
-  };
 
   const errorLabel = groupError
     ? groupError === "not_found"
@@ -297,12 +286,47 @@ export default function Gruppe() {
                   {groupSession.rendezvous.lng.toFixed(5)}
                 </Text>
               )}
+              {plannedStart && !groupSession.isLeader ? (
+                <View
+                  style={[
+                    styles.planBox,
+                    {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.primary + "12",
+                    },
+                  ]}
+                >
+                  <Feather name="navigation" size={18} color={colors.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.planTitle, { color: colors.foreground }]}>
+                      {t.activityWandering(plannedStart.routeName)}
+                    </Text>
+                    <Text style={[styles.planBody, { color: colors.mutedForeground }]}>
+                      {t.joinHikeButton}
+                    </Text>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t.joinHikeButton}
+                    onPress={() =>
+                      router.push(
+                        `/hike/${encodeURIComponent(plannedStart.sagaId)}?routeId=${encodeURIComponent(plannedStart.routeId)}`,
+                      )
+                    }
+                    style={[styles.joinHikeBtn, { borderColor: colors.primary }]}
+                  >
+                    <Text style={[styles.joinHikeText, { color: colors.primary }]}>
+                      {t.joinHikeButton}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
               {groupSession.isLeader && (
                 <PrimaryButton
                   variant="secondary"
                   label={t.setRendezvousButton ?? "Set rendezvous here"}
                   onPress={async () => {
-                    const permission = await Location.requestForegroundPermissionsAsync();
+                    const permission = await Location.getForegroundPermissionsAsync();
                     if (permission.status !== Location.PermissionStatus.GRANTED) return;
                     const fix = await Location.getCurrentPositionAsync({
                       accuracy: Location.Accuracy.Balanced,
@@ -366,25 +390,17 @@ export default function Gruppe() {
                        : (t.locationUnavailable ?? "No GPS location shared")}
                    </Text>
                 </View>
-                {!groupSession.isLeader &&
-                  m.isLeader &&
-                  m.activity.type === "wandert" &&
-                  m.activity.sagaId != null && (
+                 {!groupSession.isLeader &&
+                   m.isLeader &&
+                   plannedStart &&
+                   (
                     <Pressable
                       onPress={() => {
                         // Mitwandern: dieselbe Sage/Route wie die Leitung
                         // oeffnen — Kapitel und Entscheidungen folgen dann
                         // live der Gruppenleitung.
-                        const a = m.activity as {
-                          sagaId?: string;
-                          routeId?: string;
-                        };
-                        if (!a.sagaId) return;
-                        const routeParam = a.routeId
-                          ? `?routeId=${encodeURIComponent(a.routeId)}`
-                          : "";
                         router.push(
-                          `/hike/${encodeURIComponent(a.sagaId)}${routeParam}`,
+                           `/hike/${encodeURIComponent(plannedStart.sagaId)}?routeId=${encodeURIComponent(plannedStart.routeId)}`,
                         );
                       }}
                       hitSlop={10}
@@ -400,7 +416,7 @@ export default function Gruppe() {
                       </Text>
                     </Pressable>
                   )}
-                {(m.connected === false || memberOutOfSync(m.id)) && (
+                {m.connected === false && (
                   <Feather
                     name="wifi-off"
                     size={14}
@@ -502,6 +518,18 @@ const styles = StyleSheet.create({
   locationConsent: { flexDirection: "row", alignItems: "flex-start", gap: 10, width: "100%", borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 12 },
   locationConsentTitle: { fontFamily: fonts.bodyBold, fontSize: 13 },
   locationConsentBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  planBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 14,
+  },
+  planTitle: { fontFamily: fonts.titleBold, fontSize: 14, flex: 1 },
+  planBody: { fontFamily: fonts.body, fontSize: 12, marginTop: 3 },
   rendezvous: { fontFamily: fonts.mono, fontSize: 11, marginTop: 10 },
   joinHikeBtn: {
     borderWidth: 1,

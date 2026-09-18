@@ -3,7 +3,7 @@ name: EAS OTA release
 description: Reliable release path for SagaTrail OTA updates when EAS workflow uploads are too large or the project is not linked to GitHub.
 ---
 
-Use `eas update` directly on the `production` branch for OTA releases when the EAS Workflow dashboard is not connected to the repository. Publish iOS and Android sequentially rather than together, because the combined Expo export can be terminated by the system due to memory pressure. Keep generated `dist`, `.expo`, and native build directories out of workflow source archives. A manual `eas workflow:run` can successfully upload the archive without a quota error even when the later workflow bundling step fails independently.
+Use `eas update` directly on the `production` branch for OTA releases when the EAS Workflow dashboard is not connected to the repository. Publish iOS and Android sequentially rather than together, because the combined Expo export can be terminated by the system due to memory pressure; even a platform-specific iOS export may be SIGKILLed when Metro rebuilds its full cache. Keep generated `dist`, `.expo`, and native build directories out of workflow source archives. A manual `eas workflow:run` can successfully upload the archive without a quota error even when the later workflow bundling step fails independently.
 
 **Why:** The project can be authenticated with EAS while still lacking an EAS-to-GitHub repository link, and the full workflow source archive can exceed upload/quota limits. Direct platform-specific updates successfully publish the same runtime without a native build. Upload success and OTA bundle success are separate checks; do not misdiagnose a downstream Metro/dependency failure as an archive quota problem.
 
@@ -20,3 +20,24 @@ Use `eas update` directly on the `production` branch for OTA releases when the E
 **Why:** The production channel can continue serving an older update when the push-trigger workflow is not linked or does not execute.
 
 **How to apply:** Treat the OTA as pending until the production manifest is newer than the commit. If the manifest stays older, manually trigger the supported Expo/EAS update flow instead of retrying Git pushes.
+
+**Environment constraint:** `eas update --non-interactive` requires
+`--environment production`, but this project does not have the public runtime
+variables populated in EAS's production environment. Export the non-secret
+`build.production.env` values from `eas.json` into the update process before
+running the export; otherwise the bundle can publish successfully while
+`ClerkProvider` receives no publishable key and the app falls into its startup
+error screen.
+
+**Why:** EAS's environment warning is non-fatal, so a missing Clerk key is only
+detected on the device after publication.
+
+**How to apply:** Never print the values. Set them in the shell for each
+platform-specific update, and verify the resulting production group before
+telling the user to restart the app.
+
+**Activation constraint:** A production binary with `fallbackToCacheTimeout: 0` can launch its embedded bundle while the current OTA downloads in the background. Publishing and manifest verification do not prove the device is executing that update.
+
+**Why:** Device logs showed the embedded update ID, `isUpdateAvailable: true`, and an incomplete download while new feature behavior was being tested.
+
+**How to apply:** Log the running update ID. Auto-reload when `useUpdates().isUpdatePending` becomes true, and give future production binaries a short nonzero fallback timeout. Do not call an OTA fix active until runtime logs show its update ID.

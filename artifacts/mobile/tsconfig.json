@@ -4,6 +4,8 @@
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo",
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "types": ["node"],
     "strict": true,
     "paths": {
       "@/*": [

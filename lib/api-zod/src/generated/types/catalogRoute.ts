@@ -7,6 +7,7 @@
  */
 import type { CatalogCoordinates } from './catalogCoordinates';
 import type { CatalogRouteSeason } from './catalogRouteSeason';
+import type { RouteDataSources } from './routeDataSources';
 
 export interface CatalogRoute {
   id: string;
@@ -48,4 +49,11 @@ export interface CatalogRoute {
   description?: string | null;
   /** URL des Wikipedia-Artikels, aus dem die Beschreibung stammt. */
   descriptionSource?: string | null;
+  /** Serverseitig geprüfte Themenbelege der Route. */
+  themeKeys?: string[];
+  /** Ergebnis des letzten Plausibilitätschecks: verified, partial, invalid oder unverified. */
+  qualityStatus?: string;
+  /** Zeitpunkt des letzten erfolgreichen Qualitätschecks. */
+  qualityCheckedAt?: Date | null;
+  sources?: RouteDataSources;
 }

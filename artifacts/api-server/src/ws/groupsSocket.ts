@@ -138,6 +138,11 @@ type ClientMessage =
   | { type: "rendezvous"; location: GroupLocation | null }
   | { type: "hike"; event: HikeSyncEvent };
 
+export interface GroupHikeFinishAckMessage {
+  type: "hike_finish_ack";
+  clientHikeId: string | null;
+}
+
 function parseHikeEvent(raw: unknown): HikeSyncEvent | null {
   if (typeof raw !== "object" || raw === null) return null;
   const e = raw as Record<string, unknown>;
@@ -145,8 +150,18 @@ function parseHikeEvent(raw: unknown): HikeSyncEvent | null {
     case "start":
       if (
         typeof e.sagaId !== "string" ||
+        e.sagaId.trim().length === 0 ||
         typeof e.routeId !== "string" ||
-        typeof e.routeName !== "string"
+        e.routeId.trim().length === 0 ||
+        typeof e.routeName !== "string" ||
+        e.routeName.trim().length === 0 ||
+        e.routeName.length > 180
+      ) {
+        return null;
+      }
+      if (
+        e.clientHikeId !== undefined &&
+        (typeof e.clientHikeId !== "string" || e.clientHikeId.trim().length === 0)
       ) {
         return null;
       }
@@ -155,6 +170,9 @@ function parseHikeEvent(raw: unknown): HikeSyncEvent | null {
         sagaId: e.sagaId,
         routeId: e.routeId,
         routeName: e.routeName,
+        ...(typeof e.clientHikeId === "string"
+          ? { clientHikeId: e.clientHikeId.trim() }
+          : {}),
       };
     case "chapter":
       if (typeof e.index !== "number" || !Number.isInteger(e.index) || e.index < 0) {
@@ -174,7 +192,18 @@ function parseHikeEvent(raw: unknown): HikeSyncEvent | null {
       }
       return { kind: "decision", chapterIndex: e.chapterIndex, optionIndex: e.optionIndex };
     case "finish":
-      return { kind: "finish" };
+      if (
+        e.clientHikeId !== undefined &&
+        (typeof e.clientHikeId !== "string" || e.clientHikeId.trim().length === 0)
+      ) {
+        return null;
+      }
+      return {
+        kind: "finish",
+        ...(typeof e.clientHikeId === "string"
+          ? { clientHikeId: e.clientHikeId.trim() }
+          : {}),
+      };
     default:
       return null;
   }
@@ -346,6 +375,7 @@ export function attachGroupsSocket(server: HttpServer): void {
               });
               if (!result.ok) {
                 send(ws, { type: "error", code: result.reason });
+                return;
               }
               return;
             }
@@ -364,6 +394,13 @@ export function attachGroupsSocket(server: HttpServer): void {
               const result = await broadcastHikeEvent(profile.userId, message.event);
               if (!result.ok) {
                 send(ws, { type: "error", code: result.reason });
+              }
+              if ("finishAck" in result && result.finishAck !== undefined) {
+                const ack: GroupHikeFinishAckMessage = {
+                  type: "hike_finish_ack",
+                  clientHikeId: result.finishAck as string | null,
+                };
+                send(ws, ack);
               }
               // Beim Wanderstart Push an alle Mitglieder (nicht-blockierend)
               if (message.event.kind === "start") {

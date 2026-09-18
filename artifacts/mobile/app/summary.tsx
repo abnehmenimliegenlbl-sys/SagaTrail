@@ -37,6 +37,7 @@ import {
   getTransportStationboard,
 } from "@workspace/api-client-react";
 import type { TransportStationboard } from "@workspace/api-client-react";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
 
 const WEB_TOP = 67;
 
@@ -123,8 +124,10 @@ export default function Summary() {
 
   const decisions = lastHike.chapters.filter((c) => c.isDecisionPoint);
 
-  const sagaTitle =
-    sagas.find((s) => s.id === lastHike.sagaId)?.title ?? lastHike.routeName;
+  const completedSaga = sagas.find((s) => s.id === lastHike.sagaId);
+  const sagaTitle = completedSaga
+    ? getLocalizedSagaTitle(completedSaga, profile?.language)
+    : lastHike.routeName;
 
   // SBB-Rueckreise: VON = naechste Station am Endpunkt, NACH = naechste Station am Startpunkt.
   const oeffneRueckreise = () => {

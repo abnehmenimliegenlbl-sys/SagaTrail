@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { BackButton } from "@/components/brand/BackButton";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
@@ -40,6 +41,7 @@ import { useClaimKantonspack, getGetMyProfileQueryKey } from "@workspace/api-cli
 import { useQueryClient } from "@tanstack/react-query";
 import { resolveLang } from "@/lib/storyContent";
 import { useSagaFoto, clearSagaFotoCache } from "@/lib/useSagaFoto";
+import { getLocalizedSagaTitle } from "@/lib/sagaTitle";
 
 export default function SagaDetail() {
   const t = useSagaStrings();
@@ -190,8 +192,14 @@ export default function SagaDetail() {
     // Erste entdeckte Sage des Kantons registrieren (No-op, falls schon
     // eine registriert ist) — Grundlage der Inklusiv-Regel.
     registriereSagenEntdeckung(saga.canton, saga.id).catch(() => {});
-    router.replace(
-      routeId ? `/hike/${saga.id}?routeId=${routeId}` : `/hike/${saga.id}`
+    // Ein Katalogstart ist immer eine neue Wanderung. `resume=1` darf nur
+    // vom expliziten "Weiter wandern"-Einstieg auf dem Home-Tab kommen;
+    // ein alter activeHike darf eine neue Startentscheidung nicht überspringen.
+    const params = routeId
+      ? `?routeId=${encodeURIComponent(routeId)}`
+      : "";
+    router.push(
+      `/hike/${saga.id}${params}`,
     );
   };
 
@@ -200,7 +208,7 @@ export default function SagaDetail() {
   // Zusammenfassung in der gewaehlten Sprache; Deutsch als Fallback.
   const lang = resolveLang(profile?.language);
   const summaryText = saga.summaries[lang]?.text ?? saga.summary;
-  const sagaTitle = saga.summaries[lang]?.title ?? saga.title;
+  const sagaTitle = getLocalizedSagaTitle(saga, lang);
   const reviewPending = saga.summaries[lang]?.reviewEmpfohlen ?? false;
 
   // Ehrliche Kennzeichnung der Ortsgenauigkeit der ueberlieferten Sage.
@@ -229,16 +237,11 @@ export default function SagaDetail() {
           />
           {/* Immer heller Pfeil auf dunklem Kreis — das Hero-Bild ist meist
               duester, themeabhaengige Farben waeren darauf schlecht lesbar. */}
-          <Pressable
+          <BackButton
+            accessibilityLabel={t.back}
             onPress={() => router.back()}
-            style={[
-              styles.back,
-              { top: topInset + 6, borderColor: "rgba(255,255,255,0.45)" },
-            ]}
-            hitSlop={10}
-          >
-            <Feather name="chevron-left" size={22} color="#FFFFFF" />
-          </Pressable>
+            style={{ position: "absolute", left: 16, top: topInset + 6 }}
+          />
           <View style={[styles.cantonChip, { backgroundColor: colors.accent, top: topInset + 6 }]}>
             <Text style={[styles.canton, { color: colors.accentForeground }]}>
               {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
@@ -398,17 +401,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "rgba(255,255,255,0.88)",
   },
-  back: {
-    position: "absolute",
-    left: 16,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(16,24,26,0.62)",
-  },
   cantonChip: {
     position: "absolute",
     left: 68,
@@ -433,10 +425,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   title: {
-    fontFamily: fonts.titleBlack,
-    fontSize: 36,
+    fontFamily: fonts.titleMedium,
+    fontSize: 31,
     marginTop: 0,
-    lineHeight: 38,
+    lineHeight: 34,
   },
   mood: {
     fontFamily: fonts.story,

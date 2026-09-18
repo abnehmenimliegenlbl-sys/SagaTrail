@@ -35,7 +35,7 @@ const SAGA_STRINGS: StringsDict<SagaStrings> = {
     sourceLabel: "QUELLE (GEMEINFREI)",
     lockedText: "Deine Gratis-Wanderung hast du bereits erlebt. Mit Premium wanderst du unbegrenzt durch alle 26 Kantone – jede Sage, jede Route, jederzeit.",
     premiumButton: "Premium freischalten",
-    startHike: "Wanderung starten",
+    startHike: "Zur Wanderung weiter",
     packLockedText: "Deine erste entdeckte Sage in diesem Kanton war inklusive. Alle weiteren Sagen dieses Kantons schaltest du mit dem Sagen-Pack frei.",
     packBuyBtn: "Sagen-Pack kaufen",
     packUnavailable: "Das Sagen-Pack ist derzeit nicht verfügbar.",
