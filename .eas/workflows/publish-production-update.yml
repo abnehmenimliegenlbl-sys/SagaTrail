@@ -16,3 +16,4 @@ jobs:
     type: update
     params:
       branch: production
+      working_directory: ./artifacts/mobile
