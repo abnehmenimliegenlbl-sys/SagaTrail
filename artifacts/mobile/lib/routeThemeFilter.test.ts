@@ -1,1 +1,51 @@
-aW1wb3J0IGFzc2VydCBmcm9tICJub2RlOmFzc2VydC9zdHJpY3QiOwppbXBvcnQgdGVzdCBmcm9tICJub2RlOnRlc3QiOwoKaW1wb3J0IHsgZmlsdGVyUm91dGVzQnlUaGVtZXMgfSBmcm9tICIuL3JvdXRlVGhlbWVGaWx0ZXIiOwppbXBvcnQgdHlwZSB7IFJvdXRlVGhlbWVLZXkgfSBmcm9tICIuL3JvdXRlVGhlbWVzIjsKCmNvbnN0IHJvdXRlcyA9IFsKICB7IGlkOiAid2F0ZXIiLCBuYW1lOiAiV2F0ZXIgcm91dGUiIH0sCiAgeyBpZDogImNhc3RsZSIsIG5hbWU6ICJDYXN0bGUgcm91dGUiIH0sCiAgeyBpZDogImJvdGgiLCBuYW1lOiAiV2F0ZXIgYW5kIGNhc3RsZSByb3V0ZSIgfSwKICB7IGlkOiAibm9uZSIsIG5hbWU6ICJVbm1hdGNoZWQgcm91dGUiIH0sCl0gYXMgY29uc3Q7Cgpjb25zdCBldmlkZW5jZTogUmVjb3JkPHN0cmluZywgUm91dGVUaGVtZUtleVtdPiA9IHsKICB3YXRlcjogWyJ3YXNzZXJ3ZWdlIl0sCiAgY2FzdGxlOiBbImJ1cmdlbl9ydWluZW5fYWx0ZV93ZWdlIl0sCiAgYm90aDogWyJ3YXNzZXJ3ZWdlIiwgImJ1cmdlbl9ydWluZW5fYWx0ZV93ZWdlIl0sCiAgbm9uZTogW10sCn07Cgp0ZXN0KCJrZWVwcyBldmVyeSByb3V0ZSB3aGVuIG5vIHRoZW1lIGlzIHNlbGVjdGVkIiwgKCkgPT4gewogIGFzc2VydC5kZWVwRXF1YWwoCiAgICBmaWx0ZXJSb3V0ZXNCeVRoZW1lcyhyb3V0ZXMsIGV2aWRlbmNlLCBbXSksCiAgICByb3V0ZXMsCiAgKTsKfSk7Cgp0ZXN0KCJmaWx0ZXJzIHRvIHJvdXRlcyBtYXRjaGluZyBvbmUgc2VsZWN0ZWQgdGhlbWUiLCAoKSA9PiB7CiAgYXNzZXJ0LmRlZXBFcXVhbCgKICAgIGZpbHRlclJvdXRlc0J5VGhlbWVzKHJvdXRlcywgZXZpZGVuY2UsIFsid2Fzc2Vyd2VnZSJdKS5tYXAoKHJvdXRlKSA9PiByb3V0ZS5pZCksCiAgICBbIndhdGVyIiwgImJvdGgiXSwKICApOwp9KTsKCnRlc3QoImNvbWJpbmVzIG11bHRpcGxlIHNlbGVjdGVkIHRoZW1lcyB3aXRoIE9SIHNlbWFudGljcyIsICgpID0+IHsKICBhc3NlcnQuZGVlcEVxdWFsKAogICAgZmlsdGVyUm91dGVzQnlUaGVtZXMoCiAgICAgIHJvdXRlcywKICAgICAgZXZpZGVuY2UsCiAgICAgIFsid2Fzc2Vyd2VnZSIsICJidXJnZW5fcnVpbmVuX2FsdGVfd2VnZSJdLAogICAgKS5tYXAoKHJvdXRlKSA9PiByb3V0ZS5pZCksCiAgICBbIndhdGVyIiwgImNhc3RsZSIsICJib3RoIl0sCiAgKTsKfSk7Cgp0ZXN0KCJleGNsdWRlcyByb3V0ZXMgd2l0aG91dCBldmlkZW5jZSBhbmQgcmV0dXJucyBhbiBlbXB0eSByZXN1bHQgd2hlbiBub25lIG1hdGNoIiwgKCkgPT4gewogIGFzc2VydC5kZWVwRXF1YWwoCiAgICBmaWx0ZXJSb3V0ZXNCeVRoZW1lcyhyb3V0ZXMsIGV2aWRlbmNlLCBbImdpcGZlbF9wYW5vcmFtYSJdKS5tYXAoKHJvdXRlKSA9PiByb3V0ZS5pZCksCiAgICBbXSwKICApOwp9KTs=
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { filterRoutesByThemes } from "./routeThemeFilter";
+import type { RouteThemeKey } from "./routeThemes";
+
+const routes = [
+  { id: "water", name: "Water route" },
+  { id: "castle", name: "Castle route" },
+  { id: "both", name: "Water and castle route" },
+  { id: "none", name: "Unmatched route" },
+] as const;
+
+const evidence: Record<string, RouteThemeKey[]> = {
+  water: ["wasserwege"],
+  castle: ["burgen_ruinen_alte_wege"],
+  both: ["wasserwege", "burgen_ruinen_alte_wege"],
+  none: [],
+};
+
+test("keeps every route when no theme is selected", () => {
+  assert.deepEqual(
+    filterRoutesByThemes(routes, evidence, []),
+    routes,
+  );
+});
+
+test("filters to routes matching one selected theme", () => {
+  assert.deepEqual(
+    filterRoutesByThemes(routes, evidence, ["wasserwege"]).map((route) => route.id),
+    ["water", "both"],
+  );
+});
+
+test("combines multiple selected themes with OR semantics", () => {
+  assert.deepEqual(
+    filterRoutesByThemes(
+      routes,
+      evidence,
+      ["wasserwege", "burgen_ruinen_alte_wege"],
+    ).map((route) => route.id),
+    ["water", "castle", "both"],
+  );
+});
+
+test("excludes routes without evidence and returns an empty result when none match", () => {
+  assert.deepEqual(
+    filterRoutesByThemes(routes, evidence, ["gipfel_panorama"]).map((route) => route.id),
+    [],
+  );
+});

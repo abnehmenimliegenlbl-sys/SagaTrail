@@ -1,1 +1,178 @@
-LyoqCiAqIEdlb2RhZXNpZS1IZWxmZXI6IERpc3RhbnpiZXJlY2hudW5nIChIYXZlcnNpbmUpLCBBdXNkdWVubnVuZyB2b24KICogV2VndmVybGFldWZlbiwgVW1yZWNobnVuZyBXR1M4NCAtPiBMVjk1IChFUFNHOjIwNTYpIHNvd2llIGVpbmUgU2NoYWV0enVuZyBkZXIKICogR2VoemVpdCBuYWNoIGRlciBGYXVzdGZvcm1lbCBkZXIgU2Nod2VpemVyIFdhbmRlcndlZ2UuCiAqLwoKZXhwb3J0IGludGVyZmFjZSBMYXRMbmcgewogIGxhdDogbnVtYmVyOwogIGxuZzogbnVtYmVyOwp9Cgpjb25zdCBFQVJUSF9SQURJVVNfTSA9IDYzNzEwMDA7CgpmdW5jdGlvbiB0b1JhZChkZWc6IG51bWJlcik6IG51bWJlciB7CiAgcmV0dXJuIChkZWcgKiBNYXRoLlBJKSAvIDE4MDsKfQoKLyoqIERpc3Rhbnogendpc2NoZW4gendlaSBQdW5rdGVuIGluIE1ldGVybi4gKi8KZXhwb3J0IGZ1bmN0aW9uIGhhdmVyc2luZU0oYTogTGF0TG5nLCBiOiBMYXRMbmcpOiBudW1iZXIgewogIGNvbnN0IGRMYXQgPSB0b1JhZChiLmxhdCAtIGEubGF0KTsKICBjb25zdCBkTG5nID0gdG9SYWQoYi5sbmcgLSBhLmxuZyk7CiAgY29uc3QgbGF0MSA9IHRvUmFkKGEubGF0KTsKICBjb25zdCBsYXQyID0gdG9SYWQoYi5sYXQpOwogIGNvbnN0IGggPQogICAgTWF0aC5zaW4oZExhdCAvIDIpICoqIDIgKwogICAgTWF0aC5jb3MobGF0MSkgKiBNYXRoLmNvcyhsYXQyKSAqIE1hdGguc2luKGRMbmcgLyAyKSAqKiAyOwogIHJldHVybiAyICogRUFSVEhfUkFESVVTX00gKiBNYXRoLmFzaW4oTWF0aC5taW4oMSwgTWF0aC5zcXJ0KGgpKSk7Cn0KCi8qKiBHZXNhbXRsYWVuZ2UgZWluZXMgV2VndmVybGF1ZnMgaW4gS2lsb21ldGVybi4gKi8KZXhwb3J0IGZ1bmN0aW9uIHBhdGhEaXN0YW5jZUttKHBvaW50czogTGF0TG5nW10pOiBudW1iZXIgewogIGxldCBtZXRlcnMgPSAwOwogIGZvciAobGV0IGkgPSAxOyBpIDwgcG9pbnRzLmxlbmd0aDsgaSsrKSB7CiAgICBtZXRlcnMgKz0gaGF2ZXJzaW5lTShwb2ludHNbaSAtIDFdLCBwb2ludHNbaV0pOwogIH0KICByZXR1cm4gbWV0ZXJzIC8gMTAwMDsKfQoKLyoqCiAqIER1ZW5udCBlaW5lIFB1bmt0bGlzdGUgZ2xlaWNobWFlc3NpZyBhdWYgaG9lY2hzdGVucyBgbWF4YCBQdW5rdGUgYXVzLgogKiBFcnN0ZXIgdW5kIGxldHp0ZXIgUHVua3QgYmxlaWJlbiBlcmhhbHRlbi4KICovCmV4cG9ydCBmdW5jdGlvbiBkb3duc2FtcGxlPFQ+KHBvaW50czogVFtdLCBtYXg6IG51bWJlcik6IFRbXSB7CiAgaWYgKHBvaW50cy5sZW5ndGggPD0gbWF4IHx8IG1heCA8IDIpIHJldHVybiBwb2ludHMuc2xpY2UoKTsKICBjb25zdCBzdGVwID0gKHBvaW50cy5sZW5ndGggLSAxKSAvIChtYXggLSAxKTsKICBjb25zdCByZXN1bHQ6IFRbXSA9IFtdOwogIGZvciAobGV0IGkgPSAwOyBpIDwgbWF4OyBpKyspIHsKICAgIHJlc3VsdC5wdXNoKHBvaW50c1tNYXRoLnJvdW5kKGkgKiBzdGVwKV0pOwogIH0KICByZXR1cm4gcmVzdWx0Owp9CgovKiogVmVydGVpbHQgTGF0TG5nLVB1bmt0ZSBlbnRsYW5nIGRlciB0YXRzw6RjaGxpY2hlbiBXZWdsw6RuZ2U7IFN0YXJ0IHVuZCBFbmRlIGJsZWliZW4gZXJoYWx0ZW4uICovCmZ1bmN0aW9uIGRvd25zYW1wbGVMYXRMbmdCeURpc3RhbmNlKHBvaW50czogTGF0TG5nW10sIG1heDogbnVtYmVyKTogTGF0TG5nW10gewogIGlmIChwb2ludHMubGVuZ3RoIDw9IG1heCB8fCBtYXggPCAyKSByZXR1cm4gcG9pbnRzLnNsaWNlKCk7CgogIGNvbnN0IGN1bXVsYXRpdmUgPSBbMF07CiAgbGV0IHRvdGFsID0gMDsKICBmb3IgKGxldCBpID0gMTsgaSA8IHBvaW50cy5sZW5ndGg7IGkrKykgewogICAgdG90YWwgKz0gaGF2ZXJzaW5lTShwb2ludHNbaSAtIDFdISwgcG9pbnRzW2ldISk7CiAgICBjdW11bGF0aXZlLnB1c2godG90YWwpOwogIH0KICBpZiAoIU51bWJlci5pc0Zpbml0ZSh0b3RhbCkgfHwgdG90YWwgPD0gMCkgewogICAgcmV0dXJuIFtwb2ludHNbMF0hLCBwb2ludHNbcG9pbnRzLmxlbmd0aCAtIDFdIV07CiAgfQoKICBjb25zdCByZXN1bHQ6IExhdExuZ1tdID0gW3BvaW50c1swXSFdOwogIGxldCBjdXJzb3IgPSAxOwogIGZvciAobGV0IHRhcmdldEluZGV4ID0gMTsgdGFyZ2V0SW5kZXggPCBtYXggLSAxOyB0YXJnZXRJbmRleCsrKSB7CiAgICBjb25zdCB0YXJnZXREaXN0YW5jZSA9ICh0b3RhbCAqIHRhcmdldEluZGV4KSAvIChtYXggLSAxKTsKICAgIHdoaWxlIChjdXJzb3IgPCBwb2ludHMubGVuZ3RoIC0gMSAmJiBjdW11bGF0aXZlW2N1cnNvcl0hIDwgdGFyZ2V0RGlzdGFuY2UpIHsKICAgICAgY3Vyc29yKys7CiAgICB9CiAgICBjb25zdCBiZWZvcmUgPSBwb2ludHNbY3Vyc29yIC0gMV0hOwogICAgY29uc3QgYWZ0ZXIgPSBwb2ludHNbY3Vyc29yXSE7CiAgICBjb25zdCBiZWZvcmVEaXN0YW5jZSA9IGN1bXVsYXRpdmVbY3Vyc29yIC0gMV0hOwogICAgY29uc3Qgc2VnbWVudERpc3RhbmNlID0gY3VtdWxhdGl2ZVtjdXJzb3JdISAtIGJlZm9yZURpc3RhbmNlOwogICAgY29uc3QgcmF0aW8gPQogICAgICBzZWdtZW50RGlzdGFuY2UgPiAwCiAgICAgICAgPyAodGFyZ2V0RGlzdGFuY2UgLSBiZWZvcmVEaXN0YW5jZSkgLyBzZWdtZW50RGlzdGFuY2UKICAgICAgICA6IDA7CiAgICByZXN1bHQucHVzaCh7CiAgICAgIGxhdDogYmVmb3JlLmxhdCArIChhZnRlci5sYXQgLSBiZWZvcmUubGF0KSAqIHJhdGlvLAogICAgICBsbmc6IGJlZm9yZS5sbmcgKyAoYWZ0ZXIubG5nIC0gYmVmb3JlLmxuZykgKiByYXRpbywKICAgIH0pOwogIH0KICByZXN1bHQucHVzaChwb2ludHNbcG9pbnRzLmxlbmd0aCAtIDFdISk7CiAgcmV0dXJuIHJlc3VsdDsKfQoKLyoqCiAqIFNlbmtyZWNodGVyIEFic3RhbmQgZWluZXMgUHVua3RlcyB6dXIgR2VyYWRlbiBzdGFydOKAk2VuZCwgaW4gTWV0ZXJuLgogKiBOYWVoZXJ1bmcgdmlhIGZsYWNoZSBQcm9qZWt0aW9uIChmdWVyIGtsZWluZSBHZWJpZXRlIHdpZSBkaWUgU2Nod2VpeiBhdXNyZWljaGVuZCkuCiAqLwpmdW5jdGlvbiBwZXJwRGlzdGFuY2VNKHA6IExhdExuZywgc3RhcnQ6IExhdExuZywgZW5kOiBMYXRMbmcpOiBudW1iZXIgewogIGNvbnN0IExBVF9NID0gMTExXzMyMDsKICBjb25zdCBMTkdfTSA9IE1hdGguY29zKCgoc3RhcnQubGF0ICsgZW5kLmxhdCkgLyAyKSAqIChNYXRoLlBJIC8gMTgwKSkgKiAxMTFfMzIwOwogIGNvbnN0IHB4ID0gKHAubG5nICAgLSBzdGFydC5sbmcpICogTE5HX007CiAgY29uc3QgcHkgPSAocC5sYXQgICAtIHN0YXJ0LmxhdCkgKiBMQVRfTTsKICBjb25zdCBkeCA9IChlbmQubG5nIC0gc3RhcnQubG5nKSAqIExOR19NOwogIGNvbnN0IGR5ID0gKGVuZC5sYXQgLSBzdGFydC5sYXQpICogTEFUX007CiAgY29uc3QgbGVuU3EgPSBkeCAqIGR4ICsgZHkgKiBkeTsKICBpZiAobGVuU3EgPT09IDApIHJldHVybiBNYXRoLnNxcnQocHggKiBweCArIHB5ICogcHkpOwogIGNvbnN0IHQgICA9IE1hdGgubWF4KDAsIE1hdGgubWluKDEsIChweCAqIGR4ICsgcHkgKiBkeSkgLyBsZW5TcSkpOwogIGNvbnN0IGV4ICA9IHB4IC0gdCAqIGR4OwogIGNvbnN0IGV5ICA9IHB5IC0gdCAqIGR5OwogIHJldHVybiBNYXRoLnNxcnQoZXggKiBleCArIGV5ICogZXkpOwp9CgovKioKICogRG91Z2xhcy1QZXVja2VyLVZlcmVpbmZhY2h1bmc6IGJlaMOkbHQgYWxsZSBQdW5rdGUgZGllIG1laHIgYWxzCiAqIGB0b2xlcmFuY2VNYCBNZXRlciB2b24gZGVyIFNlaG5lIGFid2VpY2hlbiAoS3VydmVuLCBCaWVndW5nZW4gYmxlaWJlbgogKiBlcmhhbHRlbikuIFJlZHVuZGFudGUgWndpc2NoZW5wdW5rdGUgYXVmIGdlcmFkZW4gU3RyZWNrZW4gd2VyZGVuIGVudGZlcm50LgogKiBBbHMgU2ljaGVyaGVpdHNuZXR6IHdlcmRlbiBkaWUgUHVua3RlIGFtIEVuZGUgYXVmIGBtYXhQb2ludHNgIGJlZ3Jlbnp0LgogKi8KZXhwb3J0IGZ1bmN0aW9uIHJkcFNpbXBsaWZ5KHBvaW50czogTGF0TG5nW10sIHRvbGVyYW5jZU0gPSA1LCBtYXhQb2ludHMgPSA1MDApOiBMYXRMbmdbXSB7CiAgaWYgKHBvaW50cy5sZW5ndGggPD0gMikgcmV0dXJuIHBvaW50cy5zbGljZSgpOwoKICBmdW5jdGlvbiByZHAocHRzOiBMYXRMbmdbXSwgZXBzOiBudW1iZXIpOiBMYXRMbmdbXSB7CiAgICBpZiAocHRzLmxlbmd0aCA8PSAyKSByZXR1cm4gcHRzLnNsaWNlKCk7CiAgICBsZXQgbWF4RGlzdCA9IDA7CiAgICBsZXQgbWF4SWR4ICA9IDE7CiAgICBjb25zdCBmaXJzdCA9IHB0c1swXTsKICAgIGNvbnN0IGxhc3QgID0gcHRzW3B0cy5sZW5ndGggLSAxXTsKICAgIGZvciAobGV0IGkgPSAxOyBpIDwgcHRzLmxlbmd0aCAtIDE7IGkrKykgewogICAgICBjb25zdCBkID0gcGVycERpc3RhbmNlTShwdHNbaV0sIGZpcnN0LCBsYXN0KTsKICAgICAgaWYgKGQgPiBtYXhEaXN0KSB7IG1heERpc3QgPSBkOyBtYXhJZHggPSBpOyB9CiAgICB9CiAgICBpZiAobWF4RGlzdCA+IGVwcykgewogICAgICBjb25zdCBsZWZ0ICA9IHJkcChwdHMuc2xpY2UoMCwgbWF4SWR4ICsgMSksIGVwcyk7CiAgICAgIGNvbnN0IHJpZ2h0ID0gcmRwKHB0cy5zbGljZShtYXhJZHgpLCAgICAgICAgIGVwcyk7CiAgICAgIHJldHVybiBbLi4ubGVmdC5zbGljZSgwLCAtMSksIC4uLnJpZ2h0XTsKICAgIH0KICAgIHJldHVybiBbZmlyc3QsIGxhc3RdOwogIH0KCiAgY29uc3QgcmVzdWx0ID0gcmRwKHBvaW50cywgdG9sZXJhbmNlTSk7CiAgLy8gU2ljaGVyaGVpdHNuZXR6OiBmYWxscyBUb2xlcmFueiBzZWhyIGtsZWluIHVuZCBSb3V0ZSBzZWhyIGxhbmcKICByZXR1cm4gcmVzdWx0Lmxlbmd0aCA+IG1heFBvaW50cwogICAgPyBkb3duc2FtcGxlTGF0TG5nQnlEaXN0YW5jZShyZXN1bHQsIG1heFBvaW50cykKICAgIDogcmVzdWx0Owp9CgovKioKICogTmFlaGVydW5nc2Zvcm1lbCBzd2lzc3RvcG86IFdHUzg0IChsYXQvbG5nIGluIEdyYWQpIC0+IExWOTUgKEUvTiBpbiBNZXRlcm4pLgogKiBHZW5hdWlna2VpdCBpbSBCZXJlaWNoIHdlbmlnZXIgTWV0ZXIsIGF1c3JlaWNoZW5kIGZ1ZXIgZGFzIEhvZWhlbnByb2ZpbC4KICovCmV4cG9ydCBmdW5jdGlvbiB3Z3M4NFRvTFY5NShsYXQ6IG51bWJlciwgbG5nOiBudW1iZXIpOiBbbnVtYmVyLCBudW1iZXJdIHsKICBjb25zdCBwaGkgPSAobGF0ICogMzYwMCAtIDE2OTAyOC42NikgLyAxMDAwMDsKICBjb25zdCBsYW0gPSAobG5nICogMzYwMCAtIDI2NzgyLjUpIC8gMTAwMDA7CiAgY29uc3QgZSA9CiAgICAyNjAwMDcyLjM3ICsKICAgIDIxMTQ1NS45MyAqIGxhbSAtCiAgICAxMDkzOC41MSAqIGxhbSAqIHBoaSAtCiAgICAwLjM2ICogbGFtICogcGhpICogcGhpIC0KICAgIDQ0LjU0ICogbGFtICogbGFtICogbGFtOwogIGNvbnN0IG4gPQogICAgMTIwMDE0Ny4wNyArCiAgICAzMDg4MDcuOTUgKiBwaGkgKwogICAgMzc0NS4yNSAqIGxhbSAqIGxhbSArCiAgICA3Ni42MyAqIHBoaSAqIHBoaSAtCiAgICAxOTQuNTYgKiBsYW0gKiBsYW0gKiBwaGkgKwogICAgMTE5Ljc5ICogcGhpICogcGhpICogcGhpOwogIHJldHVybiBbTWF0aC5yb3VuZChlICogMTAwKSAvIDEwMCwgTWF0aC5yb3VuZChuICogMTAwKSAvIDEwMF07Cn0KCi8qKgogKiBHZWh6ZWl0LVNjaGFldHp1bmcgKE1pbnV0ZW4pIG5hY2ggZGVyIEZhdXN0Zm9ybWVsIGRlciBTY2h3ZWl6ZXIgV2FuZGVyd2VnZToKICogNCBrbS9oIGhvcml6b250YWwsIDQwMCBIbS9oIGltIEF1ZnN0aWVnOyBkaWUga2xlaW5lcmUgZGVyIGJlaWRlbiBaZWl0ZW4gd2lyZAogKiB6dXIgSGFlbGZ0ZSBhbmdlcmVjaG5ldC4KICovCmV4cG9ydCBmdW5jdGlvbiBlc3RpbWF0ZU1pbnV0ZXMoZGlzdGFuY2VLbTogbnVtYmVyLCBhc2NlbnRNOiBudW1iZXIpOiBudW1iZXIgewogIGNvbnN0IGhvcml6b250YWxIID0gZGlzdGFuY2VLbSAvIDQ7CiAgY29uc3QgdmVydGljYWxIID0gTWF0aC5tYXgoMCwgYXNjZW50TSkgLyA0MDA7CiAgY29uc3QgaG91cnMgPQogICAgTWF0aC5tYXgoaG9yaXpvbnRhbEgsIHZlcnRpY2FsSCkgKyBNYXRoLm1pbihob3Jpem9udGFsSCwgdmVydGljYWxIKSAvIDI7CiAgcmV0dXJuIE1hdGgubWF4KDE1LCBNYXRoLnJvdW5kKGhvdXJzICogNjApKTsKfQo=
+/**
+ * Geodaesie-Helfer: Distanzberechnung (Haversine), Ausduennung von
+ * Wegverlaeufen, Umrechnung WGS84 -> LV95 (EPSG:2056) sowie eine Schaetzung der
+ * Gehzeit nach der Faustformel der Schweizer Wanderwege.
+ */
+
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
+const EARTH_RADIUS_M = 6371000;
+
+function toRad(deg: number): number {
+  return (deg * Math.PI) / 180;
+}
+
+/** Distanz zwischen zwei Punkten in Metern. */
+export function haversineM(a: LatLng, b: LatLng): number {
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** Gesamtlaenge eines Wegverlaufs in Kilometern. */
+export function pathDistanceKm(points: LatLng[]): number {
+  let meters = 0;
+  for (let i = 1; i < points.length; i++) {
+    meters += haversineM(points[i - 1], points[i]);
+  }
+  return meters / 1000;
+}
+
+/**
+ * Duennt eine Punktliste gleichmaessig auf hoechstens `max` Punkte aus.
+ * Erster und letzter Punkt bleiben erhalten.
+ */
+export function downsample<T>(points: T[], max: number): T[] {
+  if (points.length <= max || max < 2) return points.slice();
+  const step = (points.length - 1) / (max - 1);
+  const result: T[] = [];
+  for (let i = 0; i < max; i++) {
+    result.push(points[Math.round(i * step)]);
+  }
+  return result;
+}
+
+/** Verteilt LatLng-Punkte entlang der tatsächlichen Weglänge; Start und Ende bleiben erhalten. */
+function downsampleLatLngByDistance(points: LatLng[], max: number): LatLng[] {
+  if (points.length <= max || max < 2) return points.slice();
+
+  const cumulative = [0];
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    total += haversineM(points[i - 1]!, points[i]!);
+    cumulative.push(total);
+  }
+  if (!Number.isFinite(total) || total <= 0) {
+    return [points[0]!, points[points.length - 1]!];
+  }
+
+  const result: LatLng[] = [points[0]!];
+  let cursor = 1;
+  for (let targetIndex = 1; targetIndex < max - 1; targetIndex++) {
+    const targetDistance = (total * targetIndex) / (max - 1);
+    while (cursor < points.length - 1 && cumulative[cursor]! < targetDistance) {
+      cursor++;
+    }
+    const before = points[cursor - 1]!;
+    const after = points[cursor]!;
+    const beforeDistance = cumulative[cursor - 1]!;
+    const segmentDistance = cumulative[cursor]! - beforeDistance;
+    const ratio =
+      segmentDistance > 0
+        ? (targetDistance - beforeDistance) / segmentDistance
+        : 0;
+    result.push({
+      lat: before.lat + (after.lat - before.lat) * ratio,
+      lng: before.lng + (after.lng - before.lng) * ratio,
+    });
+  }
+  result.push(points[points.length - 1]!);
+  return result;
+}
+
+/**
+ * Senkrechter Abstand eines Punktes zur Geraden start–end, in Metern.
+ * Naeherung via flache Projektion (fuer kleine Gebiete wie die Schweiz ausreichend).
+ */
+function perpDistanceM(p: LatLng, start: LatLng, end: LatLng): number {
+  const LAT_M = 111_320;
+  const LNG_M = Math.cos(((start.lat + end.lat) / 2) * (Math.PI / 180)) * 111_320;
+  const px = (p.lng   - start.lng) * LNG_M;
+  const py = (p.lat   - start.lat) * LAT_M;
+  const dx = (end.lng - start.lng) * LNG_M;
+  const dy = (end.lat - start.lat) * LAT_M;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.sqrt(px * px + py * py);
+  const t   = Math.max(0, Math.min(1, (px * dx + py * dy) / lenSq));
+  const ex  = px - t * dx;
+  const ey  = py - t * dy;
+  return Math.sqrt(ex * ex + ey * ey);
+}
+
+/**
+ * Douglas-Peucker-Vereinfachung: behält alle Punkte die mehr als
+ * `toleranceM` Meter von der Sehne abweichen (Kurven, Biegungen bleiben
+ * erhalten). Redundante Zwischenpunkte auf geraden Strecken werden entfernt.
+ * Als Sicherheitsnetz werden die Punkte am Ende auf `maxPoints` begrenzt.
+ */
+export function rdpSimplify(points: LatLng[], toleranceM = 5, maxPoints = 500): LatLng[] {
+  if (points.length <= 2) return points.slice();
+
+  function rdp(pts: LatLng[], eps: number): LatLng[] {
+    if (pts.length <= 2) return pts.slice();
+    let maxDist = 0;
+    let maxIdx  = 1;
+    const first = pts[0];
+    const last  = pts[pts.length - 1];
+    for (let i = 1; i < pts.length - 1; i++) {
+      const d = perpDistanceM(pts[i], first, last);
+      if (d > maxDist) { maxDist = d; maxIdx = i; }
+    }
+    if (maxDist > eps) {
+      const left  = rdp(pts.slice(0, maxIdx + 1), eps);
+      const right = rdp(pts.slice(maxIdx),         eps);
+      return [...left.slice(0, -1), ...right];
+    }
+    return [first, last];
+  }
+
+  const result = rdp(points, toleranceM);
+  // Sicherheitsnetz: falls Toleranz sehr klein und Route sehr lang
+  return result.length > maxPoints
+    ? downsampleLatLngByDistance(result, maxPoints)
+    : result;
+}
+
+/**
+ * Naeherungsformel swisstopo: WGS84 (lat/lng in Grad) -> LV95 (E/N in Metern).
+ * Genauigkeit im Bereich weniger Meter, ausreichend fuer das Hoehenprofil.
+ */
+export function wgs84ToLV95(lat: number, lng: number): [number, number] {
+  const phi = (lat * 3600 - 169028.66) / 10000;
+  const lam = (lng * 3600 - 26782.5) / 10000;
+  const e =
+    2600072.37 +
+    211455.93 * lam -
+    10938.51 * lam * phi -
+    0.36 * lam * phi * phi -
+    44.54 * lam * lam * lam;
+  const n =
+    1200147.07 +
+    308807.95 * phi +
+    3745.25 * lam * lam +
+    76.63 * phi * phi -
+    194.56 * lam * lam * phi +
+    119.79 * phi * phi * phi;
+  return [Math.round(e * 100) / 100, Math.round(n * 100) / 100];
+}
+
+/**
+ * Gehzeit-Schaetzung (Minuten) nach der Faustformel der Schweizer Wanderwege:
+ * 4 km/h horizontal, 400 Hm/h im Aufstieg; die kleinere der beiden Zeiten wird
+ * zur Haelfte angerechnet.
+ */
+export function estimateMinutes(distanceKm: number, ascentM: number): number {
+  const horizontalH = distanceKm / 4;
+  const verticalH = Math.max(0, ascentM) / 400;
+  const hours =
+    Math.max(horizontalH, verticalH) + Math.min(horizontalH, verticalH) / 2;
+  return Math.max(15, Math.round(hours * 60));
+}

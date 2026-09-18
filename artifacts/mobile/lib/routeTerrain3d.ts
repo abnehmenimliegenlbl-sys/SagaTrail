@@ -1,1 +1,101 @@
-ZXhwb3J0IHR5cGUgVGVycmFpbkdyaWRDZWxsID0gewogIGxhdDogbnVtYmVyOwogIGxuZzogbnVtYmVyOwogIGVsZXZhdGlvbk06IG51bWJlciB8IG51bGw7Cn07CgpleHBvcnQgdHlwZSBUZXJyYWluR3JpZCA9IHsKICByb3dzOiBudW1iZXI7CiAgY29sdW1uczogbnVtYmVyOwogIC8qKiBHZW9ncmFwaGljIGRlZ3JlZXM6IHNvdXRoLCB3ZXN0LCBub3J0aCwgZWFzdC4gKi8KICBib3VuZHM6IHsgc291dGg6IG51bWJlcjsgd2VzdDogbnVtYmVyOyBub3J0aDogbnVtYmVyOyBlYXN0OiBudW1iZXIgfTsKICBncmlkOiBUZXJyYWluR3JpZENlbGxbXVtdOwp9OwoKZXhwb3J0IGZ1bmN0aW9uIGhhc1JlYWxUZXJyYWluVHJpYW5nbGUoCiAgZ3JpZDogVGVycmFpbkdyaWQsCiAgcm93OiBudW1iZXIsCiAgY29sdW1uOiBudW1iZXIsCiAgaGFsZjogInVwcGVyTGVmdCIgfCAibG93ZXJSaWdodCIsCik6IGJvb2xlYW4gewogIGNvbnN0IG9mZnNldHMgPQogICAgaGFsZiA9PT0gInVwcGVyTGVmdCIKICAgICAgPyAoW1swLCAwXSwgWzEsIDBdLCBbMCwgMV1dIGFzIGNvbnN0KQogICAgICA6IChbWzAsIDFdLCBbMSwgMF0sIFsxLCAxXV0gYXMgY29uc3QpOwogIHJldHVybiBvZmZzZXRzLmV2ZXJ5KAogICAgKFtyb3dPZmZzZXQsIGNvbHVtbk9mZnNldF0pID0+CiAgICAgIGdyaWQuZ3JpZFtyb3cgKyByb3dPZmZzZXRdPy5bY29sdW1uICsgY29sdW1uT2Zmc2V0XT8uZWxldmF0aW9uTSAhPSBudWxsLAogICk7Cn0KCnR5cGUgVW5rbm93blJlY29yZCA9IFJlY29yZDxzdHJpbmcsIHVua25vd24+OwoKZnVuY3Rpb24gYXNSZWNvcmQodmFsdWU6IHVua25vd24pOiBVbmtub3duUmVjb3JkIHwgbnVsbCB7CiAgcmV0dXJuIHZhbHVlICYmIHR5cGVvZiB2YWx1ZSA9PT0gIm9iamVjdCIgJiYgIUFycmF5LmlzQXJyYXkodmFsdWUpCiAgICA/ICh2YWx1ZSBhcyBVbmtub3duUmVjb3JkKQogICAgOiBudWxsOwp9CgpmdW5jdGlvbiBmaW5pdGUodmFsdWU6IHVua25vd24pOiBudW1iZXIgfCBudWxsIHsKICByZXR1cm4gdHlwZW9mIHZhbHVlID09PSAibnVtYmVyIiAmJiBOdW1iZXIuaXNGaW5pdGUodmFsdWUpID8gdmFsdWUgOiBudWxsOwp9CgovKioKICogUGFyc2VzIHRoZSB0ZXJyYWluLWNvcnJpZG9yIHJlc3BvbnNlIHdpdGhvdXQgZGVyaXZpbmcgY29vcmRpbmF0ZXMgb3IgZmlsbGluZwogKiBlbGV2YXRpb24gZ2Fwcy4gVGhlIGdyaWQncyBvd24gY2VsbCBjb29yZGluYXRlcyBhcmUgYXV0aG9yaXRhdGl2ZS4KICovCmV4cG9ydCBmdW5jdGlvbiBwYXJzZVRlcnJhaW5Db3JyaWRvcihwYXlsb2FkOiB1bmtub3duKTogVGVycmFpbkdyaWQgfCBudWxsIHsKICBjb25zdCByb290ID0gYXNSZWNvcmQocGF5bG9hZCk7CiAgaWYgKCFyb290IHx8ICFBcnJheS5pc0FycmF5KHJvb3QuZ3JpZCkpIHJldHVybiBudWxsOwoKICBjb25zdCByb3dzID0gZmluaXRlKHJvb3Qucm93cyk7CiAgY29uc3QgY29sdW1ucyA9IGZpbml0ZShyb290LmNvbHVtbnMpOwogIGNvbnN0IHJhd0JvdW5kcyA9IGFzUmVjb3JkKHJvb3QuYm91bmRzKTsKICBjb25zdCBzb3V0aCA9IGZpbml0ZShyYXdCb3VuZHM/LnNvdXRoKTsKICBjb25zdCB3ZXN0ID0gZmluaXRlKHJhd0JvdW5kcz8ud2VzdCk7CiAgY29uc3Qgbm9ydGggPSBmaW5pdGUocmF3Qm91bmRzPy5ub3J0aCk7CiAgY29uc3QgZWFzdCA9IGZpbml0ZShyYXdCb3VuZHM/LmVhc3QpOwoKICBpZiAoCiAgICAhcm93cyB8fAogICAgIWNvbHVtbnMgfHwKICAgIHJvd3MgPCAyIHx8CiAgICBjb2x1bW5zIDwgMiB8fAogICAgcm9vdC5ncmlkLmxlbmd0aCAhPT0gcm93cyB8fAogICAgc291dGggPT0gbnVsbCB8fAogICAgd2VzdCA9PSBudWxsIHx8CiAgICBub3J0aCA9PSBudWxsIHx8CiAgICBlYXN0ID09IG51bGwgfHwKICAgIG5vcnRoIDw9IHNvdXRoIHx8CiAgICBlYXN0IDw9IHdlc3QKICApIHsKICAgIHJldHVybiBudWxsOwogIH0KCiAgY29uc3QgZ3JpZDogVGVycmFpbkdyaWRDZWxsW11bXSA9IFtdOwogIGZvciAoY29uc3QgcmF3Um93IG9mIHJvb3QuZ3JpZCkgewogICAgaWYgKCFBcnJheS5pc0FycmF5KHJhd1JvdykgfHwgcmF3Um93Lmxlbmd0aCAhPT0gY29sdW1ucykgcmV0dXJuIG51bGw7CiAgICBjb25zdCByb3c6IFRlcnJhaW5HcmlkQ2VsbFtdID0gW107CiAgICBmb3IgKGNvbnN0IHJhd0NlbGwgb2YgcmF3Um93KSB7CiAgICAgIGNvbnN0IGNlbGwgPSBhc1JlY29yZChyYXdDZWxsKTsKICAgICAgY29uc3QgbGF0ID0gZmluaXRlKGNlbGw/LmxhdCk7CiAgICAgIGNvbnN0IGxuZyA9IGZpbml0ZShjZWxsPy5sbmcpOwogICAgICAvLyBOdWxsIGlzIGRlbGliZXJhdGUgbWlzc2luZyBEVE0gZGF0YSwgbm90IGEgemVyby1oZWlnaHQgZmFsbGJhY2suCiAgICAgIGNvbnN0IGVsZXZhdGlvbk0gPQogICAgICAgIGNlbGw/LmVsZXZhdGlvbk0gPT09IG51bGwgPyBudWxsIDogZmluaXRlKGNlbGw/LmVsZXZhdGlvbk0pOwogICAgICBpZiAoCiAgICAgICAgbGF0ID09IG51bGwgfHwKICAgICAgICBsbmcgPT0gbnVsbCB8fAogICAgICAgIChlbGV2YXRpb25NID09PSBudWxsICYmIGNlbGw/LmVsZXZhdGlvbk0gIT09IG51bGwpCiAgICAgICkgewogICAgICAgIHJldHVybiBudWxsOwogICAgICB9CiAgICAgIHJvdy5wdXNoKHsgbGF0LCBsbmcsIGVsZXZhdGlvbk0gfSk7CiAgICB9CiAgICBncmlkLnB1c2gocm93KTsKICB9CgogIGlmICghZ3JpZC5zb21lKChyb3cpID0+IHJvdy5zb21lKChjZWxsKSA9PiBjZWxsLmVsZXZhdGlvbk0gIT0gbnVsbCkpKQogICAgcmV0dXJuIG51bGw7CiAgcmV0dXJuIHsgcm93cywgY29sdW1ucywgYm91bmRzOiB7IHNvdXRoLCB3ZXN0LCBub3J0aCwgZWFzdCB9LCBncmlkIH07Cn0K
+export type TerrainGridCell = {
+  lat: number;
+  lng: number;
+  elevationM: number | null;
+};
+
+export type TerrainGrid = {
+  rows: number;
+  columns: number;
+  /** Geographic degrees: south, west, north, east. */
+  bounds: { south: number; west: number; north: number; east: number };
+  grid: TerrainGridCell[][];
+};
+
+export function hasRealTerrainTriangle(
+  grid: TerrainGrid,
+  row: number,
+  column: number,
+  half: "upperLeft" | "lowerRight",
+): boolean {
+  const offsets =
+    half === "upperLeft"
+      ? ([[0, 0], [1, 0], [0, 1]] as const)
+      : ([[0, 1], [1, 0], [1, 1]] as const);
+  return offsets.every(
+    ([rowOffset, columnOffset]) =>
+      grid.grid[row + rowOffset]?.[column + columnOffset]?.elevationM != null,
+  );
+}
+
+type UnknownRecord = Record<string, unknown>;
+
+function asRecord(value: unknown): UnknownRecord | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as UnknownRecord)
+    : null;
+}
+
+function finite(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * Parses the terrain-corridor response without deriving coordinates or filling
+ * elevation gaps. The grid's own cell coordinates are authoritative.
+ */
+export function parseTerrainCorridor(payload: unknown): TerrainGrid | null {
+  const root = asRecord(payload);
+  if (!root || !Array.isArray(root.grid)) return null;
+
+  const rows = finite(root.rows);
+  const columns = finite(root.columns);
+  const rawBounds = asRecord(root.bounds);
+  const south = finite(rawBounds?.south);
+  const west = finite(rawBounds?.west);
+  const north = finite(rawBounds?.north);
+  const east = finite(rawBounds?.east);
+
+  if (
+    !rows ||
+    !columns ||
+    rows < 2 ||
+    columns < 2 ||
+    root.grid.length !== rows ||
+    south == null ||
+    west == null ||
+    north == null ||
+    east == null ||
+    north <= south ||
+    east <= west
+  ) {
+    return null;
+  }
+
+  const grid: TerrainGridCell[][] = [];
+  for (const rawRow of root.grid) {
+    if (!Array.isArray(rawRow) || rawRow.length !== columns) return null;
+    const row: TerrainGridCell[] = [];
+    for (const rawCell of rawRow) {
+      const cell = asRecord(rawCell);
+      const lat = finite(cell?.lat);
+      const lng = finite(cell?.lng);
+      // Null is deliberate missing DTM data, not a zero-height fallback.
+      const elevationM =
+        cell?.elevationM === null ? null : finite(cell?.elevationM);
+      if (
+        lat == null ||
+        lng == null ||
+        (elevationM === null && cell?.elevationM !== null)
+      ) {
+        return null;
+      }
+      row.push({ lat, lng, elevationM });
+    }
+    grid.push(row);
+  }
+
+  if (!grid.some((row) => row.some((cell) => cell.elevationM != null)))
+    return null;
+  return { rows, columns, bounds: { south, west, north, east }, grid };
+}

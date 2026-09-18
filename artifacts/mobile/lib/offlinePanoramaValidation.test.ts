@@ -1,1 +1,94 @@
-aW1wb3J0IGFzc2VydCBmcm9tICJub2RlOmFzc2VydC9zdHJpY3QiOwppbXBvcnQgdGVzdCBmcm9tICJub2RlOnRlc3QiOwoKaW1wb3J0IHsKICBpc09mZmxpbmVQYW5vcmFtYURhdGVuYmFuaywKICBQQU5PUkFNQV9PRkZMSU5FX1NPVVJDRSwKICBQQU5PUkFNQV9PRkZMSU5FX1ZFUlNJT04sCiAgUEFOT1JBTUFfUk9VVEVfQ09SUklET1JfS00sCn0gZnJvbSAiLi9vZmZsaW5lUGFub3JhbWFWYWxpZGF0aW9uIjsKCnR5cGUgVGVzdFBhY2thZ2UgPSB7CiAgdmVyc2lvbjogbnVtYmVyOwogIHNvdXJjZTogc3RyaW5nOwogIGVsZXZhdGlvblNvdXJjZTogc3RyaW5nOwogIHZpc2liaWxpdHlTb3VyY2U6IHN0cmluZzsKICBjb3ZlcmFnZTogewogICAgcGVha0NvcnJpZG9yS206IG51bWJlcjsKICAgIHRlcnJhaW5SYWRpdXNNOiBudW1iZXIgfCBudWxsOwogIH07CiAgZG93bmxvYWRlZEF0OiBudW1iZXI7CiAgcGVha3M6IHsKICAgIGlkOiBzdHJpbmc7CiAgICBuYW1lOiBzdHJpbmc7CiAgICBsYXQ6IG51bWJlcjsKICAgIGxuZzogbnVtYmVyOwogICAgZWxldmF0aW9uTTogbnVtYmVyIHwgbnVsbDsKICAgIGVsZXZhdGlvblNvdXJjZTogc3RyaW5nOwogIH1bXTsKICB0ZXJyYWluUHJvZmlsZTogeyBkaXN0YW5jZUttOiBudW1iZXI7IGFsdE06IG51bWJlciB9W107CiAgdGVycmFpbk1vZGVsPzogdW5rbm93bjsKfTsKCmZ1bmN0aW9uIHZhbGlkUGFja2FnZSgpOiBUZXN0UGFja2FnZSB7CiAgcmV0dXJuIHsKICAgIHZlcnNpb246IFBBTk9SQU1BX09GRkxJTkVfVkVSU0lPTiwKICAgIHNvdXJjZTogUEFOT1JBTUFfT0ZGTElORV9TT1VSQ0UsCiAgICBlbGV2YXRpb25Tb3VyY2U6ICJPcGVuU3RyZWV0TWFwIGVsZSB0YWciLAogICAgdmlzaWJpbGl0eVNvdXJjZTogIlN3aXNzVG9wbyBEVE0gcmFkaWFsIHByb2ZpbGVzIiwKICAgIGNvdmVyYWdlOiB7CiAgICAgIHBlYWtDb3JyaWRvckttOiBQQU5PUkFNQV9ST1VURV9DT1JSSURPUl9LTSwKICAgICAgdGVycmFpblJhZGl1c006IG51bGwsCiAgICB9LAogICAgZG93bmxvYWRlZEF0OiAxLAogICAgcGVha3M6IFsKICAgICAgewogICAgICAgIGlkOiAicGVhay0xIiwKICAgICAgICBuYW1lOiAiVGVzdCBwZWFrIiwKICAgICAgICBsYXQ6IDQ2LjgsCiAgICAgICAgbG5nOiA4LjIsCiAgICAgICAgZWxldmF0aW9uTTogbnVsbCwKICAgICAgICBlbGV2YXRpb25Tb3VyY2U6ICJ1bmtub3duIiwKICAgICAgfSwKICAgIF0sCiAgICB0ZXJyYWluUHJvZmlsZTogWwogICAgICB7IGRpc3RhbmNlS206IDAsIGFsdE06IDEwMDAgfSwKICAgICAgeyBkaXN0YW5jZUttOiAxLCBhbHRNOiAxMTAwIH0sCiAgICBdLAogIH07Cn0KCnRlc3QoImFjY2VwdHMgYSBjb21wbGV0ZSBvZmZsaW5lIHBhbm9yYW1hIHBhY2thZ2UiLCAoKSA9PiB7CiAgYXNzZXJ0LmVxdWFsKGlzT2ZmbGluZVBhbm9yYW1hRGF0ZW5iYW5rKHZhbGlkUGFja2FnZSgpKSwgdHJ1ZSk7Cn0pOwoKdGVzdCgicmVqZWN0cyBjb3JydXB0ZWQgcGVhayBjb29yZGluYXRlcyBiZWZvcmUgZGlzcGxheSIsICgpID0+IHsKICBjb25zdCBwYXlsb2FkID0gdmFsaWRQYWNrYWdlKCk7CiAgcGF5bG9hZC5wZWFrc1swXS5sYXQgPSA5MTsKICBhc3NlcnQuZXF1YWwoaXNPZmZsaW5lUGFub3JhbWFEYXRlbmJhbmsocGF5bG9hZCksIGZhbHNlKTsKfSk7Cgp0ZXN0KCJyZWplY3RzIGluY29tcGxldGUgb3IgdW5vcmRlcmVkIHRlcnJhaW4gcHJvZmlsZXMiLCAoKSA9PiB7CiAgY29uc3QgcGF5bG9hZCA9IHZhbGlkUGFja2FnZSgpOwogIHBheWxvYWQudGVycmFpblByb2ZpbGUgPSBbCiAgICB7IGRpc3RhbmNlS206IDAsIGFsdE06IDEwMDAgfSwKICAgIHsgZGlzdGFuY2VLbTogMCwgYWx0TTogMTEwMCB9LAogIF07CiAgYXNzZXJ0LmVxdWFsKGlzT2ZmbGluZVBhbm9yYW1hRGF0ZW5iYW5rKHBheWxvYWQpLCBmYWxzZSk7Cn0pOwoKdGVzdCgicmVqZWN0cyBtYWxmb3JtZWQgdGVycmFpbiBtb2RlbHMgaW5zdGVhZCBvZiBwYXNzaW5nIHRoZW0gdG8gdGhlIHJlbmRlcmVyIiwgKCkgPT4gewogIGNvbnN0IHBheWxvYWQgPSB2YWxpZFBhY2thZ2UoKTsKICBwYXlsb2FkLnRlcnJhaW5Nb2RlbCA9IHsKICAgIHZlcnNpb246IDEsCiAgICBzb3VyY2U6ICJTd2lzc1RvcG8gRFRNIHJhZGlhbCBwcm9maWxlcyIsCiAgICBjZW50ZXI6IHsgbGF0OiA0Ni44LCBsbmc6IDguMiB9LAogICAgcmFkaXVzTTogMCwKICAgIHNlY3RvcnM6IDE2LAogICAgcmluZ3M6IDcsCiAgICBmZXRjaGVkQXQ6IDEsCiAgICBvYnNlcnZlckVsZXZhdGlvbk06IG51bGwsCiAgICByYXlzOiBbXSwKICB9OwogIGFzc2VydC5lcXVhbChpc09mZmxpbmVQYW5vcmFtYURhdGVuYmFuayhwYXlsb2FkKSwgZmFsc2UpOwp9KTs=
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  isOfflinePanoramaDatenbank,
+  PANORAMA_OFFLINE_SOURCE,
+  PANORAMA_OFFLINE_VERSION,
+  PANORAMA_ROUTE_CORRIDOR_KM,
+} from "./offlinePanoramaValidation";
+
+type TestPackage = {
+  version: number;
+  source: string;
+  elevationSource: string;
+  visibilitySource: string;
+  coverage: {
+    peakCorridorKm: number;
+    terrainRadiusM: number | null;
+  };
+  downloadedAt: number;
+  peaks: {
+    id: string;
+    name: string;
+    lat: number;
+    lng: number;
+    elevationM: number | null;
+    elevationSource: string;
+  }[];
+  terrainProfile: { distanceKm: number; altM: number }[];
+  terrainModel?: unknown;
+};
+
+function validPackage(): TestPackage {
+  return {
+    version: PANORAMA_OFFLINE_VERSION,
+    source: PANORAMA_OFFLINE_SOURCE,
+    elevationSource: "OpenStreetMap ele tag",
+    visibilitySource: "SwissTopo DTM radial profiles",
+    coverage: {
+      peakCorridorKm: PANORAMA_ROUTE_CORRIDOR_KM,
+      terrainRadiusM: null,
+    },
+    downloadedAt: 1,
+    peaks: [
+      {
+        id: "peak-1",
+        name: "Test peak",
+        lat: 46.8,
+        lng: 8.2,
+        elevationM: null,
+        elevationSource: "unknown",
+      },
+    ],
+    terrainProfile: [
+      { distanceKm: 0, altM: 1000 },
+      { distanceKm: 1, altM: 1100 },
+    ],
+  };
+}
+
+test("accepts a complete offline panorama package", () => {
+  assert.equal(isOfflinePanoramaDatenbank(validPackage()), true);
+});
+
+test("rejects corrupted peak coordinates before display", () => {
+  const payload = validPackage();
+  payload.peaks[0].lat = 91;
+  assert.equal(isOfflinePanoramaDatenbank(payload), false);
+});
+
+test("rejects incomplete or unordered terrain profiles", () => {
+  const payload = validPackage();
+  payload.terrainProfile = [
+    { distanceKm: 0, altM: 1000 },
+    { distanceKm: 0, altM: 1100 },
+  ];
+  assert.equal(isOfflinePanoramaDatenbank(payload), false);
+});
+
+test("rejects malformed terrain models instead of passing them to the renderer", () => {
+  const payload = validPackage();
+  payload.terrainModel = {
+    version: 1,
+    source: "SwissTopo DTM radial profiles",
+    center: { lat: 46.8, lng: 8.2 },
+    radiusM: 0,
+    sectors: 16,
+    rings: 7,
+    fetchedAt: 1,
+    observerElevationM: null,
+    rays: [],
+  };
+  assert.equal(isOfflinePanoramaDatenbank(payload), false);
+});

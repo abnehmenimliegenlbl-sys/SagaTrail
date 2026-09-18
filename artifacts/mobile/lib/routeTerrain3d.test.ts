@@ -1,1 +1,43 @@
-aW1wb3J0IGFzc2VydCBmcm9tICJub2RlOmFzc2VydC9zdHJpY3QiOwppbXBvcnQgdGVzdCBmcm9tICJub2RlOnRlc3QiOwoKaW1wb3J0IHsKICBoYXNSZWFsVGVycmFpblRyaWFuZ2xlLAogIHBhcnNlVGVycmFpbkNvcnJpZG9yLAogIHR5cGUgVGVycmFpbkdyaWQsCn0gZnJvbSAiLi9yb3V0ZVRlcnJhaW4zZCI7Cgpjb25zdCBncmlkOiBUZXJyYWluR3JpZCA9IHsKICByb3dzOiAyLAogIGNvbHVtbnM6IDIsCiAgYm91bmRzOiB7IHNvdXRoOiA0Niwgd2VzdDogNywgbm9ydGg6IDQ2LjAxLCBlYXN0OiA3LjAxIH0sCiAgZ3JpZDogWwogICAgWwogICAgICB7IGxhdDogNDYuMDEsIGxuZzogNywgZWxldmF0aW9uTTogMTAwMCB9LAogICAgICB7IGxhdDogNDYuMDEsIGxuZzogNy4wMSwgZWxldmF0aW9uTTogbnVsbCB9LAogICAgXSwKICAgIFsKICAgICAgeyBsYXQ6IDQ2LCBsbmc6IDcsIGVsZXZhdGlvbk06IDkwMCB9LAogICAgICB7IGxhdDogNDYsIGxuZzogNy4wMSwgZWxldmF0aW9uTTogOTUwIH0sCiAgICBdLAogIF0sCn07Cgp0ZXN0KCJwcmVzZXJ2ZXMgU3dpc3NUb3BvIGdhcHMgYW5kIG5ldmVyIGJ1aWxkcyBhIHRyaWFuZ2xlIHRocm91Z2ggdGhlbSIsICgpID0+IHsKICBjb25zdCBwYXJzZWQgPSBwYXJzZVRlcnJhaW5Db3JyaWRvcihncmlkKTsKICBhc3NlcnQub2socGFyc2VkKTsKICBhc3NlcnQuZXF1YWwocGFyc2VkLmdyaWRbMF0hWzFdIS5lbGV2YXRpb25NLCBudWxsKTsKICBhc3NlcnQuZXF1YWwoaGFzUmVhbFRlcnJhaW5UcmlhbmdsZShwYXJzZWQsIDAsIDAsICJ1cHBlckxlZnQiKSwgZmFsc2UpOwogIGFzc2VydC5lcXVhbChoYXNSZWFsVGVycmFpblRyaWFuZ2xlKHBhcnNlZCwgMCwgMCwgImxvd2VyUmlnaHQiKSwgZmFsc2UpOwp9KTsKCnRlc3QoImJ1aWxkcyBib3RoIHRlcnJhaW4gaGFsdmVzIHdoZW4gZXZlcnkgRFRNIGhlaWdodCBpcyByZWFsIiwgKCkgPT4gewogIGNvbnN0IGNvbXBsZXRlOiBUZXJyYWluR3JpZCA9IHsKICAgIC4uLmdyaWQsCiAgICBncmlkOiBncmlkLmdyaWQubWFwKChyb3cpID0+CiAgICAgIHJvdy5tYXAoKGNlbGwpID0+ICh7IC4uLmNlbGwsIGVsZXZhdGlvbk06IGNlbGwuZWxldmF0aW9uTSA/PyA5NzUgfSkpLAogICAgKSwKICB9OwogIGFzc2VydC5lcXVhbChoYXNSZWFsVGVycmFpblRyaWFuZ2xlKGNvbXBsZXRlLCAwLCAwLCAidXBwZXJMZWZ0IiksIHRydWUpOwogIGFzc2VydC5lcXVhbChoYXNSZWFsVGVycmFpblRyaWFuZ2xlKGNvbXBsZXRlLCAwLCAwLCAibG93ZXJSaWdodCIpLCB0cnVlKTsKfSk7
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  hasRealTerrainTriangle,
+  parseTerrainCorridor,
+  type TerrainGrid,
+} from "./routeTerrain3d";
+
+const grid: TerrainGrid = {
+  rows: 2,
+  columns: 2,
+  bounds: { south: 46, west: 7, north: 46.01, east: 7.01 },
+  grid: [
+    [
+      { lat: 46.01, lng: 7, elevationM: 1000 },
+      { lat: 46.01, lng: 7.01, elevationM: null },
+    ],
+    [
+      { lat: 46, lng: 7, elevationM: 900 },
+      { lat: 46, lng: 7.01, elevationM: 950 },
+    ],
+  ],
+};
+
+test("preserves SwissTopo gaps and never builds a triangle through them", () => {
+  const parsed = parseTerrainCorridor(grid);
+  assert.ok(parsed);
+  assert.equal(parsed.grid[0]![1]!.elevationM, null);
+  assert.equal(hasRealTerrainTriangle(parsed, 0, 0, "upperLeft"), false);
+  assert.equal(hasRealTerrainTriangle(parsed, 0, 0, "lowerRight"), false);
+});
+
+test("builds both terrain halves when every DTM height is real", () => {
+  const complete: TerrainGrid = {
+    ...grid,
+    grid: grid.grid.map((row) =>
+      row.map((cell) => ({ ...cell, elevationM: cell.elevationM ?? 975 })),
+    ),
+  };
+  assert.equal(hasRealTerrainTriangle(complete, 0, 0, "upperLeft"), true);
+  assert.equal(hasRealTerrainTriangle(complete, 0, 0, "lowerRight"), true);
+});

@@ -1,1 +1,409 @@
-aW1wb3J0IHR5cGUgeyBMb2dnZXIgfSBmcm9tICJwaW5vIjsKaW1wb3J0IHsgY3JlYXRlSGFzaCB9IGZyb20gImNyeXB0byI7CmltcG9ydCB7IGNvbXB1dGVFbGV2YXRpb25TdGF0cyB9IGZyb20gIi4vZWxldmF0aW9uIjsKaW1wb3J0IHsgZGVyaXZlU2FjRnJvbVN3aXNzVGxtM2QgfSBmcm9tICIuL3N3aXNzdG9wb0hpa2luZyI7CmltcG9ydCB7IGRlcml2ZVNlYXNvbiB9IGZyb20gIi4vc2Vhc29uIjsKaW1wb3J0IHsgcmV2ZXJzZUdlb2NvZGUgfSBmcm9tICIuL2dlb2NvZGluZyI7CmltcG9ydCB7CiAgZG93bnNhbXBsZSwKICBlc3RpbWF0ZU1pbnV0ZXMsCiAgaGF2ZXJzaW5lTSwKICBwYXRoRGlzdGFuY2VLbSwKICByZHBTaW1wbGlmeSwKICB0eXBlIExhdExuZywKfSBmcm9tICIuL2dlbyI7CgovKioKICogQmVyZWNobmV0IGVpbmUgV2FuZGVycm91dGUgendpc2NoZW4gendlaSBzZWxic3QgZ2V3YWVobHRlbiBQdW5rdGVuCiAqIChWYWxoYWxsYS1Sb3V0ZXIgZGVyIEZPU1NHSVMsIG9obmUgQVBJLUtleSwgQ29zdGluZyAicGVkZXN0cmlhbiIpIHVuZAogKiByZWljaGVydCBzaWUgbWl0IGRlbnNlbGJlbiBRdWVsbGVuIHdpZSBkaWUgS2FudG9uc3JvdXRlbiBhbgogKiAoc3dpc3N0b3BvLUhvZWhlbm1ldGVybiwgU0FDLUdyYWQsIFNhaXNvbi1IZXVyaXN0aWspLiBEaWUgUm91dGUgd2lyZAogKiBOSUNIVCBwZXJzaXN0aWVydCDigJQgamVkZSBBbmZyYWdlIGJlcmVjaG5ldCBzaWUgbmV1LCBkZW5uIFN0YXJ0L1ppZWwgc2luZAogKiBmcmVpIHdhZWhsYmFyIHVuZCBuaWNodCBhdWYgZWluZW4gS2FudG9uLUthdGFsb2cgYmVncmVuenQuCiAqCiAqIFdpY2h0aWc6IEZydWVoZXIgbGllZiBkYXMgUm91dGluZyB1ZWJlciBkZW4gb2VmZmVudGxpY2hlbiBPU1JNLURlbW8tU2VydmVyCiAqIG1pdCBQcm9maWwgImZvb3QiIOKAlCBkZXIgYmVkaWVudCBhYmVyIHVuYWJoYWVuZ2lnIHZvbSBQcm9maWwgaW4gZGVyIFVSTCBudXIKICogQXV0b2RhdGVuLCB3ZXNoYWxiICJXYW5kZXJyb3V0ZW4iIHVlYmVyIEF1dG9iYWhuZW4vU2NobmVsbHN0cmFzc2VuIGZ1ZWhydGVuLgogKiBEYXMgVmFsaGFsbGEtRnVzc2dhZW5nZXJwcm9maWwgc2NobGllc3N0IEF1dG9iYWhuZW4gdW5kIGZ1ZXIgRnVzc2dhZW5nZXIKICogZ2VzcGVycnRlIFN0cmFzc2VuIGdydW5kc2FldHpsaWNoIGF1cyB1bmQgYmV2b3J6dWd0IFdlZ2UvVHJhaWxzLgogKi8KCmNvbnN0IFZBTEhBTExBX1VSTCA9ICJodHRwczovL3ZhbGhhbGxhMS5vcGVuc3RyZWV0bWFwLmRlL3JvdXRlIjsKY29uc3QgVkFMSEFMTEFfVFJBQ0VfVVJMID0gImh0dHBzOi8vdmFsaGFsbGExLm9wZW5zdHJlZXRtYXAuZGUvdHJhY2Vfcm91dGUiOwpjb25zdCBVU0VSX0FHRU5UID0gIlNhZ2FUcmFpbC8xLjAgKFN3aXNzIGhpa2luZyBjb21wYW5pb24pIjsKY29uc3QgU1RPUkVEX0dFT01FVFJZX1BPSU5UUyA9IDgwOwpjb25zdCBNSU5fS00gPSAwLjM7CmNvbnN0IE1BWF9LTSA9IDYwOwpjb25zdCBEUkFXTl9ST1VURV9XQVlQT0lOVFMgPSA0ODsKCmludGVyZmFjZSBWYWxoYWxsYVJlc3BvbnNlIHsKICB0cmlwPzogewogICAgbGVncz86IHsgc2hhcGU/OiBzdHJpbmcgfVtdOwogICAgc3VtbWFyeT86IHsgbGVuZ3RoPzogbnVtYmVyIH07CiAgfTsKICBlcnJvcj86IHN0cmluZzsKfQoKLyoqCiAqIERla29kaWVydCBlaW5lIFZhbGhhbGxhLVBvbHlsaW5lIChQcmVjaXNpb24gMWU2KSBpbiBLb29yZGluYXRlbi4KICogR2xlaWNoZXMgRm9ybWF0IHdpZSBHb29nbGUtRW5jb2RlZC1Qb2x5bGluZSwgbnVyIG1pdCBGYWt0b3IgMWU2LgogKi8KZnVuY3Rpb24gZGVjb2RlUG9seWxpbmU2KGVuY29kZWQ6IHN0cmluZyk6IExhdExuZ1tdIHsKICBjb25zdCBwb2ludHM6IExhdExuZ1tdID0gW107CiAgbGV0IGluZGV4ID0gMDsKICBsZXQgbGF0ID0gMDsKICBsZXQgbG5nID0gMDsKICB3aGlsZSAoaW5kZXggPCBlbmNvZGVkLmxlbmd0aCkgewogICAgZm9yIChjb25zdCB3aGljaCBvZiBbImxhdCIsICJsbmciXSBhcyBjb25zdCkgewogICAgICBsZXQgcmVzdWx0ID0gMDsKICAgICAgbGV0IHNoaWZ0ID0gMDsKICAgICAgbGV0IGJ5dGUgPSAweDIwOwogICAgICB3aGlsZSAoYnl0ZSA+PSAweDIwKSB7CiAgICAgICAgYnl0ZSA9IGVuY29kZWQuY2hhckNvZGVBdChpbmRleCsrKSAtIDYzOwogICAgICAgIHJlc3VsdCB8PSAoYnl0ZSAmIDB4MWYpIDw8IHNoaWZ0OwogICAgICAgIHNoaWZ0ICs9IDU7CiAgICAgIH0KICAgICAgY29uc3QgZGVsdGEgPSByZXN1bHQgJiAxID8gfihyZXN1bHQgPj4gMSkgOiByZXN1bHQgPj4gMTsKICAgICAgaWYgKHdoaWNoID09PSAibGF0IikgbGF0ICs9IGRlbHRhOwogICAgICBlbHNlIGxuZyArPSBkZWx0YTsKICAgIH0KICAgIHBvaW50cy5wdXNoKHsgbGF0OiBsYXQgLyAxZTYsIGxuZzogbG5nIC8gMWU2IH0pOwogIH0KICByZXR1cm4gcG9pbnRzOwp9CgpleHBvcnQgY2xhc3MgQ3VzdG9tUm91dGVFcnJvciBleHRlbmRzIEVycm9yIHt9CgovKiogQmF1dCBlaW5lbiBkZXRlcm1pbmlzdGlzY2hlbiBCZXplaWNobmVyIGF1cyBnZXJ1bmRldGVuIFN0YXJ0LS9aaWVsa29vcmRpbmF0ZW4uICovCmZ1bmN0aW9uIGN1c3RvbVJvdXRlSWQocG9pbnRzOiBMYXRMbmdbXSk6IHN0cmluZyB7CiAgY29uc3QgZmluZ2VycHJpbnQgPSBwb2ludHMKICAgIC5tYXAoKHBvaW50KSA9PiBgJHtwb2ludC5sYXQudG9GaXhlZCg1KX0sJHtwb2ludC5sbmcudG9GaXhlZCg1KX1gKQogICAgLmpvaW4oIjsiKTsKICByZXR1cm4gYGN1c3RvbS0ke2NyZWF0ZUhhc2goInNoYTI1NiIpLnVwZGF0ZShmaW5nZXJwcmludCkuZGlnZXN0KCJoZXgiKS5zbGljZSgwLCAxNil9YDsKfQoKZXhwb3J0IGludGVyZmFjZSBDdXN0b21Sb3V0ZSB7CiAgaWQ6IHN0cmluZzsKICBzYWdhSWQ6IHN0cmluZzsKICBuYW1lOiBzdHJpbmc7CiAgcmVnaW9uOiBzdHJpbmc7CiAgZGlzdGFuY2VLbTogbnVtYmVyOwogIGRpc3RhbmNlVGFnS206IG51bWJlcjsKICBhc2NlbnRNOiBudW1iZXI7CiAgbWF4RWxldmF0aW9uTTogbnVtYmVyOwogIHNlYXNvbjogUmV0dXJuVHlwZTx0eXBlb2YgZGVyaXZlU2Vhc29uPjsKICBtaW51dGVzOiBudW1iZXI7CiAgc2FjOiBzdHJpbmc7CiAgdGVycmFpbjogc3RyaW5nOwogIGNvb3JkaW5hdGVzOiBMYXRMbmc7CiAgZ2VvbWV0cnk6IFtudW1iZXIsIG51bWJlcl1bXTsKICBmZWF0dXJlZDogYm9vbGVhbjsKfQoKZXhwb3J0IGludGVyZmFjZSBSb3V0ZUZyb21Qb2ludHNNZXRhIHsKICAvKiogRGV0ZXJtaW5pc3Rpc2NoZXIgQmV6ZWljaG5lciBkZXIgUm91dGUgKGRpZW50IGF1Y2ggYWxzIHNhZ2FJZCkuICovCiAgaWQ6IHN0cmluZzsKICAvKiogRmVzdGVyIEFuemVpZ2VuYW1lOyBvaG5lIEFuZ2FiZSB3aXJkICJTdGFydCDihpIgWmllbCIgcGVyIEdlb2NvZGluZyBnZWJhdXQuICovCiAgbmFtZT86IHN0cmluZzsKICBzdGFydExhYmVsPzogc3RyaW5nOwogIGVuZExhYmVsPzogc3RyaW5nOwogIC8qKiBBbnplaWdlLVRlcnJhaW4sIHouIEIuICJFaWdlbmUgUm91dGUiIG9kZXIgIkdQWC1JbXBvcnQiLiAqLwogIHRlcnJhaW46IHN0cmluZzsKfQoKLyoqCiAqIEdlbWVpbnNhbWUgQW5yZWljaGVydW5nIGZ1ZXIgYWxsZSBSb3V0ZW4sIGRpZSBhbHMgbmFja3RlIFB1bmt0Zm9sZ2UKICogaGVyZWlua29tbWVuIChlaWdlbmUgUm91dGVuIHZpYSBWYWxoYWxsYSwgR1BYLUltcG9ydCk6IERpc3RhbnotUHJ1ZWZ1bmcsCiAqIHN3aXNzdG9wby1Ib2VoZW5tZXRlciwgU0FDLUdyYWQsIFNhaXNvbi1IZXVyaXN0aWssIEdlb2NvZGluZyBmdWVyIE5hbWVuCiAqIHVuZCBLYW50b24uIFdpcmZ0IGBDdXN0b21Sb3V0ZUVycm9yYCBiZWkgdW5wbGF1c2libGVyIExhZW5nZS4KICovCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBidWlsZFJvdXRlRnJvbVBvaW50cygKICBwb2ludHM6IExhdExuZ1tdLAogIG1ldGE6IFJvdXRlRnJvbVBvaW50c01ldGEsCiAgbG9nOiBMb2dnZXIsCik6IFByb21pc2U8Q3VzdG9tUm91dGU+IHsKICBjb25zdCBzdGFydCA9IHBvaW50c1swXSE7CiAgY29uc3QgZW5kID0gcG9pbnRzW3BvaW50cy5sZW5ndGggLSAxXSE7CiAgY29uc3QgZGlzdGFuY2VLbSA9IHBhdGhEaXN0YW5jZUttKHBvaW50cyk7CiAgaWYgKGRpc3RhbmNlS20gPCBNSU5fS00gfHwgZGlzdGFuY2VLbSA+IE1BWF9LTSkgewogICAgdGhyb3cgbmV3IEN1c3RvbVJvdXRlRXJyb3IoCiAgICAgIGBEaWUgUm91dGUgaXN0IG1pdCAke2Rpc3RhbmNlS20udG9GaXhlZCgxKX0ga20gYXVzc2VyaGFsYiBkZXMgc2lubnZvbGxlbiBCZXJlaWNocyAoJHtNSU5fS019LSR7TUFYX0tNfSBrbSkuYCwKICAgICk7CiAgfQoKICBjb25zdCBbZWxldmF0aW9uLCBzYWMsIHN0YXJ0UGxhY2UsIGVuZFBsYWNlXSA9IGF3YWl0IFByb21pc2UuYWxsKFsKICAgIGNvbXB1dGVFbGV2YXRpb25TdGF0cyhwb2ludHMsIGxvZyksCiAgICBkZXJpdmVTYWNGcm9tU3dpc3NUbG0zZChwb2ludHMsIGxvZyksCiAgICBtZXRhLnN0YXJ0TGFiZWwKICAgICAgPyBQcm9taXNlLnJlc29sdmUoeyBsYWJlbDogbWV0YS5zdGFydExhYmVsLCBjYW50b246IG51bGwgfSkKICAgICAgOiByZXZlcnNlR2VvY29kZShzdGFydC5sYXQsIHN0YXJ0LmxuZywgbG9nKSwKICAgIG1ldGEuZW5kTGFiZWwKICAgICAgPyBQcm9taXNlLnJlc29sdmUoeyBsYWJlbDogbWV0YS5lbmRMYWJlbCwgY2FudG9uOiBudWxsIH0pCiAgICAgIDogcmV2ZXJzZUdlb2NvZGUoZW5kLmxhdCwgZW5kLmxuZywgbG9nKSwKICBdKTsKCiAgY29uc3QgYXNjZW50TSA9IGVsZXZhdGlvbj8uYXNjZW50TSA/PyAwOwogIGNvbnN0IG1heEVsZXZhdGlvbk0gPSBlbGV2YXRpb24/Lm1heEVsZXZhdGlvbk0gPz8gMDsKICBjb25zdCBzYWNHcmFkZSA9IHNhYyA/PyAidW5iZWthbm50IjsKCiAgLy8gS2FudG9uLUVya2VubnVuZzogU3RhcnRwdW5rdCBpc3QgYmV2b3J6dWd0OyBmYWVsbHQgZGFzIEdlb2NvZGluZyBhdXMKICAvLyAoei5CLiBOZXR6ZmVobGVyIG9kZXIgTm9taW5hdGltIGxpZWZlcnQga2VpbiB2ZXJ3ZXJ0YmFyZXMgc3RhdGUtRmVsZCksCiAgLy8gd2lyZCBkZXIgTWl0dGVscHVua3QgZGVyIFJvdXRlIGFscyBGYWxsYmFjayBnZW9jb2RpZXJ0LiBEYXMgaXN0IHdpY2h0aWcKICAvLyBmdWVyIHVtZ2VrZWhydGUgR1BYLUltcG9ydGUsIGJlaSBkZW5lbiBkZXIgU3RhcnRwdW5rdCBuYWggYW4gZWluZXIKICAvLyBLYW50b25zZ3JlbnplIGxpZWd0IHVuZCBkaWUgS2FudG9uLVp1b3JkbnVuZyB1bnp1dmVybGFlc3NpZyBpc3QuCiAgbGV0IGNhbnRvbiA9IHN0YXJ0UGxhY2UuY2FudG9uOwogIGlmICghY2FudG9uICYmIHBvaW50cy5sZW5ndGggPiAyKSB7CiAgICBjb25zdCBtaWQgPSBwb2ludHNbTWF0aC5mbG9vcihwb2ludHMubGVuZ3RoIC8gMildITsKICAgIGNvbnN0IG1pZFBsYWNlID0gYXdhaXQgcmV2ZXJzZUdlb2NvZGUobWlkLmxhdCwgbWlkLmxuZywgbG9nKTsKICAgIGNhbnRvbiA9IG1pZFBsYWNlLmNhbnRvbjsKICB9CiAgY29uc3QgcmVnaW9uID0gY2FudG9uID8/ICIiOwogIGNvbnN0IGdlb21ldHJ5OiBbbnVtYmVyLCBudW1iZXJdW10gPSBkb3duc2FtcGxlKHBvaW50cywgU1RPUkVEX0dFT01FVFJZX1BPSU5UUykubWFwKAogICAgKHApID0+IFtwLmxhdCwgcC5sbmddLAogICk7CiAgY29uc3Qgc2hvcnRMYWJlbCA9IChsYWJlbDogc3RyaW5nKSA9PiBsYWJlbC5zcGxpdCgiLCIpWzBdPy50cmltKCkgfHwgbGFiZWw7CgogIGNvbnN0IHJvdW5kZWREaXN0YW5jZUttID0gTWF0aC5yb3VuZChkaXN0YW5jZUttICogMTApIC8gMTA7CiAgcmV0dXJuIHsKICAgIGlkOiBtZXRhLmlkLAogICAgc2FnYUlkOiBtZXRhLmlkLAogICAgbmFtZTogbWV0YS5uYW1lID8/IGAke3Nob3J0TGFiZWwoc3RhcnRQbGFjZS5sYWJlbCl9IOKGkiAke3Nob3J0TGFiZWwoZW5kUGxhY2UubGFiZWwpfWAsCiAgICByZWdpb24sCiAgICBkaXN0YW5jZUttOiByb3VuZGVkRGlzdGFuY2VLbSwKICAgIGRpc3RhbmNlVGFnS206IHJvdW5kZWREaXN0YW5jZUttLAogICAgYXNjZW50TSwKICAgIG1heEVsZXZhdGlvbk0sCiAgICBzZWFzb246IGRlcml2ZVNlYXNvbihtYXhFbGV2YXRpb25NLCBzYWNHcmFkZSksCiAgICBtaW51dGVzOiBlc3RpbWF0ZU1pbnV0ZXMoZGlzdGFuY2VLbSwgYXNjZW50TSksCiAgICBzYWM6IHNhY0dyYWRlLAogICAgdGVycmFpbjogbWV0YS50ZXJyYWluLAogICAgY29vcmRpbmF0ZXM6IHN0YXJ0LAogICAgZ2VvbWV0cnksCiAgICBmZWF0dXJlZDogZmFsc2UsCiAgfTsKfQoKLyoqCiAqIEJlcmVjaG5ldCBkaWUgRnVzc3dlZy1Sb3V0ZSB6d2lzY2hlbiBgc3RhcnRgIHVuZCBgZW5kYCB1bmQgcmVpY2hlcnQgc2llIGFuLgogKiBXaXJmdCBgQ3VzdG9tUm91dGVFcnJvcmAsIHdlbm4gT1NSTSBrZWluZSBSb3V0ZSBmaW5kZXQgb2RlciBkaWUgTGFlbmdlCiAqIGF1c3NlcmhhbGIgZGVzIHNpbm52b2xsZW4gQmVyZWljaHMgbGllZ3QgKFJvdXRlciBtZWxkZXQgZGFubiA0MDApLgogKi8KZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGJ1aWxkQ3VzdG9tUm91dGUoCiAgc3RhcnQ6IExhdExuZywKICBlbmQ6IExhdExuZywKICBzdGFydExhYmVsOiBzdHJpbmcgfCB1bmRlZmluZWQsCiAgZW5kTGFiZWw6IHN0cmluZyB8IHVuZGVmaW5lZCwKICBsb2c6IExvZ2dlciwKKTogUHJvbWlzZTxDdXN0b21Sb3V0ZT4gewogIHJldHVybiBidWlsZFBlZGVzdHJpYW5Sb3V0ZSgKICAgIFtzdGFydCwgZW5kXSwKICAgIHN0YXJ0TGFiZWwsCiAgICBlbmRMYWJlbCwKICAgICJFaWdlbmUgUm91dGUiLAogICAgbG9nLAogICk7Cn0KCi8qKgogKiBCZXJlY2huZXQgZWluZSBGdXNzd2VnLVJvdXRlLCBkaWUgYWxsZSBXZWdwdW5rdGUgaW4gZGVyIGFuZ2VnZWJlbmVuCiAqIFJlaWhlbmZvbGdlIHBhc3NpZXJ0LiBWYWxoYWxsYSBsaWVmZXJ0IGRhZnVlciBlaW5lbiBMZWcgcHJvIEFic2Nobml0dDsKICogZGllIExlZ3Mgd2VyZGVuIG9obmUgZG9wcGVsdGUgVmVyYmluZHVuZ3NwdW5rdGUgenUgZWluZXIgR2VvbWV0cmllCiAqIHp1c2FtbWVuZ2VmdWVndC4KICovCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBidWlsZEN1c3RvbVJvdXRlVGhyb3VnaFdheXBvaW50cygKICBwb2ludHM6IExhdExuZ1tdLAogIGxvZzogTG9nZ2VyLAopOiBQcm9taXNlPEN1c3RvbVJvdXRlPiB7CiAgcmV0dXJuIGJ1aWxkUGVkZXN0cmlhblJvdXRlKHBvaW50cywgdW5kZWZpbmVkLCB1bmRlZmluZWQsICJFaWdlbmUgV2VncHVua3QtUm91dGUiLCBsb2cpOwp9CgovKioKICogTWFwcHQgZWluZSB2b20gQmVudXR6ZXIgZ2V6ZWljaG5ldGUgTGluaWUgYXVmIGRhcyBGdXNzd2VnbmV0ei4gQW5kZXJzIGFscwogKiBiZWkgV2VncHVua3RlbiB3aXJkIGRpZSBMaW5pZSBuaWNodCBudXIgYWxzIEZvbGdlIHZvbiBaaWVsZW4gYmVoYW5kZWx0OgogKiBWYWxoYWxsYXMgdHJhY2Vfcm91dGUgZm9sZ3QgZGVyIGdlemVpY2huZXRlbiBTcHVyIHVuZCBsaWVmZXJ0IGRpZSByZWFsZQogKiBXZWdnZW9tZXRyaWUgenVyw7xjay4KICovCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBidWlsZEN1c3RvbVJvdXRlRnJvbURyYXduUG9pbnRzKAogIHBvaW50czogTGF0TG5nW10sCiAgbG9nOiBMb2dnZXIsCik6IFByb21pc2U8Q3VzdG9tUm91dGU+IHsKICBpZiAocG9pbnRzLmxlbmd0aCA8IDIgfHwgcG9pbnRzLmxlbmd0aCA+IDEwMCkgewogICAgdGhyb3cgbmV3IEN1c3RvbVJvdXRlRXJyb3IoIkJpdHRlIGVpbmUgTGluaWUgbWl0IG1pbmRlc3RlbnMgendlaSBQdW5rdGVuIHplaWNobmVuLiIpOwogIH0KCiAgY29uc3QgcmVzID0gYXdhaXQgZmV0Y2goVkFMSEFMTEFfVFJBQ0VfVVJMLCB7CiAgICBtZXRob2Q6ICJQT1NUIiwKICAgIGhlYWRlcnM6IHsgIkNvbnRlbnQtVHlwZSI6ICJhcHBsaWNhdGlvbi9qc29uIiwgIlVzZXItQWdlbnQiOiBVU0VSX0FHRU5UIH0sCiAgICBib2R5OiBKU09OLnN0cmluZ2lmeSh7CiAgICAgIHNoYXBlOiBwb2ludHMubWFwKChwb2ludCkgPT4gKHsgbGF0OiBwb2ludC5sYXQsIGxvbjogcG9pbnQubG5nIH0pKSwKICAgICAgY29zdGluZzogInBlZGVzdHJpYW4iLAogICAgICBzaGFwZV9tYXRjaDogIm1hcF9zbmFwIiwKICAgICAgdW5pdHM6ICJraWxvbWV0ZXJzIiwKICAgIH0pLAogIH0pOwogIGlmICghcmVzLm9rICYmIHJlcy5zdGF0dXMgIT09IDQwMCkgewogICAgdGhyb3cgbmV3IEVycm9yKGBWYWxoYWxsYS1NYXAtTWF0Y2hpbmc6IEhUVFAtRmVobGVyICR7cmVzLnN0YXR1c31gKTsKICB9CiAgY29uc3QgZGF0YSA9IChhd2FpdCByZXMuanNvbigpKSBhcyBWYWxoYWxsYVJlc3BvbnNlOwogIGNvbnN0IHNoYXBlcyA9IChkYXRhLnRyaXA/LmxlZ3MgPz8gW10pCiAgICAubWFwKChsZWcpID0+IGxlZy5zaGFwZSkKICAgIC5maWx0ZXIoKHNoYXBlKTogc2hhcGUgaXMgc3RyaW5nID0+IEJvb2xlYW4oc2hhcGUpKTsKCiAgY29uc3Qgcm91dGVkUG9pbnRzOiBMYXRMbmdbXSA9IFtdOwogIGZvciAoY29uc3Qgc2hhcGUgb2Ygc2hhcGVzKSB7CiAgICBmb3IgKGNvbnN0IHBvaW50IG9mIGRlY29kZVBvbHlsaW5lNihzaGFwZSkpIHsKICAgICAgY29uc3QgcHJldmlvdXMgPSByb3V0ZWRQb2ludHNbcm91dGVkUG9pbnRzLmxlbmd0aCAtIDFdOwogICAgICBpZiAoIXByZXZpb3VzIHx8IHByZXZpb3VzLmxhdCAhPT0gcG9pbnQubGF0IHx8IHByZXZpb3VzLmxuZyAhPT0gcG9pbnQubG5nKSB7CiAgICAgICAgcm91dGVkUG9pbnRzLnB1c2gocG9pbnQpOwogICAgICB9CiAgICB9CiAgfQoKICBjb25zdCBpbnB1dERpc3RhbmNlS20gPSBwYXRoRGlzdGFuY2VLbShwb2ludHMpOwogIGNvbnN0IHRyYWNlZERpc3RhbmNlS20gPSBwYXRoRGlzdGFuY2VLbShyb3V0ZWRQb2ludHMpOwogIGNvbnN0IGZpcnN0SW5wdXQgPSBwb2ludHNbMF0hOwogIGNvbnN0IGxhc3RJbnB1dCA9IHBvaW50c1twb2ludHMubGVuZ3RoIC0gMV0hOwogIGNvbnN0IGlzQ2xvc2VkSW5wdXQgPQogICAgaGF2ZXJzaW5lTShmaXJzdElucHV0LCBsYXN0SW5wdXQpIDw9CiAgICBNYXRoLm1heCg1MCwgTWF0aC5taW4oNTAwLCBpbnB1dERpc3RhbmNlS20gKiAxMDAwICogMC4wNSkpOwogIGNvbnN0IHRyYWNlZFN0YXJ0R2FwTSA9CiAgICByb3V0ZWRQb2ludHMubGVuZ3RoID49IDIKICAgICAgPyBoYXZlcnNpbmVNKHJvdXRlZFBvaW50c1swXSEsIGZpcnN0SW5wdXQpCiAgICAgIDogTnVtYmVyLlBPU0lUSVZFX0lORklOSVRZOwogIGNvbnN0IHRyYWNlZEZpbmlzaEdhcE0gPQogICAgcm91dGVkUG9pbnRzLmxlbmd0aCA+PSAyCiAgICAgID8gaGF2ZXJzaW5lTShyb3V0ZWRQb2ludHNbcm91dGVkUG9pbnRzLmxlbmd0aCAtIDFdISwgbGFzdElucHV0KQogICAgICA6IE51bWJlci5QT1NJVElWRV9JTkZJTklUWTsKICAvLyB0cmFjZV9yb3V0ZSBkYXJmIGRpZSBmcmVpIGdlemVpY2huZXRlbiBFbmRwdW5rdGUgYXVmIGVpbmVuIG5haGVuIFdlZwogIC8vIHZlcnNjaGllYmVuLCBhYmVyIG5pY2h0IGRlbiBsZXR6dGVuIEFic2Nobml0dCBzdGlsbHNjaHdlaWdlbmQgdmVybGllcmVuLgogIC8vIEVpbmUgZ3LDtnNzZW5iZWdyZW56dGUgVG9sZXJhbnogdmVyaGluZGVydCBzb3dvaGwgZmFsc2NoZSBBYmJyw7xjaGUgYmVpCiAgLy8ga2xlaW5lbiBTbmFwLUFid2VpY2h1bmdlbiBhbHMgYXVjaCBhYmdlc2Nobml0dGVuZSBsYW5nZSBFbmRzdMO8Y2tlLgogIGNvbnN0IGVuZHBvaW50VG9sZXJhbmNlTSA9IE1hdGgubWF4KAogICAgMTUwLAogICAgTWF0aC5taW4oNTAwLCBpbnB1dERpc3RhbmNlS20gKiAxMDAwICogMC4wOCksCiAgKTsKICBjb25zdCB0cmFjZU1pc3NlZEVuZHBvaW50ID0KICAgIHRyYWNlZFN0YXJ0R2FwTSA+IGVuZHBvaW50VG9sZXJhbmNlTSB8fAogICAgdHJhY2VkRmluaXNoR2FwTSA+IGVuZHBvaW50VG9sZXJhbmNlTTsKICBjb25zdCB0cmFjZUxvb2tzQ29sbGFwc2VkID0KICAgIHJvdXRlZFBvaW50cy5sZW5ndGggPCAyIHx8CiAgICB0cmFjZWREaXN0YW5jZUttIDwgTWF0aC5tYXgoTUlOX0tNLCBpbnB1dERpc3RhbmNlS20gKiAwLjQ1KSB8fAogICAgdHJhY2VNaXNzZWRFbmRwb2ludCB8fAogICAgKGlzQ2xvc2VkSW5wdXQgJiYKICAgICAgaGF2ZXJzaW5lTShyb3V0ZWRQb2ludHNbMF0hLCByb3V0ZWRQb2ludHNbcm91dGVkUG9pbnRzLmxlbmd0aCAtIDFdISkgPgogICAgICAgIE1hdGgubWF4KDE1MCwgaW5wdXREaXN0YW5jZUttICogMTAwMCAqIDAuMTIpKTsKCiAgaWYgKHRyYWNlTG9va3NDb2xsYXBzZWQpIHsKICAgIC8vIHRyYWNlX3JvdXRlIGthbm4gYmVpIGVpbmVyIGdlc2NobG9zc2VuZW4gSGFuZHNraXp6ZSBlaW5lbiBBYnNjaG5pdHQKICAgIC8vIG1laHJmYWNoIHZlcndlbmRlbiBvZGVyIG5hY2ggZGVtIGVyc3RlbiBTZWdtZW50IGFiYnJlY2hlbi4gRGllCiAgICAvLyBnbGVpY2htYWVzc2lnIHZlcnRlaWx0ZW4gU3R1ZXR6cHVua3RlIHp3aW5nZW4gZGVuIG5vcm1hbGVuIFJvdXRlciwKICAgIC8vIGFsbGUgZ2V6ZWljaG5ldGVuIFNlZ21lbnRlIGluIGlocmVyIFJlaWhlbmZvbGdlIHp1IHZlcmJpbmRlbi4KICAgIC8vIE5pY2h0IG51ciBkaWUgZXJzdGVuIFdlZ3B1bmt0ZSB2ZXJ3ZW5kZW46IERpZSBSRFAtVmVyZWluZmFjaHVuZwogICAgLy8gYmV3YWhydCBkaWUgQmllZ3VuZ2VuIGRlciBnZXplaWNobmV0ZW4gTGluaWUgdW5kIGJlZ3Jlbnp0IG51ciBkaWUKICAgIC8vIFB1bmt0emFobCwgZGllIGRlciBub3JtYWxlIFZhbGhhbGxhLVJvdXRlciB2ZXJhcmJlaXRlbiBtdXNzLgogICAgY29uc3Qgd2F5cG9pbnRQb2ludHMgPSByZHBTaW1wbGlmeShwb2ludHMsIDgsIERSQVdOX1JPVVRFX1dBWVBPSU5UUyk7CiAgICBpZiAod2F5cG9pbnRQb2ludHMubGVuZ3RoID49IDIpIHsKICAgICAgbG9nLndhcm4oCiAgICAgICAgewogICAgICAgICAgaW5wdXRQb2ludHM6IHBvaW50cy5sZW5ndGgsCiAgICAgICAgICB3YXlwb2ludFBvaW50czogd2F5cG9pbnRQb2ludHMubGVuZ3RoLAogICAgICAgICAgaW5wdXREaXN0YW5jZUttOiBOdW1iZXIoaW5wdXREaXN0YW5jZUttLnRvRml4ZWQoMikpLAogICAgICAgICAgdHJhY2VkRGlzdGFuY2VLbTogTnVtYmVyKHRyYWNlZERpc3RhbmNlS20udG9GaXhlZCgyKSksCiAgICAgICAgICBpc0Nsb3NlZElucHV0LAogICAgICAgICAgICB0cmFjZWRTdGFydEdhcE06IE51bWJlci5pc0Zpbml0ZSh0cmFjZWRTdGFydEdhcE0pCiAgICAgICAgICAgICAgPyBNYXRoLnJvdW5kKHRyYWNlZFN0YXJ0R2FwTSkKICAgICAgICAgICAgICA6IG51bGwsCiAgICAgICAgICAgIHRyYWNlZEZpbmlzaEdhcE06IE51bWJlci5pc0Zpbml0ZSh0cmFjZWRGaW5pc2hHYXBNKQogICAgICAgICAgICAgID8gTWF0aC5yb3VuZCh0cmFjZWRGaW5pc2hHYXBNKQogICAgICAgICAgICAgIDogbnVsbCwKICAgICAgICAgICAgZW5kcG9pbnRUb2xlcmFuY2VNLAogICAgICAgIH0sCiAgICAgICAgIkZyZWloYW5kLU1hcC1NYXRjaGluZyB6dSBrdXJ6IOKAlCBXZWdwdW5rdC1GYWxsYmFjayIsCiAgICAgICk7CiAgICAgIHJldHVybiBidWlsZFBlZGVzdHJpYW5Sb3V0ZSgKICAgICAgICB3YXlwb2ludFBvaW50cywKICAgICAgICB1bmRlZmluZWQsCiAgICAgICAgdW5kZWZpbmVkLAogICAgICAgICJGcmVpaGFuZC1Sb3V0ZSIsCiAgICAgICAgbG9nLAogICAgICAgIGN1c3RvbVJvdXRlSWQocG9pbnRzKSwKICAgICAgICBEUkFXTl9ST1VURV9XQVlQT0lOVFMsCiAgICAgICk7CiAgICB9CiAgfQoKICBpZiAocm91dGVkUG9pbnRzLmxlbmd0aCA8IDIpIHsKICAgIHRocm93IG5ldyBDdXN0b21Sb3V0ZUVycm9yKAogICAgICAiRGllIGdlemVpY2huZXRlIExpbmllIGtvbm50ZSBrZWluZW0gYmVnZWhiYXJlbiBXZWcgenVnZW9yZG5ldCB3ZXJkZW4uIiwKICAgICk7CiAgfQoKICByZXR1cm4gYnVpbGRSb3V0ZUZyb21Qb2ludHMoCiAgICByb3V0ZWRQb2ludHMsCiAgICB7CiAgICAgIGlkOiBjdXN0b21Sb3V0ZUlkKHBvaW50cyksCiAgICAgIHRlcnJhaW46ICJGcmVpaGFuZC1Sb3V0ZSIsCiAgICB9LAogICAgbG9nLAogICk7Cn0KCmFzeW5jIGZ1bmN0aW9uIGJ1aWxkUGVkZXN0cmlhblJvdXRlKAogIHBvaW50czogTGF0TG5nW10sCiAgc3RhcnRMYWJlbDogc3RyaW5nIHwgdW5kZWZpbmVkLAogIGVuZExhYmVsOiBzdHJpbmcgfCB1bmRlZmluZWQsCiAgdGVycmFpbjogc3RyaW5nLAogIGxvZzogTG9nZ2VyLAogIHJvdXRlSWQgPSBjdXN0b21Sb3V0ZUlkKHBvaW50cyksCiAgbWF4V2F5cG9pbnRzID0gMTIsCik6IFByb21pc2U8Q3VzdG9tUm91dGU+IHsKICBpZiAocG9pbnRzLmxlbmd0aCA8IDIgfHwgcG9pbnRzLmxlbmd0aCA+IG1heFdheXBvaW50cykgewogICAgdGhyb3cgbmV3IEN1c3RvbVJvdXRlRXJyb3IoYEJpdHRlIHp3aXNjaGVuIDIgdW5kICR7bWF4V2F5cG9pbnRzfSBXZWdwdW5rdGUgc2V0emVuLmApOwogIH0KCiAgY29uc3QgcmVzID0gYXdhaXQgZmV0Y2goVkFMSEFMTEFfVVJMLCB7CiAgICBtZXRob2Q6ICJQT1NUIiwKICAgIGhlYWRlcnM6IHsgIkNvbnRlbnQtVHlwZSI6ICJhcHBsaWNhdGlvbi9qc29uIiwgIlVzZXItQWdlbnQiOiBVU0VSX0FHRU5UIH0sCiAgICBib2R5OiBKU09OLnN0cmluZ2lmeSh7CiAgICAgIGxvY2F0aW9uczogcG9pbnRzLm1hcCgocG9pbnQpID0+ICh7IGxhdDogcG9pbnQubGF0LCBsb246IHBvaW50LmxuZyB9KSksCiAgICAgIC8vIEZ1c3NnYWVuZ2VycHJvZmlsOiBBdXRvYmFobmVuL1NjaG5lbGxzdHJhc3NlbiBzaW5kIGF1c2dlc2NobG9zc2VuLAogICAgICAvLyBXYW5kZXJ3ZWdlIHVuZCBUcmFpbHMgd2VyZGVuIGJldm9yenVndC4KICAgICAgY29zdGluZzogInBlZGVzdHJpYW4iLAogICAgICBjb3N0aW5nX29wdGlvbnM6IHsgcGVkZXN0cmlhbjogeyB1c2VfaGlsbHM6IDAuNSB9IH0sCiAgICAgIHVuaXRzOiAia2lsb21ldGVycyIsCiAgICB9KSwKICB9KTsKICBpZiAoIXJlcy5vayAmJiByZXMuc3RhdHVzICE9PSA0MDApIHsKICAgIHRocm93IG5ldyBFcnJvcihgVmFsaGFsbGEtUm91dGluZzogSFRUUC1GZWhsZXIgJHtyZXMuc3RhdHVzfWApOwogIH0KICBjb25zdCBkYXRhID0gKGF3YWl0IHJlcy5qc29uKCkpIGFzIFZhbGhhbGxhUmVzcG9uc2U7CiAgY29uc3Qgc2hhcGVzID0gKGRhdGEudHJpcD8ubGVncyA/PyBbXSkKICAgIC5tYXAoKGxlZykgPT4gbGVnLnNoYXBlKQogICAgLmZpbHRlcigocyk6IHMgaXMgc3RyaW5nID0+IEJvb2xlYW4ocykpOwogIGlmICghZGF0YS50cmlwIHx8IHNoYXBlcy5sZW5ndGggPT09IDApIHsKICAgIHRocm93IG5ldyBDdXN0b21Sb3V0ZUVycm9yKAogICAgICAiWndpc2NoZW4gZGVuIGdld2FlaGx0ZW4gUHVua3RlbiB3dXJkZSBrZWluZSBGdXNzd2Vncm91dGUgZ2VmdW5kZW4uIiwKICAgICk7CiAgfQoKICBjb25zdCByb3V0ZWRQb2ludHM6IExhdExuZ1tdID0gW107CiAgZm9yIChjb25zdCBzaGFwZSBvZiBzaGFwZXMpIHsKICAgIGNvbnN0IGxlZ1BvaW50cyA9IGRlY29kZVBvbHlsaW5lNihzaGFwZSk7CiAgICBmb3IgKGNvbnN0IHBvaW50IG9mIGxlZ1BvaW50cykgewogICAgICBjb25zdCBwcmV2aW91cyA9IHJvdXRlZFBvaW50c1tyb3V0ZWRQb2ludHMubGVuZ3RoIC0gMV07CiAgICAgIGlmICghcHJldmlvdXMgfHwgcHJldmlvdXMubGF0ICE9PSBwb2ludC5sYXQgfHwgcHJldmlvdXMubG5nICE9PSBwb2ludC5sbmcpIHsKICAgICAgICByb3V0ZWRQb2ludHMucHVzaChwb2ludCk7CiAgICAgIH0KICAgIH0KICB9CiAgcmV0dXJuIGJ1aWxkUm91dGVGcm9tUG9pbnRzKAogICAgcm91dGVkUG9pbnRzLAogICAgewogICAgICBpZDogcm91dGVJZCwKICAgICAgc3RhcnRMYWJlbCwKICAgICAgZW5kTGFiZWwsCiAgICAgIHRlcnJhaW4sCiAgICB9LAogICAgbG9nLAogICk7Cn0K
+import type { Logger } from "pino";
+import { createHash } from "crypto";
+import { computeElevationStats } from "./elevation";
+import { deriveSacFromSwissTlm3d } from "./swisstopoHiking";
+import { deriveSeason } from "./season";
+import { reverseGeocode } from "./geocoding";
+import {
+  downsample,
+  estimateMinutes,
+  haversineM,
+  pathDistanceKm,
+  rdpSimplify,
+  type LatLng,
+} from "./geo";
+
+/**
+ * Berechnet eine Wanderroute zwischen zwei selbst gewaehlten Punkten
+ * (Valhalla-Router der FOSSGIS, ohne API-Key, Costing "pedestrian") und
+ * reichert sie mit denselben Quellen wie die Kantonsrouten an
+ * (swisstopo-Hoehenmetern, SAC-Grad, Saison-Heuristik). Die Route wird
+ * NICHT persistiert — jede Anfrage berechnet sie neu, denn Start/Ziel sind
+ * frei waehlbar und nicht auf einen Kanton-Katalog begrenzt.
+ *
+ * Wichtig: Frueher lief das Routing ueber den oeffentlichen OSRM-Demo-Server
+ * mit Profil "foot" — der bedient aber unabhaengig vom Profil in der URL nur
+ * Autodaten, weshalb "Wanderrouten" ueber Autobahnen/Schnellstrassen fuehrten.
+ * Das Valhalla-Fussgaengerprofil schliesst Autobahnen und fuer Fussgaenger
+ * gesperrte Strassen grundsaetzlich aus und bevorzugt Wege/Trails.
+ */
+
+const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
+const VALHALLA_TRACE_URL = "https://valhalla1.openstreetmap.de/trace_route";
+const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion)";
+const STORED_GEOMETRY_POINTS = 80;
+const MIN_KM = 0.3;
+const MAX_KM = 60;
+const DRAWN_ROUTE_WAYPOINTS = 48;
+
+interface ValhallaResponse {
+  trip?: {
+    legs?: { shape?: string }[];
+    summary?: { length?: number };
+  };
+  error?: string;
+}
+
+/**
+ * Dekodiert eine Valhalla-Polyline (Precision 1e6) in Koordinaten.
+ * Gleiches Format wie Google-Encoded-Polyline, nur mit Faktor 1e6.
+ */
+function decodePolyline6(encoded: string): LatLng[] {
+  const points: LatLng[] = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+  while (index < encoded.length) {
+    for (const which of ["lat", "lng"] as const) {
+      let result = 0;
+      let shift = 0;
+      let byte = 0x20;
+      while (byte >= 0x20) {
+        byte = encoded.charCodeAt(index++) - 63;
+        result |= (byte & 0x1f) << shift;
+        shift += 5;
+      }
+      const delta = result & 1 ? ~(result >> 1) : result >> 1;
+      if (which === "lat") lat += delta;
+      else lng += delta;
+    }
+    points.push({ lat: lat / 1e6, lng: lng / 1e6 });
+  }
+  return points;
+}
+
+export class CustomRouteError extends Error {}
+
+/** Baut einen deterministischen Bezeichner aus gerundeten Start-/Zielkoordinaten. */
+function customRouteId(points: LatLng[]): string {
+  const fingerprint = points
+    .map((point) => `${point.lat.toFixed(5)},${point.lng.toFixed(5)}`)
+    .join(";");
+  return `custom-${createHash("sha256").update(fingerprint).digest("hex").slice(0, 16)}`;
+}
+
+export interface CustomRoute {
+  id: string;
+  sagaId: string;
+  name: string;
+  region: string;
+  distanceKm: number;
+  distanceTagKm: number;
+  ascentM: number;
+  maxElevationM: number;
+  season: ReturnType<typeof deriveSeason>;
+  minutes: number;
+  sac: string;
+  terrain: string;
+  coordinates: LatLng;
+  geometry: [number, number][];
+  featured: boolean;
+}
+
+export interface RouteFromPointsMeta {
+  /** Deterministischer Bezeichner der Route (dient auch als sagaId). */
+  id: string;
+  /** Fester Anzeigename; ohne Angabe wird "Start → Ziel" per Geocoding gebaut. */
+  name?: string;
+  startLabel?: string;
+  endLabel?: string;
+  /** Anzeige-Terrain, z. B. "Eigene Route" oder "GPX-Import". */
+  terrain: string;
+}
+
+/**
+ * Gemeinsame Anreicherung fuer alle Routen, die als nackte Punktfolge
+ * hereinkommen (eigene Routen via Valhalla, GPX-Import): Distanz-Pruefung,
+ * swisstopo-Hoehenmeter, SAC-Grad, Saison-Heuristik, Geocoding fuer Namen
+ * und Kanton. Wirft `CustomRouteError` bei unplausibler Laenge.
+ */
+export async function buildRouteFromPoints(
+  points: LatLng[],
+  meta: RouteFromPointsMeta,
+  log: Logger,
+): Promise<CustomRoute> {
+  const start = points[0]!;
+  const end = points[points.length - 1]!;
+  const distanceKm = pathDistanceKm(points);
+  if (distanceKm < MIN_KM || distanceKm > MAX_KM) {
+    throw new CustomRouteError(
+      `Die Route ist mit ${distanceKm.toFixed(1)} km ausserhalb des sinnvollen Bereichs (${MIN_KM}-${MAX_KM} km).`,
+    );
+  }
+
+  const [elevation, sac, startPlace, endPlace] = await Promise.all([
+    computeElevationStats(points, log),
+    deriveSacFromSwissTlm3d(points, log),
+    meta.startLabel
+      ? Promise.resolve({ label: meta.startLabel, canton: null })
+      : reverseGeocode(start.lat, start.lng, log),
+    meta.endLabel
+      ? Promise.resolve({ label: meta.endLabel, canton: null })
+      : reverseGeocode(end.lat, end.lng, log),
+  ]);
+
+  const ascentM = elevation?.ascentM ?? 0;
+  const maxElevationM = elevation?.maxElevationM ?? 0;
+  const sacGrade = sac ?? "unbekannt";
+
+  // Kanton-Erkennung: Startpunkt ist bevorzugt; faellt das Geocoding aus
+  // (z.B. Netzfehler oder Nominatim liefert kein verwertbares state-Feld),
+  // wird der Mittelpunkt der Route als Fallback geocodiert. Das ist wichtig
+  // fuer umgekehrte GPX-Importe, bei denen der Startpunkt nah an einer
+  // Kantonsgrenze liegt und die Kanton-Zuordnung unzuverlaessig ist.
+  let canton = startPlace.canton;
+  if (!canton && points.length > 2) {
+    const mid = points[Math.floor(points.length / 2)]!;
+    const midPlace = await reverseGeocode(mid.lat, mid.lng, log);
+    canton = midPlace.canton;
+  }
+  const region = canton ?? "";
+  const geometry: [number, number][] = downsample(points, STORED_GEOMETRY_POINTS).map(
+    (p) => [p.lat, p.lng],
+  );
+  const shortLabel = (label: string) => label.split(",")[0]?.trim() || label;
+
+  const roundedDistanceKm = Math.round(distanceKm * 10) / 10;
+  return {
+    id: meta.id,
+    sagaId: meta.id,
+    name: meta.name ?? `${shortLabel(startPlace.label)} → ${shortLabel(endPlace.label)}`,
+    region,
+    distanceKm: roundedDistanceKm,
+    distanceTagKm: roundedDistanceKm,
+    ascentM,
+    maxElevationM,
+    season: deriveSeason(maxElevationM, sacGrade),
+    minutes: estimateMinutes(distanceKm, ascentM),
+    sac: sacGrade,
+    terrain: meta.terrain,
+    coordinates: start,
+    geometry,
+    featured: false,
+  };
+}
+
+/**
+ * Berechnet die Fussweg-Route zwischen `start` und `end` und reichert sie an.
+ * Wirft `CustomRouteError`, wenn OSRM keine Route findet oder die Laenge
+ * ausserhalb des sinnvollen Bereichs liegt (Router meldet dann 400).
+ */
+export async function buildCustomRoute(
+  start: LatLng,
+  end: LatLng,
+  startLabel: string | undefined,
+  endLabel: string | undefined,
+  log: Logger,
+): Promise<CustomRoute> {
+  return buildPedestrianRoute(
+    [start, end],
+    startLabel,
+    endLabel,
+    "Eigene Route",
+    log,
+  );
+}
+
+/**
+ * Berechnet eine Fussweg-Route, die alle Wegpunkte in der angegebenen
+ * Reihenfolge passiert. Valhalla liefert dafuer einen Leg pro Abschnitt;
+ * die Legs werden ohne doppelte Verbindungspunkte zu einer Geometrie
+ * zusammengefuegt.
+ */
+export async function buildCustomRouteThroughWaypoints(
+  points: LatLng[],
+  log: Logger,
+): Promise<CustomRoute> {
+  return buildPedestrianRoute(points, undefined, undefined, "Eigene Wegpunkt-Route", log);
+}
+
+/**
+ * Mappt eine vom Benutzer gezeichnete Linie auf das Fusswegnetz. Anders als
+ * bei Wegpunkten wird die Linie nicht nur als Folge von Zielen behandelt:
+ * Valhallas trace_route folgt der gezeichneten Spur und liefert die reale
+ * Weggeometrie zurück.
+ */
+export async function buildCustomRouteFromDrawnPoints(
+  points: LatLng[],
+  log: Logger,
+): Promise<CustomRoute> {
+  if (points.length < 2 || points.length > 100) {
+    throw new CustomRouteError("Bitte eine Linie mit mindestens zwei Punkten zeichnen.");
+  }
+
+  const res = await fetch(VALHALLA_TRACE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "User-Agent": USER_AGENT },
+    body: JSON.stringify({
+      shape: points.map((point) => ({ lat: point.lat, lon: point.lng })),
+      costing: "pedestrian",
+      shape_match: "map_snap",
+      units: "kilometers",
+    }),
+  });
+  if (!res.ok && res.status !== 400) {
+    throw new Error(`Valhalla-Map-Matching: HTTP-Fehler ${res.status}`);
+  }
+  const data = (await res.json()) as ValhallaResponse;
+  const shapes = (data.trip?.legs ?? [])
+    .map((leg) => leg.shape)
+    .filter((shape): shape is string => Boolean(shape));
+
+  const routedPoints: LatLng[] = [];
+  for (const shape of shapes) {
+    for (const point of decodePolyline6(shape)) {
+      const previous = routedPoints[routedPoints.length - 1];
+      if (!previous || previous.lat !== point.lat || previous.lng !== point.lng) {
+        routedPoints.push(point);
+      }
+    }
+  }
+
+  const inputDistanceKm = pathDistanceKm(points);
+  const tracedDistanceKm = pathDistanceKm(routedPoints);
+  const firstInput = points[0]!;
+  const lastInput = points[points.length - 1]!;
+  const isClosedInput =
+    haversineM(firstInput, lastInput) <=
+    Math.max(50, Math.min(500, inputDistanceKm * 1000 * 0.05));
+  const tracedStartGapM =
+    routedPoints.length >= 2
+      ? haversineM(routedPoints[0]!, firstInput)
+      : Number.POSITIVE_INFINITY;
+  const tracedFinishGapM =
+    routedPoints.length >= 2
+      ? haversineM(routedPoints[routedPoints.length - 1]!, lastInput)
+      : Number.POSITIVE_INFINITY;
+  // trace_route darf die frei gezeichneten Endpunkte auf einen nahen Weg
+  // verschieben, aber nicht den letzten Abschnitt stillschweigend verlieren.
+  // Eine grössenbegrenzte Toleranz verhindert sowohl falsche Abbrüche bei
+  // kleinen Snap-Abweichungen als auch abgeschnittene lange Endstücke.
+  const endpointToleranceM = Math.max(
+    150,
+    Math.min(500, inputDistanceKm * 1000 * 0.08),
+  );
+  const traceMissedEndpoint =
+    tracedStartGapM > endpointToleranceM ||
+    tracedFinishGapM > endpointToleranceM;
+  const traceLooksCollapsed =
+    routedPoints.length < 2 ||
+    tracedDistanceKm < Math.max(MIN_KM, inputDistanceKm * 0.45) ||
+    traceMissedEndpoint ||
+    (isClosedInput &&
+      haversineM(routedPoints[0]!, routedPoints[routedPoints.length - 1]!) >
+        Math.max(150, inputDistanceKm * 1000 * 0.12));
+
+  if (traceLooksCollapsed) {
+    // trace_route kann bei einer geschlossenen Handskizze einen Abschnitt
+    // mehrfach verwenden oder nach dem ersten Segment abbrechen. Die
+    // gleichmaessig verteilten Stuetzpunkte zwingen den normalen Router,
+    // alle gezeichneten Segmente in ihrer Reihenfolge zu verbinden.
+    // Nicht nur die ersten Wegpunkte verwenden: Die RDP-Vereinfachung
+    // bewahrt die Biegungen der gezeichneten Linie und begrenzt nur die
+    // Punktzahl, die der normale Valhalla-Router verarbeiten muss.
+    const waypointPoints = rdpSimplify(points, 8, DRAWN_ROUTE_WAYPOINTS);
+    if (waypointPoints.length >= 2) {
+      log.warn(
+        {
+          inputPoints: points.length,
+          waypointPoints: waypointPoints.length,
+          inputDistanceKm: Number(inputDistanceKm.toFixed(2)),
+          tracedDistanceKm: Number(tracedDistanceKm.toFixed(2)),
+          isClosedInput,
+            tracedStartGapM: Number.isFinite(tracedStartGapM)
+              ? Math.round(tracedStartGapM)
+              : null,
+            tracedFinishGapM: Number.isFinite(tracedFinishGapM)
+              ? Math.round(tracedFinishGapM)
+              : null,
+            endpointToleranceM,
+        },
+        "Freihand-Map-Matching zu kurz — Wegpunkt-Fallback",
+      );
+      return buildPedestrianRoute(
+        waypointPoints,
+        undefined,
+        undefined,
+        "Freihand-Route",
+        log,
+        customRouteId(points),
+        DRAWN_ROUTE_WAYPOINTS,
+      );
+    }
+  }
+
+  if (routedPoints.length < 2) {
+    throw new CustomRouteError(
+      "Die gezeichnete Linie konnte keinem begehbaren Weg zugeordnet werden.",
+    );
+  }
+
+  return buildRouteFromPoints(
+    routedPoints,
+    {
+      id: customRouteId(points),
+      terrain: "Freihand-Route",
+    },
+    log,
+  );
+}
+
+async function buildPedestrianRoute(
+  points: LatLng[],
+  startLabel: string | undefined,
+  endLabel: string | undefined,
+  terrain: string,
+  log: Logger,
+  routeId = customRouteId(points),
+  maxWaypoints = 12,
+): Promise<CustomRoute> {
+  if (points.length < 2 || points.length > maxWaypoints) {
+    throw new CustomRouteError(`Bitte zwischen 2 und ${maxWaypoints} Wegpunkte setzen.`);
+  }
+
+  const res = await fetch(VALHALLA_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "User-Agent": USER_AGENT },
+    body: JSON.stringify({
+      locations: points.map((point) => ({ lat: point.lat, lon: point.lng })),
+      // Fussgaengerprofil: Autobahnen/Schnellstrassen sind ausgeschlossen,
+      // Wanderwege und Trails werden bevorzugt.
+      costing: "pedestrian",
+      costing_options: { pedestrian: { use_hills: 0.5 } },
+      units: "kilometers",
+    }),
+  });
+  if (!res.ok && res.status !== 400) {
+    throw new Error(`Valhalla-Routing: HTTP-Fehler ${res.status}`);
+  }
+  const data = (await res.json()) as ValhallaResponse;
+  const shapes = (data.trip?.legs ?? [])
+    .map((leg) => leg.shape)
+    .filter((s): s is string => Boolean(s));
+  if (!data.trip || shapes.length === 0) {
+    throw new CustomRouteError(
+      "Zwischen den gewaehlten Punkten wurde keine Fusswegroute gefunden.",
+    );
+  }
+
+  const routedPoints: LatLng[] = [];
+  for (const shape of shapes) {
+    const legPoints = decodePolyline6(shape);
+    for (const point of legPoints) {
+      const previous = routedPoints[routedPoints.length - 1];
+      if (!previous || previous.lat !== point.lat || previous.lng !== point.lng) {
+        routedPoints.push(point);
+      }
+    }
+  }
+  return buildRouteFromPoints(
+    routedPoints,
+    {
+      id: routeId,
+      startLabel,
+      endLabel,
+      terrain,
+    },
+    log,
+  );
+}

@@ -1,1 +1,11 @@
-LyoqCiAqIE9mZml6aWVsbGUgU3RhcnRrYW50b25lIGbDvHIgZWluemVsbmUgaW1wb3J0aWVydGUgRXRhcHBlbiwgZGVyZW4gdGVtcG9yw6RyZXIKICogIl9faGlkZGVuX18iLVN0YXR1cyBzb25zdCBiaXMgaW4gZGllIG1vYmlsZSBUaGVtZW53ZWx0IGR1cmNoZ2VyZWljaHQgd2lyZC4KICoKICogRGllIFp1b3JkbnVuZyBpc3QgYWJzaWNodGxpY2ggYXVmIGRpZSBzdGFiaWxlIFJvdXRlbi1JRCBiZWdyZW56dDogQW5kZXJlCiAqIHZlcnN0ZWNrdGUgUm91dGVuIGTDvHJmZW4gbmljaHQgb2huZSBiZWxhc3RiYXJlbiBOYWNod2VpcyBlaW5lbSBLYW50b24KICogenVnZW9yZG5ldCB3ZXJkZW4uCiAqLwpleHBvcnQgY29uc3QgU1RBUlRfQ0FOVE9OX09WRVJSSURFUzogUmVhZG9ubHk8UmVjb3JkPHN0cmluZywgc3RyaW5nPj4gPSB7CiAgIndpa2ktMzA5NDQyMS0xIjogIkdyYXViw7xuZGVuIiwKfTs=
+/**
+ * Offizielle Startkantone für einzelne importierte Etappen, deren temporärer
+ * "__hidden__"-Status sonst bis in die mobile Themenwelt durchgereicht wird.
+ *
+ * Die Zuordnung ist absichtlich auf die stabile Routen-ID begrenzt: Andere
+ * versteckte Routen dürfen nicht ohne belastbaren Nachweis einem Kanton
+ * zugeordnet werden.
+ */
+export const START_CANTON_OVERRIDES: Readonly<Record<string, string>> = {
+  "wiki-3094421-1": "Graubünden",
+};

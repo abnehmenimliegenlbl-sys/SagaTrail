@@ -1,1 +1,19 @@
-aW1wb3J0IHR5cGUgeyBIaWtpbmdSb3V0ZSB9IGZyb20gIi4uL2NvbnN0YW50cy9yb3V0ZXMiOwppbXBvcnQgdHlwZSB7IFJvdXRlVGhlbWVLZXkgfSBmcm9tICIuL3JvdXRlVGhlbWVzIjsKCi8qKgogKiBBcHBsaWVzIHRoZSBjYW50b24gdGhlbWUgZmlsdGVyIHdpdGhvdXQgbWFraW5nIGFzc3VtcHRpb25zIGFib3V0IGhvdyB0aGVtZQogKiBldmlkZW5jZSB3YXMgb2J0YWluZWQuIFNlbGVjdGluZyBtdWx0aXBsZSB0aGVtZXMgbWVhbnMgImFueSBzZWxlY3RlZCB0aGVtZSIuCiAqLwpleHBvcnQgZnVuY3Rpb24gZmlsdGVyUm91dGVzQnlUaGVtZXM8VCBleHRlbmRzIFBpY2s8SGlraW5nUm91dGUsICJpZCI+PigKICByb3V0ZXM6IHJlYWRvbmx5IFRbXSwKICByb3V0ZVRoZW1lc0J5SWQ6IFJlYWRvbmx5PFJlY29yZDxzdHJpbmcsIHJlYWRvbmx5IFJvdXRlVGhlbWVLZXlbXT4+LAogIHNlbGVjdGVkVGhlbWVLZXlzOiByZWFkb25seSBSb3V0ZVRoZW1lS2V5W10sCik6IFRbXSB7CiAgaWYgKHNlbGVjdGVkVGhlbWVLZXlzLmxlbmd0aCA9PT0gMCkgcmV0dXJuIFsuLi5yb3V0ZXNdOwoKICBjb25zdCBzZWxlY3RlZCA9IG5ldyBTZXQoc2VsZWN0ZWRUaGVtZUtleXMpOwogIHJldHVybiByb3V0ZXMuZmlsdGVyKChyb3V0ZSkgPT4KICAgIChyb3V0ZVRoZW1lc0J5SWRbcm91dGUuaWRdID8/IFtdKS5zb21lKCh0aGVtZSkgPT4gc2VsZWN0ZWQuaGFzKHRoZW1lKSksCiAgKTsKfQ==
+import type { HikingRoute } from "../constants/routes";
+import type { RouteThemeKey } from "./routeThemes";
+
+/**
+ * Applies the canton theme filter without making assumptions about how theme
+ * evidence was obtained. Selecting multiple themes means "any selected theme".
+ */
+export function filterRoutesByThemes<T extends Pick<HikingRoute, "id">>(
+  routes: readonly T[],
+  routeThemesById: Readonly<Record<string, readonly RouteThemeKey[]>>,
+  selectedThemeKeys: readonly RouteThemeKey[],
+): T[] {
+  if (selectedThemeKeys.length === 0) return [...routes];
+
+  const selected = new Set(selectedThemeKeys);
+  return routes.filter((route) =>
+    (routeThemesById[route.id] ?? []).some((theme) => selected.has(theme)),
+  );
+}

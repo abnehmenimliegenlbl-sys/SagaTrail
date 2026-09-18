@@ -1,1 +1,443 @@
-aW1wb3J0IHsgUm91dGVyLCB0eXBlIElSb3V0ZXIgfSBmcm9tICJleHByZXNzIjsKaW1wb3J0IHsgR2V0Q2FudG9uUm91dGVzUmVzcG9uc2UgfSBmcm9tICJAd29ya3NwYWNlL2FwaS16b2QiOwppbXBvcnQgeyBkYiwgZXh0ZXJuYWxSb3V0ZXNUYWJsZSwgdHlwZSBFeHRlcm5hbFJvdXRlUm93IH0gZnJvbSAiQHdvcmtzcGFjZS9kYiI7CmltcG9ydCB7IHNxbCB9IGZyb20gImRyaXp6bGUtb3JtIjsKaW1wb3J0IHsgbG9hZENhY2hlZFJvdXRlcywgbG9hZE9mZmljaWFsU2Nod2Vpek1vYmlsRGlmZmljdWx0aWVzIH0gZnJvbSAiLi4vbGliL3JvdXRlU2VydmljZSI7CmltcG9ydCB7IFNUQVJUX0NBTlRPTl9PVkVSUklERVMgfSBmcm9tICIuLi9saWIvcm91dGVDYW50b25PdmVycmlkZXMiOwppbXBvcnQgeyBkZXJpdmVTZWFzb24gfSBmcm9tICIuLi9saWIvc2Vhc29uIjsKaW1wb3J0IHsgaGF2ZXJzaW5lTSB9IGZyb20gIi4uL2xpYi9nZW8iOwoKY29uc3Qgcm91dGVyOiBJUm91dGVyID0gUm91dGVyKCk7CgovLyBLZWluIERlY2tlbCDigJQgYWxsZSBnZWZpbHRlcnRlbiBSb3V0ZW4gd2VyZGVuIHp1cnVlY2tnZWdlYmVuLgpjb25zdCBSRVNVTFRfTElNSVQgPSBJbmZpbml0eTsKCi8qKgogKiBTb3J0aWVydCBUcmVmZmVyIG5hY2ggUmVsZXZhbnosIGRhbWl0IGRlciBSRVNVTFRfTElNSVQtRGVja2VsIGRpZQogKiBhdXNzYWdla3JhZWZ0aWdzdGVuIFJvdXRlbiBiZWhhZWx0OiBhbXRsaWNoIG51bW1lcmllcnRlIFdhbmRlcmxhbmQtUm91dGVuCiAqIChtaXQgYHJlZmApIHp1ZXJzdCwgZGFuYWNoIGFscGhhYmV0aXNjaC4KICovCi8qKgogKiBTb3J0aWVyLVJhbmdmb2xnZToKICogMS4gbmF0aW9uYWxlIFJvdXRlbiAoMS1zdGVsbGlnZSBOdW1tZXIpLCAyLiBkZXJlbiBFdGFwcGVuLAogKiAzLiByZWdpb25hbGUgUm91dGVuICgyLXN0ZWxsaWcpLCA0LiBkZXJlbiBFdGFwcGVuLAogKiA1LiBsb2thbGUgUm91dGVuICgzLXN0ZWxsaWcpLCA2LiBkZXJlbiBFdGFwcGVuLAogKiA3LiBrYW50b25hbGUgUm91dGVuIChLLU51bW1lcm4pLCA4LiBSZXN0LgogKiBJbm5lcmhhbGIgamVkZXIgS2F0ZWdvcmllIG5hY2ggUm91dGVuLU51bW1lciwgRXRhcHBlbiB6dXPDpHR6bGljaAogKiBuYWNoIEV0YXBwZW4tTnVtbWVyLgogKi8KLy8gU29ydGllcnNjaGzDvHNzZWw6IFtLYXRlZ29yaWUsIFJvdXRlbk5yLCBJc3RFdGFwcGUsIEV0YXBwZW5Ocl0KLy8gS2F0ZWdvcmllOiAwPW5hdGlvbmFsLCAxPXJlZ2lvbmFsLCAyPWxva2FsLCAzPWthbnRvbmFsLCA0PXJlc3QKLy8gSXN0RXRhcHBlOiAwPUhhdXB0cm91dGUgKGtvbW10IHp1ZXJzdCksIDE9RXRhcHBlCi8vIEVyZ2lidDogMSBWaWEgQWxwaW5hIOKGkiAxIEV0YXBwZSAxIOKGkiAxIEV0YXBwZSAyIOKGkiA1IEp1cmEgSMO2aGVud2VnIOKGkiA1IEV0YXBwZSAxIOKGkiDigKYKZnVuY3Rpb24gc29ydFNjaGx1ZXNzZWwocm93OiBFeHRlcm5hbFJvdXRlUm93KTogW251bWJlciwgbnVtYmVyLCBudW1iZXIsIG51bWJlciwgbnVtYmVyXSB7CiAgY29uc3QgaXN0RXRhcHBlID0gL1xiKD86ZXRhcHBlfMOpdGFwZXxldGFwZXx0YXBwYSlcYi9pLnRlc3Qocm93Lm5hbWUpOwogIGNvbnN0IGV0YXBwZW5OciA9IGlzdEV0YXBwZQogICAgPyBwYXJzZUludChyb3cubmFtZS5tYXRjaCgvXGIoPzpFdGFwcGV8w4l0YXBlfEV0YXBlfFRhcHBhKVxzKyhcZCspL2kpPy5bMV0gPz8gIjAiLCAxMCkKICAgIDogMDsKCiAgLy8gS2FudG9uYWxlIEstUm91dGU6IE5hbWUgYmVnaW5udCBtaXQgIkt7bn0ge0NDfSIgKHouQi4gIks0IEFHIEt1bHR1cndlZyIpCiAgY29uc3Qga01hdGNoID0gcm93Lm5hbWUubWF0Y2goL15LKFxkKylccytbQS1aXXsyfVxiLyk7CiAgaWYgKGtNYXRjaCkgewogICAgcmV0dXJuIFszLCBwYXJzZUludChrTWF0Y2hbMV0sIDEwKSwgaXN0RXRhcHBlID8gMSA6IDAsIGV0YXBwZW5OciwgMF07CiAgfQoKICAvLyBTY2h3ZWl6TW9iaWwtUm91dGVuOiBOdW1tZXIgYW0gQW5mYW5nIGRlcyBOYW1lbnMgYmVzdGltbXQgS2F0ZWdvcmllICh6LkIuICI0YSIg4oaSIG5hdGlvbmFsKQogIC8vIFN1ZmZpeC1PcmRudW5nOiBrZWluIFN1ZmZpeCA9IDAsICJhIiA9IDEsICJiIiA9IDIg4oCmIOKGkiAiNCIgdm9yICI0YSIKICBjb25zdCBudW1NYXRjaCA9IHJvdy5uYW1lLm1hdGNoKC9eKFxkezEsM30pKFthLXpdPylccy8pOwogIGlmIChudW1NYXRjaCkgewogICAgY29uc3QgbnIgPSBwYXJzZUludChudW1NYXRjaFsxXSwgMTApOwogICAgY29uc3QgbnVtTGVuID0gbnIudG9TdHJpbmcoKS5sZW5ndGg7CiAgICBjb25zdCBrYXQgPSBudW1MZW4gPT09IDEgPyAwIDogbnVtTGVuID09PSAyID8gMSA6IDI7CiAgICBjb25zdCBzdWZmaXhPcmRlciA9IG51bU1hdGNoWzJdID8gbnVtTWF0Y2hbMl0uY2hhckNvZGVBdCgwKSAtIDk2IDogMDsgLy8gJycg4oaSIDAsICdhJyDihpIgMQogICAgcmV0dXJuIFtrYXQsIG5yLCBpc3RFdGFwcGUgPyAxIDogMCwgZXRhcHBlbk5yLCBzdWZmaXhPcmRlcl07CiAgfQoKICByZXR1cm4gWzQsIDAsIDAsIDAsIDBdOwp9CgpmdW5jdGlvbiBieVJlbGV2YW5jZShhOiBFeHRlcm5hbFJvdXRlUm93LCBiOiBFeHRlcm5hbFJvdXRlUm93KTogbnVtYmVyIHsKICBjb25zdCBrYSA9IHNvcnRTY2hsdWVzc2VsKGEpOwogIGNvbnN0IGtiID0gc29ydFNjaGx1ZXNzZWwoYik7CiAgZm9yIChsZXQgaSA9IDA7IGkgPCA0OyBpKyspIHsKICAgIGlmIChrYVtpXSAhPT0ga2JbaV0pIHJldHVybiBrYVtpXSEgLSBrYltpXSE7CiAgfQogIC8vIEdsZWljaGVyIFNjaGzDvHNzZWw6IGzDpG5nc3RlIFJvdXRlIHp1ZXJzdCAoSGF1cHRyb3V0ZSB2b3Iga3VyemVuIEV0YXBwZW4gb2huZSBMYWJlbCkuCiAgaWYgKChiLmRpc3RhbmNlS20gPz8gMCkgIT09IChhLmRpc3RhbmNlS20gPz8gMCkpIHJldHVybiAoYi5kaXN0YW5jZUttID8/IDApIC0gKGEuZGlzdGFuY2VLbSA/PyAwKTsKICByZXR1cm4gYS5uYW1lLmxvY2FsZUNvbXBhcmUoYi5uYW1lLCAiZGUiKTsKfQoKLyoqIFBhcnN0IEdlb21ldHJpZSBhdXMgZGVtIERCLUZlbGQ6IGtvcnJla3RlIEpTT05CLUFycmF5cyBrb21tZW4gZGlyZWt0IGR1cmNoLAogKiAgaGlzdG9yaXNjaCBkb3BwZWx0LWNvZGllcnRlIEpTT04tU3RyaW5ncyB3ZXJkZW4gb24tdGhlLWZseSBnZXBhcnN0LiAqLwpmdW5jdGlvbiBwYXJzZUdlb21ldHJ5KHJhdzogdW5rbm93bik6IG51bWJlcltdW10gfCB1bmRlZmluZWQgewogIGlmIChBcnJheS5pc0FycmF5KHJhdykpIHJldHVybiByYXcgYXMgbnVtYmVyW11bXTsKICBpZiAodHlwZW9mIHJhdyA9PT0gInN0cmluZyIpIHsKICAgIHRyeSB7IHJldHVybiBKU09OLnBhcnNlKHJhdykgYXMgbnVtYmVyW11bXTsgfSBjYXRjaCB7IHJldHVybiB1bmRlZmluZWQ7IH0KICB9CiAgcmV0dXJuIHVuZGVmaW5lZDsKfQoKLyoqIEZvcm1hdGllcnQga20gZGV1dHNjaDogIjIwLDMiIGJ6dy4gIjE5IiBvaG5lIHVubsO2dGlnZSBEZXppbWFsc3RlbGxlLiAqLwpmdW5jdGlvbiBmbXRLbShrbTogbnVtYmVyKTogc3RyaW5nIHsKICBjb25zdCBnZXJ1bmRldCA9IE1hdGgucm91bmQoa20gKiAxMCkgLyAxMDsKICByZXR1cm4gTnVtYmVyLmlzSW50ZWdlcihnZXJ1bmRldCkgPyBTdHJpbmcoZ2VydW5kZXQpIDogU3RyaW5nKGdlcnVuZGV0KS5yZXBsYWNlKCIuIiwgIiwiKTsKfQoKLyoqIEZvcm1hdGllcnQgTWludXRlbiBhbHMgU3R1bmRlbmFuZ2FiZTogMzYxIOKGkiAiNiIsIDM5MCDihpIgIjbCvSIuICovCmZ1bmN0aW9uIGZtdFN0dW5kZW4obWludXRlbjogbnVtYmVyKTogc3RyaW5nIHsKICBjb25zdCBoYWxiZSA9IE1hdGgucm91bmQobWludXRlbiAvIDMwKTsKICBjb25zdCBoID0gTWF0aC5mbG9vcihoYWxiZSAvIDIpOwogIHJldHVybiBoYWxiZSAlIDIgPT09IDEgPyBgJHtofcK9YCA6IFN0cmluZyhoKTsKfQoKLyoqIFBhcnN0ICIxOSIsICIyMCwzIiwgIjIwLjMiIHp1IGVpbmVyIFphaGwuICovCmZ1bmN0aW9uIHBhcnNlWmFobChzOiBzdHJpbmcpOiBudW1iZXIgewogIHJldHVybiBOdW1iZXIocy5yZXBsYWNlKCIsIiwgIi4iKSk7Cn0KCi8qKgogKiBHbGVpY2h0IFphaGxlbmFuZ2FiZW4gaW0ga3VyYXRpZXJ0ZW4gQmVzY2hyZWlidW5nc3RleHQgYW4gZGllIGFtdGxpY2hlbgogKiBXZXJ0ZSBhbiAoRGlzdGFueiwgRGF1ZXIsIEjDtmhlbm1ldGVyKS4gRXJzZXR6dCBOVVIgV2VydGUsIGRpZSBuYWhlIGFtCiAqIGFtdGxpY2hlbiBHZXNhbXR3ZXJ0IGxpZWdlbiAoVG9sZXJhbnopIOKAlCBad2lzY2hlbmFuZ2FiZW4gd2llICJuYWNoIDUga20KICogZXJyZWljaHQgbWFu4oCmIiBibGVpYmVuIHVuYW5nZXRhc3RldC4KICovCmZ1bmN0aW9uIGhhcm1vbmlzaWVyZUJlc2NocmVpYnVuZygKICB0ZXh0OiBzdHJpbmcsCiAgZGlzdGFuekttOiBudW1iZXIgfCBudWxsLAogIG1pbnV0ZW46IG51bWJlciB8IG51bGwsCiAgYXVmc3RpZWdNOiBudW1iZXIgfCBudWxsLAopOiBzdHJpbmcgewogIGxldCBvdXQgPSB0ZXh0OwogIGlmIChkaXN0YW56S20gIT0gbnVsbCAmJiBkaXN0YW56S20gPiAwKSB7CiAgICBvdXQgPSBvdXQucmVwbGFjZSgKICAgICAgLyhcZCsoPzpbLixdXGQrKT8pKFxzKig/OmttXGJ8S2lsb21ldGVyKSkvZywKICAgICAgKGdhbnosIHphaGw6IHN0cmluZywgZWluaGVpdDogc3RyaW5nKSA9PiB7CiAgICAgICAgY29uc3Qgd2VydCA9IHBhcnNlWmFobCh6YWhsKTsKICAgICAgICByZXR1cm4gd2VydCA+PSBkaXN0YW56S20gKiAwLjcgJiYgd2VydCA8PSBkaXN0YW56S20gKiAxLjMKICAgICAgICAgID8gYCR7Zm10S20oZGlzdGFuekttKX0ke2VpbmhlaXR9YAogICAgICAgICAgOiBnYW56OwogICAgICB9LAogICAgKTsKICB9CiAgaWYgKG1pbnV0ZW4gIT0gbnVsbCAmJiBtaW51dGVuID4gMCkgewogICAgY29uc3Qgc3R1bmRlbkFtdGxpY2ggPSBtaW51dGVuIC8gNjA7CiAgICBvdXQgPSBvdXQucmVwbGFjZSgKICAgICAgLyhcZCsoPzpbLixdXGQrKT8pKD86XHMqKD86YmlzfFvigJMtXSlccyooXGQrKD86Wy4sXVxkKyk/KSk/KFxzKig/OlN0dW5kZW5cYnxTdGRcLj8pKS9nLAogICAgICAoZ2Fueiwgdm9uOiBzdHJpbmcsIGJpczogc3RyaW5nIHwgdW5kZWZpbmVkLCBlaW5oZWl0OiBzdHJpbmcpID0+IHsKICAgICAgICBpZiAoYmlzKSB7CiAgICAgICAgICAvLyBaZWl0c3Bhbm5lICgiNCBiaXMgNSBTdHVuZGVuIik6IGJld3Vzc3RlIFVuc2Now6RyZmUgZXJoYWx0ZW4uCiAgICAgICAgICAvLyBMaWVndCBkZXIgYW10bGljaGUgV2VydCBpbm5lcmhhbGIgZGVyIFNwYW5uZSDihpIgdW5hbmdldGFzdGV0IGxhc3NlbjsKICAgICAgICAgIC8vIG51ciB3ZW5uIGVyIGtsYXIgZHJhdXNzZW4gbGllZ3Qg4oaSIGR1cmNoIFB1bmt0d2VydCBlcnNldHplbi4KICAgICAgICAgIGNvbnN0IGxvID0gcGFyc2VaYWhsKHZvbik7CiAgICAgICAgICBjb25zdCBoaSA9IHBhcnNlWmFobChiaXMpOwogICAgICAgICAgaWYgKHN0dW5kZW5BbXRsaWNoID49IGxvICYmIHN0dW5kZW5BbXRsaWNoIDw9IGhpKSByZXR1cm4gZ2FuejsKICAgICAgICAgIGNvbnN0IG1pdHRlID0gKGxvICsgaGkpIC8gMjsKICAgICAgICAgIHJldHVybiBtaXR0ZSA+PSBzdHVuZGVuQW10bGljaCAqIDAuNiAmJiBtaXR0ZSA8PSBzdHVuZGVuQW10bGljaCAqIDEuNAogICAgICAgICAgICA/IGAke2ZtdFN0dW5kZW4obWludXRlbil9JHtlaW5oZWl0fWAKICAgICAgICAgICAgOiBnYW56OwogICAgICAgIH0KICAgICAgICBjb25zdCB3ZXJ0ID0gcGFyc2VaYWhsKHZvbik7CiAgICAgICAgcmV0dXJuIHdlcnQgPj0gc3R1bmRlbkFtdGxpY2ggKiAwLjYgJiYgd2VydCA8PSBzdHVuZGVuQW10bGljaCAqIDEuNAogICAgICAgICAgPyBgJHtmbXRTdHVuZGVuKG1pbnV0ZW4pfSR7ZWluaGVpdH1gCiAgICAgICAgICA6IGdhbno7CiAgICAgIH0sCiAgICApOwogIH0KICBpZiAoYXVmc3RpZWdNICE9IG51bGwgJiYgYXVmc3RpZWdNID4gMCkgewogICAgb3V0ID0gb3V0LnJlcGxhY2UoCiAgICAgIC8oXGQrKShccyooPzpIw7ZoZW5tZXRlcnxIbVxifGhtXGIpKS9nLAogICAgICAoZ2FueiwgemFobDogc3RyaW5nLCBlaW5oZWl0OiBzdHJpbmcpID0+IHsKICAgICAgICBjb25zdCB3ZXJ0ID0gTnVtYmVyKHphaGwpOwogICAgICAgIHJldHVybiB3ZXJ0ID49IGF1ZnN0aWVnTSAqIDAuNiAmJiB3ZXJ0IDw9IGF1ZnN0aWVnTSAqIDEuNAogICAgICAgICAgPyBgJHthdWZzdGllZ019JHtlaW5oZWl0fWAKICAgICAgICAgIDogZ2FuejsKICAgICAgfSwKICAgICk7CiAgfQogIHJldHVybiBvdXQ7Cn0KCnR5cGUgUm91dGVTdWl0YWJpbGl0eSA9IHsKICBmYW1pbHlGcmllbmRseTogYm9vbGVhbiB8IG51bGw7CiAgd2hlZWxjaGFpckFjY2Vzc2libGU6IGJvb2xlYW4gfCBudWxsOwp9OwoKLyoqCiAqIEVyemV1Z3QgYmV3dXNzdCBudXIgdGVjaG5pc2NoZSBFbXBmZWhsdW5nZW4sIGtlaW5lIHJlZGFrdGlvbmVsbGVuCiAqIFRhdHNhY2hlbmJlaGF1cHR1bmdlbjoKICogLSBGYW1pbGllbi9LaW5kZXI6IFNBQywgU3RyZWNrZW5sw6RuZ2UgdW5kIEF1ZnN0aWVnIGJlZ3JlbnplbiBkaWUgdGVjaG5pc2NoZQogKiAgIEJlbGFzdHVuZywgc2luZCBhYmVyIGtlaW5lIHJlZGFrdGlvbmVsbGUgWnVzYWdlLgogKiAtIEJhcnJpZXJlYXJtdXQ6IG51ciBkZXIgb2ZmaXppZWxsZSBTY2h3ZWl6TW9iaWwtUm91dGVudHlwICJoYW5kaWNhcCIgZGFyZgogKiAgIGRpZXNlbiBXZXJ0IHNldHplbi4gQXVzIEjDtmhlLCBEaXN0YW56IG9kZXIgU0FDIHdpcmQgZGFzIG5pZSBhYmdlbGVpdGV0LgogKgogKiBCZXJlaXRzIHJlZGFrdGlvbmVsbCBnZXNldHp0ZSBXZXJ0ZSBoYWJlbiBpbW1lciBWb3JyYW5nLiBVbmJla2FubnRlIFdlcnRlCiAqIGJsZWliZW4gbnVsbCwgZGFtaXQgZGllIEFQSSBzaWUgbmljaHQgYWxzIGV4cGxpeml0ZXMgTmVpbiBhdXNnaWJ0LgogKi8KZnVuY3Rpb24gZGVyaXZlU3VpdGFiaWxpdHkoCiAgcm93OiBFeHRlcm5hbFJvdXRlUm93LAogIG9mZmljaWFsVHlwZUJ5UmVmOiBSZWFkb25seU1hcDxzdHJpbmcsIHN0cmluZz4gPSBuZXcgTWFwKCksCik6IFJvdXRlU3VpdGFiaWxpdHkgewogIGNvbnN0IHN0dWZlID0gc2FjU3R1ZmUocm93LnNhYyk7CiAgY29uc3Qga20gPSByb3cuZGlzdGFuY2VUYWdLbSA/PyByb3cuZGlzdGFuY2VLbTsKICBjb25zdCBhc2NlbnQgPSByb3cuYXNjZW50TTsKICBjb25zdCBvZmZpY2lhbFR5cGUgPSByb3cucmVmID8gb2ZmaWNpYWxUeXBlQnlSZWYuZ2V0KHJvdy5yZWYpIDogdW5kZWZpbmVkOwoKICByZXR1cm4gewogICAgZmFtaWx5RnJpZW5kbHk6CiAgICAgIHJvdy5mYW1pbHlGcmllbmRseSA/PwogICAgICAoc3R1ZmUgIT09IG51bGwgJiYgc3R1ZmUgPD0gMiAmJiBrbSA8PSAxNSAmJiBhc2NlbnQgPD0gNjAwID8gdHJ1ZSA6IG51bGwpLAogICAgd2hlZWxjaGFpckFjY2Vzc2libGU6CiAgICAgIHJvdy53aGVlbGNoYWlyQWNjZXNzaWJsZSA/PwogICAgICAob2ZmaWNpYWxUeXBlID09PSAiaGFuZGljYXAiID8gdHJ1ZSA6IG51bGwpLAogIH07Cn0KCmV4cG9ydCBmdW5jdGlvbiB0b1JvdXRlKHJvdzogRXh0ZXJuYWxSb3V0ZVJvdywgc3VpdGFiaWxpdHkgPSBkZXJpdmVTdWl0YWJpbGl0eShyb3cpKSB7CiAgcmV0dXJuIHsKICAgIGlkOiByb3cuaWQsCiAgICBzYWdhSWQ6IHJvdy5zYWdhSWQsCiAgICBuYW1lOiByb3cubmFtZSwKICAgIHJlZjogcm93LnJlZiA/PyBudWxsLAogICAgbmV0d29yazogcm93LnJvdXRlVHlwZSA/PyBudWxsLAogICAgcmVnaW9uOiBTVEFSVF9DQU5UT05fT1ZFUlJJREVTW3Jvdy5pZF0gPz8gcm93LmNhbnRvbiwKICAgIGRpc3RhbmNlS206IHJvdy5kaXN0YW5jZUttLAogICAgZGlzdGFuY2VUYWdLbTogcm93LmRpc3RhbmNlVGFnS20gPz8gcm93LmRpc3RhbmNlS20sCiAgICBhc2NlbnRNOiByb3cuYXNjZW50TSwKICAgIG1heEVsZXZhdGlvbk06IHJvdy5tYXhFbGV2YXRpb25NLAogICAgc2Vhc29uOiBkZXJpdmVTZWFzb24ocm93Lm1heEVsZXZhdGlvbk0sIHJvdy5zYWMpLAogICAgbWludXRlczogcm93Lm1pbnV0ZXMsCiAgICBzYWM6IHJvdy5zYWMsCiAgICBzYWNTb3VyY2U6IHJvdy5zYWNTb3VyY2UsCiAgICBzY2h3ZWl6TW9iaWxDb25kaXRpb246IHJvdy5zY2h3ZWl6TW9iaWxDb25kaXRpb24sCiAgICBzY2h3ZWl6TW9iaWxUZWNobmlxdWU6IHJvdy5zY2h3ZWl6TW9iaWxUZWNobmlxdWUsCiAgICB0aGVtZUtleXM6IHJvdy50aGVtZUtleXMsCiAgICBxdWFsaXR5U3RhdHVzOiByb3cucXVhbGl0eVN0YXR1cywKICAgIHF1YWxpdHlDaGVja2VkQXQ6IHJvdy5xdWFsaXR5Q2hlY2tlZEF0LAogICAgdGVycmFpbjogcm93LnRlcnJhaW4sCiAgICBmYW1pbHlGcmllbmRseTogc3VpdGFiaWxpdHkuZmFtaWx5RnJpZW5kbHksCiAgICB3aGVlbGNoYWlyQWNjZXNzaWJsZTogc3VpdGFiaWxpdHkud2hlZWxjaGFpckFjY2Vzc2libGUsCiAgICB0ZWNobmljYWxEaWZmaWN1bHR5OiByb3cudGVjaG5pY2FsRGlmZmljdWx0eSA/PyBudWxsLAogICAgY29vcmRpbmF0ZXM6IHsgbGF0OiByb3cubGF0LCBsbmc6IHJvdy5sbmcgfSwKICAgIGdlb21ldHJ5OiBwYXJzZUdlb21ldHJ5KHJvdy5nZW9tZXRyeSksCiAgICBmZWF0dXJlZDogcm93LmZlYXR1cmVkLAogICAgcGhvdG9Vcmw6IHJvdy5waG90b1VybCA/PyBudWxsLAogICAgcGhvdG9BdHRyaWJ1dGlvbjogcm93LnBob3RvQXR0cmlidXRpb24gPz8gbnVsbCwKICAgIGRlc2NyaXB0aW9uOiByb3cuZGVzY3JpcHRpb24KICAgICAgPyBoYXJtb25pc2llcmVCZXNjaHJlaWJ1bmcoCiAgICAgICAgICByb3cuZGVzY3JpcHRpb24sCiAgICAgICAgICByb3cuZGlzdGFuY2VUYWdLbSA/PyByb3cuZGlzdGFuY2VLbSwKICAgICAgICAgIHJvdy5taW51dGVzLAogICAgICAgICAgcm93LmFzY2VudE0sCiAgICAgICAgKQogICAgICA6IG51bGwsCiAgICBkZXNjcmlwdGlvblNvdXJjZTogcm93LmRlc2NyaXB0aW9uU291cmNlID8/IG51bGwsCiAgfTsKfQoKLyoqIExpZXN0IGRlbiBTQUMtR3JhZCAoVDHigJNUNikgYXVzIGVpbmVtIFJvdXRlbi1GZWxkOyBudWxsIGJlaSAidW5iZWthbm50Ii4gKi8KZnVuY3Rpb24gc2FjU3R1ZmUoc2FjOiBzdHJpbmcpOiBudW1iZXIgfCBudWxsIHsKICBjb25zdCBtID0gL1RccyooWzEtNl0pL2kuZXhlYyhzYWMpOwogIHJldHVybiBtID8gTnVtYmVyKG1bMV0pIDogbnVsbDsKfQoKLyoqIExpZXN0IGVpbmUgb3B0aW9uYWxlIG51bWVyaXNjaGUgUXVlcnktR3JlbnplOyBudWxsIGJlaSBmZWhsZW5kL3VuZ3VlbHRpZy4gKi8KZnVuY3Rpb24gbnVtUGFyYW0odmFsdWU6IHVua25vd24pOiBudW1iZXIgfCBudWxsIHsKICBjb25zdCByYXcgPSBBcnJheS5pc0FycmF5KHZhbHVlKSA/IHZhbHVlWzBdIDogdmFsdWU7CiAgaWYgKHJhdyA9PT0gdW5kZWZpbmVkIHx8IHJhdyA9PT0gbnVsbCB8fCByYXcgPT09ICIiKSByZXR1cm4gbnVsbDsKICBjb25zdCBuID0gTnVtYmVyKHJhdyk7CiAgcmV0dXJuIE51bWJlci5pc0Zpbml0ZShuKSA/IG4gOiBudWxsOwp9CgovKiogTGllc3QgZWluZW4gb3B0aW9uYWxlbiBCb29sZWFuLVF1ZXJ5LVBhcmFtZXRlcjsgbnVsbCBiZWkgZmVobGVuZC91bmd1ZWx0aWcuICovCmZ1bmN0aW9uIGJvb2xQYXJhbSh2YWx1ZTogdW5rbm93bik6IGJvb2xlYW4gfCBudWxsIHsKICBjb25zdCByYXcgPSBBcnJheS5pc0FycmF5KHZhbHVlKSA/IHZhbHVlWzBdIDogdmFsdWU7CiAgaWYgKHJhdyA9PT0gdW5kZWZpbmVkIHx8IHJhdyA9PT0gbnVsbCB8fCByYXcgPT09ICIiKSByZXR1cm4gbnVsbDsKICByZXR1cm4gcmF3ID09PSAidHJ1ZSIgfHwgcmF3ID09PSAiMSI7Cn0KCmludGVyZmFjZSBSb3V0ZUZpbHRlciB7CiAgZGlzdE1pbjogbnVtYmVyIHwgbnVsbDsKICBkaXN0TWF4OiBudW1iZXIgfCBudWxsOwogIGFzY01pbjogbnVtYmVyIHwgbnVsbDsKICBhc2NNYXg6IG51bWJlciB8IG51bGw7CiAgZGlmZk1pbjogbnVtYmVyIHwgbnVsbDsKICBkaWZmTWF4OiBudW1iZXIgfCBudWxsOwogIGdhbnpqYWVocmlnTnVyOiBib29sZWFuIHwgbnVsbDsKICBuZWFyTGF0OiBudW1iZXIgfCBudWxsOwogIG5lYXJMbmc6IG51bWJlciB8IG51bGw7CiAgZmFtaWx5RnJpZW5kbHk6IGJvb2xlYW4gfCBudWxsOwogIHdoZWVsY2hhaXJBY2Nlc3NpYmxlOiBib29sZWFuIHwgbnVsbDsKfQoKLyoqCiAqIEdyZW56dCBkaWUgUm91dGVuIGFuaGFuZCBkZXIgRmlsdGVyIGVpbi4gRGlzdGFuei0gdW5kIEhvZWhlbm1ldGVyLUdyZW56ZW4gc2luZAogKiBuYWNoIG9iZW4gb2ZmZW4sIHdlbm4ga2VpbmUgT2JlcmdyZW56ZSB1ZWJlcmdlYmVuIHdpcmQuIFNvYmFsZCBlaW5lCiAqIFNjaHdpZXJpZ2tlaXRzZ3JlbnplIGdlc2V0enQgaXN0LCBlbnRmYWxsZW4gUm91dGVuIG1pdCB1bmJla2FubnRlbSBTQUMtR3JhZC4KICovCmZ1bmN0aW9uIGFwcGx5RmlsdGVyKHJvdzogRXh0ZXJuYWxSb3V0ZVJvdywgZjogUm91dGVGaWx0ZXIpOiBib29sZWFuIHsKICBpZiAoZi5kaXN0TWluICE9PSBudWxsICYmIHJvdy5kaXN0YW5jZUttIDwgZi5kaXN0TWluKSByZXR1cm4gZmFsc2U7CiAgaWYgKGYuZGlzdE1heCAhPT0gbnVsbCAmJiByb3cuZGlzdGFuY2VLbSA+IGYuZGlzdE1heCkgcmV0dXJuIGZhbHNlOwogIGlmIChmLmFzY01pbiAhPT0gbnVsbCAmJiByb3cuYXNjZW50TSA8IGYuYXNjTWluKSByZXR1cm4gZmFsc2U7CiAgaWYgKGYuYXNjTWF4ICE9PSBudWxsICYmIHJvdy5hc2NlbnRNID4gZi5hc2NNYXgpIHJldHVybiBmYWxzZTsKICBpZiAoZi5kaWZmTWluICE9PSBudWxsIHx8IGYuZGlmZk1heCAhPT0gbnVsbCkgewogICAgY29uc3Qgc3R1ZmUgPSBzYWNTdHVmZShyb3cuc2FjKTsKICAgIGlmIChzdHVmZSA9PT0gbnVsbCkgcmV0dXJuIGZhbHNlOyAvLyB1bmJla2FubnRlciBHcmFkIGJlaSBha3RpdmVtIEZpbHRlciByYXVzCiAgICBpZiAoZi5kaWZmTWluICE9PSBudWxsICYmIHN0dWZlIDwgZi5kaWZmTWluKSByZXR1cm4gZmFsc2U7CiAgICBpZiAoZi5kaWZmTWF4ICE9PSBudWxsICYmIHN0dWZlID4gZi5kaWZmTWF4KSByZXR1cm4gZmFsc2U7CiAgfQogIGlmIChmLmdhbnpqYWVocmlnTnVyID09PSB0cnVlKSB7CiAgICBjb25zdCBzZWFzb24gPSBkZXJpdmVTZWFzb24ocm93Lm1heEVsZXZhdGlvbk0sIHJvdy5zYWMpOwogICAgaWYgKHNlYXNvbiAhPT0gImdhbnpqYWVocmlnIikgcmV0dXJuIGZhbHNlOwogIH0KICBpZiAoZi5mYW1pbHlGcmllbmRseSA9PT0gdHJ1ZSAmJiByb3cuZmFtaWx5RnJpZW5kbHkgIT09IHRydWUpIHJldHVybiBmYWxzZTsKICBpZiAoZi53aGVlbGNoYWlyQWNjZXNzaWJsZSA9PT0gdHJ1ZSAmJiByb3cud2hlZWxjaGFpckFjY2Vzc2libGUgIT09IHRydWUpIHJldHVybiBmYWxzZTsKICByZXR1cm4gdHJ1ZTsKfQoKcm91dGVyLmdldCgiL2NhbnRvbnMvOmNhbnRvbi9yb3V0ZXMiLCBhc3luYyAocmVxLCByZXMpOiBQcm9taXNlPHZvaWQ+ID0+IHsKICBjb25zdCBjYW50b24gPSBBcnJheS5pc0FycmF5KHJlcS5wYXJhbXMuY2FudG9uKQogICAgPyByZXEucGFyYW1zLmNhbnRvblswXQogICAgOiByZXEucGFyYW1zLmNhbnRvbjsKICBjb25zdCBmaWx0ZXI6IFJvdXRlRmlsdGVyID0gewogICAgZGlzdE1pbjogbnVtUGFyYW0ocmVxLnF1ZXJ5LmRpc3RNaW4pLAogICAgZGlzdE1heDogbnVtUGFyYW0ocmVxLnF1ZXJ5LmRpc3RNYXgpLAogICAgYXNjTWluOiBudW1QYXJhbShyZXEucXVlcnkuYXNjTWluKSwKICAgIGFzY01heDogbnVtUGFyYW0ocmVxLnF1ZXJ5LmFzY01heCksCiAgICBkaWZmTWluOiBudW1QYXJhbShyZXEucXVlcnkuZGlmZk1pbiksCiAgICBkaWZmTWF4OiBudW1QYXJhbShyZXEucXVlcnkuZGlmZk1heCksCiAgICBnYW56amFlaHJpZ051cjogYm9vbFBhcmFtKHJlcS5xdWVyeS5nYW56amFlaHJpZ051ciksCiAgICBuZWFyTGF0OiBudW1QYXJhbShyZXEucXVlcnkubmVhckxhdCksCiAgICBuZWFyTG5nOiBudW1QYXJhbShyZXEucXVlcnkubmVhckxuZyksCiAgICBmYW1pbHlGcmllbmRseTogYm9vbFBhcmFtKHJlcS5xdWVyeS5mYW1pbHlGcmllbmRseSksCiAgICB3aGVlbGNoYWlyQWNjZXNzaWJsZTogYm9vbFBhcmFtKHJlcS5xdWVyeS53aGVlbGNoYWlyQWNjZXNzaWJsZSksCiAgfTsKICB0cnkgewogICAgY29uc3QgcmF3Um93cyA9IGF3YWl0IGxvYWRDYWNoZWRSb3V0ZXMoY2FudG9uKTsKICAgIC8vIERpZSBhbXRsaWNoZSBTY2h3ZWl6TW9iaWwtRGF0ZWkgaXN0IG51ciBmw7xyIGRpZXNlbiBadXNhdHprbGFzc2lmaWthdG9yCiAgICAvLyBuw7Z0aWcuIFNpZSB3aXJkIGRlc2hhbGIgbmljaHQgYmVpIGplZGVyIG5vcm1hbGVuIEthbnRvbnNhYmZyYWdlCiAgICAvLyBoZXJ1bnRlcmdlbGFkZW4sIHNvbmRlcm4gZXJzdCBiZWltIEJhcnJpZXJlZnJlaWhlaXRzZmlsdGVyLgogICAgY29uc3Qgb2ZmaWNpYWxUeXBlQnlSZWYgPSBuZXcgTWFwPHN0cmluZywgc3RyaW5nPigpOwogICAgaWYgKGZpbHRlci53aGVlbGNoYWlyQWNjZXNzaWJsZSA9PT0gdHJ1ZSkgewogICAgICB0cnkgewogICAgICAgIGNvbnN0IG9mZmljaWFsID0gYXdhaXQgbG9hZE9mZmljaWFsU2Nod2Vpek1vYmlsRGlmZmljdWx0aWVzKHJlcS5sb2cpOwogICAgICAgIGZvciAoY29uc3QgaXRlbSBvZiBvZmZpY2lhbCkgewogICAgICAgICAgaWYgKGl0ZW0ucm91dGVUeXBlKSBvZmZpY2lhbFR5cGVCeVJlZi5zZXQoaXRlbS5yZWYsIGl0ZW0ucm91dGVUeXBlKTsKICAgICAgICB9CiAgICAgIH0gY2F0Y2ggKGVycikgewogICAgICAgIC8vIERpZSB0ZWNobmlzY2hlIEVtcGZlaGx1bmcgZsO8ciBkaWUgYW5kZXJlbiBGaWx0ZXIgYmxlaWJ0IHZlcmbDvGdiYXIuCiAgICAgICAgLy8gT2huZSBvZmZpemllbGxlbiBFeHBvcnQgZGFyZiBCYXJyaWVyZWFybXV0IG5pY2h0IGdlcmF0ZW4gd2VyZGVuLgogICAgICAgIHJlcS5sb2cud2Fybih7IGVyciB9LCAiU2Nod2Vpek1vYmlsLVR5cGVuIGbDvHIgQmFycmllcmVmcmVpaGVpdHNmaWx0ZXIgbmljaHQgdmVyZsO8Z2JhciIpOwogICAgICB9CiAgICB9CiAgICBjb25zdCB1c2VyUG9zID0KICAgICAgZmlsdGVyLm5lYXJMYXQgIT09IG51bGwgJiYgZmlsdGVyLm5lYXJMbmcgIT09IG51bGwKICAgICAgICA/IHsgbGF0OiBmaWx0ZXIubmVhckxhdCwgbG5nOiBmaWx0ZXIubmVhckxuZyB9CiAgICAgICAgOiBudWxsOwoKICAgIC8vIERlZHVwbGl6aWVydW5nOiBzY2h3ZWl6bW9iaWwtKiBaZWlsZW4gZW50ZmVybmVuIHdlbm4gZWluZSBvc20tKiBSb3V0ZSBtaXQgZXhha3QKICAgIC8vIGdsZWljaGVtIE5hbWVuIGV4aXN0aWVydCAoYmVpZGUgc2luZCBkYXNzZWxiZSBXYW5kZXJ3ZWctTmV0eiwgYWJlciBkaWUgb3NtLVplaWxlCiAgICAvLyBoYXQgZGllIGFuZ2VyZWljaGVydGUgR2VvbWV0cmllIHVuZCBzb2xsIGRpZSBzY2h3ZWl6bW9iaWwtWmVpbGUgZXJzZXR6ZW4pLgogICAgY29uc3Qgb3NtTmFtZXMgPSBuZXcgU2V0KHJhd1Jvd3MuZmlsdGVyKChyKSA9PiByLmlkLnN0YXJ0c1dpdGgoIm9zbS0iKSkubWFwKChyKSA9PiByLm5hbWUpKTsKICAgIGNvbnN0IHJvd3MgPSByYXdSb3dzLmZpbHRlcigKICAgICAgKHIpID0+ICFyLmlkLnN0YXJ0c1dpdGgoInNjaHdlaXptb2JpbC0iKSB8fCAhb3NtTmFtZXMuaGFzKHIubmFtZSksCiAgICApOwoKICAgIC8vIEV0YXBwZW4tTGFiZWxzIGbDvHIgUm91dGVuIG1pdCBnbGVpY2hlbSByZWYgVU5EIGdsZWljaGVtIE5hbWVuIChrZWluICJFdGFwcGUiIGRyaW4pOgogICAgLy8gei5CLiA0w5cgIjYwIFZpYSBSaGVuYW5hIiBpbiBBYXJnYXUg4oaSICI2MCBWaWEgUmhlbmFuYSBFdGFwcGUgMSIg4oCmICJFdGFwcGUgNCIKICAgIC8vIFNvcnRpZXJ1bmcgaW5uZXJoYWxiIGRlciBHcnVwcGU6IGzDpG5nc3RlIHp1ZXJzdCAoPSBIYXVwdGV0YXBwZSA9IEV0YXBwZSAxKS4KICAgIGNvbnN0IHJlZkdyb3VwcyA9IG5ldyBNYXA8c3RyaW5nLCBFeHRlcm5hbFJvdXRlUm93W10+KCk7CiAgICBmb3IgKGNvbnN0IHJvdyBvZiByb3dzKSB7CiAgICAgIGlmICghcm93LnJlZikgY29udGludWU7CiAgICAgIGNvbnN0IGtleSA9IGAke3Jvdy5yZWZ9Ojoke3Jvdy5uYW1lfWA7CiAgICAgIGlmICghL2V0YXBwZXzDqXRhcGV8dGFwcGEvaS50ZXN0KHJvdy5uYW1lKSkgewogICAgICAgIGlmICghcmVmR3JvdXBzLmhhcyhrZXkpKSByZWZHcm91cHMuc2V0KGtleSwgW10pOwogICAgICAgIHJlZkdyb3Vwcy5nZXQoa2V5KSEucHVzaChyb3cpOwogICAgICB9CiAgICB9CiAgICBjb25zdCBldGFwcGVuTmFtZXMgPSBuZXcgTWFwPHN0cmluZywgc3RyaW5nPigpOwogICAgZm9yIChjb25zdCBncm91cCBvZiByZWZHcm91cHMudmFsdWVzKCkpIHsKICAgICAgaWYgKGdyb3VwLmxlbmd0aCA8IDIpIGNvbnRpbnVlOwogICAgICBncm91cC5zb3J0KChhLCBiKSA9PiBiLmRpc3RhbmNlS20gLSBhLmRpc3RhbmNlS20pOwogICAgICBncm91cC5mb3JFYWNoKChyb3csIGkpID0+IGV0YXBwZW5OYW1lcy5zZXQocm93LmlkLCBgJHtyb3cubmFtZX0gRXRhcHBlICR7aSArIDF9YCkpOwogICAgfQoKICAgIC8vIEV0YXBwZW4tTGFiZWxzIFZPUiBkZW0gU29ydCBhbndlbmRlbiBkYW1pdCBzb3J0U2NobHVlc3NlbCAiRXRhcHBlIE4iIHNpZWh0LgogICAgY29uc3Qgcm93c01pdExhYmVscyA9IHJvd3MubWFwKChyb3cpID0+CiAgICAgIGV0YXBwZW5OYW1lcy5oYXMocm93LmlkKSA/IHsgLi4ucm93LCBuYW1lOiBldGFwcGVuTmFtZXMuZ2V0KHJvdy5pZCkhIH0gOiByb3csCiAgICApOwogICAgY29uc3Qgcm93c01pdEVpZ251bmcgPSByb3dzTWl0TGFiZWxzLm1hcCgocm93KSA9PiAoewogICAgICAuLi5yb3csCiAgICAgIC4uLmRlcml2ZVN1aXRhYmlsaXR5KHJvdywgb2ZmaWNpYWxUeXBlQnlSZWYpLAogICAgfSkpOwoKICAgIGNvbnN0IG1hdGNoZWQgPSByb3dzTWl0RWlnbnVuZwogICAgICAuZmlsdGVyKChyb3cpID0+IGFwcGx5RmlsdGVyKHJvdywgZmlsdGVyKSkKICAgICAgLnNvcnQodXNlclBvcwogICAgICAgID8gKGEsIGIpID0+CiAgICAgICAgICAgIGhhdmVyc2luZU0oeyBsYXQ6IGEubGF0LCBsbmc6IGEubG5nIH0sIHVzZXJQb3MpIC0KICAgICAgICAgICAgaGF2ZXJzaW5lTSh7IGxhdDogYi5sYXQsIGxuZzogYi5sbmcgfSwgdXNlclBvcykKICAgICAgICA6IGJ5UmVsZXZhbmNlKQogICAgICAuc2xpY2UoMCwgUkVTVUxUX0xJTUlUKTsKICAgIHJlcy5qc29uKEdldENhbnRvblJvdXRlc1Jlc3BvbnNlLnBhcnNlKG1hdGNoZWQubWFwKChyb3cpID0+IHRvUm91dGUocm93KSkpKTsKICB9IGNhdGNoIChlcnIpIHsKICAgIHJlcS5sb2cuZXJyb3IoeyBlcnIsIGNhbnRvbiB9LCAiS2FudG9uLVJvdXRlbiBrb25udGVuIG5pY2h0IGdlbGFkZW4gd2VyZGVuIik7CiAgICByZXMuc3RhdHVzKDUwMikuanNvbih7IGVycm9yOiAiUm91dGVuIGtvbm50ZW4gbmljaHQgZ2VsYWRlbiB3ZXJkZW4iIH0pOwogIH0KfSk7Cgpjb25zdCBUSEVNRV9LRVlTID0gbmV3IFNldChbCiAgIndhc3NlcndlZ2UiLAogICJidXJnZW5fcnVpbmVuX2FsdGVfd2VnZSIsCiAgImdpcGZlbF9wYW5vcmFtYSIsCiAgImdlb2xvZ2llX2Vpc3plaXQiLAogICJob2VobGVuX2dyb3R0ZW4iLAogICJ3YWxkX3dpbGR0aWVyZSIsCiAgImFscGVuX2xhbmR3aXJ0c2NoYWZ0IiwKICAicGlsZ2VyX2hhbmRlbHN3ZWdlIiwKICAiaW5kdXN0cmlla3VsdHVyIiwKICAiZmFtaWxpZW5fZW50ZGVja2VyIiwKICAibmFjaHRfc3Rlcm5lIiwKICAiZmxvcmFfamFocmVzemVpdGVuIiwKICAiYmFobl9zZWlsYmFobiIsCl0pOwoKLyoqCiAqIFRoZW1lbndlbHRlbiB3ZXJkZW4gZGlyZWt0IGF1cyBkZXIgc2VydmVyc2VpdGlnIGdlcHLDvGZ0ZW4gVGhlbWVuLVNwYWx0ZQogKiBnZWxhZGVuLiBEYXMgdmVybWVpZGV0IGRpZSBmcsO8aGVyZSBLYXNrYWRlIGF1cyAyNiBLYW50b25zYWJmcmFnZW4gcGx1cwogKiBzZXBhcmF0ZW4gUE9JLUFiZnJhZ2VuIHBybyBLYW50b24uCiAqCiAqIGBxdWFsaXR5Q2hlY2tlZEF0YCBkYXJmIGhpZXIgbmljaHQgenVzw6R0emxpY2ggdmVybGFuZ3Qgd2VyZGVuOiBEaWUKICogVGhlbWVuYmVsZWdlIHd1cmRlbiBiZXJlaXRzIHZvciBFaW5mw7xocnVuZyBkZXMgYWxsZ2VtZWluZW4KICogUm91dGVuLVF1YWxpdMOkdHNjaGVja3MgZ2VzcGVpY2hlcnQuIFNvbGFuZ2UgZGllc2VyIENoZWNrIG5vY2ggbmljaHQgZsO8cgogKiBhbGxlIGJlc3RlaGVuZGVuIFJvdXRlbiBnZWxhdWZlbiBpc3QsIHfDvHJkZSBkaWUgWnVzYXR6YmVkaW5ndW5nIHNvbnN0IGplZGUKICogVGhlbWVud2VsdCBmw6Rsc2NobGljaCBsZWVyIHp1csO8Y2tnZWJlbi4KICovCnJvdXRlci5nZXQoIi90aGVtZXMvOnRoZW1lL3JvdXRlcyIsIGFzeW5jIChyZXEsIHJlcyk6IFByb21pc2U8dm9pZD4gPT4gewogIGNvbnN0IHRoZW1lID0gQXJyYXkuaXNBcnJheShyZXEucGFyYW1zLnRoZW1lKSA/IHJlcS5wYXJhbXMudGhlbWVbMF0gOiByZXEucGFyYW1zLnRoZW1lOwogIGlmICghdGhlbWUgfHwgIVRIRU1FX0tFWVMuaGFzKHRoZW1lKSkgewogICAgcmVzLnN0YXR1cyg0MDApLmpzb24oeyBlcnJvcjogIlVuYmVrYW5udGUgVGhlbWVud2VsdCIgfSk7CiAgICByZXR1cm47CiAgfQogIHRyeSB7CiAgICAvLyBEaWVzZSBncm/Dn2UsIGR5bmFtaXNjaGUgTGlzdGUgZGFyZiBuaWNodCBhbHMgbGVlcmUgMzA0LUFudHdvcnQgYmVpbQogICAgLy8gUmVhY3QtTmF0aXZlLUNsaWVudCBhbmtvbW1lbi4gRXIgYmVuw7Z0aWd0IGJlaSBqZWRlciBBYmZyYWdlIGRhcyBKU09OLgogICAgcmVzLnNldEhlYWRlcigiQ2FjaGUtQ29udHJvbCIsICJuby1jYWNoZSwgbm8tc3RvcmUsIG11c3QtcmV2YWxpZGF0ZSIpOwogICAgY29uc3Qgcm93cyA9IGF3YWl0IGRiCiAgICAgIC5zZWxlY3QoKQogICAgICAuZnJvbShleHRlcm5hbFJvdXRlc1RhYmxlKQogICAgICAud2hlcmUoc3FsYCR7ZXh0ZXJuYWxSb3V0ZXNUYWJsZS50aGVtZUtleXN9IEA+IEFSUkFZWyR7dGhlbWV9XTo6dGV4dFtdYCk7CiAgICByb3dzLnNvcnQoYnlSZWxldmFuY2UpOwogICAgY29uc3QgYm9keSA9IEpTT04uc3RyaW5naWZ5KEdldENhbnRvblJvdXRlc1Jlc3BvbnNlLnBhcnNlKHJvd3MubWFwKChyb3cpID0+IHRvUm91dGUocm93KSkpKTsKICAgIHJlcwogICAgICAuc3RhdHVzKDIwMCkKICAgICAgLnR5cGUoImFwcGxpY2F0aW9uL2pzb24iKQogICAgICAuc2V0KCJDYWNoZS1Db250cm9sIiwgIm5vLWNhY2hlLCBuby1zdG9yZSwgbXVzdC1yZXZhbGlkYXRlIikKICAgICAgLnNldCgiQ29udGVudC1MZW5ndGgiLCBTdHJpbmcoQnVmZmVyLmJ5dGVMZW5ndGgoYm9keSkpKQogICAgICAuZW5kKGJvZHkpOwogIH0gY2F0Y2ggKGVycikgewogICAgcmVxLmxvZy5lcnJvcih7IGVyciwgdGhlbWUgfSwgIlRoZW1lbndlbHQtUm91dGVuIGtvbm50ZW4gbmljaHQgZ2VsYWRlbiB3ZXJkZW4iKTsKICAgIHJlcy5zdGF0dXMoNTAyKS5qc29uKHsgZXJyb3I6ICJUaGVtZW53ZWx0LVJvdXRlbiBrb25udGVuIG5pY2h0IGdlbGFkZW4gd2VyZGVuIiB9KTsKICB9Cn0pOwoKZXhwb3J0IGRlZmF1bHQgcm91dGVyOwo=
+import { Router, type IRouter } from "express";
+import { GetCantonRoutesResponse } from "@workspace/api-zod";
+import { db, externalRoutesTable, type ExternalRouteRow } from "@workspace/db";
+import { sql } from "drizzle-orm";
+import { loadCachedRoutes, loadOfficialSchweizMobilDifficulties } from "../lib/routeService";
+import { START_CANTON_OVERRIDES } from "../lib/routeCantonOverrides";
+import { deriveSeason } from "../lib/season";
+import { haversineM } from "../lib/geo";
+
+const router: IRouter = Router();
+
+// Kein Deckel — alle gefilterten Routen werden zurueckgegeben.
+const RESULT_LIMIT = Infinity;
+
+/**
+ * Sortiert Treffer nach Relevanz, damit der RESULT_LIMIT-Deckel die
+ * aussagekraeftigsten Routen behaelt: amtlich nummerierte Wanderland-Routen
+ * (mit `ref`) zuerst, danach alphabetisch.
+ */
+/**
+ * Sortier-Rangfolge:
+ * 1. nationale Routen (1-stellige Nummer), 2. deren Etappen,
+ * 3. regionale Routen (2-stellig), 4. deren Etappen,
+ * 5. lokale Routen (3-stellig), 6. deren Etappen,
+ * 7. kantonale Routen (K-Nummern), 8. Rest.
+ * Innerhalb jeder Kategorie nach Routen-Nummer, Etappen zusätzlich
+ * nach Etappen-Nummer.
+ */
+// Sortierschlüssel: [Kategorie, RoutenNr, IstEtappe, EtappenNr]
+// Kategorie: 0=national, 1=regional, 2=lokal, 3=kantonal, 4=rest
+// IstEtappe: 0=Hauptroute (kommt zuerst), 1=Etappe
+// Ergibt: 1 Via Alpina → 1 Etappe 1 → 1 Etappe 2 → 5 Jura Höhenweg → 5 Etappe 1 → …
+function sortSchluessel(row: ExternalRouteRow): [number, number, number, number, number] {
+  const istEtappe = /\b(?:etappe|étape|etape|tappa)\b/i.test(row.name);
+  const etappenNr = istEtappe
+    ? parseInt(row.name.match(/\b(?:Etappe|Étape|Etape|Tappa)\s+(\d+)/i)?.[1] ?? "0", 10)
+    : 0;
+
+  // Kantonale K-Route: Name beginnt mit "K{n} {CC}" (z.B. "K4 AG Kulturweg")
+  const kMatch = row.name.match(/^K(\d+)\s+[A-Z]{2}\b/);
+  if (kMatch) {
+    return [3, parseInt(kMatch[1], 10), istEtappe ? 1 : 0, etappenNr, 0];
+  }
+
+  // SchweizMobil-Routen: Nummer am Anfang des Namens bestimmt Kategorie (z.B. "4a" → national)
+  // Suffix-Ordnung: kein Suffix = 0, "a" = 1, "b" = 2 … → "4" vor "4a"
+  const numMatch = row.name.match(/^(\d{1,3})([a-z]?)\s/);
+  if (numMatch) {
+    const nr = parseInt(numMatch[1], 10);
+    const numLen = nr.toString().length;
+    const kat = numLen === 1 ? 0 : numLen === 2 ? 1 : 2;
+    const suffixOrder = numMatch[2] ? numMatch[2].charCodeAt(0) - 96 : 0; // '' → 0, 'a' → 1
+    return [kat, nr, istEtappe ? 1 : 0, etappenNr, suffixOrder];
+  }
+
+  return [4, 0, 0, 0, 0];
+}
+
+function byRelevance(a: ExternalRouteRow, b: ExternalRouteRow): number {
+  const ka = sortSchluessel(a);
+  const kb = sortSchluessel(b);
+  for (let i = 0; i < 4; i++) {
+    if (ka[i] !== kb[i]) return ka[i]! - kb[i]!;
+  }
+  // Gleicher Schlüssel: längste Route zuerst (Hauptroute vor kurzen Etappen ohne Label).
+  if ((b.distanceKm ?? 0) !== (a.distanceKm ?? 0)) return (b.distanceKm ?? 0) - (a.distanceKm ?? 0);
+  return a.name.localeCompare(b.name, "de");
+}
+
+/** Parst Geometrie aus dem DB-Feld: korrekte JSONB-Arrays kommen direkt durch,
+ *  historisch doppelt-codierte JSON-Strings werden on-the-fly geparst. */
+function parseGeometry(raw: unknown): number[][] | undefined {
+  if (Array.isArray(raw)) return raw as number[][];
+  if (typeof raw === "string") {
+    try { return JSON.parse(raw) as number[][]; } catch { return undefined; }
+  }
+  return undefined;
+}
+
+/** Formatiert km deutsch: "20,3" bzw. "19" ohne unnötige Dezimalstelle. */
+function fmtKm(km: number): string {
+  const gerundet = Math.round(km * 10) / 10;
+  return Number.isInteger(gerundet) ? String(gerundet) : String(gerundet).replace(".", ",");
+}
+
+/** Formatiert Minuten als Stundenangabe: 361 → "6", 390 → "6½". */
+function fmtStunden(minuten: number): string {
+  const halbe = Math.round(minuten / 30);
+  const h = Math.floor(halbe / 2);
+  return halbe % 2 === 1 ? `${h}½` : String(h);
+}
+
+/** Parst "19", "20,3", "20.3" zu einer Zahl. */
+function parseZahl(s: string): number {
+  return Number(s.replace(",", "."));
+}
+
+/**
+ * Gleicht Zahlenangaben im kuratierten Beschreibungstext an die amtlichen
+ * Werte an (Distanz, Dauer, Höhenmeter). Ersetzt NUR Werte, die nahe am
+ * amtlichen Gesamtwert liegen (Toleranz) — Zwischenangaben wie "nach 5 km
+ * erreicht man…" bleiben unangetastet.
+ */
+function harmonisiereBeschreibung(
+  text: string,
+  distanzKm: number | null,
+  minuten: number | null,
+  aufstiegM: number | null,
+): string {
+  let out = text;
+  if (distanzKm != null && distanzKm > 0) {
+    out = out.replace(
+      /(\d+(?:[.,]\d+)?)(\s*(?:km\b|Kilometer))/g,
+      (ganz, zahl: string, einheit: string) => {
+        const wert = parseZahl(zahl);
+        return wert >= distanzKm * 0.7 && wert <= distanzKm * 1.3
+          ? `${fmtKm(distanzKm)}${einheit}`
+          : ganz;
+      },
+    );
+  }
+  if (minuten != null && minuten > 0) {
+    const stundenAmtlich = minuten / 60;
+    out = out.replace(
+      /(\d+(?:[.,]\d+)?)(?:\s*(?:bis|[–-])\s*(\d+(?:[.,]\d+)?))?(\s*(?:Stunden\b|Std\.?))/g,
+      (ganz, von: string, bis: string | undefined, einheit: string) => {
+        if (bis) {
+          // Zeitspanne ("4 bis 5 Stunden"): bewusste Unschärfe erhalten.
+          // Liegt der amtliche Wert innerhalb der Spanne → unangetastet lassen;
+          // nur wenn er klar draussen liegt → durch Punktwert ersetzen.
+          const lo = parseZahl(von);
+          const hi = parseZahl(bis);
+          if (stundenAmtlich >= lo && stundenAmtlich <= hi) return ganz;
+          const mitte = (lo + hi) / 2;
+          return mitte >= stundenAmtlich * 0.6 && mitte <= stundenAmtlich * 1.4
+            ? `${fmtStunden(minuten)}${einheit}`
+            : ganz;
+        }
+        const wert = parseZahl(von);
+        return wert >= stundenAmtlich * 0.6 && wert <= stundenAmtlich * 1.4
+          ? `${fmtStunden(minuten)}${einheit}`
+          : ganz;
+      },
+    );
+  }
+  if (aufstiegM != null && aufstiegM > 0) {
+    out = out.replace(
+      /(\d+)(\s*(?:Höhenmeter|Hm\b|hm\b))/g,
+      (ganz, zahl: string, einheit: string) => {
+        const wert = Number(zahl);
+        return wert >= aufstiegM * 0.6 && wert <= aufstiegM * 1.4
+          ? `${aufstiegM}${einheit}`
+          : ganz;
+      },
+    );
+  }
+  return out;
+}
+
+type RouteSuitability = {
+  familyFriendly: boolean | null;
+  wheelchairAccessible: boolean | null;
+};
+
+/**
+ * Erzeugt bewusst nur technische Empfehlungen, keine redaktionellen
+ * Tatsachenbehauptungen:
+ * - Familien/Kinder: SAC, Streckenlänge und Aufstieg begrenzen die technische
+ *   Belastung, sind aber keine redaktionelle Zusage.
+ * - Barrierearmut: nur der offizielle SchweizMobil-Routentyp "handicap" darf
+ *   diesen Wert setzen. Aus Höhe, Distanz oder SAC wird das nie abgeleitet.
+ *
+ * Bereits redaktionell gesetzte Werte haben immer Vorrang. Unbekannte Werte
+ * bleiben null, damit die API sie nicht als explizites Nein ausgibt.
+ */
+function deriveSuitability(
+  row: ExternalRouteRow,
+  officialTypeByRef: ReadonlyMap<string, string> = new Map(),
+): RouteSuitability {
+  const stufe = sacStufe(row.sac);
+  const km = row.distanceTagKm ?? row.distanceKm;
+  const ascent = row.ascentM;
+  const officialType = row.ref ? officialTypeByRef.get(row.ref) : undefined;
+
+  return {
+    familyFriendly:
+      row.familyFriendly ??
+      (stufe !== null && stufe <= 2 && km <= 15 && ascent <= 600 ? true : null),
+    wheelchairAccessible:
+      row.wheelchairAccessible ??
+      (officialType === "handicap" ? true : null),
+  };
+}
+
+export function toRoute(row: ExternalRouteRow, suitability = deriveSuitability(row)) {
+  return {
+    id: row.id,
+    sagaId: row.sagaId,
+    name: row.name,
+    ref: row.ref ?? null,
+    network: row.routeType ?? null,
+    region: START_CANTON_OVERRIDES[row.id] ?? row.canton,
+    distanceKm: row.distanceKm,
+    distanceTagKm: row.distanceTagKm ?? row.distanceKm,
+    ascentM: row.ascentM,
+    maxElevationM: row.maxElevationM,
+    season: deriveSeason(row.maxElevationM, row.sac),
+    minutes: row.minutes,
+    sac: row.sac,
+    sacSource: row.sacSource,
+    schweizMobilCondition: row.schweizMobilCondition,
+    schweizMobilTechnique: row.schweizMobilTechnique,
+    themeKeys: row.themeKeys,
+    qualityStatus: row.qualityStatus,
+    qualityCheckedAt: row.qualityCheckedAt,
+    terrain: row.terrain,
+    familyFriendly: suitability.familyFriendly,
+    wheelchairAccessible: suitability.wheelchairAccessible,
+    technicalDifficulty: row.technicalDifficulty ?? null,
+    coordinates: { lat: row.lat, lng: row.lng },
+    geometry: parseGeometry(row.geometry),
+    featured: row.featured,
+    photoUrl: row.photoUrl ?? null,
+    photoAttribution: row.photoAttribution ?? null,
+    description: row.description
+      ? harmonisiereBeschreibung(
+          row.description,
+          row.distanceTagKm ?? row.distanceKm,
+          row.minutes,
+          row.ascentM,
+        )
+      : null,
+    descriptionSource: row.descriptionSource ?? null,
+  };
+}
+
+/** Liest den SAC-Grad (T1–T6) aus einem Routen-Feld; null bei "unbekannt". */
+function sacStufe(sac: string): number | null {
+  const m = /T\s*([1-6])/i.exec(sac);
+  return m ? Number(m[1]) : null;
+}
+
+/** Liest eine optionale numerische Query-Grenze; null bei fehlend/ungueltig. */
+function numParam(value: unknown): number | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (raw === undefined || raw === null || raw === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Liest einen optionalen Boolean-Query-Parameter; null bei fehlend/ungueltig. */
+function boolParam(value: unknown): boolean | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (raw === undefined || raw === null || raw === "") return null;
+  return raw === "true" || raw === "1";
+}
+
+interface RouteFilter {
+  distMin: number | null;
+  distMax: number | null;
+  ascMin: number | null;
+  ascMax: number | null;
+  diffMin: number | null;
+  diffMax: number | null;
+  ganzjaehrigNur: boolean | null;
+  nearLat: number | null;
+  nearLng: number | null;
+  familyFriendly: boolean | null;
+  wheelchairAccessible: boolean | null;
+}
+
+/**
+ * Grenzt die Routen anhand der Filter ein. Distanz- und Hoehenmeter-Grenzen sind
+ * nach oben offen, wenn keine Obergrenze uebergeben wird. Sobald eine
+ * Schwierigkeitsgrenze gesetzt ist, entfallen Routen mit unbekanntem SAC-Grad.
+ */
+function applyFilter(row: ExternalRouteRow, f: RouteFilter): boolean {
+  if (f.distMin !== null && row.distanceKm < f.distMin) return false;
+  if (f.distMax !== null && row.distanceKm > f.distMax) return false;
+  if (f.ascMin !== null && row.ascentM < f.ascMin) return false;
+  if (f.ascMax !== null && row.ascentM > f.ascMax) return false;
+  if (f.diffMin !== null || f.diffMax !== null) {
+    const stufe = sacStufe(row.sac);
+    if (stufe === null) return false; // unbekannter Grad bei aktivem Filter raus
+    if (f.diffMin !== null && stufe < f.diffMin) return false;
+    if (f.diffMax !== null && stufe > f.diffMax) return false;
+  }
+  if (f.ganzjaehrigNur === true) {
+    const season = deriveSeason(row.maxElevationM, row.sac);
+    if (season !== "ganzjaehrig") return false;
+  }
+  if (f.familyFriendly === true && row.familyFriendly !== true) return false;
+  if (f.wheelchairAccessible === true && row.wheelchairAccessible !== true) return false;
+  return true;
+}
+
+router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
+  const canton = Array.isArray(req.params.canton)
+    ? req.params.canton[0]
+    : req.params.canton;
+  const filter: RouteFilter = {
+    distMin: numParam(req.query.distMin),
+    distMax: numParam(req.query.distMax),
+    ascMin: numParam(req.query.ascMin),
+    ascMax: numParam(req.query.ascMax),
+    diffMin: numParam(req.query.diffMin),
+    diffMax: numParam(req.query.diffMax),
+    ganzjaehrigNur: boolParam(req.query.ganzjaehrigNur),
+    nearLat: numParam(req.query.nearLat),
+    nearLng: numParam(req.query.nearLng),
+    familyFriendly: boolParam(req.query.familyFriendly),
+    wheelchairAccessible: boolParam(req.query.wheelchairAccessible),
+  };
+  try {
+    const rawRows = await loadCachedRoutes(canton);
+    // Die amtliche SchweizMobil-Datei ist nur für diesen Zusatzklassifikator
+    // nötig. Sie wird deshalb nicht bei jeder normalen Kantonsabfrage
+    // heruntergeladen, sondern erst beim Barrierefreiheitsfilter.
+    const officialTypeByRef = new Map<string, string>();
+    if (filter.wheelchairAccessible === true) {
+      try {
+        const official = await loadOfficialSchweizMobilDifficulties(req.log);
+        for (const item of official) {
+          if (item.routeType) officialTypeByRef.set(item.ref, item.routeType);
+        }
+      } catch (err) {
+        // Die technische Empfehlung für die anderen Filter bleibt verfügbar.
+        // Ohne offiziellen Export darf Barrierearmut nicht geraten werden.
+        req.log.warn({ err }, "SchweizMobil-Typen für Barrierefreiheitsfilter nicht verfügbar");
+      }
+    }
+    const userPos =
+      filter.nearLat !== null && filter.nearLng !== null
+        ? { lat: filter.nearLat, lng: filter.nearLng }
+        : null;
+
+    // Deduplizierung: schweizmobil-* Zeilen entfernen wenn eine osm-* Route mit exakt
+    // gleichem Namen existiert (beide sind dasselbe Wanderweg-Netz, aber die osm-Zeile
+    // hat die angereicherte Geometrie und soll die schweizmobil-Zeile ersetzen).
+    const osmNames = new Set(rawRows.filter((r) => r.id.startsWith("osm-")).map((r) => r.name));
+    const rows = rawRows.filter(
+      (r) => !r.id.startsWith("schweizmobil-") || !osmNames.has(r.name),
+    );
+
+    // Etappen-Labels für Routen mit gleichem ref UND gleichem Namen (kein "Etappe" drin):
+    // z.B. 4× "60 Via Rhenana" in Aargau → "60 Via Rhenana Etappe 1" … "Etappe 4"
+    // Sortierung innerhalb der Gruppe: längste zuerst (= Hauptetappe = Etappe 1).
+    const refGroups = new Map<string, ExternalRouteRow[]>();
+    for (const row of rows) {
+      if (!row.ref) continue;
+      const key = `${row.ref}::${row.name}`;
+      if (!/etappe|étape|tappa/i.test(row.name)) {
+        if (!refGroups.has(key)) refGroups.set(key, []);
+        refGroups.get(key)!.push(row);
+      }
+    }
+    const etappenNames = new Map<string, string>();
+    for (const group of refGroups.values()) {
+      if (group.length < 2) continue;
+      group.sort((a, b) => b.distanceKm - a.distanceKm);
+      group.forEach((row, i) => etappenNames.set(row.id, `${row.name} Etappe ${i + 1}`));
+    }
+
+    // Etappen-Labels VOR dem Sort anwenden damit sortSchluessel "Etappe N" sieht.
+    const rowsMitLabels = rows.map((row) =>
+      etappenNames.has(row.id) ? { ...row, name: etappenNames.get(row.id)! } : row,
+    );
+    const rowsMitEignung = rowsMitLabels.map((row) => ({
+      ...row,
+      ...deriveSuitability(row, officialTypeByRef),
+    }));
+
+    const matched = rowsMitEignung
+      .filter((row) => applyFilter(row, filter))
+      .sort(userPos
+        ? (a, b) =>
+            haversineM({ lat: a.lat, lng: a.lng }, userPos) -
+            haversineM({ lat: b.lat, lng: b.lng }, userPos)
+        : byRelevance)
+      .slice(0, RESULT_LIMIT);
+    res.json(GetCantonRoutesResponse.parse(matched.map((row) => toRoute(row))));
+  } catch (err) {
+    req.log.error({ err, canton }, "Kanton-Routen konnten nicht geladen werden");
+    res.status(502).json({ error: "Routen konnten nicht geladen werden" });
+  }
+});
+
+const THEME_KEYS = new Set([
+  "wasserwege",
+  "burgen_ruinen_alte_wege",
+  "gipfel_panorama",
+  "geologie_eiszeit",
+  "hoehlen_grotten",
+  "wald_wildtiere",
+  "alpen_landwirtschaft",
+  "pilger_handelswege",
+  "industriekultur",
+  "familien_entdecker",
+  "nacht_sterne",
+  "flora_jahreszeiten",
+  "bahn_seilbahn",
+]);
+
+/**
+ * Themenwelten werden direkt aus der serverseitig geprüften Themen-Spalte
+ * geladen. Das vermeidet die frühere Kaskade aus 26 Kantonsabfragen plus
+ * separaten POI-Abfragen pro Kanton.
+ *
+ * `qualityCheckedAt` darf hier nicht zusätzlich verlangt werden: Die
+ * Themenbelege wurden bereits vor Einführung des allgemeinen
+ * Routen-Qualitätschecks gespeichert. Solange dieser Check noch nicht für
+ * alle bestehenden Routen gelaufen ist, würde die Zusatzbedingung sonst jede
+ * Themenwelt fälschlich leer zurückgeben.
+ */
+router.get("/themes/:theme/routes", async (req, res): Promise<void> => {
+  const theme = Array.isArray(req.params.theme) ? req.params.theme[0] : req.params.theme;
+  if (!theme || !THEME_KEYS.has(theme)) {
+    res.status(400).json({ error: "Unbekannte Themenwelt" });
+    return;
+  }
+  try {
+    // Diese große, dynamische Liste darf nicht als leere 304-Antwort beim
+    // React-Native-Client ankommen. Er benötigt bei jeder Abfrage das JSON.
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    const rows = await db
+      .select()
+      .from(externalRoutesTable)
+      .where(sql`${externalRoutesTable.themeKeys} @> ARRAY[${theme}]::text[]`);
+    rows.sort(byRelevance);
+    const body = JSON.stringify(GetCantonRoutesResponse.parse(rows.map((row) => toRoute(row))));
+    res
+      .status(200)
+      .type("application/json")
+      .set("Cache-Control", "no-cache, no-store, must-revalidate")
+      .set("Content-Length", String(Buffer.byteLength(body)))
+      .end(body);
+  } catch (err) {
+    req.log.error({ err, theme }, "Themenwelt-Routen konnten nicht geladen werden");
+    res.status(502).json({ error: "Themenwelt-Routen konnten nicht geladen werden" });
+  }
+});
+
+export default router;

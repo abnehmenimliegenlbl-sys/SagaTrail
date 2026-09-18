@@ -1,1 +1,68 @@
-aW1wb3J0IHsgRmVhdGhlciB9IGZyb20gIkBleHBvL3ZlY3Rvci1pY29ucyI7CmltcG9ydCB7IEFjdGl2aXR5SW5kaWNhdG9yLCBTdHlsZVNoZWV0LCBUZXh0LCBWaWV3IH0gZnJvbSAicmVhY3QtbmF0aXZlIjsKCmltcG9ydCB7IGZvbnRzIH0gZnJvbSAiQC9jb25zdGFudHMvdHlwb2dyYXBoeSI7CmltcG9ydCB7IHVzZUNvbG9ycyB9IGZyb20gIkAvaG9va3MvdXNlQ29sb3JzIjsKCmV4cG9ydCBmdW5jdGlvbiBTdGFydHVwU3RhdGUoewogIHRpdGxlID0gIlNhZ2FUcmFpbCB3aXJkIHZvcmJlcmVpdGV0IiwKICBkZXRhaWwgPSAiRGVpbmUgRGF0ZW4gdW5kIGRlaW5lIFdhbmRlcnVuZ2VuIHdlcmRlbiBnZWxhZGVuLiIsCn06IHsKICB0aXRsZT86IHN0cmluZzsKICBkZXRhaWw/OiBzdHJpbmc7Cn0pIHsKICBjb25zdCBjb2xvcnMgPSB1c2VDb2xvcnMoKTsKCiAgcmV0dXJuICgKICAgIDxWaWV3CiAgICAgIHN0eWxlPXtbc3R5bGVzLmNvbnRhaW5lciwgeyBiYWNrZ3JvdW5kQ29sb3I6IGNvbG9ycy50YWxzY2hhdHRlbiB9XX0KICAgICAgYWNjZXNzaWJsZQogICAgICBhY2Nlc3NpYmlsaXR5Um9sZT0icHJvZ3Jlc3NiYXIiCiAgICAgIGFjY2Vzc2liaWxpdHlMYWJlbD17YCR7dGl0bGV9LiAke2RldGFpbH1gfQogICAgPgogICAgICA8VmlldwogICAgICAgIHN0eWxlPXtbCiAgICAgICAgICBzdHlsZXMuaWNvbldyYXAsCiAgICAgICAgICB7IGJhY2tncm91bmRDb2xvcjogY29sb3JzLmdsYXNzQmdTdHJvbmcsIGJvcmRlckNvbG9yOiBjb2xvcnMuZ2xhc3NCb3JkZXIgfSwKICAgICAgICBdfQogICAgICA+CiAgICAgICAgPEZlYXRoZXIgbmFtZT0iY29tcGFzcyIgc2l6ZT17MzB9IGNvbG9yPXtjb2xvcnMuYWNjZW50fSAvPgogICAgICA8L1ZpZXc+CiAgICAgIDxUZXh0IHN0eWxlPXtbc3R5bGVzLnRpdGxlLCB7IGNvbG9yOiBjb2xvcnMuZm9yZWdyb3VuZCB9XX0+e3RpdGxlfTwvVGV4dD4KICAgICAgPFRleHQgc3R5bGU9e1tzdHlsZXMuZGV0YWlsLCB7IGNvbG9yOiBjb2xvcnMubXV0ZWRGb3JlZ3JvdW5kIH1dfT57ZGV0YWlsfTwvVGV4dD4KICAgICAgPEFjdGl2aXR5SW5kaWNhdG9yIGNvbG9yPXtjb2xvcnMuYWNjZW50fSBzaXplPSJzbWFsbCIgc3R5bGU9e3N0eWxlcy5zcGlubmVyfSAvPgogICAgPC9WaWV3PgogICk7Cn0KCmNvbnN0IHN0eWxlcyA9IFN0eWxlU2hlZXQuY3JlYXRlKHsKICBjb250YWluZXI6IHsKICAgIGZsZXg6IDEsCiAgICBhbGlnbkl0ZW1zOiAiY2VudGVyIiwKICAgIGp1c3RpZnlDb250ZW50OiAiY2VudGVyIiwKICAgIHBhZGRpbmdIb3Jpem9udGFsOiAzMiwKICB9LAogIGljb25XcmFwOiB7CiAgICB3aWR0aDogNzIsCiAgICBoZWlnaHQ6IDcyLAogICAgYm9yZGVyUmFkaXVzOiAzNiwKICAgIGJvcmRlcldpZHRoOiAxLAogICAgYWxpZ25JdGVtczogImNlbnRlciIsCiAgICBqdXN0aWZ5Q29udGVudDogImNlbnRlciIsCiAgICBtYXJnaW5Cb3R0b206IDE4LAogIH0sCiAgdGl0bGU6IHsKICAgIGZvbnRGYW1pbHk6IGZvbnRzLnRpdGxlQm9sZCwKICAgIGZvbnRTaXplOiAyNCwKICAgIHRleHRBbGlnbjogImNlbnRlciIsCiAgfSwKICBkZXRhaWw6IHsKICAgIGZvbnRGYW1pbHk6IGZvbnRzLmJvZHksCiAgICBmb250U2l6ZTogMTUsCiAgICBsaW5lSGVpZ2h0OiAyMiwKICAgIHRleHRBbGlnbjogImNlbnRlciIsCiAgICBtYXJnaW5Ub3A6IDgsCiAgICBtYXhXaWR0aDogMzAwLAogIH0sCiAgc3Bpbm5lcjogeyBtYXJnaW5Ub3A6IDIyIH0sCn0pOw==
+import { Feather } from "@expo/vector-icons";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+
+import { fonts } from "@/constants/typography";
+import { useColors } from "@/hooks/useColors";
+
+export function StartupState({
+  title = "SagaTrail wird vorbereitet",
+  detail = "Deine Daten und deine Wanderungen werden geladen.",
+}: {
+  title?: string;
+  detail?: string;
+}) {
+  const colors = useColors();
+
+  return (
+    <View
+      style={[styles.container, { backgroundColor: colors.talschatten }]}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={`${title}. ${detail}`}
+    >
+      <View
+        style={[
+          styles.iconWrap,
+          { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
+        ]}
+      >
+        <Feather name="compass" size={30} color={colors.accent} />
+      </View>
+      <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
+      <Text style={[styles.detail, { color: colors.mutedForeground }]}>{detail}</Text>
+      <ActivityIndicator color={colors.accent} size="small" style={styles.spinner} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+  },
+  iconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 18,
+  },
+  title: {
+    fontFamily: fonts.titleBold,
+    fontSize: 24,
+    textAlign: "center",
+  },
+  detail: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+    marginTop: 8,
+    maxWidth: 300,
+  },
+  spinner: { marginTop: 22 },
+});

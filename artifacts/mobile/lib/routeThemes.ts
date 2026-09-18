@@ -1,1 +1,376 @@
-aW1wb3J0IHR5cGUgeyBQb2kgfSBmcm9tICJAd29ya3NwYWNlL2FwaS1jbGllbnQtcmVhY3QiOwppbXBvcnQgdHlwZSB7IEhpa2luZ1JvdXRlIH0gZnJvbSAiQC9jb25zdGFudHMvcm91dGVzIjsKCmV4cG9ydCBjb25zdCBST1VURV9USEVNRV9LRVlTID0gWwogICJ3YXNzZXJ3ZWdlIiwKICAiYnVyZ2VuX3J1aW5lbl9hbHRlX3dlZ2UiLAogICJnaXBmZWxfcGFub3JhbWEiLAogICJnZW9sb2dpZV9laXN6ZWl0IiwKICAiaG9laGxlbl9ncm90dGVuIiwKICAid2FsZF93aWxkdGllcmUiLAogICJhbHBlbl9sYW5kd2lydHNjaGFmdCIsCiAgInBpbGdlcl9oYW5kZWxzd2VnZSIsCiAgImluZHVzdHJpZWt1bHR1ciIsCiAgImZhbWlsaWVuX2VudGRlY2tlciIsCiAgIm5hY2h0X3N0ZXJuZSIsCiAgImZsb3JhX2phaHJlc3plaXRlbiIsCiAgImJhaG5fc2VpbGJhaG4iLApdIGFzIGNvbnN0OwoKZXhwb3J0IHR5cGUgUm91dGVUaGVtZUtleSA9ICh0eXBlb2YgUk9VVEVfVEhFTUVfS0VZUylbbnVtYmVyXTsKCmV4cG9ydCBjb25zdCBUSEVNRV9NQVhfRElTVEFOQ0VfS006IFJlY29yZDxSb3V0ZVRoZW1lS2V5LCBudW1iZXI+ID0gewogIHdhc3NlcndlZ2U6IDAuMywKICBidXJnZW5fcnVpbmVuX2FsdGVfd2VnZTogMC4yLAogIGdpcGZlbF9wYW5vcmFtYTogMSwKICBnZW9sb2dpZV9laXN6ZWl0OiAwLjIsCiAgaG9laGxlbl9ncm90dGVuOiAwLjIsCiAgd2FsZF93aWxkdGllcmU6IDAuMiwKICBhbHBlbl9sYW5kd2lydHNjaGFmdDogMC41LAogIHBpbGdlcl9oYW5kZWxzd2VnZTogMC4xLAogIGluZHVzdHJpZWt1bHR1cjogMC4yLAogIGZhbWlsaWVuX2VudGRlY2tlcjogMSwKICBuYWNodF9zdGVybmU6IDIsCiAgZmxvcmFfamFocmVzemVpdGVuOiAwLjIsCiAgYmFobl9zZWlsYmFobjogMC4yLAp9OwoKZXhwb3J0IGNvbnN0IE1BWF9USEVNRV9ESVNUQU5DRV9LTSA9IE1hdGgubWF4KAogIC4uLk9iamVjdC52YWx1ZXMoVEhFTUVfTUFYX0RJU1RBTkNFX0tNKSwKKTsKCmNvbnN0IFRIRU1FX0xBQkVMUzogUmVjb3JkPHN0cmluZywgUmVjb3JkPFJvdXRlVGhlbWVLZXksIHN0cmluZz4+ID0gewogIGRlOiB7CiAgICB3YXNzZXJ3ZWdlOiAiV2Fzc2Vyd2VnZSIsCiAgICBidXJnZW5fcnVpbmVuX2FsdGVfd2VnZTogIkJ1cmdlbiwgUnVpbmVuICYgYWx0ZSBXZWdlIiwKICAgIGdpcGZlbF9wYW5vcmFtYTogIkdpcGZlbCAmIFBhbm9yYW1hIiwKICAgIGdlb2xvZ2llX2Vpc3plaXQ6ICJHZW9sb2dpZSAmIEVpc3plaXQiLAogICAgaG9laGxlbl9ncm90dGVuOiAiSMO2aGxlbiAmIEdyb3R0ZW4iLAogICAgd2FsZF93aWxkdGllcmU6ICJXYWxkLCBXaWxkdGllcmUgJiBTcHVyZW4iLAogICAgYWxwZW5fbGFuZHdpcnRzY2hhZnQ6ICJBbHBlbiAmIExhbmR3aXJ0c2NoYWZ0IiwKICAgIHBpbGdlcl9oYW5kZWxzd2VnZTogIlBpbGdlci0gJiBIYW5kZWxzd2VnZSIsCiAgICBpbmR1c3RyaWVrdWx0dXI6ICJJbmR1c3RyaWVrdWx0dXIiLAogICAgZmFtaWxpZW5fZW50ZGVja2VyOiAiRmFtaWxpZW4tRW50ZGVja2VyIiwKICAgIG5hY2h0X3N0ZXJuZTogIk5hY2h0ICYgU3Rlcm5lIiwKICAgIGZsb3JhX2phaHJlc3plaXRlbjogIkZsb3JhICYgSmFocmVzemVpdGVuIiwKICAgIGJhaG5fc2VpbGJhaG46ICJCYWhuLCBUcmFtICYgU2VpbGJhaG4iLAogIH0sCiAgZ3N3OiB7CiAgICB3YXNzZXJ3ZWdlOiAiV2Fzc2Vyd8OkZyIsCiAgICBidXJnZW5fcnVpbmVuX2FsdGVfd2VnZTogIkJ1cmfDpCwgUnVpbmUgJiBhbHRpIFfDpGciLAogICAgZ2lwZmVsX3Bhbm9yYW1hOiAiR2lwZmVsICYgUGFub3JhbWEiLAogICAgZ2VvbG9naWVfZWlzemVpdDogIkdlb2xvZ2llICYgSWlzemlpdCIsCiAgICBob2VobGVuX2dyb3R0ZW46ICJIw7ZobGUgJiBHcm90dGVuZSIsCiAgICB3YWxkX3dpbGR0aWVyZTogIldhbGQsIFdpbGR0aWVyICYgU3B1cmUiLAogICAgYWxwZW5fbGFuZHdpcnRzY2hhZnQ6ICJBbHBlICYgTGFuZHdpcnRzY2hhZnQiLAogICAgcGlsZ2VyX2hhbmRlbHN3ZWdlOiAiUGlsZ2VyLSAmIEhhbmRlbHN3w6RnIiwKICAgIGluZHVzdHJpZWt1bHR1cjogIkluZHVzdHJpZWt1bHR1ciIsCiAgICBmYW1pbGllbl9lbnRkZWNrZXI6ICJGYW1pbGllLUVudGRlY2tlciIsCiAgICBuYWNodF9zdGVybmU6ICJOYWNodCAmIFN0w6RybmUiLAogICAgZmxvcmFfamFocmVzemVpdGVuOiAiRmxvcmEgJiBKYWhyZXN6aWl0ZSIsCiAgICBiYWhuX3NlaWxiYWhuOiAiQmFobiwgVHJhbSAmIFNlaWxiYWhuIiwKICB9LAogIGVuOiB7CiAgICB3YXNzZXJ3ZWdlOiAiV2F0ZXJ3YXlzIiwKICAgIGJ1cmdlbl9ydWluZW5fYWx0ZV93ZWdlOiAiQ2FzdGxlcywgcnVpbnMgJiBvbGQgdHJhaWxzIiwKICAgIGdpcGZlbF9wYW5vcmFtYTogIlN1bW1pdHMgJiBwYW5vcmFtYXMiLAogICAgZ2VvbG9naWVfZWlzemVpdDogIkdlb2xvZ3kgJiBJY2UgQWdlIiwKICAgIGhvZWhsZW5fZ3JvdHRlbjogIkNhdmVzICYgZ3JvdHRvZXMiLAogICAgd2FsZF93aWxkdGllcmU6ICJGb3Jlc3QsIHdpbGRsaWZlICYgdHJhY2tzIiwKICAgIGFscGVuX2xhbmR3aXJ0c2NoYWZ0OiAiQWxwcyAmIGZhcm1pbmciLAogICAgcGlsZ2VyX2hhbmRlbHN3ZWdlOiAiUGlsZ3JpbWFnZSAmIHRyYWRlIHJvdXRlcyIsCiAgICBpbmR1c3RyaWVrdWx0dXI6ICJJbmR1c3RyaWFsIGhlcml0YWdlIiwKICAgIGZhbWlsaWVuX2VudGRlY2tlcjogIkZhbWlseSBkaXNjb3ZlcnkiLAogICAgbmFjaHRfc3Rlcm5lOiAiTmlnaHQgJiBzdGFycyIsCiAgICBmbG9yYV9qYWhyZXN6ZWl0ZW46ICJGbG9yYSAmIHNlYXNvbnMiLAogICAgYmFobl9zZWlsYmFobjogIlJhaWwsIHRyYW0gJiBjYWJsZSBjYXIiLAogIH0sCiAgZnI6IHsKICAgIHdhc3NlcndlZ2U6ICJDaGVtaW5zIGRlIGzigJllYXUiLAogICAgYnVyZ2VuX3J1aW5lbl9hbHRlX3dlZ2U6ICJDaMOidGVhdXgsIHJ1aW5lcyAmIGFuY2llbnMgY2hlbWlucyIsCiAgICBnaXBmZWxfcGFub3JhbWE6ICJTb21tZXRzICYgcGFub3JhbWFzIiwKICAgIGdlb2xvZ2llX2Vpc3plaXQ6ICJHw6lvbG9naWUgJiBww6lyaW9kZSBnbGFjaWFpcmUiLAogICAgaG9laGxlbl9ncm90dGVuOiAiR3JvdHRlcyAmIGNhdmVybmVzIiwKICAgIHdhbGRfd2lsZHRpZXJlOiAiRm9yw6p0LCBmYXVuZSAmIHRyYWNlcyIsCiAgICBhbHBlbl9sYW5kd2lydHNjaGFmdDogIkFscGVzICYgYWdyaWN1bHR1cmUiLAogICAgcGlsZ2VyX2hhbmRlbHN3ZWdlOiAiQ2hlbWlucyBkZSBww6hsZXJpbmFnZSAmIGRlIGNvbW1lcmNlIiwKICAgIGluZHVzdHJpZWt1bHR1cjogIlBhdHJpbW9pbmUgaW5kdXN0cmllbCIsCiAgICBmYW1pbGllbl9lbnRkZWNrZXI6ICJEw6ljb3V2ZXJ0ZSBlbiBmYW1pbGxlIiwKICAgIG5hY2h0X3N0ZXJuZTogIk51aXQgJiDDqXRvaWxlcyIsCiAgICBmbG9yYV9qYWhyZXN6ZWl0ZW46ICJGbG9yZSAmIHNhaXNvbnMiLAogICAgYmFobl9zZWlsYmFobjogIlRyYWluLCB0cmFtICYgcmVtb250w6llcyIsCiAgfSwKICBpdDogewogICAgd2Fzc2Vyd2VnZTogIlZpZSBkZWxs4oCZYWNxdWEiLAogICAgYnVyZ2VuX3J1aW5lbl9hbHRlX3dlZ2U6ICJDYXN0ZWxsaSwgcm92aW5lICYgYW50aWNoaSBzZW50aWVyaSIsCiAgICBnaXBmZWxfcGFub3JhbWE6ICJWZXR0ZSAmIHBhbm9yYW1pIiwKICAgIGdlb2xvZ2llX2Vpc3plaXQ6ICJHZW9sb2dpYSAmIGVyYSBnbGFjaWFsZSIsCiAgICBob2VobGVuX2dyb3R0ZW46ICJHcm90dGUgJiBjYXZlcm5lIiwKICAgIHdhbGRfd2lsZHRpZXJlOiAiQm9zY2hpLCBmYXVuYSAmIHRyYWNjZSIsCiAgICBhbHBlbl9sYW5kd2lydHNjaGFmdDogIkFscGkgJiBhZ3JpY29sdHVyYSIsCiAgICBwaWxnZXJfaGFuZGVsc3dlZ2U6ICJWaWUgZGkgcGVsbGVncmluYWdnaW8gJiBjb21tZXJjaW8iLAogICAgaW5kdXN0cmlla3VsdHVyOiAiUGF0cmltb25pbyBpbmR1c3RyaWFsZSIsCiAgICBmYW1pbGllbl9lbnRkZWNrZXI6ICJTY29wZXJ0YSBpbiBmYW1pZ2xpYSIsCiAgICBuYWNodF9zdGVybmU6ICJOb3R0ZSAmIHN0ZWxsZSIsCiAgICBmbG9yYV9qYWhyZXN6ZWl0ZW46ICJGbG9yYSAmIHN0YWdpb25pIiwKICAgIGJhaG5fc2VpbGJhaG46ICJUcmVubywgdHJhbSAmIGZ1bml2aWEiLAogIH0sCiAgZXM6IHsKICAgIHdhc3NlcndlZ2U6ICJSdXRhcyBkZWwgYWd1YSIsCiAgICBidXJnZW5fcnVpbmVuX2FsdGVfd2VnZTogIkNhc3RpbGxvcywgcnVpbmFzIHkgY2FtaW5vcyBhbnRpZ3VvcyIsCiAgICBnaXBmZWxfcGFub3JhbWE6ICJDdW1icmVzIHkgcGFub3JhbWFzIiwKICAgIGdlb2xvZ2llX2Vpc3plaXQ6ICJHZW9sb2fDrWEgeSBlcmEgZ2xhY2lhbCIsCiAgICBob2VobGVuX2dyb3R0ZW46ICJDdWV2YXMgeSBncnV0YXMiLAogICAgd2FsZF93aWxkdGllcmU6ICJCb3NxdWUsIGZhdW5hIHkgaHVlbGxhcyIsCiAgICBhbHBlbl9sYW5kd2lydHNjaGFmdDogIkFscGVzIHkgYWdyaWN1bHR1cmEiLAogICAgcGlsZ2VyX2hhbmRlbHN3ZWdlOiAiUnV0YXMgZGUgcGVyZWdyaW5hY2nDs24geSBjb21lcmNpbyIsCiAgICBpbmR1c3RyaWVrdWx0dXI6ICJQYXRyaW1vbmlvIGluZHVzdHJpYWwiLAogICAgZmFtaWxpZW5fZW50ZGVja2VyOiAiRGVzY3VicmltaWVudG8gZW4gZmFtaWxpYSIsCiAgICBuYWNodF9zdGVybmU6ICJOb2NoZSB5IGVzdHJlbGxhcyIsCiAgICBmbG9yYV9qYWhyZXN6ZWl0ZW46ICJGbG9yYSB5IGVzdGFjaW9uZXMiLAogICAgYmFobl9zZWlsYmFobjogIlRyZW4sIHRyYW52w61hIHkgdGVsZWbDqXJpY28iLAogIH0sCiAgcHQ6IHsKICAgIHdhc3NlcndlZ2U6ICJDYW1pbmhvcyBkYSDDoWd1YSIsCiAgICBidXJnZW5fcnVpbmVuX2FsdGVfd2VnZTogIkNhc3RlbG9zLCBydcOtbmFzIGUgY2FtaW5ob3MgYW50aWdvcyIsCiAgICBnaXBmZWxfcGFub3JhbWE6ICJDdW1lcyBlIHBhbm9yYW1hcyIsCiAgICBnZW9sb2dpZV9laXN6ZWl0OiAiR2VvbG9naWEgZSBlcmEgZ2xhY2lhbCIsCiAgICBob2VobGVuX2dyb3R0ZW46ICJHcnV0YXMgZSBjYXZlcm5hcyIsCiAgICB3YWxkX3dpbGR0aWVyZTogIkZsb3Jlc3RhLCBmYXVuYSBlIHBlZ2FkYXMiLAogICAgYWxwZW5fbGFuZHdpcnRzY2hhZnQ6ICJBbHBlcyBlIGFncmljdWx0dXJhIiwKICAgIHBpbGdlcl9oYW5kZWxzd2VnZTogIlJvdGFzIGRlIHBlcmVncmluYcOnw6NvIGUgY29tw6lyY2lvIiwKICAgIGluZHVzdHJpZWt1bHR1cjogIlBhdHJpbcOzbmlvIGluZHVzdHJpYWwiLAogICAgZmFtaWxpZW5fZW50ZGVja2VyOiAiRGVzY29iZXJ0YSBlbSBmYW3DrWxpYSIsCiAgICBuYWNodF9zdGVybmU6ICJOb2l0ZSBlIGVzdHJlbGFzIiwKICAgIGZsb3JhX2phaHJlc3plaXRlbjogIkZsb3JhIGUgZXN0YcOnw7VlcyIsCiAgICBiYWhuX3NlaWxiYWhuOiAiQ29tYm9pbywgZWzDqXRyaWNvIGUgdGVsZWbDqXJpY28iLAogIH0sCiAgemg6IHsKICAgIHdhc3NlcndlZ2U6ICLmsLTkuYvml4UiLAogICAgYnVyZ2VuX3J1aW5lbl9hbHRlX3dlZ2U6ICLln47loKHjgIHpgZfov7nkuI7lj6TpgZMiLAogICAgZ2lwZmVsX3Bhbm9yYW1hOiAi5bGx5bOw5LiO5YWo5pmvIiwKICAgIGdlb2xvZ2llX2Vpc3plaXQ6ICLlnLDotKjkuI7lhrDmsrPml7bku6MiLAogICAgaG9laGxlbl9ncm90dGVuOiAi5rSe56m05LiO5bKp5rSeIiwKICAgIHdhbGRfd2lsZHRpZXJlOiAi5qOu5p6X44CB6YeO55Sf5Yqo54mp5LiO6Liq6L+5IiwKICAgIGFscGVuX2xhbmR3aXJ0c2NoYWZ0OiAi6Zi/5bCU5Y2R5pav5LiO5Yac5LiaIiwKICAgIHBpbGdlcl9oYW5kZWxzd2VnZTogIuacneWco+S4juWVhui0uOi3r+e6vyIsCiAgICBpbmR1c3RyaWVrdWx0dXI6ICLlt6XkuJrpgZfkuqciLAogICAgZmFtaWxpZW5fZW50ZGVja2VyOiAi5a625bqt5o6i57SiIiwKICAgIG5hY2h0X3N0ZXJuZTogIuWknOepuuS4juaYn+i+sCIsCiAgICBmbG9yYV9qYWhyZXN6ZWl0ZW46ICLmpI3niankuI7lm5vlraMiLAogICAgYmFobl9zZWlsYmFobjogIumTgei3r+OAgeaciei9qOeUtei9puS4jue8hui9piIsCiAgfSwKICBydTogewogICAgd2Fzc2Vyd2VnZTogItCS0L7QtNC90YvQtSDQvNCw0YDRiNGA0YPRgtGLIiwKICAgIGJ1cmdlbl9ydWluZW5fYWx0ZV93ZWdlOiAi0JfQsNC80LrQuCwg0YDRg9C40L3RiyDQuCDRgdGC0LDRgNGL0LUg0YLRgNC+0L/RiyIsCiAgICBnaXBmZWxfcGFub3JhbWE6ICLQktC10YDRiNC40L3RiyDQuCDQv9Cw0L3QvtGA0LDQvNGLIiwKICAgIGdlb2xvZ2llX2Vpc3plaXQ6ICLQk9C10L7Qu9C+0LPQuNGPINC4INC70LXQtNC90LjQutC+0LLRi9C5INC/0LXRgNC40L7QtCIsCiAgICBob2VobGVuX2dyb3R0ZW46ICLQn9C10YnQtdGA0Ysg0Lgg0LPRgNC+0YLRiyIsCiAgICB3YWxkX3dpbGR0aWVyZTogItCb0LXRgSwg0LbQuNCy0L7RgtC90YvQtSDQuCDRgdC70LXQtNGLIiwKICAgIGFscGVuX2xhbmR3aXJ0c2NoYWZ0OiAi0JDQu9GM0L/RiyDQuCDRgdC10LvRjNGB0LrQvtC1INGF0L7Qt9GP0LnRgdGC0LLQviIsCiAgICBwaWxnZXJfaGFuZGVsc3dlZ2U6ICLQn9Cw0LvQvtC80L3QuNGH0LXRgdC60LjQtSDQuCDRgtC+0YDQs9C+0LLRi9C1INC/0YPRgtC4IiwKICAgIGluZHVzdHJpZWt1bHR1cjogItCf0YDQvtC80YvRiNC70LXQvdC90L7QtSDQvdCw0YHQu9C10LTQuNC1IiwKICAgIGZhbWlsaWVuX2VudGRlY2tlcjogItCh0LXQvNC10LnQvdGL0LUg0L7RgtC60YDRi9GC0LjRjyIsCiAgICBuYWNodF9zdGVybmU6ICLQndC+0YfRjCDQuCDQt9Cy0ZHQt9C00YsiLAogICAgZmxvcmFfamFocmVzemVpdGVuOiAi0KTQu9C+0YDQsCDQuCDQstGA0LXQvNC10L3QsCDQs9C+0LTQsCIsCiAgICBiYWhuX3NlaWxiYWhuOiAi0J/QvtC10LfQtCwg0YLRgNCw0LzQstCw0Lkg0Lgg0LrQsNC90LDRgtC90LDRjyDQtNC+0YDQvtCz0LAiLAogIH0sCn07CgpleHBvcnQgZnVuY3Rpb24gcm91dGVUaGVtZUxhYmVsKGtleTogUm91dGVUaGVtZUtleSwgbGFuZ3VhZ2U/OiBzdHJpbmcpOiBzdHJpbmcgewogIHJldHVybiAoVEhFTUVfTEFCRUxTW2xhbmd1YWdlID8/ICJkZSJdID8/IFRIRU1FX0xBQkVMUy5kZSlba2V5XTsKfQoKZnVuY3Rpb24gaGFzS2luZChwb2k6IFBvaSwgLi4ua2luZHM6IHN0cmluZ1tdKTogYm9vbGVhbiB7CiAgcmV0dXJuIGtpbmRzLnNvbWUoKGtpbmQpID0+IHBvaS5raW5kID09PSBraW5kKTsKfQoKZnVuY3Rpb24gaXNFbmRwb2ludE9ubHlUcmFuc2l0KHBvaTogUG9pKTogYm9vbGVhbiB7CiAgcmV0dXJuIGhhc0tpbmQoCiAgICBwb2ksCiAgICAicmFpbHdheT1zdGF0aW9uIiwKICAgICJyYWlsd2F5PWhhbHQiLAogICAgInJhaWx3YXk9dHJhbV9zdG9wIiwKICAgICJoaWdod2F5PWJ1c19zdG9wIiwKICApOwp9CgpmdW5jdGlvbiBkaXN0YW5jZVRvU2VnbWVudEttKAogIHBvaW50OiB7IGxhdDogbnVtYmVyOyBsbmc6IG51bWJlciB9LAogIGE6IG51bWJlcltdLAogIGI6IG51bWJlcltdLAopOiBudW1iZXIgewogIGNvbnN0IHJhZGl1cyA9IDYzNzE7CiAgY29uc3QgcmFkaWFucyA9IE1hdGguUEkgLyAxODA7CiAgY29uc3QgY29zTGF0ID0gTWF0aC5jb3MocG9pbnQubGF0ICogcmFkaWFucyk7CiAgY29uc3QgYXggPSAoYVsxXSEgLSBwb2ludC5sbmcpICogcmFkaWFucyAqIGNvc0xhdCAqIHJhZGl1czsKICBjb25zdCBheSA9IChhWzBdISAtIHBvaW50LmxhdCkgKiByYWRpYW5zICogcmFkaXVzOwogIGNvbnN0IGJ4ID0gKGJbMV0hIC0gcG9pbnQubG5nKSAqIHJhZGlhbnMgKiBjb3NMYXQgKiByYWRpdXM7CiAgY29uc3QgYnkgPSAoYlswXSEgLSBwb2ludC5sYXQpICogcmFkaWFucyAqIHJhZGl1czsKICBjb25zdCBkeCA9IGJ4IC0gYXg7CiAgY29uc3QgZHkgPSBieSAtIGF5OwogIGNvbnN0IGxlbmd0aDIgPSBkeCAqIGR4ICsgZHkgKiBkeTsKICBjb25zdCB0ID0KICAgIGxlbmd0aDIgPT09IDAKICAgICAgPyAwCiAgICAgIDogTWF0aC5tYXgoMCwgTWF0aC5taW4oMSwgLShheCAqIGR4ICsgYXkgKiBkeSkgLyBsZW5ndGgyKSk7CiAgcmV0dXJuIE1hdGguaHlwb3QoYXggKyB0ICogZHgsIGF5ICsgdCAqIGR5KTsKfQoKZnVuY3Rpb24gZGlzdGFuY2VUb1JvdXRlS20ocG9pOiBQb2ksIGdlb21ldHJ5OiBudW1iZXJbXVtdKTogbnVtYmVyIHsKICBpZiAoZ2VvbWV0cnkubGVuZ3RoIDwgMikgcmV0dXJuIEluZmluaXR5OwogIGxldCBuZWFyZXN0ID0gSW5maW5pdHk7CiAgZm9yIChsZXQgaW5kZXggPSAxOyBpbmRleCA8IGdlb21ldHJ5Lmxlbmd0aDsgaW5kZXggKz0gMSkgewogICAgbmVhcmVzdCA9IE1hdGgubWluKAogICAgICBuZWFyZXN0LAogICAgICBkaXN0YW5jZVRvU2VnbWVudEttKAogICAgICAgIHsgbGF0OiBwb2kubGF0LCBsbmc6IHBvaS5sbmcgfSwKICAgICAgICBnZW9tZXRyeVtpbmRleCAtIDFdISwKICAgICAgICBnZW9tZXRyeVtpbmRleF0hLAogICAgICApLAogICAgKTsKICB9CiAgcmV0dXJuIG5lYXJlc3Q7Cn0KCmZ1bmN0aW9uIGRpc3RhbmNlVG9FbmRwb2ludEttKHBvaTogUG9pLCBnZW9tZXRyeTogbnVtYmVyW11bXSk6IG51bWJlciB7CiAgaWYgKGdlb21ldHJ5Lmxlbmd0aCA9PT0gMCkgcmV0dXJuIEluZmluaXR5OwogIGNvbnN0IHBvaW50ID0geyBsYXQ6IHBvaS5sYXQsIGxuZzogcG9pLmxuZyB9OwogIGNvbnN0IGZpcnN0ID0geyBsYXQ6IGdlb21ldHJ5WzBdIVswXSEsIGxuZzogZ2VvbWV0cnlbMF0hWzFdISB9OwogIGNvbnN0IGxhc3RQb2ludCA9IGdlb21ldHJ5W2dlb21ldHJ5Lmxlbmd0aCAtIDFdITsKICBjb25zdCBsYXN0ID0geyBsYXQ6IGxhc3RQb2ludFswXSEsIGxuZzogbGFzdFBvaW50WzFdISB9OwogIGNvbnN0IHJhZGl1cyA9IDYzNzE7CiAgY29uc3QgcmFkaWFucyA9IE1hdGguUEkgLyAxODA7CiAgY29uc3QgZGlzdGFuY2UgPSAoYTogeyBsYXQ6IG51bWJlcjsgbG5nOiBudW1iZXIgfSwgYjogeyBsYXQ6IG51bWJlcjsgbG5nOiBudW1iZXIgfSkgPT4gewogICAgY29uc3QgZExhdCA9IChiLmxhdCAtIGEubGF0KSAqIHJhZGlhbnM7CiAgICBjb25zdCBkTG5nID0gKGIubG5nIC0gYS5sbmcpICogcmFkaWFuczsKICAgIGNvbnN0IG1lYW5MYXQgPSAoKGEubGF0ICsgYi5sYXQpIC8gMikgKiByYWRpYW5zOwogICAgcmV0dXJuIE1hdGguaHlwb3QoZExhdCAqIHJhZGl1cywgZExuZyAqIE1hdGguY29zKG1lYW5MYXQpICogcmFkaXVzKTsKICB9OwogIHJldHVybiBNYXRoLm1pbihkaXN0YW5jZShwb2ludCwgZmlyc3QpLCBkaXN0YW5jZShwb2ludCwgbGFzdCkpOwp9CgovKioKICogRXJ6ZXVndCBzaWNodGJhcmUgVGhlbWVuIGF1cyBkZW4gdGF0c8OkY2hsaWNoIGdlZnVuZGVuZW4gUm91dGVuLVBPSXMuCiAqIEthdGVnb3JpZW4gb2huZSBiZWxhc3RiYXJlbiBQT0ktQmVsZWcgd2VyZGVuIGFic2ljaHRsaWNoIG5pY2h0IGdlcmF0ZW4uCiAqLwpleHBvcnQgZnVuY3Rpb24gZGVyaXZlUm91dGVUaGVtZXMoCiAgcG9pczogcmVhZG9ubHkgUG9pW10sCiAgcm91dGU6IFBpY2s8SGlraW5nUm91dGUsICJmYW1pbHlGcmllbmRseSIgfCAiZ2VvbWV0cnkiPiwKKTogUm91dGVUaGVtZUtleVtdIHsKICBjb25zdCB0YWdzID0gbmV3IFNldDxSb3V0ZVRoZW1lS2V5PigpOwogIGNvbnN0IGdlb21ldHJ5ID0gcm91dGUuZ2VvbWV0cnkgPz8gW107CiAgZm9yIChjb25zdCBwb2kgb2YgcG9pcykgewogICAgY29uc3Qga2luZCA9IHBvaS5raW5kID8/ICIiOwogICAgY29uc3QgZGlzdGFuY2VLbSA9IGRpc3RhbmNlVG9Sb3V0ZUttKHBvaSwgZ2VvbWV0cnkpOwogICAgY29uc3QgZW5kcG9pbnREaXN0YW5jZUttID0gZGlzdGFuY2VUb0VuZHBvaW50S20ocG9pLCBnZW9tZXRyeSk7CiAgICBjb25zdCBhZGRJZk5lYXIgPSAodGhlbWU6IFJvdXRlVGhlbWVLZXksIG1hdGNoZXM6IGJvb2xlYW4pID0+IHsKICAgICAgaWYgKG1hdGNoZXMgJiYgZGlzdGFuY2VLbSA8PSBUSEVNRV9NQVhfRElTVEFOQ0VfS01bdGhlbWVdKSB7CiAgICAgICAgdGFncy5hZGQodGhlbWUpOwogICAgICB9CiAgICB9OwogICAgYWRkSWZOZWFyKCJidXJnZW5fcnVpbmVuX2FsdGVfd2VnZSIsICgKICAgICAga2luZC5zdGFydHNXaXRoKCJoaXN0b3JpYz0iKSAmJgogICAgICBbCiAgICAgICAgImhpc3RvcmljPWNhc3RsZSIsCiAgICAgICAgImhpc3RvcmljPXJ1aW5zIiwKICAgICAgICAiaGlzdG9yaWM9Zm9ydCIsCiAgICAgICAgImhpc3RvcmljPWFyY2hhZW9sb2dpY2FsX3NpdGUiLAogICAgICAgICJoaXN0b3JpYz1yb21hbl9yb2FkIiwKICAgICAgICAiaGlzdG9yaWM9cm9tYW5fdmlsbGEiLAogICAgICAgICJoaXN0b3JpYz1yb21hbl9idWlsZGluZyIsCiAgICAgICAgImhpc3RvcmljPWJhdHRsZWZpZWxkIiwKICAgICAgICAiaGlzdG9yaWM9YnJpZGdlIiwKICAgICAgXS5pbmNsdWRlcyhraW5kKQogICAgKSk7CiAgICBhZGRJZk5lYXIoCiAgICAgICJnaXBmZWxfcGFub3JhbWEiLAogICAgICBoYXNLaW5kKHBvaSwgInRvdXJpc209dmlld3BvaW50IikgfHwKICAgICAgKGhhc0tpbmQocG9pLCAibmF0dXJhbD1wZWFrIiwgIm5hdHVyYWw9c2FkZGxlIikgJiYKICAgICAgICBwb2kuZWxldmF0aW9uICE9IG51bGwgJiYKICAgICAgICBwb2kuZWxldmF0aW9uID49IDEwMDApLAogICAgKTsKICAgIGFkZElmTmVhcigKICAgICAgImdlb2xvZ2llX2Vpc3plaXQiLAogICAgICBraW5kLnN0YXJ0c1dpdGgoImdlb2xvZ2ljYWw9IikgfHwKICAgICAgaGFzS2luZChwb2ksICJuYXR1cmFsPXJvY2siLCAibmF0dXJhbD1nbGFjaWVyIikKICAgICk7CiAgICBhZGRJZk5lYXIoImhvZWhsZW5fZ3JvdHRlbiIsICgKICAgICAgaGFzS2luZCgKICAgICAgICBwb2ksCiAgICAgICAgIm5hdHVyYWw9YXJjaCIsCiAgICAgICAgIm5hdHVyYWw9Y2F2ZSIsCiAgICAgICAgIm5hdHVyYWw9Y2F2ZV9lbnRyYW5jZSIsCiAgICAgICAgIm5hdHVyYWw9cm9ja19zaGVsdGVyIiwKICAgICAgICAibWFuX21hZGU9YWRpdCIsCiAgICAgICkKICAgICkpOwogICAgYWRkSWZOZWFyKAogICAgICAid2FsZF93aWxkdGllcmUiLAogICAgICBoYXNLaW5kKHBvaSwgIm5hdHVyYWw9d29vZCIsICJuYXR1cmFsPXdldGxhbmQiLCAidG91cmlzbT13aWxkbGlmZV9oaWRlIiksCiAgICApOwogICAgYWRkSWZOZWFyKCJhbHBlbl9sYW5kd2lydHNjaGFmdCIsICgKICAgICAgaGFzS2luZCgKICAgICAgICBwb2ksCiAgICAgICAgInRvdXJpc209YWxwaW5lX2h1dCIsCiAgICAgICAgImFtZW5pdHk9c2hlbHRlciIsCiAgICAgICAgInNob3A9Y2hlZXNlIiwKICAgICAgICAiZmFybT1BbHAiLAogICAgICAgICJsYW5kdXNlPW1lYWRvdyIsCiAgICAgICAgImxhbmR1c2U9cGFzdHVyZSIsCiAgICAgICkKICAgICkpOwogICAgYWRkSWZOZWFyKCJwaWxnZXJfaGFuZGVsc3dlZ2UiLCAoCiAgICAgIGhhc0tpbmQoCiAgICAgICAgcG9pLAogICAgICAgICJyb3V0ZT1waWxncmltYWdlIiwKICAgICAgICAiaGlzdG9yaWM9Y2h1cmNoIiwKICAgICAgICAiaGlzdG9yaWM9d2F5c2lkZV9jcm9zcyIsCiAgICAgICAgImhpc3RvcmljPXdheXNpZGVfc2hyaW5lIiwKICAgICAgICAiaGlzdG9yaWM9bWlsZXN0b25lIiwKICAgICAgICAiaGlzdG9yaWM9Ym91bmRhcnlfc3RvbmUiLAogICAgICApCiAgICApKTsKICAgIGFkZElmTmVhcigiaW5kdXN0cmlla3VsdHVyIiwgKAogICAgICBraW5kLnN0YXJ0c1dpdGgoIm1hbl9tYWRlPSIpICYmCiAgICAgIFsibWFuX21hZGU9d2F0ZXJtaWxsIiwgIm1hbl9tYWRlPXdpbmRtaWxsIiwgIm1hbl9tYWRlPXdvcmtzIiwgIm1hbl9tYWRlPXF1YXJyeSJdLmluY2x1ZGVzKGtpbmQpCiAgICApKTsKICAgIGFkZElmTmVhcigKICAgICAgImZhbWlsaWVuX2VudGRlY2tlciIsCiAgICAgIGhhc0tpbmQocG9pLCAiYW1lbml0eT1wbGF5Z3JvdW5kIiwgImFtZW5pdHk9cGljbmljX3NpdGUiKSwKICAgICk7CiAgICBpZiAocm91dGUuZmFtaWx5RnJpZW5kbHkgPT09IHRydWUpIHRhZ3MuYWRkKCJmYW1pbGllbl9lbnRkZWNrZXIiKTsKICAgIGFkZElmTmVhcigKICAgICAgIm5hY2h0X3N0ZXJuZSIsCiAgICAgIGhhc0tpbmQocG9pLCAiYW1lbml0eT1vYnNlcnZhdG9yeSIsICJ0b3VyaXNtPW9ic2VydmF0b3J5IiksCiAgICApOwogICAgYWRkSWZOZWFyKCJmbG9yYV9qYWhyZXN6ZWl0ZW4iLCAoCiAgICAgIGhhc0tpbmQoCiAgICAgICAgcG9pLAogICAgICAgICJuYXR1cmFsPXRyZWUiLAogICAgICAgICJuYXR1cmFsPXdldGxhbmQiLAogICAgICAgICJsYW5kdXNlPW9yY2hhcmQiLAogICAgICAgICJsYW5kdXNlPXZpbmV5YXJkIiwKICAgICAgICAibmF0dXJhbD1oZWF0aCIsCiAgICAgICkKICAgICkpOwogICAgY29uc3QgaXNUcmFuc3BvcnRQb2ludCA9IGhhc0tpbmQoCiAgICAgIHBvaSwKICAgICAgInJhaWx3YXk9c3RhdGlvbiIsCiAgICAgICJyYWlsd2F5PWhhbHQiLAogICAgICAicmFpbHdheT10cmFtX3N0b3AiLAogICAgICAiaGlnaHdheT1idXNfc3RvcCIsCiAgICAgICJhZXJpYWx3YXk9c3RhdGlvbiIsCiAgICAgICJhbWVuaXR5PWZlcnJ5X3Rlcm1pbmFsIiwKICAgICk7CiAgICBhZGRJZk5lYXIoCiAgICAgICJiYWhuX3NlaWxiYWhuIiwKICAgICAgaXNUcmFuc3BvcnRQb2ludCAmJgogICAgICAoCiAgICAgICAgIWlzRW5kcG9pbnRPbmx5VHJhbnNpdChwb2kpIHx8CiAgICAgICAgZW5kcG9pbnREaXN0YW5jZUttIDw9IFRIRU1FX01BWF9ESVNUQU5DRV9LTS5iYWhuX3NlaWxiYWhuCiAgICAgICksCiAgICApOwogIH0KICByZXR1cm4gUk9VVEVfVEhFTUVfS0VZUy5maWx0ZXIoKGtleSkgPT4gdGFncy5oYXMoa2V5KSk7Cn0=
+import type { Poi } from "@workspace/api-client-react";
+import type { HikingRoute } from "@/constants/routes";
+
+export const ROUTE_THEME_KEYS = [
+  "wasserwege",
+  "burgen_ruinen_alte_wege",
+  "gipfel_panorama",
+  "geologie_eiszeit",
+  "hoehlen_grotten",
+  "wald_wildtiere",
+  "alpen_landwirtschaft",
+  "pilger_handelswege",
+  "industriekultur",
+  "familien_entdecker",
+  "nacht_sterne",
+  "flora_jahreszeiten",
+  "bahn_seilbahn",
+] as const;
+
+export type RouteThemeKey = (typeof ROUTE_THEME_KEYS)[number];
+
+export const THEME_MAX_DISTANCE_KM: Record<RouteThemeKey, number> = {
+  wasserwege: 0.3,
+  burgen_ruinen_alte_wege: 0.2,
+  gipfel_panorama: 1,
+  geologie_eiszeit: 0.2,
+  hoehlen_grotten: 0.2,
+  wald_wildtiere: 0.2,
+  alpen_landwirtschaft: 0.5,
+  pilger_handelswege: 0.1,
+  industriekultur: 0.2,
+  familien_entdecker: 1,
+  nacht_sterne: 2,
+  flora_jahreszeiten: 0.2,
+  bahn_seilbahn: 0.2,
+};
+
+export const MAX_THEME_DISTANCE_KM = Math.max(
+  ...Object.values(THEME_MAX_DISTANCE_KM),
+);
+
+const THEME_LABELS: Record<string, Record<RouteThemeKey, string>> = {
+  de: {
+    wasserwege: "Wasserwege",
+    burgen_ruinen_alte_wege: "Burgen, Ruinen & alte Wege",
+    gipfel_panorama: "Gipfel & Panorama",
+    geologie_eiszeit: "Geologie & Eiszeit",
+    hoehlen_grotten: "Höhlen & Grotten",
+    wald_wildtiere: "Wald, Wildtiere & Spuren",
+    alpen_landwirtschaft: "Alpen & Landwirtschaft",
+    pilger_handelswege: "Pilger- & Handelswege",
+    industriekultur: "Industriekultur",
+    familien_entdecker: "Familien-Entdecker",
+    nacht_sterne: "Nacht & Sterne",
+    flora_jahreszeiten: "Flora & Jahreszeiten",
+    bahn_seilbahn: "Bahn, Tram & Seilbahn",
+  },
+  gsw: {
+    wasserwege: "Wasserwäg",
+    burgen_ruinen_alte_wege: "Burgä, Ruine & alti Wäg",
+    gipfel_panorama: "Gipfel & Panorama",
+    geologie_eiszeit: "Geologie & Iisziit",
+    hoehlen_grotten: "Höhle & Grottene",
+    wald_wildtiere: "Wald, Wildtier & Spure",
+    alpen_landwirtschaft: "Alpe & Landwirtschaft",
+    pilger_handelswege: "Pilger- & Handelswäg",
+    industriekultur: "Industriekultur",
+    familien_entdecker: "Familie-Entdecker",
+    nacht_sterne: "Nacht & Stärne",
+    flora_jahreszeiten: "Flora & Jahresziite",
+    bahn_seilbahn: "Bahn, Tram & Seilbahn",
+  },
+  en: {
+    wasserwege: "Waterways",
+    burgen_ruinen_alte_wege: "Castles, ruins & old trails",
+    gipfel_panorama: "Summits & panoramas",
+    geologie_eiszeit: "Geology & Ice Age",
+    hoehlen_grotten: "Caves & grottoes",
+    wald_wildtiere: "Forest, wildlife & tracks",
+    alpen_landwirtschaft: "Alps & farming",
+    pilger_handelswege: "Pilgrimage & trade routes",
+    industriekultur: "Industrial heritage",
+    familien_entdecker: "Family discovery",
+    nacht_sterne: "Night & stars",
+    flora_jahreszeiten: "Flora & seasons",
+    bahn_seilbahn: "Rail, tram & cable car",
+  },
+  fr: {
+    wasserwege: "Chemins de l’eau",
+    burgen_ruinen_alte_wege: "Châteaux, ruines & anciens chemins",
+    gipfel_panorama: "Sommets & panoramas",
+    geologie_eiszeit: "Géologie & période glaciaire",
+    hoehlen_grotten: "Grottes & cavernes",
+    wald_wildtiere: "Forêt, faune & traces",
+    alpen_landwirtschaft: "Alpes & agriculture",
+    pilger_handelswege: "Chemins de pèlerinage & de commerce",
+    industriekultur: "Patrimoine industriel",
+    familien_entdecker: "Découverte en famille",
+    nacht_sterne: "Nuit & étoiles",
+    flora_jahreszeiten: "Flore & saisons",
+    bahn_seilbahn: "Train, tram & remontées",
+  },
+  it: {
+    wasserwege: "Vie dell’acqua",
+    burgen_ruinen_alte_wege: "Castelli, rovine & antichi sentieri",
+    gipfel_panorama: "Vette & panorami",
+    geologie_eiszeit: "Geologia & era glaciale",
+    hoehlen_grotten: "Grotte & caverne",
+    wald_wildtiere: "Boschi, fauna & tracce",
+    alpen_landwirtschaft: "Alpi & agricoltura",
+    pilger_handelswege: "Vie di pellegrinaggio & commercio",
+    industriekultur: "Patrimonio industriale",
+    familien_entdecker: "Scoperta in famiglia",
+    nacht_sterne: "Notte & stelle",
+    flora_jahreszeiten: "Flora & stagioni",
+    bahn_seilbahn: "Treno, tram & funivia",
+  },
+  es: {
+    wasserwege: "Rutas del agua",
+    burgen_ruinen_alte_wege: "Castillos, ruinas y caminos antiguos",
+    gipfel_panorama: "Cumbres y panoramas",
+    geologie_eiszeit: "Geología y era glacial",
+    hoehlen_grotten: "Cuevas y grutas",
+    wald_wildtiere: "Bosque, fauna y huellas",
+    alpen_landwirtschaft: "Alpes y agricultura",
+    pilger_handelswege: "Rutas de peregrinación y comercio",
+    industriekultur: "Patrimonio industrial",
+    familien_entdecker: "Descubrimiento en familia",
+    nacht_sterne: "Noche y estrellas",
+    flora_jahreszeiten: "Flora y estaciones",
+    bahn_seilbahn: "Tren, tranvía y teleférico",
+  },
+  pt: {
+    wasserwege: "Caminhos da água",
+    burgen_ruinen_alte_wege: "Castelos, ruínas e caminhos antigos",
+    gipfel_panorama: "Cumes e panoramas",
+    geologie_eiszeit: "Geologia e era glacial",
+    hoehlen_grotten: "Grutas e cavernas",
+    wald_wildtiere: "Floresta, fauna e pegadas",
+    alpen_landwirtschaft: "Alpes e agricultura",
+    pilger_handelswege: "Rotas de peregrinação e comércio",
+    industriekultur: "Património industrial",
+    familien_entdecker: "Descoberta em família",
+    nacht_sterne: "Noite e estrelas",
+    flora_jahreszeiten: "Flora e estações",
+    bahn_seilbahn: "Comboio, elétrico e teleférico",
+  },
+  zh: {
+    wasserwege: "水之旅",
+    burgen_ruinen_alte_wege: "城堡、遗迹与古道",
+    gipfel_panorama: "山峰与全景",
+    geologie_eiszeit: "地质与冰河时代",
+    hoehlen_grotten: "洞穴与岩洞",
+    wald_wildtiere: "森林、野生动物与踪迹",
+    alpen_landwirtschaft: "阿尔卑斯与农业",
+    pilger_handelswege: "朝圣与商贸路线",
+    industriekultur: "工业遗产",
+    familien_entdecker: "家庭探索",
+    nacht_sterne: "夜空与星辰",
+    flora_jahreszeiten: "植物与四季",
+    bahn_seilbahn: "铁路、有轨电车与缆车",
+  },
+  ru: {
+    wasserwege: "Водные маршруты",
+    burgen_ruinen_alte_wege: "Замки, руины и старые тропы",
+    gipfel_panorama: "Вершины и панорамы",
+    geologie_eiszeit: "Геология и ледниковый период",
+    hoehlen_grotten: "Пещеры и гроты",
+    wald_wildtiere: "Лес, животные и следы",
+    alpen_landwirtschaft: "Альпы и сельское хозяйство",
+    pilger_handelswege: "Паломнические и торговые пути",
+    industriekultur: "Промышленное наследие",
+    familien_entdecker: "Семейные открытия",
+    nacht_sterne: "Ночь и звёзды",
+    flora_jahreszeiten: "Флора и времена года",
+    bahn_seilbahn: "Поезд, трамвай и канатная дорога",
+  },
+};
+
+export function routeThemeLabel(key: RouteThemeKey, language?: string): string {
+  return (THEME_LABELS[language ?? "de"] ?? THEME_LABELS.de)[key];
+}
+
+function hasKind(poi: Poi, ...kinds: string[]): boolean {
+  return kinds.some((kind) => poi.kind === kind);
+}
+
+function isEndpointOnlyTransit(poi: Poi): boolean {
+  return hasKind(
+    poi,
+    "railway=station",
+    "railway=halt",
+    "railway=tram_stop",
+    "highway=bus_stop",
+  );
+}
+
+function distanceToSegmentKm(
+  point: { lat: number; lng: number },
+  a: number[],
+  b: number[],
+): number {
+  const radius = 6371;
+  const radians = Math.PI / 180;
+  const cosLat = Math.cos(point.lat * radians);
+  const ax = (a[1]! - point.lng) * radians * cosLat * radius;
+  const ay = (a[0]! - point.lat) * radians * radius;
+  const bx = (b[1]! - point.lng) * radians * cosLat * radius;
+  const by = (b[0]! - point.lat) * radians * radius;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const length2 = dx * dx + dy * dy;
+  const t =
+    length2 === 0
+      ? 0
+      : Math.max(0, Math.min(1, -(ax * dx + ay * dy) / length2));
+  return Math.hypot(ax + t * dx, ay + t * dy);
+}
+
+function distanceToRouteKm(poi: Poi, geometry: number[][]): number {
+  if (geometry.length < 2) return Infinity;
+  let nearest = Infinity;
+  for (let index = 1; index < geometry.length; index += 1) {
+    nearest = Math.min(
+      nearest,
+      distanceToSegmentKm(
+        { lat: poi.lat, lng: poi.lng },
+        geometry[index - 1]!,
+        geometry[index]!,
+      ),
+    );
+  }
+  return nearest;
+}
+
+function distanceToEndpointKm(poi: Poi, geometry: number[][]): number {
+  if (geometry.length === 0) return Infinity;
+  const point = { lat: poi.lat, lng: poi.lng };
+  const first = { lat: geometry[0]![0]!, lng: geometry[0]![1]! };
+  const lastPoint = geometry[geometry.length - 1]!;
+  const last = { lat: lastPoint[0]!, lng: lastPoint[1]! };
+  const radius = 6371;
+  const radians = Math.PI / 180;
+  const distance = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+    const dLat = (b.lat - a.lat) * radians;
+    const dLng = (b.lng - a.lng) * radians;
+    const meanLat = ((a.lat + b.lat) / 2) * radians;
+    return Math.hypot(dLat * radius, dLng * Math.cos(meanLat) * radius);
+  };
+  return Math.min(distance(point, first), distance(point, last));
+}
+
+/**
+ * Erzeugt sichtbare Themen aus den tatsächlich gefundenen Routen-POIs.
+ * Kategorien ohne belastbaren POI-Beleg werden absichtlich nicht geraten.
+ */
+export function deriveRouteThemes(
+  pois: readonly Poi[],
+  route: Pick<HikingRoute, "familyFriendly" | "geometry">,
+): RouteThemeKey[] {
+  const tags = new Set<RouteThemeKey>();
+  const geometry = route.geometry ?? [];
+  for (const poi of pois) {
+    const kind = poi.kind ?? "";
+    const distanceKm = distanceToRouteKm(poi, geometry);
+    const endpointDistanceKm = distanceToEndpointKm(poi, geometry);
+    const addIfNear = (theme: RouteThemeKey, matches: boolean) => {
+      if (matches && distanceKm <= THEME_MAX_DISTANCE_KM[theme]) {
+        tags.add(theme);
+      }
+    };
+    addIfNear("burgen_ruinen_alte_wege", (
+      kind.startsWith("historic=") &&
+      [
+        "historic=castle",
+        "historic=ruins",
+        "historic=fort",
+        "historic=archaeological_site",
+        "historic=roman_road",
+        "historic=roman_villa",
+        "historic=roman_building",
+        "historic=battlefield",
+        "historic=bridge",
+      ].includes(kind)
+    ));
+    addIfNear(
+      "gipfel_panorama",
+      hasKind(poi, "tourism=viewpoint") ||
+      (hasKind(poi, "natural=peak", "natural=saddle") &&
+        poi.elevation != null &&
+        poi.elevation >= 1000),
+    );
+    addIfNear(
+      "geologie_eiszeit",
+      kind.startsWith("geological=") ||
+      hasKind(poi, "natural=rock", "natural=glacier")
+    );
+    addIfNear("hoehlen_grotten", (
+      hasKind(
+        poi,
+        "natural=arch",
+        "natural=cave",
+        "natural=cave_entrance",
+        "natural=rock_shelter",
+        "man_made=adit",
+      )
+    ));
+    addIfNear(
+      "wald_wildtiere",
+      hasKind(poi, "natural=wood", "natural=wetland", "tourism=wildlife_hide"),
+    );
+    addIfNear("alpen_landwirtschaft", (
+      hasKind(
+        poi,
+        "tourism=alpine_hut",
+        "amenity=shelter",
+        "shop=cheese",
+        "farm=Alp",
+        "landuse=meadow",
+        "landuse=pasture",
+      )
+    ));
+    addIfNear("pilger_handelswege", (
+      hasKind(
+        poi,
+        "route=pilgrimage",
+        "historic=church",
+        "historic=wayside_cross",
+        "historic=wayside_shrine",
+        "historic=milestone",
+        "historic=boundary_stone",
+      )
+    ));
+    addIfNear("industriekultur", (
+      kind.startsWith("man_made=") &&
+      ["man_made=watermill", "man_made=windmill", "man_made=works", "man_made=quarry"].includes(kind)
+    ));
+    addIfNear(
+      "familien_entdecker",
+      hasKind(poi, "amenity=playground", "amenity=picnic_site"),
+    );
+    if (route.familyFriendly === true) tags.add("familien_entdecker");
+    addIfNear(
+      "nacht_sterne",
+      hasKind(poi, "amenity=observatory", "tourism=observatory"),
+    );
+    addIfNear("flora_jahreszeiten", (
+      hasKind(
+        poi,
+        "natural=tree",
+        "natural=wetland",
+        "landuse=orchard",
+        "landuse=vineyard",
+        "natural=heath",
+      )
+    ));
+    const isTransportPoint = hasKind(
+      poi,
+      "railway=station",
+      "railway=halt",
+      "railway=tram_stop",
+      "highway=bus_stop",
+      "aerialway=station",
+      "amenity=ferry_terminal",
+    );
+    addIfNear(
+      "bahn_seilbahn",
+      isTransportPoint &&
+      (
+        !isEndpointOnlyTransit(poi) ||
+        endpointDistanceKm <= THEME_MAX_DISTANCE_KM.bahn_seilbahn
+      ),
+    );
+  }
+  return ROUTE_THEME_KEYS.filter((key) => tags.has(key));
+}

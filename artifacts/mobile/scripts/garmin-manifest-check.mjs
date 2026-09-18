@@ -1,1 +1,47 @@
-aW1wb3J0IHsgcmVhZEZpbGUgfSBmcm9tICJub2RlOmZzL3Byb21pc2VzIjsKaW1wb3J0IHBhdGggZnJvbSAibm9kZTpwYXRoIjsKaW1wb3J0IHsgZmlsZVVSTFRvUGF0aCB9IGZyb20gIm5vZGU6dXJsIjsKCmNvbnN0IHNjcmlwdERpciA9IHBhdGguZGlybmFtZShmaWxlVVJMVG9QYXRoKGltcG9ydC5tZXRhLnVybCkpOwpjb25zdCBtYW5pZmVzdFBhdGggPSBwYXRoLmpvaW4oc2NyaXB0RGlyLCAiLi4iLCAiZ2FybWluIiwgIm1hbmlmZXN0LnhtbCIpOwpjb25zdCBtYW5pZmVzdCA9IGF3YWl0IHJlYWRGaWxlKG1hbmlmZXN0UGF0aCwgInV0ZjgiKTsKCi8vIFRoZXNlIGFyZSB0aGUgaW50ZW50aW9uYWxseSBzdXBwb3J0ZWQgcHJvZHVjdHMgbGlzdGVkIGluIGdhcm1pbi9SRUFETUUubWQuCi8vIEtlZXAgdGhpcyBhbGxvd2xpc3QgZXhwbGljaXQ6IGEgbmV3IHdhdGNoIG11c3QgYmUgdmFsaWRhdGVkIGFnYWluc3QgdGhlCi8vIENvbm5lY3QgSVEgU0RLIGNhdGFsb2cgYmVmb3JlIGl0IGlzIGFkZGVkIHRvIHRoZSBtYW5pZmVzdC4KY29uc3Qgc3VwcG9ydGVkUHJvZHVjdHMgPSBuZXcgU2V0KFsKICAiZmVuaXg3IiwKICAiZmVuaXg3cyIsCiAgImZlbml4N3giLAogICJlcGl4MiIsCiAgInZlbnUyIiwKICAidml2b2FjdGl2ZTQiLAogICJmcjk1NSIsCl0pOwpjb25zdCBsZWdhY3lBbGlhc2VzID0gbmV3IE1hcChbWyJmb3JlcnVubmVyOTU1IiwgImZyOTU1Il1dKTsKY29uc3QgcHJvZHVjdElkcyA9IFsuLi5tYW5pZmVzdC5tYXRjaEFsbCgvPGlxOnByb2R1Y3RccytpZD0iKFteIl0rKSIvZyldLm1hcCgKICAobWF0Y2gpID0+IG1hdGNoWzFdLAopOwoKaWYgKHByb2R1Y3RJZHMubGVuZ3RoID09PSAwKSB7CiAgdGhyb3cgbmV3IEVycm9yKCJHYXJtaW4gbWFuaWZlc3QgY29udGFpbnMgbm8gaXE6cHJvZHVjdCBlbnRyaWVzLiIpOwp9Cgpjb25zdCBkdXBsaWNhdGVJZHMgPSBwcm9kdWN0SWRzLmZpbHRlcigKICAoaWQsIGluZGV4KSA9PiBwcm9kdWN0SWRzLmluZGV4T2YoaWQpICE9PSBpbmRleCwKKTsKaWYgKGR1cGxpY2F0ZUlkcy5sZW5ndGggPiAwKSB7CiAgdGhyb3cgbmV3IEVycm9yKGBHYXJtaW4gbWFuaWZlc3QgY29udGFpbnMgZHVwbGljYXRlIHByb2R1Y3QgSURzOiAke1suLi5uZXcgU2V0KGR1cGxpY2F0ZUlkcyldLmpvaW4oIiwgIil9YCk7Cn0KCmNvbnN0IHVuc3VwcG9ydGVkID0gcHJvZHVjdElkcy5maWx0ZXIoKGlkKSA9PiAhc3VwcG9ydGVkUHJvZHVjdHMuaGFzKGlkKSk7CmlmICh1bnN1cHBvcnRlZC5sZW5ndGggPiAwKSB7CiAgY29uc3QgaGludHMgPSB1bnN1cHBvcnRlZAogICAgLm1hcCgoaWQpID0+IGAke2lkfSR7bGVnYWN5QWxpYXNlcy5oYXMoaWQpID8gYCAodXNlICR7bGVnYWN5QWxpYXNlcy5nZXQoaWQpfSlgIDogIiJ9YCkKICAgIC5qb2luKCIsICIpOwogIHRocm93IG5ldyBFcnJvcihgR2FybWluIG1hbmlmZXN0IGNvbnRhaW5zIHVudmFsaWRhdGVkIHByb2R1Y3QgSURzOiAke2hpbnRzfWApOwp9Cgpjb25zb2xlLmxvZygKICBgR2FybWluIG1hbmlmZXN0IHZhbGlkYXRlZDogJHtwcm9kdWN0SWRzLmxlbmd0aH0gc3VwcG9ydGVkIHByb2R1Y3QgSURzICgke3Byb2R1Y3RJZHMuam9pbigiLCAiKX0pLmAsCik7
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const manifestPath = path.join(scriptDir, "..", "garmin", "manifest.xml");
+const manifest = await readFile(manifestPath, "utf8");
+
+// These are the intentionally supported products listed in garmin/README.md.
+// Keep this allowlist explicit: a new watch must be validated against the
+// Connect IQ SDK catalog before it is added to the manifest.
+const supportedProducts = new Set([
+  "fenix7",
+  "fenix7s",
+  "fenix7x",
+  "epix2",
+  "venu2",
+  "vivoactive4",
+  "fr955",
+]);
+const legacyAliases = new Map([["forerunner955", "fr955"]]);
+const productIds = [...manifest.matchAll(/<iq:product\s+id="([^"]+)"/g)].map(
+  (match) => match[1],
+);
+
+if (productIds.length === 0) {
+  throw new Error("Garmin manifest contains no iq:product entries.");
+}
+
+const duplicateIds = productIds.filter(
+  (id, index) => productIds.indexOf(id) !== index,
+);
+if (duplicateIds.length > 0) {
+  throw new Error(`Garmin manifest contains duplicate product IDs: ${[...new Set(duplicateIds)].join(", ")}`);
+}
+
+const unsupported = productIds.filter((id) => !supportedProducts.has(id));
+if (unsupported.length > 0) {
+  const hints = unsupported
+    .map((id) => `${id}${legacyAliases.has(id) ? ` (use ${legacyAliases.get(id)})` : ""}`)
+    .join(", ");
+  throw new Error(`Garmin manifest contains unvalidated product IDs: ${hints}`);
+}
+
+console.log(
+  `Garmin manifest validated: ${productIds.length} supported product IDs (${productIds.join(", ")}).`,
+);

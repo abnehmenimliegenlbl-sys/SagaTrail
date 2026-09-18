@@ -1,1 +1,10 @@
-LS0tCm5hbWU6IFRoZW1lIHJvdXRlIDMwNCBoYW5kbGluZwpkZXNjcmlwdGlvbjogV2h5IHRoZW1lZC1yb3V0ZSByZXNwb25zZXMgbXVzdCBub3QgcmVseSBvbiBFeHByZXNzIEVUYWcgcmV2YWxpZGF0aW9uCi0tLQoKRHluYW1pYyB0aGVtZWQtcm91dGUgbGlzdHMgbXVzdCByZXR1cm4gdGhlaXIgSlNPTiBib2R5IGV2ZW4gd2hlbiB0aGUgcmVxdWVzdCBjb250YWlucyBhbiBvbGQgYElmLU5vbmUtTWF0Y2hgIGhlYWRlci4gQSBib2R5bGVzcyAzMDQgaXMgbm90IGEgdXNhYmxlIHN1Y2Nlc3MgcmVzcG9uc2UgZm9yIHRoZSBtb2JpbGUgQVBJIGNsaWVudDogaXQgYmVjb21lcyBgbnVsbGAgaW5zdGVhZCBvZiBhIHJvdXRlIGFycmF5IGFuZCB0aGUgc2NyZWVuIGFwcGVhcnMgZW1wdHkuCgoqKldoeToqKiBSZWFjdCBOYXRpdmUgZG9lcyBub3QgcmVsaWFibHkgcmVjb25zdHJ1Y3QgdGhlIGNhY2hlZCBKU09OIGJvZHkgZnJvbSBhbiBBUEkgMzA0LCB3aGlsZSBFeHByZXNzIG1heSBlbWl0IDMwNCBhdXRvbWF0aWNhbGx5IGZvciBgcmVzLmpzb24oKWAgcmVzcG9uc2VzLgoKKipIb3cgdG8gYXBwbHk6KiogS2VlcCB0aGVtZWQtcm91dGUgZmV0Y2hlcyB1bmNhY2hlZCBvbiB0aGUgY2xpZW50IGFuZCBieXBhc3MgYXV0b21hdGljIEVUYWcgY29uZGl0aW9uYWwgaGFuZGxpbmcgb24gdGhlIHNlcnZlciBmb3IgdGhpcyBlbmRwb2ludC4gUmVncmVzc2lvbi10ZXN0IGJvdGggYSBub3JtYWwgcmVxdWVzdCBhbmQgYSByZXF1ZXN0IGNhcnJ5aW5nIGBJZi1Ob25lLU1hdGNoYC4=
+---
+name: Theme route 304 handling
+description: Why themed-route responses must not rely on Express ETag revalidation
+---
+
+Dynamic themed-route lists must return their JSON body even when the request contains an old `If-None-Match` header. A bodyless 304 is not a usable success response for the mobile API client: it becomes `null` instead of a route array and the screen appears empty.
+
+**Why:** React Native does not reliably reconstruct the cached JSON body from an API 304, while Express may emit 304 automatically for `res.json()` responses.
+
+**How to apply:** Keep themed-route fetches uncached on the client and bypass automatic ETag conditional handling on the server for this endpoint. Regression-test both a normal request and a request carrying `If-None-Match`.

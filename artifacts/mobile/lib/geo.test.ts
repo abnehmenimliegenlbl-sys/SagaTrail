@@ -1,1 +1,44 @@
-aW1wb3J0IGFzc2VydCBmcm9tICJub2RlOmFzc2VydC9zdHJpY3QiOwppbXBvcnQgdGVzdCBmcm9tICJub2RlOnRlc3QiOwoKaW1wb3J0IHsKICBkaXN0YW5jZVRvUm91dGVFbmRwb2ludEttLAogIGZpbHRlckJ1c0FuZFRyYW1TdG9wc1RvUm91dGVFbmRwb2ludHMsCn0gZnJvbSAiLi9nZW8iOwoKY29uc3QgZ2VvbWV0cnkgPSBbCiAgWzQ2LjAwMDAsIDcuMDAwMF0sCiAgWzQ2LjAxMDAsIDcuMDAwMF0sCiAgWzQ2LjAyMDAsIDcuMDAwMF0sCl07Cgp0ZXN0KCJrZWVwcyBidXMgYW5kIHRyYW0gc3RvcHMgYXQgdGhlIHJvdXRlIGVuZHBvaW50cyIsICgpID0+IHsKICBjb25zdCBzdG9wcyA9IFsKICAgIHsgaWQ6ICJidXMtc3RhcnQiLCBraW5kOiAiaGlnaHdheT1idXNfc3RvcCIsIGxhdDogNDYuMDAwNSwgbG5nOiA3IH0sCiAgICB7IGlkOiAidHJhbS1lbmQiLCBraW5kOiAicmFpbHdheT10cmFtX3N0b3AiLCBsYXQ6IDQ2LjAxOTUsIGxuZzogNyB9LAogIF07CgogIGFzc2VydC5kZWVwRXF1YWwoCiAgICBmaWx0ZXJCdXNBbmRUcmFtU3RvcHNUb1JvdXRlRW5kcG9pbnRzKHN0b3BzLCBnZW9tZXRyeSkubWFwKChzdG9wKSA9PiBzdG9wLmlkKSwKICAgIFsiYnVzLXN0YXJ0IiwgInRyYW0tZW5kIl0sCiAgKTsKfSk7Cgp0ZXN0KCJyZW1vdmVzIGJ1cyBhbmQgdHJhbSBzdG9wcyBpbiB0aGUgcm91dGUgY29ycmlkb3IiLCAoKSA9PiB7CiAgY29uc3Qgc3RvcHMgPSBbCiAgICB7IGlkOiAiYnVzLW1pZGRsZSIsIGtpbmQ6ICJoaWdod2F5PWJ1c19zdG9wIiwgbGF0OiA0Ni4wMTAwLCBsbmc6IDcuMDAwNSB9LAogICAgeyBpZDogInRyYW0tbWlkZGxlIiwga2luZDogInJhaWx3YXk9dHJhbV9zdG9wIiwgbGF0OiA0Ni4wMTEwLCBsbmc6IDcuMDAwNSB9LAogIF07CgogIGFzc2VydC5kZWVwRXF1YWwoZmlsdGVyQnVzQW5kVHJhbVN0b3BzVG9Sb3V0ZUVuZHBvaW50cyhzdG9wcywgZ2VvbWV0cnkpLCBbXSk7Cn0pOwoKdGVzdCgiZG9lcyBub3QgYXBwbHkgZW5kcG9pbnQtb25seSBmaWx0ZXJpbmcgdG8gb3RoZXIgUE9JIHR5cGVzIiwgKCkgPT4gewogIGNvbnN0IGNoYXBlbCA9IHsgaWQ6ICJjaGFwZWwiLCBraW5kOiAiaGlzdG9yaWM9Y2hhcGVsIiwgbGF0OiA0Ni4wMTAwLCBsbmc6IDcgfTsKCiAgYXNzZXJ0LmRlZXBFcXVhbCgKICAgIGZpbHRlckJ1c0FuZFRyYW1TdG9wc1RvUm91dGVFbmRwb2ludHMoW2NoYXBlbF0sIGdlb21ldHJ5KSwKICAgIFtjaGFwZWxdLAogICk7CiAgYXNzZXJ0Lm9rKGRpc3RhbmNlVG9Sb3V0ZUVuZHBvaW50S20oY2hhcGVsLCBnZW9tZXRyeSkgPiAwLjUpOwp9KTs=
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  distanceToRouteEndpointKm,
+  filterBusAndTramStopsToRouteEndpoints,
+} from "./geo";
+
+const geometry = [
+  [46.0000, 7.0000],
+  [46.0100, 7.0000],
+  [46.0200, 7.0000],
+];
+
+test("keeps bus and tram stops at the route endpoints", () => {
+  const stops = [
+    { id: "bus-start", kind: "highway=bus_stop", lat: 46.0005, lng: 7 },
+    { id: "tram-end", kind: "railway=tram_stop", lat: 46.0195, lng: 7 },
+  ];
+
+  assert.deepEqual(
+    filterBusAndTramStopsToRouteEndpoints(stops, geometry).map((stop) => stop.id),
+    ["bus-start", "tram-end"],
+  );
+});
+
+test("removes bus and tram stops in the route corridor", () => {
+  const stops = [
+    { id: "bus-middle", kind: "highway=bus_stop", lat: 46.0100, lng: 7.0005 },
+    { id: "tram-middle", kind: "railway=tram_stop", lat: 46.0110, lng: 7.0005 },
+  ];
+
+  assert.deepEqual(filterBusAndTramStopsToRouteEndpoints(stops, geometry), []);
+});
+
+test("does not apply endpoint-only filtering to other POI types", () => {
+  const chapel = { id: "chapel", kind: "historic=chapel", lat: 46.0100, lng: 7 };
+
+  assert.deepEqual(
+    filterBusAndTramStopsToRouteEndpoints([chapel], geometry),
+    [chapel],
+  );
+  assert.ok(distanceToRouteEndpointKm(chapel, geometry) > 0.5);
+});

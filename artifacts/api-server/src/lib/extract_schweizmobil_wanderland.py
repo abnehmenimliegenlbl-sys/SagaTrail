@@ -1,1 +1,338 @@
-IyEvdXNyL2Jpbi9lbnYgcHl0aG9uMwoiIiJFeHRyYWN0IHRoZSBtaXNzaW5nIGxvY2FsIFdhbmRlcmxhbmQgZ2VvbWV0cmllcyBmcm9tIHRoZSBvZmZpY2lhbCBHZW9QYWNrYWdlLgoKVGhlIEdlb1BhY2thZ2UgaXMgdGhlIG9mZmljaWFsIFNjaHdlaXpNb2JpbCBPcGVuIERhdGEgZXhwb3J0LiAgVGhpcyBzbWFsbApzdGRsaWItb25seSBleHRyYWN0b3IgaXMgaW50ZW50aW9uYWxseSBydW4gb25seSBieSB0aGUgcHJvdGVjdGVkIGFkbWluCnJlc3RvcmUgam9iOyBpdCBpcyBub3QgcGFydCBvZiB0aGUgcmVxdWVzdCBwYXRoIHVzZWQgYnkgaGlrZXJzLgoiIiIKCmZyb20gX19mdXR1cmVfXyBpbXBvcnQgYW5ub3RhdGlvbnMKCmltcG9ydCBqc29uCmltcG9ydCBtYXRoCmltcG9ydCBvcwppbXBvcnQgc3FsaXRlMwppbXBvcnQgc3RydWN0CmltcG9ydCBzeXMKaW1wb3J0IHRlbXBmaWxlCmltcG9ydCB1cmxsaWIucmVxdWVzdAoKClNPVVJDRV9VUkwgPSAiaHR0cHM6Ly9kYXRhLnNjaHdlaXptb2JpbC5jaC9ncGtnX2V4cG9ydC93YW5kZXIuZ3BrZyIKRU5EUE9JTlRfVE9MRVJBTkNFX00gPSAxMC4wClJPVVRFX1JFRlMgPSAoCiAgICAiNDQ3IDQ1OCA0NTkgNDYzIDQ2NCA0NzIgNDgzIDU4MyA1ODQgNzAxIDczNyA3MzggNzM5IDc0OCA3NDkgNzUxICIKICAgICI3NTMgNzU0IDc1OSA3NjMgNzY5IDc4NyA3ODkgODI2IDg0OCA4NTcgODU4IDg2NCA4NjYgODk5IDkzMSA5MzIgOTMzICIKICAgICI5NjYgOTY3IDk2OCA5NzMgOTc2IDk3OSA5ODEgOTk0IDk5NSA5OTYgOTk4IDk5OSIKKS5zcGxpdCgpCgoKZGVmIGV4dHJhY3RfZGlmZmljdWx0eSgpIC0+IGxpc3RbZGljdFtzdHIsIG9iamVjdF1dOgogICAgIiIiRXhwb3J0aWVydCBkaWUgb2ZmaXppZWxsZW4gU2Nod2Vpek1vYmlsLVJvdXRlbi1LYXRlZ29yaWVuIG9obmUgR2VvbWV0cmllLgoKICAgIEtvbmRpdGlvblIgdW5kIFRlY2huaWtSIHNpbmQgZGllIHZvbiBTY2h3ZWl6TW9iaWwgZ2VwZmxlZ3RlbiBLYXRlZ29yaWVuLgogICAgU2llIHNpbmQgYWJzaWNodGxpY2gga2VpbmUgU0FDLVdlcnRlIHVuZCB3ZXJkZW4gaW0gQVBJLURhdGVubW9kZWxsIGdldHJlbm50CiAgICB2b24gYHNhY2AgZ2VzcGVpY2hlcnQuCiAgICAiIiIKICAgIGRiLCBfID0gb3Blbl9kYXRhYmFzZSgpCiAgICB0cnk6CiAgICAgICAgcm93cyA9IGRiLmV4ZWN1dGUoCiAgICAgICAgICAgICJTRUxFQ1QgTnJSLCBLb25kaXRpb25SLCBUZWNobmlrUiwgVHlwX1RSLCBMdkFydCBGUk9NIFJvdXRlICIKICAgICAgICAgICAgIldIRVJFIE5yUiBJUyBOT1QgTlVMTCIKICAgICAgICApLmZldGNoYWxsKCkKICAgICAgICByZXR1cm4gWwogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAicmVmIjogc3RyKHJlZiksCiAgICAgICAgICAgICAgICAiY29uZGl0aW9uIjogc3RyKGNvbmRpdGlvbikgaWYgY29uZGl0aW9uIGVsc2UgTm9uZSwKICAgICAgICAgICAgICAgICJ0ZWNobmlxdWUiOiBzdHIodGVjaG5pcXVlKSBpZiB0ZWNobmlxdWUgZWxzZSBOb25lLAogICAgICAgICAgICAgICAgInJvdXRlVHlwZSI6IHN0cihyb3V0ZV90eXBlKSBpZiByb3V0ZV90eXBlIGVsc2UgTm9uZSwKICAgICAgICAgICAgICAgICJsZXZlbCI6IHN0cihsZXZlbCkgaWYgbGV2ZWwgZWxzZSBOb25lLAogICAgICAgICAgICAgICAgInNvdXJjZSI6ICJTY2h3ZWl6TW9iaWwgT3BlbiBEYXRhIMK3IHdhbmRlci5ncGtnIiwKICAgICAgICAgICAgICAgICJzb3VyY2VVcmwiOiBTT1VSQ0VfVVJMLAogICAgICAgICAgICB9CiAgICAgICAgICAgIGZvciByZWYsIGNvbmRpdGlvbiwgdGVjaG5pcXVlLCByb3V0ZV90eXBlLCBsZXZlbCBpbiByb3dzCiAgICAgICAgXQogICAgZmluYWxseToKICAgICAgICBkYi5jbG9zZSgpCgoKZGVmIHVucGFja19nZW9tZXRyeShibG9iOiBieXRlcykgLT4gbGlzdFtsaXN0W3R1cGxlW2Zsb2F0LCBmbG9hdF1dXToKICAgIGlmIGJsb2JbOjJdICE9IGIiR1AiOgogICAgICAgIHJhaXNlIFZhbHVlRXJyb3IoIm5vdCBhIEdlb1BhY2thZ2UgZ2VvbWV0cnkiKQogICAgZmxhZ3MgPSBibG9iWzNdCiAgICBlbnZlbG9wZV90eXBlID0gKGZsYWdzID4+IDEpICYgNwogICAgb2Zmc2V0ID0gOCArIHswOiAwLCAxOiAzMiwgMjogNDgsIDM6IDQ4LCA0OiA2NH1bZW52ZWxvcGVfdHlwZV0KCiAgICBkZWYgcmVhZF9nZW9tZXRyeSgpIC0+IGxpc3RbbGlzdFt0dXBsZVtmbG9hdCwgZmxvYXRdXV06CiAgICAgICAgbm9ubG9jYWwgb2Zmc2V0CiAgICAgICAgZW5kaWFuX2ZsYWcgPSBibG9iW29mZnNldF0KICAgICAgICBvZmZzZXQgKz0gMQogICAgICAgIGVuZGlhbiA9ICI8IiBpZiBlbmRpYW5fZmxhZyBlbHNlICI+IgogICAgICAgIGdlb21ldHJ5X3R5cGUgPSBzdHJ1Y3QudW5wYWNrX2Zyb20oZW5kaWFuICsgIkkiLCBibG9iLCBvZmZzZXQpWzBdCiAgICAgICAgb2Zmc2V0ICs9IDQKICAgICAgICBiYXNlX3R5cGUgPSBnZW9tZXRyeV90eXBlICUgMTAwMAogICAgICAgIGRpbWVuc2lvbnMgPSAzIGlmIDEwMDAgPD0gZ2VvbWV0cnlfdHlwZSA8IDIwMDAgZWxzZSAyCgogICAgICAgIGlmIGJhc2VfdHlwZSA9PSAyOiAgIyBMSU5FU1RSSU5HCiAgICAgICAgICAgIGNvdW50ID0gc3RydWN0LnVucGFja19mcm9tKGVuZGlhbiArICJJIiwgYmxvYiwgb2Zmc2V0KVswXQogICAgICAgICAgICBvZmZzZXQgKz0gNAogICAgICAgICAgICBwb2ludHM6IGxpc3RbdHVwbGVbZmxvYXQsIGZsb2F0XV0gPSBbXQogICAgICAgICAgICBmb3IgXyBpbiByYW5nZShjb3VudCk6CiAgICAgICAgICAgICAgICB2YWx1ZXMgPSBzdHJ1Y3QudW5wYWNrX2Zyb20oZW5kaWFuICsgKCJkIiAqIGRpbWVuc2lvbnMpLCBibG9iLCBvZmZzZXQpCiAgICAgICAgICAgICAgICBvZmZzZXQgKz0gOCAqIGRpbWVuc2lvbnMKICAgICAgICAgICAgICAgIGVhc3RpbmcsIG5vcnRoaW5nID0gdmFsdWVzWzoyXQogICAgICAgICAgICAgICAgcG9pbnRzLmFwcGVuZCgoZWFzdGluZywgbm9ydGhpbmcpKQogICAgICAgICAgICByZXR1cm4gW3BvaW50c10KCiAgICAgICAgaWYgYmFzZV90eXBlID09IDU6ICAjIE1VTFRJTElORVNUUklORwogICAgICAgICAgICBjb3VudCA9IHN0cnVjdC51bnBhY2tfZnJvbShlbmRpYW4gKyAiSSIsIGJsb2IsIG9mZnNldClbMF0KICAgICAgICAgICAgb2Zmc2V0ICs9IDQKICAgICAgICAgICAgcGFydHM6IGxpc3RbbGlzdFt0dXBsZVtmbG9hdCwgZmxvYXRdXV0gPSBbXQogICAgICAgICAgICBmb3IgXyBpbiByYW5nZShjb3VudCk6CiAgICAgICAgICAgICAgICBwYXJ0cy5leHRlbmQocmVhZF9nZW9tZXRyeSgpKQogICAgICAgICAgICByZXR1cm4gcGFydHMKCiAgICAgICAgcmFpc2UgVmFsdWVFcnJvcihmInVuc3VwcG9ydGVkIFdLQiBnZW9tZXRyeSB0eXBlIHtnZW9tZXRyeV90eXBlfSIpCgogICAgcmV0dXJuIHJlYWRfZ2VvbWV0cnkoKQoKCmRlZiBsdjk1X3RvX3dnczg0KGVhc3Rpbmc6IGZsb2F0LCBub3J0aGluZzogZmxvYXQpIC0+IHR1cGxlW2Zsb2F0LCBmbG9hdF06CiAgICAiIiJBcHByb3hpbWF0ZSBFUFNHOjIwNTYgLT4gRVBTRzo0MzI2IGNvbnZlcnNpb24gdXNlZCBieSBzd2lzc3RvcG8uIiIiCiAgICB5ID0gKGVhc3RpbmcgLSAyXzYwMF8wMDAuMCkgLyAxXzAwMF8wMDAuMAogICAgeCA9IChub3J0aGluZyAtIDFfMjAwXzAwMC4wKSAvIDFfMDAwXzAwMC4wCiAgICBsYXQgPSAoCiAgICAgICAgMTYuOTAyMzg5MgogICAgICAgICsgMy4yMzgyNzIgKiB4CiAgICAgICAgLSAwLjI3MDk3OCAqIHkgKiB5CiAgICAgICAgLSAwLjAwMjUyOCAqIHggKiB4CiAgICAgICAgLSAwLjA0NDcgKiB5ICogeSAqIHgKICAgICAgICAtIDAuMDE0MCAqIHggKiB4ICogeAogICAgKQogICAgbG5nID0gKAogICAgICAgIDIuNjc3OTA5NAogICAgICAgICsgNC43Mjg5ODIgKiB5CiAgICAgICAgKyAwLjc5MTQ4NCAqIHkgKiB4CiAgICAgICAgKyAwLjEzMDYgKiB5ICogeCAqIHgKICAgICAgICAtIDAuMDQzNiAqIHkgKiB5ICogeQogICAgKQogICAgcmV0dXJuIGxhdCAqIDEwMC4wIC8gMzYuMCwgbG5nICogMTAwLjAgLyAzNi4wCgoKZGVmIGVuZHBvaW50X2Rpc3RhbmNlX20oCiAgICBmaXJzdDogdHVwbGVbZmxvYXQsIGZsb2F0XSwgc2Vjb25kOiB0dXBsZVtmbG9hdCwgZmxvYXRdCikgLT4gZmxvYXQ6CiAgICByZXR1cm4gbWF0aC5oeXBvdChmaXJzdFswXSAtIHNlY29uZFswXSwgZmlyc3RbMV0gLSBzZWNvbmRbMV0pCgoKZGVmIG9yZGVyX3BhcnRzKAogICAgcGFydHM6IGxpc3RbbGlzdFt0dXBsZVtmbG9hdCwgZmxvYXRdXV0sCiAgICBzdGFydF9oaW50OiB0dXBsZVtmbG9hdCwgZmxvYXRdIHwgTm9uZSA9IE5vbmUsCikgLT4gbGlzdFtsaXN0W3R1cGxlW2Zsb2F0LCBmbG9hdF1dXToKICAgICIiIk9yZGVyIGNvbm5lY3RlZCBMaW5lU3RyaW5nIHBhcnRzIGJ5IHRoZWlyIHNoYXJlZCBMVjk1IGVuZHBvaW50cy4KCiAgICBUaGUgR2VvUGFja2FnZSBkb2VzIG5vdCBndWFyYW50ZWUgdGhhdCBNdWx0aUxpbmVTdHJpbmcgbWVtYmVycyBhcmUgc3RvcmVkCiAgICBpbiB0cmF2ZXJzYWwgb3JkZXIuIEEgc21hbGwgZW5kcG9pbnQgZ3JhcGggYXZvaWRzIGZsYXR0ZW5pbmcgdGhvc2UgbWVtYmVycwogICAgaW4gc3RvcmFnZSBvcmRlciwgd2hpY2ggY2FuIGNyZWF0ZSBhcnRpZmljaWFsIGtpbG9tZXRyZS1zaXplZCBqdW1wcy4KICAgICIiIgogICAgdXNhYmxlID0gW3BhcnQgZm9yIHBhcnQgaW4gcGFydHMgaWYgbGVuKHBhcnQpID49IDJdCiAgICBpZiBsZW4odXNhYmxlKSA8PSAxOgogICAgICAgIHJldHVybiB1c2FibGUKCiAgICBlbmRwb2ludF9ub2RlczogbGlzdFt0dXBsZVtmbG9hdCwgZmxvYXRdXSA9IFtdCiAgICBlZGdlX25vZGVzOiBsaXN0W3R1cGxlW2ludCwgaW50XV0gPSBbXQoKICAgIGRlZiBub2RlX2Zvcihwb2ludDogdHVwbGVbZmxvYXQsIGZsb2F0XSkgLT4gaW50OgogICAgICAgIGZvciBpbmRleCwgZXhpc3RpbmcgaW4gZW51bWVyYXRlKGVuZHBvaW50X25vZGVzKToKICAgICAgICAgICAgaWYgZW5kcG9pbnRfZGlzdGFuY2VfbShwb2ludCwgZXhpc3RpbmcpIDw9IEVORFBPSU5UX1RPTEVSQU5DRV9NOgogICAgICAgICAgICAgICAgcmV0dXJuIGluZGV4CiAgICAgICAgZW5kcG9pbnRfbm9kZXMuYXBwZW5kKHBvaW50KQogICAgICAgIHJldHVybiBsZW4oZW5kcG9pbnRfbm9kZXMpIC0gMQoKICAgIGZvciBwYXJ0IGluIHVzYWJsZToKICAgICAgICBlZGdlX25vZGVzLmFwcGVuZCgobm9kZV9mb3IocGFydFswXSksIG5vZGVfZm9yKHBhcnRbLTFdKSkpCgogICAgYWRqYWNlbmN5OiBkaWN0W2ludCwgbGlzdFtpbnRdXSA9IHt9CiAgICBmb3IgZWRnZV9pbmRleCwgKGZpcnN0X25vZGUsIGxhc3Rfbm9kZSkgaW4gZW51bWVyYXRlKGVkZ2Vfbm9kZXMpOgogICAgICAgIGFkamFjZW5jeS5zZXRkZWZhdWx0KGZpcnN0X25vZGUsIFtdKS5hcHBlbmQoZWRnZV9pbmRleCkKICAgICAgICBhZGphY2VuY3kuc2V0ZGVmYXVsdChsYXN0X25vZGUsIFtdKS5hcHBlbmQoZWRnZV9pbmRleCkKCiAgICByZW1haW5pbmcgPSBzZXQocmFuZ2UobGVuKHVzYWJsZSkpKQogICAgb3JkZXJlZDogbGlzdFtsaXN0W3R1cGxlW2Zsb2F0LCBmbG9hdF1dXSA9IFtdCiAgICBjdXJyZW50X3BvaW50ID0gc3RhcnRfaGludAogICAgY3VycmVudF9ub2RlOiBpbnQgfCBOb25lID0gTm9uZQoKICAgIGRlZiBjaG9vc2Vfc3RhcnRfZWRnZSgpIC0+IHR1cGxlW2ludCwgaW50XToKICAgICAgICBpZiBjdXJyZW50X3BvaW50IGlzIG5vdCBOb25lOgogICAgICAgICAgICBiZXN0ID0gbWluKAogICAgICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICAgICAgICAgZW5kcG9pbnRfZGlzdGFuY2VfbShjdXJyZW50X3BvaW50LCBwb2ludCksCiAgICAgICAgICAgICAgICAgICAgICAgIGVkZ2VfaW5kZXgsCiAgICAgICAgICAgICAgICAgICAgICAgIG5vZGUsCiAgICAgICAgICAgICAgICAgICAgKQogICAgICAgICAgICAgICAgICAgIGZvciBlZGdlX2luZGV4IGluIHJlbWFpbmluZwogICAgICAgICAgICAgICAgICAgIGZvciBub2RlIGluIGVkZ2Vfbm9kZXNbZWRnZV9pbmRleF0KICAgICAgICAgICAgICAgICAgICBmb3IgcG9pbnQgaW4gW2VuZHBvaW50X25vZGVzW25vZGVdXQogICAgICAgICAgICAgICAgKSwKICAgICAgICAgICAgICAgIGtleT1sYW1iZGEgaXRlbTogaXRlbVswXSwKICAgICAgICAgICAgKQogICAgICAgICAgICByZXR1cm4gYmVzdFsxXSwgYmVzdFsyXQogICAgICAgIGVkZ2VfaW5kZXggPSBtaW4ocmVtYWluaW5nKQogICAgICAgIHJldHVybiBlZGdlX2luZGV4LCBlZGdlX25vZGVzW2VkZ2VfaW5kZXhdWzBdCgogICAgd2hpbGUgcmVtYWluaW5nOgogICAgICAgIGlmIGN1cnJlbnRfbm9kZSBpcyBOb25lIG9yIG5vdCBhbnkoCiAgICAgICAgICAgIGVkZ2VfaW5kZXggaW4gcmVtYWluaW5nIGZvciBlZGdlX2luZGV4IGluIGFkamFjZW5jeS5nZXQoY3VycmVudF9ub2RlLCBbXSkKICAgICAgICApOgogICAgICAgICAgICBlZGdlX2luZGV4LCBjdXJyZW50X25vZGUgPSBjaG9vc2Vfc3RhcnRfZWRnZSgpCiAgICAgICAgZWxzZToKICAgICAgICAgICAgY2FuZGlkYXRlcyA9IFsKICAgICAgICAgICAgICAgIGVkZ2VfaW5kZXgKICAgICAgICAgICAgICAgIGZvciBlZGdlX2luZGV4IGluIGFkamFjZW5jeVtjdXJyZW50X25vZGVdCiAgICAgICAgICAgICAgICBpZiBlZGdlX2luZGV4IGluIHJlbWFpbmluZwogICAgICAgICAgICBdCiAgICAgICAgICAgICMgQSB2YWxpZCByb3V0ZSBpcyBub3JtYWxseSBhIGNoYWluIG9yIGxvb3AuIEZvciBhIGJyYW5jaCwga2VlcAogICAgICAgICAgICAjIHRoZSBkZXRlcm1pbmlzdGljIHNvdXJjZSBvcmRlciByYXRoZXIgdGhhbiBpbnZlbnRpbmcgYSBicmFuY2gKICAgICAgICAgICAgIyByYW5raW5nIGZyb20gZ2VvbWV0cnkuCiAgICAgICAgICAgIGVkZ2VfaW5kZXggPSBtaW4oY2FuZGlkYXRlcykKCiAgICAgICAgZmlyc3Rfbm9kZSwgbGFzdF9ub2RlID0gZWRnZV9ub2Rlc1tlZGdlX2luZGV4XQogICAgICAgIHBhcnQgPSBsaXN0KHVzYWJsZVtlZGdlX2luZGV4XSkKICAgICAgICBpZiBsYXN0X25vZGUgPT0gY3VycmVudF9ub2RlIGFuZCBmaXJzdF9ub2RlICE9IGN1cnJlbnRfbm9kZToKICAgICAgICAgICAgcGFydC5yZXZlcnNlKCkKICAgICAgICAgICAgZmlyc3Rfbm9kZSwgbGFzdF9ub2RlID0gbGFzdF9ub2RlLCBmaXJzdF9ub2RlCiAgICAgICAgZWxpZiBmaXJzdF9ub2RlICE9IGN1cnJlbnRfbm9kZSBhbmQgbGFzdF9ub2RlICE9IGN1cnJlbnRfbm9kZToKICAgICAgICAgICAgIyBBIGRpc2Nvbm5lY3RlZCBjb21wb25lbnQgc3RhcnRzIGF0IHRoZSBlbmRwb2ludCBuZWFyZXN0IHRoZQogICAgICAgICAgICAjIHByZXZpb3VzIGNvbXBvbmVudC4gVGhpcyByZW1haW5zIHZpc2libGUgdG8gdmFsaWRhdGUoKS4KICAgICAgICAgICAgaWYgY3VycmVudF9wb2ludCBpcyBub3QgTm9uZSBhbmQgZW5kcG9pbnRfZGlzdGFuY2VfbSgKICAgICAgICAgICAgICAgIGN1cnJlbnRfcG9pbnQsIHBhcnRbLTFdCiAgICAgICAgICAgICkgPCBlbmRwb2ludF9kaXN0YW5jZV9tKGN1cnJlbnRfcG9pbnQsIHBhcnRbMF0pOgogICAgICAgICAgICAgICAgcGFydC5yZXZlcnNlKCkKICAgICAgICAgICAgICAgIGZpcnN0X25vZGUsIGxhc3Rfbm9kZSA9IGxhc3Rfbm9kZSwgZmlyc3Rfbm9kZQoKICAgICAgICBvcmRlcmVkLmFwcGVuZChwYXJ0KQogICAgICAgIHJlbWFpbmluZy5yZW1vdmUoZWRnZV9pbmRleCkKICAgICAgICBjdXJyZW50X25vZGUgPSBsYXN0X25vZGUKICAgICAgICBjdXJyZW50X3BvaW50ID0gcGFydFstMV0KCiAgICByZXR1cm4gb3JkZXJlZAoKCmRlZiBmbGF0dGVuKHBhcnRzOiBsaXN0W2xpc3RbdHVwbGVbZmxvYXQsIGZsb2F0XV1dKSAtPiBsaXN0W3R1cGxlW2Zsb2F0LCBmbG9hdF1dOgogICAgcG9pbnRzOiBsaXN0W3R1cGxlW2Zsb2F0LCBmbG9hdF1dID0gW10KICAgIGZvciBwYXJ0IGluIHBhcnRzOgogICAgICAgIGlmIG5vdCBwYXJ0OgogICAgICAgICAgICBjb250aW51ZQogICAgICAgIGZvciBwb2ludCBpbiBwYXJ0OgogICAgICAgICAgICBpZiBub3QgcG9pbnRzIG9yIHBvaW50ICE9IHBvaW50c1stMV06CiAgICAgICAgICAgICAgICBwb2ludHMuYXBwZW5kKHBvaW50KQogICAgcmV0dXJuIHBvaW50cwoKCmRlZiByZXNhbXBsZShwb2ludHM6IGxpc3RbdHVwbGVbZmxvYXQsIGZsb2F0XV0sIG1heF9wb2ludHM6IGludCA9IDUwMCkgLT4gbGlzdFtsaXN0W2Zsb2F0XV06CiAgICBpZiBsZW4ocG9pbnRzKSA8PSBtYXhfcG9pbnRzOgogICAgICAgIHNlbGVjdGVkID0gcG9pbnRzCiAgICBlbHNlOgogICAgICAgIHN0ZXAgPSAobGVuKHBvaW50cykgLSAxKSAvIChtYXhfcG9pbnRzIC0gMSkKICAgICAgICBzZWxlY3RlZCA9IFtwb2ludHNbcm91bmQoaSAqIHN0ZXApXSBmb3IgaSBpbiByYW5nZShtYXhfcG9pbnRzKV0KICAgIHJldHVybiBbW3JvdW5kKGxhdCwgNyksIHJvdW5kKGxuZywgNyldIGZvciBsYXQsIGxuZyBpbiBzZWxlY3RlZF0KCgpkZWYgdmFsaWRhdGUocG9pbnRzOiBsaXN0W2xpc3RbZmxvYXRdXSkgLT4gTm9uZToKICAgIGlmIGxlbihwb2ludHMpIDwgMjoKICAgICAgICByYWlzZSBWYWx1ZUVycm9yKCJmZXdlciB0aGFuIHR3byBwb2ludHMiKQogICAgZm9yIGxhdCwgbG5nIGluIHBvaW50czoKICAgICAgICBpZiBub3QgKDQ1LjAgPD0gbGF0IDw9IDQ4LjUgYW5kIDUuMCA8PSBsbmcgPD0gMTEuNSk6CiAgICAgICAgICAgIHJhaXNlIFZhbHVlRXJyb3IoZiJwb2ludCBvdXRzaWRlIFN3aXR6ZXJsYW5kL0xpZWNodGVuc3RlaW46IHtsYXR9LHtsbmd9IikKICAgICAgICBpZiBub3QgKG1hdGguaXNmaW5pdGUobGF0KSBhbmQgbWF0aC5pc2Zpbml0ZShsbmcpKToKICAgICAgICAgICAgcmFpc2UgVmFsdWVFcnJvcigibm9uLWZpbml0ZSBjb29yZGluYXRlIikKCiAgICAjIEEganVtcCBvdmVyIDIga20gaXMgYWxtb3N0IGNlcnRhaW5seSBhIG1hbGZvcm1lZC9zdGl0Y2hpbmcgYXJ0ZWZhY3QuCiAgICBmb3IgZmlyc3QsIHNlY29uZCBpbiB6aXAocG9pbnRzLCBwb2ludHNbMTpdKToKICAgICAgICBsYXQxLCBsbmcxID0gZmlyc3QKICAgICAgICBsYXQyLCBsbmcyID0gc2Vjb25kCiAgICAgICAgbWV0cmVzID0gbWF0aC5oeXBvdCgobGF0MiAtIGxhdDEpICogMTExXzMyMCwgKGxuZzIgLSBsbmcxKSAqIDc1XzAwMCkKICAgICAgICBpZiBtZXRyZXMgPiAyXzAwMDoKICAgICAgICAgICAgcmFpc2UgVmFsdWVFcnJvcihmImltcGxhdXNpYmxlIGdlb21ldHJ5IGp1bXA6IHtyb3VuZChtZXRyZXMpfW0iKQoKCmRlZiBvcGVuX2RhdGFiYXNlKCkgLT4gdHVwbGVbc3FsaXRlMy5Db25uZWN0aW9uLCBzdHJdOgogICAgY29uZmlndXJlZCA9IG9zLmVudmlyb24uZ2V0KCJTQ0hXRUlaTU9CSUxfV0FOREVSX0dQS0ciLCAiIikuc3RyaXAoKQogICAgcGF0aCA9IGNvbmZpZ3VyZWQgb3Igb3MucGF0aC5qb2luKHRlbXBmaWxlLmdldHRlbXBkaXIoKSwgInNhZ2F0cmFpbC13YW5kZXIuZ3BrZyIpCiAgICBpZiBub3Qgb3MucGF0aC5leGlzdHMocGF0aCk6CiAgICAgICAgcmVxdWVzdCA9IHVybGxpYi5yZXF1ZXN0LlJlcXVlc3QoCiAgICAgICAgICAgIFNPVVJDRV9VUkwsCiAgICAgICAgICAgIGhlYWRlcnM9eyJVc2VyLUFnZW50IjogIlNhZ2FUcmFpbC8xLjAgKG9mZmljaWFsIHJvdXRlIHJlc3RvcmF0aW9uKSJ9LAogICAgICAgICkKICAgICAgICB3aXRoIHVybGxpYi5yZXF1ZXN0LnVybG9wZW4ocmVxdWVzdCwgdGltZW91dD0xODApIGFzIHJlc3BvbnNlLCBvcGVuKHBhdGgsICJ3YiIpIGFzIHRhcmdldDoKICAgICAgICAgICAgd2hpbGUgY2h1bmsgOj0gcmVzcG9uc2UucmVhZCgxMDI0ICogMTAyNCk6CiAgICAgICAgICAgICAgICB0YXJnZXQud3JpdGUoY2h1bmspCiAgICByZXR1cm4gc3FsaXRlMy5jb25uZWN0KGYiZmlsZTp7cGF0aH0/bW9kZT1ybyIsIHVyaT1UcnVlKSwgcGF0aAoKCmRlZiBleHRyYWN0KCkgLT4gbGlzdFtkaWN0W3N0ciwgb2JqZWN0XV06CiAgICBkYiwgXyA9IG9wZW5fZGF0YWJhc2UoKQogICAgdHJ5OgogICAgICAgIHBsYWNlaG9sZGVycyA9ICIsIi5qb2luKCI/IiBmb3IgXyBpbiBST1VURV9SRUZTKQogICAgICAgIHJvd3MgPSBkYi5leGVjdXRlKAogICAgICAgICAgICBmIlNFTEVDVCBOclIsIE5yRXRhcHBlLCBnZW9tLCBEaXN0YW56RSBGUk9NIEV0YXBwZSAiCiAgICAgICAgICAgIGYiV0hFUkUgTnJSIElOICh7cGxhY2Vob2xkZXJzfSkgT1JERVIgQlkgTnJSLCBOckV0YXBwZSIsCiAgICAgICAgICAgIFJPVVRFX1JFRlMsCiAgICAgICAgKS5mZXRjaGFsbCgpCiAgICAgICAgYnlfcmVmOiBkaWN0W3N0ciwgbGlzdFt0dXBsZVtpbnQsIGJ5dGVzLCBpbnQgfCBOb25lXV1dID0ge30KICAgICAgICBmb3IgcmVmLCBzdGFnZSwgZ2VvbWV0cnksIGRpc3RhbmNlIGluIHJvd3M6CiAgICAgICAgICAgIGJ5X3JlZi5zZXRkZWZhdWx0KHN0cihyZWYpLCBbXSkuYXBwZW5kKChpbnQoc3RhZ2UpLCBnZW9tZXRyeSwgZGlzdGFuY2UpKQoKICAgICAgICAjIEV2ZXJ5IG1pc3Npbmcgcm91dGUgY3VycmVudGx5IGhhcyBhbiBFdGFwcGUuICBLZWVwIFJvdXRlIGFzIGEKICAgICAgICAjIGRlZmVuc2l2ZSBmYWxsYmFjayBmb3IgZnV0dXJlIG9mZmljaWFsIGV4cG9ydHMgd2l0aG91dCBFdGFwcGUgcm93cy4KICAgICAgICByb3V0ZV9yb3dzID0gZGIuZXhlY3V0ZSgKICAgICAgICAgICAgZiJTRUxFQ1QgTnJSLCBnZW9tLCBMYWVuZ2VSIEZST00gUm91dGUgV0hFUkUgTnJSIElOICh7cGxhY2Vob2xkZXJzfSkiLAogICAgICAgICAgICBST1VURV9SRUZTLAogICAgICAgICkuZmV0Y2hhbGwoKQogICAgICAgIGJ5X3JvdXRlID0ge3N0cihyZWYpOiAoZ2VvbWV0cnksIGRpc3RhbmNlKSBmb3IgcmVmLCBnZW9tZXRyeSwgZGlzdGFuY2UgaW4gcm91dGVfcm93c30KCiAgICAgICAgcmVzdWx0OiBsaXN0W2RpY3Rbc3RyLCBvYmplY3RdXSA9IFtdCiAgICAgICAgZm9yIHJlZiBpbiBST1VURV9SRUZTOgogICAgICAgICAgICBwYXJ0c19ieV9zdGFnZTogZGljdFtpbnQsIGxpc3RbbGlzdFt0dXBsZVtmbG9hdCwgZmxvYXRdXV1dID0ge30KICAgICAgICAgICAgb2ZmaWNpYWxfZGlzdGFuY2U6IGludCB8IE5vbmUgPSBOb25lCiAgICAgICAgICAgIHN0YWdlcyA9IGJ5X3JlZi5nZXQocmVmLCBbXSkKICAgICAgICAgICAgaWYgc3RhZ2VzOgogICAgICAgICAgICAgICAgZm9yIHN0YWdlLCBibG9iLCBkaXN0YW5jZSBpbiBzdGFnZXM6CiAgICAgICAgICAgICAgICAgICAgcGFydHNfYnlfc3RhZ2Uuc2V0ZGVmYXVsdChzdGFnZSwgW10pLmV4dGVuZCh1bnBhY2tfZ2VvbWV0cnkoYmxvYikpCiAgICAgICAgICAgICAgICAgICAgaWYgb2ZmaWNpYWxfZGlzdGFuY2UgaXMgTm9uZSBhbmQgZGlzdGFuY2UgaXMgbm90IE5vbmU6CiAgICAgICAgICAgICAgICAgICAgICAgIG9mZmljaWFsX2Rpc3RhbmNlID0gaW50KGRpc3RhbmNlKQogICAgICAgICAgICBlbGlmIHJlZiBpbiBieV9yb3V0ZToKICAgICAgICAgICAgICAgIGJsb2IsIG9mZmljaWFsX2Rpc3RhbmNlID0gYnlfcm91dGVbcmVmXQogICAgICAgICAgICAgICAgcGFydHNfYnlfc3RhZ2VbMF0gPSB1bnBhY2tfZ2VvbWV0cnkoYmxvYikKICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgIHJhaXNlIFZhbHVlRXJyb3IoZiJvZmZpY2lhbCBkYXRhc2V0IGhhcyBubyByb3V0ZSB7cmVmfSIpCgogICAgICAgICAgICBvcmRlcmVkX3BhcnRzOiBsaXN0W2xpc3RbdHVwbGVbZmxvYXQsIGZsb2F0XV1dID0gW10KICAgICAgICAgICAgcHJldmlvdXNfZW5kOiB0dXBsZVtmbG9hdCwgZmxvYXRdIHwgTm9uZSA9IE5vbmUKICAgICAgICAgICAgZm9yIHN0YWdlIGluIHNvcnRlZChwYXJ0c19ieV9zdGFnZSk6CiAgICAgICAgICAgICAgICBzdGFnZV9wYXJ0cyA9IG9yZGVyX3BhcnRzKHBhcnRzX2J5X3N0YWdlW3N0YWdlXSwgcHJldmlvdXNfZW5kKQogICAgICAgICAgICAgICAgb3JkZXJlZF9wYXJ0cy5leHRlbmQoc3RhZ2VfcGFydHMpCiAgICAgICAgICAgICAgICBpZiBzdGFnZV9wYXJ0czoKICAgICAgICAgICAgICAgICAgICBwcmV2aW91c19lbmQgPSBzdGFnZV9wYXJ0c1stMV1bLTFdCgogICAgICAgICAgICBsdjk1X3BvaW50cyA9IGZsYXR0ZW4ob3JkZXJlZF9wYXJ0cykKICAgICAgICAgICAgcG9pbnRzID0gcmVzYW1wbGUoW2x2OTVfdG9fd2dzODQoZSwgbikgZm9yIGUsIG4gaW4gbHY5NV9wb2ludHNdKQogICAgICAgICAgICB2YWxpZGF0ZShwb2ludHMpCiAgICAgICAgICAgIHJlc3VsdC5hcHBlbmQoCiAgICAgICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAgICAgInJlZiI6IHJlZiwKICAgICAgICAgICAgICAgICAgICAicG9pbnRzIjogcG9pbnRzLAogICAgICAgICAgICAgICAgICAgICJvZmZpY2lhbERpc3RhbmNlS20iOiBvZmZpY2lhbF9kaXN0YW5jZSwKICAgICAgICAgICAgICAgICAgICAic291cmNlIjogIlNjaHdlaXpNb2JpbCBPcGVuIERhdGEgwrcgd2FuZGVyLmdwa2ciLAogICAgICAgICAgICAgICAgICAgICJzb3VyY2VVcmwiOiBTT1VSQ0VfVVJMLAogICAgICAgICAgICAgICAgfQogICAgICAgICAgICApCiAgICAgICAgcmV0dXJuIHJlc3VsdAogICAgZmluYWxseToKICAgICAgICBkYi5jbG9zZSgpCgoKaWYgX19uYW1lX18gPT0gIl9fbWFpbl9fIjoKICAgIHBheWxvYWQgPSBleHRyYWN0X2RpZmZpY3VsdHkoKSBpZiBsZW4oc3lzLmFyZ3YpID4gMSBhbmQgc3lzLmFyZ3ZbMV0gPT0gIi0tZGlmZmljdWx0eSIgZWxzZSBleHRyYWN0KCkKICAgIGpzb24uZHVtcChwYXlsb2FkLCBzeXMuc3Rkb3V0LCBzZXBhcmF0b3JzPSgiLCIsICI6IiksIGVuc3VyZV9hc2NpaT1GYWxzZSk=
+#!/usr/bin/env python3
+"""Extract the missing local Wanderland geometries from the official GeoPackage.
+
+The GeoPackage is the official SchweizMobil Open Data export.  This small
+stdlib-only extractor is intentionally run only by the protected admin
+restore job; it is not part of the request path used by hikers.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+import os
+import sqlite3
+import struct
+import sys
+import tempfile
+import urllib.request
+
+
+SOURCE_URL = "https://data.schweizmobil.ch/gpkg_export/wander.gpkg"
+ENDPOINT_TOLERANCE_M = 10.0
+ROUTE_REFS = (
+    "447 458 459 463 464 472 483 583 584 701 737 738 739 748 749 751 "
+    "753 754 759 763 769 787 789 826 848 857 858 864 866 899 931 932 933 "
+    "966 967 968 973 976 979 981 994 995 996 998 999"
+).split()
+
+
+def extract_difficulty() -> list[dict[str, object]]:
+    """Exportiert die offiziellen SchweizMobil-Routen-Kategorien ohne Geometrie.
+
+    KonditionR und TechnikR sind die von SchweizMobil gepflegten Kategorien.
+    Sie sind absichtlich keine SAC-Werte und werden im API-Datenmodell getrennt
+    von `sac` gespeichert.
+    """
+    db, _ = open_database()
+    try:
+        rows = db.execute(
+            "SELECT NrR, KonditionR, TechnikR, Typ_TR, LvArt FROM Route "
+            "WHERE NrR IS NOT NULL"
+        ).fetchall()
+        return [
+            {
+                "ref": str(ref),
+                "condition": str(condition) if condition else None,
+                "technique": str(technique) if technique else None,
+                "routeType": str(route_type) if route_type else None,
+                "level": str(level) if level else None,
+                "source": "SchweizMobil Open Data · wander.gpkg",
+                "sourceUrl": SOURCE_URL,
+            }
+            for ref, condition, technique, route_type, level in rows
+        ]
+    finally:
+        db.close()
+
+
+def unpack_geometry(blob: bytes) -> list[list[tuple[float, float]]]:
+    if blob[:2] != b"GP":
+        raise ValueError("not a GeoPackage geometry")
+    flags = blob[3]
+    envelope_type = (flags >> 1) & 7
+    offset = 8 + {0: 0, 1: 32, 2: 48, 3: 48, 4: 64}[envelope_type]
+
+    def read_geometry() -> list[list[tuple[float, float]]]:
+        nonlocal offset
+        endian_flag = blob[offset]
+        offset += 1
+        endian = "<" if endian_flag else ">"
+        geometry_type = struct.unpack_from(endian + "I", blob, offset)[0]
+        offset += 4
+        base_type = geometry_type % 1000
+        dimensions = 3 if 1000 <= geometry_type < 2000 else 2
+
+        if base_type == 2:  # LINESTRING
+            count = struct.unpack_from(endian + "I", blob, offset)[0]
+            offset += 4
+            points: list[tuple[float, float]] = []
+            for _ in range(count):
+                values = struct.unpack_from(endian + ("d" * dimensions), blob, offset)
+                offset += 8 * dimensions
+                easting, northing = values[:2]
+                points.append((easting, northing))
+            return [points]
+
+        if base_type == 5:  # MULTILINESTRING
+            count = struct.unpack_from(endian + "I", blob, offset)[0]
+            offset += 4
+            parts: list[list[tuple[float, float]]] = []
+            for _ in range(count):
+                parts.extend(read_geometry())
+            return parts
+
+        raise ValueError(f"unsupported WKB geometry type {geometry_type}")
+
+    return read_geometry()
+
+
+def lv95_to_wgs84(easting: float, northing: float) -> tuple[float, float]:
+    """Approximate EPSG:2056 -> EPSG:4326 conversion used by swisstopo."""
+    y = (easting - 2_600_000.0) / 1_000_000.0
+    x = (northing - 1_200_000.0) / 1_000_000.0
+    lat = (
+        16.9023892
+        + 3.238272 * x
+        - 0.270978 * y * y
+        - 0.002528 * x * x
+        - 0.0447 * y * y * x
+        - 0.0140 * x * x * x
+    )
+    lng = (
+        2.6779094
+        + 4.728982 * y
+        + 0.791484 * y * x
+        + 0.1306 * y * x * x
+        - 0.0436 * y * y * y
+    )
+    return lat * 100.0 / 36.0, lng * 100.0 / 36.0
+
+
+def endpoint_distance_m(
+    first: tuple[float, float], second: tuple[float, float]
+) -> float:
+    return math.hypot(first[0] - second[0], first[1] - second[1])
+
+
+def order_parts(
+    parts: list[list[tuple[float, float]]],
+    start_hint: tuple[float, float] | None = None,
+) -> list[list[tuple[float, float]]]:
+    """Order connected LineString parts by their shared LV95 endpoints.
+
+    The GeoPackage does not guarantee that MultiLineString members are stored
+    in traversal order. A small endpoint graph avoids flattening those members
+    in storage order, which can create artificial kilometre-sized jumps.
+    """
+    usable = [part for part in parts if len(part) >= 2]
+    if len(usable) <= 1:
+        return usable
+
+    endpoint_nodes: list[tuple[float, float]] = []
+    edge_nodes: list[tuple[int, int]] = []
+
+    def node_for(point: tuple[float, float]) -> int:
+        for index, existing in enumerate(endpoint_nodes):
+            if endpoint_distance_m(point, existing) <= ENDPOINT_TOLERANCE_M:
+                return index
+        endpoint_nodes.append(point)
+        return len(endpoint_nodes) - 1
+
+    for part in usable:
+        edge_nodes.append((node_for(part[0]), node_for(part[-1])))
+
+    adjacency: dict[int, list[int]] = {}
+    for edge_index, (first_node, last_node) in enumerate(edge_nodes):
+        adjacency.setdefault(first_node, []).append(edge_index)
+        adjacency.setdefault(last_node, []).append(edge_index)
+
+    remaining = set(range(len(usable)))
+    ordered: list[list[tuple[float, float]]] = []
+    current_point = start_hint
+    current_node: int | None = None
+
+    def choose_start_edge() -> tuple[int, int]:
+        if current_point is not None:
+            best = min(
+                (
+                    (
+                        endpoint_distance_m(current_point, point),
+                        edge_index,
+                        node,
+                    )
+                    for edge_index in remaining
+                    for node in edge_nodes[edge_index]
+                    for point in [endpoint_nodes[node]]
+                ),
+                key=lambda item: item[0],
+            )
+            return best[1], best[2]
+        edge_index = min(remaining)
+        return edge_index, edge_nodes[edge_index][0]
+
+    while remaining:
+        if current_node is None or not any(
+            edge_index in remaining for edge_index in adjacency.get(current_node, [])
+        ):
+            edge_index, current_node = choose_start_edge()
+        else:
+            candidates = [
+                edge_index
+                for edge_index in adjacency[current_node]
+                if edge_index in remaining
+            ]
+            # A valid route is normally a chain or loop. For a branch, keep
+            # the deterministic source order rather than inventing a branch
+            # ranking from geometry.
+            edge_index = min(candidates)
+
+        first_node, last_node = edge_nodes[edge_index]
+        part = list(usable[edge_index])
+        if last_node == current_node and first_node != current_node:
+            part.reverse()
+            first_node, last_node = last_node, first_node
+        elif first_node != current_node and last_node != current_node:
+            # A disconnected component starts at the endpoint nearest the
+            # previous component. This remains visible to validate().
+            if current_point is not None and endpoint_distance_m(
+                current_point, part[-1]
+            ) < endpoint_distance_m(current_point, part[0]):
+                part.reverse()
+                first_node, last_node = last_node, first_node
+
+        ordered.append(part)
+        remaining.remove(edge_index)
+        current_node = last_node
+        current_point = part[-1]
+
+    return ordered
+
+
+def flatten(parts: list[list[tuple[float, float]]]) -> list[tuple[float, float]]:
+    points: list[tuple[float, float]] = []
+    for part in parts:
+        if not part:
+            continue
+        for point in part:
+            if not points or point != points[-1]:
+                points.append(point)
+    return points
+
+
+def resample(points: list[tuple[float, float]], max_points: int = 500) -> list[list[float]]:
+    if len(points) <= max_points:
+        selected = points
+    else:
+        step = (len(points) - 1) / (max_points - 1)
+        selected = [points[round(i * step)] for i in range(max_points)]
+    return [[round(lat, 7), round(lng, 7)] for lat, lng in selected]
+
+
+def validate(points: list[list[float]]) -> None:
+    if len(points) < 2:
+        raise ValueError("fewer than two points")
+    for lat, lng in points:
+        if not (45.0 <= lat <= 48.5 and 5.0 <= lng <= 11.5):
+            raise ValueError(f"point outside Switzerland/Liechtenstein: {lat},{lng}")
+        if not (math.isfinite(lat) and math.isfinite(lng)):
+            raise ValueError("non-finite coordinate")
+
+    # A jump over 2 km is almost certainly a malformed/stitching artefact.
+    for first, second in zip(points, points[1:]):
+        lat1, lng1 = first
+        lat2, lng2 = second
+        metres = math.hypot((lat2 - lat1) * 111_320, (lng2 - lng1) * 75_000)
+        if metres > 2_000:
+            raise ValueError(f"implausible geometry jump: {round(metres)}m")
+
+
+def open_database() -> tuple[sqlite3.Connection, str]:
+    configured = os.environ.get("SCHWEIZMOBIL_WANDER_GPKG", "").strip()
+    path = configured or os.path.join(tempfile.gettempdir(), "sagatrail-wander.gpkg")
+    if not os.path.exists(path):
+        request = urllib.request.Request(
+            SOURCE_URL,
+            headers={"User-Agent": "SagaTrail/1.0 (official route restoration)"},
+        )
+        with urllib.request.urlopen(request, timeout=180) as response, open(path, "wb") as target:
+            while chunk := response.read(1024 * 1024):
+                target.write(chunk)
+    return sqlite3.connect(f"file:{path}?mode=ro", uri=True), path
+
+
+def extract() -> list[dict[str, object]]:
+    db, _ = open_database()
+    try:
+        placeholders = ",".join("?" for _ in ROUTE_REFS)
+        rows = db.execute(
+            f"SELECT NrR, NrEtappe, geom, DistanzE FROM Etappe "
+            f"WHERE NrR IN ({placeholders}) ORDER BY NrR, NrEtappe",
+            ROUTE_REFS,
+        ).fetchall()
+        by_ref: dict[str, list[tuple[int, bytes, int | None]]] = {}
+        for ref, stage, geometry, distance in rows:
+            by_ref.setdefault(str(ref), []).append((int(stage), geometry, distance))
+
+        # Every missing route currently has an Etappe.  Keep Route as a
+        # defensive fallback for future official exports without Etappe rows.
+        route_rows = db.execute(
+            f"SELECT NrR, geom, LaengeR FROM Route WHERE NrR IN ({placeholders})",
+            ROUTE_REFS,
+        ).fetchall()
+        by_route = {str(ref): (geometry, distance) for ref, geometry, distance in route_rows}
+
+        result: list[dict[str, object]] = []
+        for ref in ROUTE_REFS:
+            parts_by_stage: dict[int, list[list[tuple[float, float]]]] = {}
+            official_distance: int | None = None
+            stages = by_ref.get(ref, [])
+            if stages:
+                for stage, blob, distance in stages:
+                    parts_by_stage.setdefault(stage, []).extend(unpack_geometry(blob))
+                    if official_distance is None and distance is not None:
+                        official_distance = int(distance)
+            elif ref in by_route:
+                blob, official_distance = by_route[ref]
+                parts_by_stage[0] = unpack_geometry(blob)
+            else:
+                raise ValueError(f"official dataset has no route {ref}")
+
+            ordered_parts: list[list[tuple[float, float]]] = []
+            previous_end: tuple[float, float] | None = None
+            for stage in sorted(parts_by_stage):
+                stage_parts = order_parts(parts_by_stage[stage], previous_end)
+                ordered_parts.extend(stage_parts)
+                if stage_parts:
+                    previous_end = stage_parts[-1][-1]
+
+            lv95_points = flatten(ordered_parts)
+            points = resample([lv95_to_wgs84(e, n) for e, n in lv95_points])
+            validate(points)
+            result.append(
+                {
+                    "ref": ref,
+                    "points": points,
+                    "officialDistanceKm": official_distance,
+                    "source": "SchweizMobil Open Data · wander.gpkg",
+                    "sourceUrl": SOURCE_URL,
+                }
+            )
+        return result
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    payload = extract_difficulty() if len(sys.argv) > 1 and sys.argv[1] == "--difficulty" else extract()
+    json.dump(payload, sys.stdout, separators=(",", ":"), ensure_ascii=False)

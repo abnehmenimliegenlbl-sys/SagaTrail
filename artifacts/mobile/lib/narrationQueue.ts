@@ -1,1 +1,53 @@
-ZXhwb3J0IHR5cGUgUmVwbGFjZWFibGVOYXJyYXRpb25DYXRlZ29yeSA9ICJzdXJmYWNlIiB8ICJ0ZXJyYWluIjsKCmV4cG9ydCB0eXBlIE5hcnJhdGlvbktpbmQgPQogIHwgImNoYXB0ZXIiCiAgfCAiaW50cm9kdWN0aW9uIgogIHwgInBvaSIKICB8ICJkZWNpc2lvblByb21wdCIKICB8ICJmZWVkYmFjayIKICB8ICJuYXZpZ2F0aW9uIgogIHwgInBhcnRuZXIiCiAgfCAidGVycmFpbiIKICB8ICJzdXJmYWNlIgogIHwgIndhbGtUb1N0YXJ0IjsKCmV4cG9ydCB0eXBlIE5hcnJhdGlvblF1ZXVlSXRlbSA9IHsKICB0ZXh0OiBzdHJpbmc7CiAgb25GaW5pc2hlZD86ICgpID0+IHZvaWQ7CiAgYWxsb3dEdXJpbmdTdGFydHVwPzogYm9vbGVhbjsKICB1c2VPcGVuQUk/OiBib29sZWFuOwogIHByZUZldGNoZWRVcmk/OiBzdHJpbmc7CiAgcmVwbGFjZVF1ZXVlZENhdGVnb3J5PzogUmVwbGFjZWFibGVOYXJyYXRpb25DYXRlZ29yeTsKICBraW5kPzogTmFycmF0aW9uS2luZDsKICBjaGFwdGVySW5kZXg/OiBudW1iZXI7CiAgZGlzcGxheVRpdGxlPzogc3RyaW5nOwogIHRyYWNlSWQ/OiBzdHJpbmc7CiAgYXVkaW9Sb2xlPzogImRlY2lzaW9uLXByb21wdCIgfCAiZGVjaXNpb24tYWNrIiB8ICJkZWNpc2lvbi1mZWVkYmFjayI7Cn07CgovKioKICogU3RhdHVzbWVsZHVuZ2VuIHNpbmQgTW9tZW50YXVmbmFobWVuIHVuZCBkdWVyZmVuIGtlaW5lbiB2ZXJhbHRldGVuIEZJRk8tU3RhcGVsCiAqIGJpbGRlbi4gTmljaHQgZXJzZXR6YmFyZSBFcnphZWhsdW5nZW4sIFBPSXMgdW5kIEVudHNjaGVpZHVuZ2VuIGJsZWliZW4gRklGTy4KICovCmV4cG9ydCBmdW5jdGlvbiBlbnF1ZXVlTmFycmF0aW9uSXRlbSgKICBxdWV1ZTogTmFycmF0aW9uUXVldWVJdGVtW10sCiAgZW50cnk6IE5hcnJhdGlvblF1ZXVlSXRlbSwKKTogdm9pZCB7CiAgY29uc3QgY2F0ZWdvcnkgPSBlbnRyeS5yZXBsYWNlUXVldWVkQ2F0ZWdvcnk7CiAgaWYgKGNhdGVnb3J5KSB7CiAgICBjb25zdCBxdWV1ZWRJbmRleCA9IHF1ZXVlLmZpbmRJbmRleCgKICAgICAgKHF1ZXVlZCkgPT4gcXVldWVkLnJlcGxhY2VRdWV1ZWRDYXRlZ29yeSA9PT0gY2F0ZWdvcnksCiAgICApOwogICAgaWYgKHF1ZXVlZEluZGV4ID49IDApIHsKICAgICAgcXVldWVbcXVldWVkSW5kZXhdID0gZW50cnk7CiAgICAgIGZvciAobGV0IGluZGV4ID0gcXVldWUubGVuZ3RoIC0gMTsgaW5kZXggPiBxdWV1ZWRJbmRleDsgaW5kZXggLT0gMSkgewogICAgICAgIGlmIChxdWV1ZVtpbmRleF0/LnJlcGxhY2VRdWV1ZWRDYXRlZ29yeSA9PT0gY2F0ZWdvcnkpIHsKICAgICAgICAgIHF1ZXVlLnNwbGljZShpbmRleCwgMSk7CiAgICAgICAgfQogICAgICB9CiAgICAgIHJldHVybjsKICAgIH0KICB9CiAgcXVldWUucHVzaChlbnRyeSk7Cn0K
+export type ReplaceableNarrationCategory = "surface" | "terrain";
+
+export type NarrationKind =
+  | "chapter"
+  | "introduction"
+  | "poi"
+  | "decisionPrompt"
+  | "feedback"
+  | "navigation"
+  | "partner"
+  | "terrain"
+  | "surface"
+  | "walkToStart";
+
+export type NarrationQueueItem = {
+  text: string;
+  onFinished?: () => void;
+  allowDuringStartup?: boolean;
+  useOpenAI?: boolean;
+  preFetchedUri?: string;
+  replaceQueuedCategory?: ReplaceableNarrationCategory;
+  kind?: NarrationKind;
+  chapterIndex?: number;
+  displayTitle?: string;
+  traceId?: string;
+  audioRole?: "decision-prompt" | "decision-ack" | "decision-feedback";
+};
+
+/**
+ * Statusmeldungen sind Momentaufnahmen und duerfen keinen veralteten FIFO-Stapel
+ * bilden. Nicht ersetzbare Erzaehlungen, POIs und Entscheidungen bleiben FIFO.
+ */
+export function enqueueNarrationItem(
+  queue: NarrationQueueItem[],
+  entry: NarrationQueueItem,
+): void {
+  const category = entry.replaceQueuedCategory;
+  if (category) {
+    const queuedIndex = queue.findIndex(
+      (queued) => queued.replaceQueuedCategory === category,
+    );
+    if (queuedIndex >= 0) {
+      queue[queuedIndex] = entry;
+      for (let index = queue.length - 1; index > queuedIndex; index -= 1) {
+        if (queue[index]?.replaceQueuedCategory === category) {
+          queue.splice(index, 1);
+        }
+      }
+      return;
+    }
+  }
+  queue.push(entry);
+}

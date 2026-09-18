@@ -1,1 +1,42 @@
-Y29uc3QgYXNzZXJ0ID0gcmVxdWlyZSgibm9kZTphc3NlcnQvc3RyaWN0Iik7CmNvbnN0IHRlc3QgPSByZXF1aXJlKCJub2RlOnRlc3QiKTsKCmNvbnN0IHsgZXN0aW1hdGVNaW51dGVzLCBtYXBSb3V0ZVJvdyB9ID0gcmVxdWlyZSgiLi9yb3V0ZV9zeW5jX21hcHBpbmcuY2pzIik7CgpmdW5jdGlvbiBzb3VyY2VSb3cob3ZlcnJpZGVzID0ge30pIHsKICByZXR1cm4gewogICAgaWQ6ICJvc20tdGVzdCIsCiAgICBzYWdhX2lkOiAic2FnYS10ZXN0IiwKICAgIGNhbnRvbjogIlpIIiwKICAgIGRpc3RhbmNlX2ttOiAzLjcsCiAgICBkaXN0YW5jZV90YWdfa206ICI4LjIiLAogICAgYXNjZW50X206IDEyNTAsCiAgICBtaW51dGVzOiA2MCwKICAgIC4uLm92ZXJyaWRlcywKICB9Owp9Cgp0ZXN0KCJ0cmFuc2ZlcnMgdGhlIG9mZmljaWFsIGRpc3RhbmNlIHRhZyBhcyBhIG51bWJlciIsICgpID0+IHsKICBjb25zdCBtYXBwZWQgPSBtYXBSb3V0ZVJvdyhzb3VyY2VSb3coKSk7CgogIGFzc2VydC5lcXVhbChtYXBwZWQuZGlzdGFuY2VLbSwgMy43KTsKICBhc3NlcnQuZXF1YWwobWFwcGVkLmRpc3RhbmNlVGFnS20sIDguMik7CiAgYXNzZXJ0LmVxdWFsKG1hcHBlZC5taW51dGVzLCBlc3RpbWF0ZU1pbnV0ZXMoOC4yLCAxMjUwKSk7Cn0pOwoKdGVzdCgiZmFsbHMgYmFjayB0byBnZW9tZXRyeSBkaXN0YW5jZSBvbmx5IHdoZW4gbm8gb2ZmaWNpYWwgdGFnIGV4aXN0cyIsICgpID0+IHsKICBjb25zdCBtYXBwZWQgPSBtYXBSb3V0ZVJvdyhzb3VyY2VSb3coeyBkaXN0YW5jZV90YWdfa206IG51bGwgfSkpOwoKICBhc3NlcnQuZXF1YWwobWFwcGVkLmRpc3RhbmNlVGFnS20sIG51bGwpOwogIGFzc2VydC5lcXVhbChtYXBwZWQubWludXRlcywgZXN0aW1hdGVNaW51dGVzKDMuNywgMTI1MCkpOwp9KTsKCnRlc3QoImRvZXMgbm90IHNlbmQgaW52YWxpZCBudW1lcmljIHRhZ3MgYXMgTmFOIiwgKCkgPT4gewogIGNvbnN0IG1hcHBlZCA9IG1hcFJvdXRlUm93KAogICAgc291cmNlUm93KHsgZGlzdGFuY2VfdGFnX2ttOiAibm90LWEtbnVtYmVyIiwgZGlzdGFuY2Vfa206ICI0LjUiIH0pLAogICk7CgogIGFzc2VydC5lcXVhbChtYXBwZWQuZGlzdGFuY2VUYWdLbSwgbnVsbCk7CiAgYXNzZXJ0LmVxdWFsKG1hcHBlZC5kaXN0YW5jZUttLCA0LjUpOwogIGFzc2VydC5lcXVhbChtYXBwZWQubWludXRlcywgZXN0aW1hdGVNaW51dGVzKDQuNSwgMTI1MCkpOwp9KTs=
+const assert = require("node:assert/strict");
+const test = require("node:test");
+
+const { estimateMinutes, mapRouteRow } = require("./route_sync_mapping.cjs");
+
+function sourceRow(overrides = {}) {
+  return {
+    id: "osm-test",
+    saga_id: "saga-test",
+    canton: "ZH",
+    distance_km: 3.7,
+    distance_tag_km: "8.2",
+    ascent_m: 1250,
+    minutes: 60,
+    ...overrides,
+  };
+}
+
+test("transfers the official distance tag as a number", () => {
+  const mapped = mapRouteRow(sourceRow());
+
+  assert.equal(mapped.distanceKm, 3.7);
+  assert.equal(mapped.distanceTagKm, 8.2);
+  assert.equal(mapped.minutes, estimateMinutes(8.2, 1250));
+});
+
+test("falls back to geometry distance only when no official tag exists", () => {
+  const mapped = mapRouteRow(sourceRow({ distance_tag_km: null }));
+
+  assert.equal(mapped.distanceTagKm, null);
+  assert.equal(mapped.minutes, estimateMinutes(3.7, 1250));
+});
+
+test("does not send invalid numeric tags as NaN", () => {
+  const mapped = mapRouteRow(
+    sourceRow({ distance_tag_km: "not-a-number", distance_km: "4.5" }),
+  );
+
+  assert.equal(mapped.distanceTagKm, null);
+  assert.equal(mapped.distanceKm, 4.5);
+  assert.equal(mapped.minutes, estimateMinutes(4.5, 1250));
+});

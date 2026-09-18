@@ -1,1 +1,104 @@
-aW1wb3J0IEFzeW5jU3RvcmFnZSBmcm9tICJAcmVhY3QtbmF0aXZlLWFzeW5jLXN0b3JhZ2UvYXN5bmMtc3RvcmFnZSI7CmltcG9ydCAqIGFzIExvY2F0aW9uIGZyb20gImV4cG8tbG9jYXRpb24iOwppbXBvcnQgKiBhcyBOb3RpZmljYXRpb25zIGZyb20gImV4cG8tbm90aWZpY2F0aW9ucyI7CmltcG9ydCB7IFBlZG9tZXRlciB9IGZyb20gImV4cG8tc2Vuc29ycyI7CmltcG9ydCB7IFBsYXRmb3JtIH0gZnJvbSAicmVhY3QtbmF0aXZlIjsKCmltcG9ydCB7IG1ha2VMb2dnZXIgfSBmcm9tICJAL2xpYi9kZWJ1Z0xvZyI7CmltcG9ydCB7IE5BVElWRV9NT0RVTEVTX0FWQUlMQUJMRSB9IGZyb20gIkAvbGliL25hdGl2ZUVudiI7CmltcG9ydCB7IGdldFJ1bnRpbWVEaWFnbm9zdGljcyB9IGZyb20gIkAvbGliL3J1bnRpbWVEaWFnbm9zdGljcyI7CmltcG9ydCB7IHJlYWRTcGVlY2hQZXJtaXNzaW9uV2l0aFJldHJ5IH0gZnJvbSAiQC9saWIvc3BlZWNoUGVybWlzc2lvbiI7Cgpjb25zdCBDT05GSVJNRURfS0VZID0gIl9fc3RfcmVxdWlyZWRfcGVybWlzc2lvbnNfY29uZmlybWVkX3YxX18iOwpjb25zdCBwZXJtaXNzaW9uR2F0ZUxvZyA9IG1ha2VMb2dnZXIoIltQRVJNSVNTSU9OLUdBVEVdIiwgInBlcm1pc3Npb25fZ2F0ZSIpOwoKZXhwb3J0IHR5cGUgUmVxdWlyZWRQZXJtaXNzaW9uS2V5ID0KICB8ICJsb2NhdGlvbiIKICB8ICJtaWNyb3Bob25lIgogIHwgIm1vdGlvbiIKICB8ICJub3RpZmljYXRpb25zIjsKCmV4cG9ydCB0eXBlIFJlcXVpcmVkUGVybWlzc2lvblN0YXR1c2VzID0gUmVjb3JkPFJlcXVpcmVkUGVybWlzc2lvbktleSwgYm9vbGVhbj47CgpleHBvcnQgaW50ZXJmYWNlIFJlcXVpcmVkUGVybWlzc2lvblNuYXBzaG90IHsKICBzdGF0dXNlczogUmVxdWlyZWRQZXJtaXNzaW9uU3RhdHVzZXM7CiAgYWxsR3JhbnRlZDogYm9vbGVhbjsKICBwcmV2aW91c2x5Q29uZmlybWVkOiBib29sZWFuOwp9Cgpjb25zdCBFTVBUWV9TVEFUVVNFUzogUmVxdWlyZWRQZXJtaXNzaW9uU3RhdHVzZXMgPSB7CiAgbG9jYXRpb246IGZhbHNlLAogIG1pY3JvcGhvbmU6IGZhbHNlLAogIG1vdGlvbjogZmFsc2UsCiAgbm90aWZpY2F0aW9uczogZmFsc2UsCn07CgpleHBvcnQgYXN5bmMgZnVuY3Rpb24gcmVhZFJlcXVpcmVkUGVybWlzc2lvblNuYXBzaG90KAogIHJlYXNvbjogc3RyaW5nLAopOiBQcm9taXNlPFJlcXVpcmVkUGVybWlzc2lvblNuYXBzaG90PiB7CiAgaWYgKFBsYXRmb3JtLk9TID09PSAid2ViIikgewogICAgcmV0dXJuIHsKICAgICAgc3RhdHVzZXM6IHsKICAgICAgICBsb2NhdGlvbjogdHJ1ZSwKICAgICAgICBtaWNyb3Bob25lOiB0cnVlLAogICAgICAgIG1vdGlvbjogdHJ1ZSwKICAgICAgICBub3RpZmljYXRpb25zOiB0cnVlLAogICAgICB9LAogICAgICBhbGxHcmFudGVkOiB0cnVlLAogICAgICBwcmV2aW91c2x5Q29uZmlybWVkOiB0cnVlLAogICAgfTsKICB9CgogIGNvbnN0IHByZXZpb3VzRXZpZGVuY2UgPSBhd2FpdCBBc3luY1N0b3JhZ2UuZ2V0SXRlbShDT05GSVJNRURfS0VZKS5jYXRjaCgoKSA9PiBudWxsKTsKICBjb25zdCBbbG9jYXRpb24sIG1pY3JvcGhvbmUsIG1vdGlvbiwgbm90aWZpY2F0aW9uc10gPSBhd2FpdCBQcm9taXNlLmFsbChbCiAgICBMb2NhdGlvbi5nZXRGb3JlZ3JvdW5kUGVybWlzc2lvbnNBc3luYygpCiAgICAgIC50aGVuKChwZXJtaXNzaW9uKSA9PiBwZXJtaXNzaW9uLmdyYW50ZWQpCiAgICAgIC5jYXRjaCgoKSA9PiBmYWxzZSksCiAgICBOQVRJVkVfTU9EVUxFU19BVkFJTEFCTEUKICAgICAgPyByZWFkU3BlZWNoUGVybWlzc2lvbldpdGhSZXRyeShhc3luYyAoKSA9PgogICAgICAgICAgKGF3YWl0IGltcG9ydCgiZXhwby1zcGVlY2gtcmVjb2duaXRpb24iKSkuRXhwb1NwZWVjaFJlY29nbml0aW9uTW9kdWxlLmdldFBlcm1pc3Npb25zQXN5bmMoKQogICAgICAgICkKICAgICAgICAgIC50aGVuKChzdGF0dXMpID0+IHN0YXR1cyA9PT0gImdyYW50ZWQiKQogICAgICAgICAgLmNhdGNoKCgpID0+IGZhbHNlKQogICAgICA6IFByb21pc2UucmVzb2x2ZShmYWxzZSksCiAgICBQZWRvbWV0ZXIuZ2V0UGVybWlzc2lvbnNBc3luYygpCiAgICAgIC50aGVuKChwZXJtaXNzaW9uKSA9PiBwZXJtaXNzaW9uLmdyYW50ZWQpCiAgICAgIC5jYXRjaCgoKSA9PiBmYWxzZSksCiAgICBOb3RpZmljYXRpb25zLmdldFBlcm1pc3Npb25zQXN5bmMoKQogICAgICAudGhlbigocGVybWlzc2lvbikgPT4gcGVybWlzc2lvbi5ncmFudGVkKQogICAgICAuY2F0Y2goKCkgPT4gZmFsc2UpLAogIF0pOwoKICBjb25zdCBzdGF0dXNlcyA9IHsgbG9jYXRpb24sIG1pY3JvcGhvbmUsIG1vdGlvbiwgbm90aWZpY2F0aW9ucyB9OwogIC8vIEthbWVyYSBpc3QgbmljaHQgVGVpbCBkaWVzZXMgR2F0ZXMuIEFsbGUgYW5kZXJlbiBCZXJlY2h0aWd1bmdlbiB3ZXJkZW4KICAvLyB3aWUgaW0gT25ib2FyZGluZyBnZW1laW5zYW0gYWxzIGVyZm9yZGVybGljaCBiZWhhbmRlbHQuCiAgY29uc3QgYWxsR3JhbnRlZCA9IE9iamVjdC52YWx1ZXMoc3RhdHVzZXMpLmV2ZXJ5KEJvb2xlYW4pOwogIGNvbnN0IHByZXZpb3VzbHlDb25maXJtZWQgPSBwcmV2aW91c0V2aWRlbmNlICE9PSBudWxsOwogIGNvbnN0IHJ1bnRpbWUgPSBnZXRSdW50aW1lRGlhZ25vc3RpY3MoKTsKCiAgcGVybWlzc2lvbkdhdGVMb2coInJlcXVpcmVkIHBlcm1pc3Npb25zIGNoZWNrZWQiLCB7CiAgICAuLi5ydW50aW1lLAogICAgcmVhc29uLAogICAgc3RhdHVzZXMsCiAgICBhbGxHcmFudGVkLAogICAgcHJldmlvdXNseUNvbmZpcm1lZCwKICAgIGxvc3RBZnRlclByZXZpb3VzQ29uZmlybWF0aW9uOiBwcmV2aW91c2x5Q29uZmlybWVkICYmICFhbGxHcmFudGVkLAogIH0pOwoKICBpZiAoYWxsR3JhbnRlZCkgewogICAgYXdhaXQgQXN5bmNTdG9yYWdlLnNldEl0ZW0oCiAgICAgIENPTkZJUk1FRF9LRVksCiAgICAgIEpTT04uc3RyaW5naWZ5KHsKICAgICAgICBjb25maXJtZWRBdDogRGF0ZS5ub3coKSwKICAgICAgICBydW50aW1lLAogICAgICAgIHN0YXR1c2VzLAogICAgICB9KSwKICAgICkuY2F0Y2goKCkgPT4ge30pOwogIH0KCiAgcmV0dXJuIHsKICAgIHN0YXR1c2VzOiB7IC4uLkVNUFRZX1NUQVRVU0VTLCAuLi5zdGF0dXNlcyB9LAogICAgYWxsR3JhbnRlZCwKICAgIHByZXZpb3VzbHlDb25maXJtZWQsCiAgfTsKfQ==
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
+import { Pedometer } from "expo-sensors";
+import { Platform } from "react-native";
+
+import { makeLogger } from "@/lib/debugLog";
+import { NATIVE_MODULES_AVAILABLE } from "@/lib/nativeEnv";
+import { getRuntimeDiagnostics } from "@/lib/runtimeDiagnostics";
+import { readSpeechPermissionWithRetry } from "@/lib/speechPermission";
+
+const CONFIRMED_KEY = "__st_required_permissions_confirmed_v1__";
+const permissionGateLog = makeLogger("[PERMISSION-GATE]", "permission_gate");
+
+export type RequiredPermissionKey =
+  | "location"
+  | "microphone"
+  | "motion"
+  | "notifications";
+
+export type RequiredPermissionStatuses = Record<RequiredPermissionKey, boolean>;
+
+export interface RequiredPermissionSnapshot {
+  statuses: RequiredPermissionStatuses;
+  allGranted: boolean;
+  previouslyConfirmed: boolean;
+}
+
+const EMPTY_STATUSES: RequiredPermissionStatuses = {
+  location: false,
+  microphone: false,
+  motion: false,
+  notifications: false,
+};
+
+export async function readRequiredPermissionSnapshot(
+  reason: string,
+): Promise<RequiredPermissionSnapshot> {
+  if (Platform.OS === "web") {
+    return {
+      statuses: {
+        location: true,
+        microphone: true,
+        motion: true,
+        notifications: true,
+      },
+      allGranted: true,
+      previouslyConfirmed: true,
+    };
+  }
+
+  const previousEvidence = await AsyncStorage.getItem(CONFIRMED_KEY).catch(() => null);
+  const [location, microphone, motion, notifications] = await Promise.all([
+    Location.getForegroundPermissionsAsync()
+      .then((permission) => permission.granted)
+      .catch(() => false),
+    NATIVE_MODULES_AVAILABLE
+      ? readSpeechPermissionWithRetry(async () =>
+          (await import("expo-speech-recognition")).ExpoSpeechRecognitionModule.getPermissionsAsync()
+        )
+          .then((status) => status === "granted")
+          .catch(() => false)
+      : Promise.resolve(false),
+    Pedometer.getPermissionsAsync()
+      .then((permission) => permission.granted)
+      .catch(() => false),
+    Notifications.getPermissionsAsync()
+      .then((permission) => permission.granted)
+      .catch(() => false),
+  ]);
+
+  const statuses = { location, microphone, motion, notifications };
+  // Kamera ist nicht Teil dieses Gates. Alle anderen Berechtigungen werden
+  // wie im Onboarding gemeinsam als erforderlich behandelt.
+  const allGranted = Object.values(statuses).every(Boolean);
+  const previouslyConfirmed = previousEvidence !== null;
+  const runtime = getRuntimeDiagnostics();
+
+  permissionGateLog("required permissions checked", {
+    ...runtime,
+    reason,
+    statuses,
+    allGranted,
+    previouslyConfirmed,
+    lostAfterPreviousConfirmation: previouslyConfirmed && !allGranted,
+  });
+
+  if (allGranted) {
+    await AsyncStorage.setItem(
+      CONFIRMED_KEY,
+      JSON.stringify({
+        confirmedAt: Date.now(),
+        runtime,
+        statuses,
+      }),
+    ).catch(() => {});
+  }
+
+  return {
+    statuses: { ...EMPTY_STATUSES, ...statuses },
+    allGranted,
+    previouslyConfirmed,
+  };
+}

@@ -1,1 +1,63 @@
-aW1wb3J0IGFzc2VydCBmcm9tICJub2RlOmFzc2VydC9zdHJpY3QiOwppbXBvcnQgdGVzdCBmcm9tICJub2RlOnRlc3QiOwoKaW1wb3J0IHsgaXNGcmVzaEdwc0ZpeCB9IGZyb20gIi4vZ3BzU2FmZXR5IjsKCmNvbnN0IE5PVyA9IDFfMDAwXzAwMDsKCnRlc3QoImFjY2VwdHMgYSByZWNlbnQgZml4IHdoZW4gcGVybWlzc2lvbiBhbmQgYSBwb3NpdGlvbiBleGlzdCIsICgpID0+IHsKICBhc3NlcnQuZXF1YWwoCiAgICBpc0ZyZXNoR3BzRml4KHsKICAgICAgcGVybWlzc2lvbkdyYW50ZWQ6IHRydWUsCiAgICAgIGhhc1Bvc2l0aW9uOiB0cnVlLAogICAgICBsYXN0Rml4QXRNczogTk9XIC0gMzBfMDAwLAogICAgICBub3dNczogTk9XLAogICAgfSksCiAgICB0cnVlLAogICk7Cn0pOwoKdGVzdCgicmVqZWN0cyBhIHN0YWxlIGZpeCBldmVuIHdoZW4gcGVybWlzc2lvbiByZW1haW5zIGdyYW50ZWQiLCAoKSA9PiB7CiAgYXNzZXJ0LmVxdWFsKAogICAgaXNGcmVzaEdwc0ZpeCh7CiAgICAgIHBlcm1pc3Npb25HcmFudGVkOiB0cnVlLAogICAgICBoYXNQb3NpdGlvbjogdHJ1ZSwKICAgICAgbGFzdEZpeEF0TXM6IE5PVyAtIDE4MV8wMDAsCiAgICAgIG5vd01zOiBOT1csCiAgICB9KSwKICAgIGZhbHNlLAogICk7Cn0pOwoKdGVzdCgicmVqZWN0cyBtaXNzaW5nIHBvc2l0aW9uIG9yIHBlcm1pc3Npb24iLCAoKSA9PiB7CiAgYXNzZXJ0LmVxdWFsKAogICAgaXNGcmVzaEdwc0ZpeCh7CiAgICAgIHBlcm1pc3Npb25HcmFudGVkOiB0cnVlLAogICAgICBoYXNQb3NpdGlvbjogZmFsc2UsCiAgICAgIGxhc3RGaXhBdE1zOiBOT1cgLSAxXzAwMCwKICAgICAgbm93TXM6IE5PVywKICAgIH0pLAogICAgZmFsc2UsCiAgKTsKICBhc3NlcnQuZXF1YWwoCiAgICBpc0ZyZXNoR3BzRml4KHsKICAgICAgcGVybWlzc2lvbkdyYW50ZWQ6IGZhbHNlLAogICAgICBoYXNQb3NpdGlvbjogdHJ1ZSwKICAgICAgbGFzdEZpeEF0TXM6IE5PVyAtIDFfMDAwLAogICAgICBub3dNczogTk9XLAogICAgfSksCiAgICBmYWxzZSwKICApOwp9KTsKCnRlc3QoInJlamVjdHMgYSB0aW1lc3RhbXAgZnJvbSBiZWZvcmUgdGhlIGZpcnN0IGFjY2VwdGVkIGZpeCIsICgpID0+IHsKICBhc3NlcnQuZXF1YWwoCiAgICBpc0ZyZXNoR3BzRml4KHsKICAgICAgcGVybWlzc2lvbkdyYW50ZWQ6IHRydWUsCiAgICAgIGhhc1Bvc2l0aW9uOiB0cnVlLAogICAgICBsYXN0Rml4QXRNczogMCwKICAgICAgbm93TXM6IE5PVywKICAgIH0pLAogICAgZmFsc2UsCiAgKTsKfSk7
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { isFreshGpsFix } from "./gpsSafety";
+
+const NOW = 1_000_000;
+
+test("accepts a recent fix when permission and a position exist", () => {
+  assert.equal(
+    isFreshGpsFix({
+      permissionGranted: true,
+      hasPosition: true,
+      lastFixAtMs: NOW - 30_000,
+      nowMs: NOW,
+    }),
+    true,
+  );
+});
+
+test("rejects a stale fix even when permission remains granted", () => {
+  assert.equal(
+    isFreshGpsFix({
+      permissionGranted: true,
+      hasPosition: true,
+      lastFixAtMs: NOW - 181_000,
+      nowMs: NOW,
+    }),
+    false,
+  );
+});
+
+test("rejects missing position or permission", () => {
+  assert.equal(
+    isFreshGpsFix({
+      permissionGranted: true,
+      hasPosition: false,
+      lastFixAtMs: NOW - 1_000,
+      nowMs: NOW,
+    }),
+    false,
+  );
+  assert.equal(
+    isFreshGpsFix({
+      permissionGranted: false,
+      hasPosition: true,
+      lastFixAtMs: NOW - 1_000,
+      nowMs: NOW,
+    }),
+    false,
+  );
+});
+
+test("rejects a timestamp from before the first accepted fix", () => {
+  assert.equal(
+    isFreshGpsFix({
+      permissionGranted: true,
+      hasPosition: true,
+      lastFixAtMs: 0,
+      nowMs: NOW,
+    }),
+    false,
+  );
+});

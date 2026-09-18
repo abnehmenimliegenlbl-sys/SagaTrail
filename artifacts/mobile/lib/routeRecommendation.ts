@@ -1,1 +1,288 @@
-aW1wb3J0IHR5cGUgewogIFRyYWlsQ29uZGl0aW9uUmVwb3J0LAogIFdlYXRoZXJSZXBvcnQsCiAgVHJhbnNwb3J0U3RhdGlvbmJvYXJkLAp9IGZyb20gIkB3b3Jrc3BhY2UvYXBpLWNsaWVudC1yZWFjdCI7CgppbXBvcnQgdHlwZSB7IEhpa2luZ1JvdXRlIH0gZnJvbSAiQC9jb25zdGFudHMvcm91dGVzIjsKaW1wb3J0IHR5cGUgeyBMYXRMbmcgfSBmcm9tICJAL3R5cGVzIjsKaW1wb3J0IHR5cGUgeyBSb3V0ZVRoZW1lS2V5IH0gZnJvbSAiQC9saWIvcm91dGVUaGVtZXMiOwoKZXhwb3J0IHR5cGUgUmVjb21tZW5kYXRpb25GaXRuZXNzID0gImVhc3kiIHwgIm1vZGVyYXRlIiB8ICJzdHJvbmciOwpleHBvcnQgdHlwZSBSZWNvbW1lbmRhdGlvbkNvbXBhbmlvbiA9ICJzb2xvIiB8ICJjaGlsZHJlbiIgfCAid2hlZWxjaGFpciI7CmV4cG9ydCB0eXBlIFJlY29tbWVuZGF0aW9uVHJhdmVsID0gInB1YmxpY1RyYW5zcG9ydCIgfCAiY2FyIiB8ICJmbGV4aWJsZSI7CgpleHBvcnQgaW50ZXJmYWNlIFJlY29tbWVuZGF0aW9uUHJlZmVyZW5jZXMgewogIHRpbWVCdWRnZXRNaW46IG51bWJlcjsKICBmaXRuZXNzOiBSZWNvbW1lbmRhdGlvbkZpdG5lc3M7CiAgY29tcGFuaW9uOiBSZWNvbW1lbmRhdGlvbkNvbXBhbmlvbjsKICBpbnRlcmVzdHM6IFJvdXRlVGhlbWVLZXlbXTsKICB0cmF2ZWw6IFJlY29tbWVuZGF0aW9uVHJhdmVsOwogIG5lZWRzUmV0dXJuQ29ubmVjdGlvbjogYm9vbGVhbjsKICBuZWFyYnk/OiBMYXRMbmcgfCBudWxsOwp9CgpleHBvcnQgaW50ZXJmYWNlIFJlY29tbWVuZGF0aW9uU2lnbmFscyB7CiAgd2VhdGhlcj86IFdlYXRoZXJSZXBvcnQgfCBudWxsOwogIGNvbmRpdGlvbnM/OiBUcmFpbENvbmRpdGlvblJlcG9ydFtdOwogIHJldHVyblRyYW5zcG9ydD86IFRyYW5zcG9ydFN0YXRpb25ib2FyZCB8IG51bGw7CiAgc3RhcnRUcmFuc3BvcnQ/OiBUcmFuc3BvcnRTdGF0aW9uYm9hcmQgfCBudWxsOwogIHBhcmtpbmdBdmFpbGFibGU/OiBib29sZWFuIHwgbnVsbDsKfQoKZXhwb3J0IHR5cGUgUmVjb21tZW5kYXRpb25SZWFzb25Db2RlID0KICB8ICJ0aW1lIgogIHwgImZpdG5lc3MiCiAgfCAiY29tcGFuaW9uIgogIHwgImludGVyZXN0IgogIHwgInNlYXNvbiIKICB8ICJ3ZWF0aGVyIgogIHwgImNvbmRpdGlvbnMiCiAgfCAicmV0dXJuIgogIHwgImFycml2YWwiCiAgfCAicGFya2luZyIKICB8ICJuZWFyYnkiOwoKZXhwb3J0IGludGVyZmFjZSBTY29yZWRSb3V0ZSB7CiAgcm91dGU6IEhpa2luZ1JvdXRlOwogIHNjb3JlOiBudW1iZXI7CiAgcmVhc29uczogUmVjb21tZW5kYXRpb25SZWFzb25Db2RlW107CiAgY2F1dGlvbnM6IFJlY29tbWVuZGF0aW9uUmVhc29uQ29kZVtdOwogIHNpZ25hbHM6IFJlY29tbWVuZGF0aW9uU2lnbmFsczsKfQoKY29uc3QgRklUTkVTU19MSU1JVFM6IFJlY29yZDxSZWNvbW1lbmRhdGlvbkZpdG5lc3MsIHsgYXNjZW50OiBudW1iZXI7IHNhYzogbnVtYmVyIH0+ID0gewogIGVhc3k6IHsgYXNjZW50OiA0MDAsIHNhYzogMiB9LAogIG1vZGVyYXRlOiB7IGFzY2VudDogODAwLCBzYWM6IDMgfSwKICBzdHJvbmc6IHsgYXNjZW50OiAxNjAwLCBzYWM6IDUgfSwKfTsKCmZ1bmN0aW9uIHNhY0xldmVsKHNhYzogc3RyaW5nIHwgbnVsbCB8IHVuZGVmaW5lZCk6IG51bWJlciB8IG51bGwgewogIGNvbnN0IG1hdGNoID0gL1RccyooWzEtNl0pL2kuZXhlYyhzYWMgPz8gIiIpOwogIHJldHVybiBtYXRjaCA/IE51bWJlcihtYXRjaFsxXSkgOiBudWxsOwp9CgpmdW5jdGlvbiBjdXJyZW50U2Vhc29uSXNTdWl0YWJsZShyb3V0ZTogSGlraW5nUm91dGUpOiBib29sZWFuIHsKICBjb25zdCBtb250aCA9IG5ldyBEYXRlKCkuZ2V0TW9udGgoKSArIDE7CiAgaWYgKHJvdXRlLnNlYXNvbiA9PT0gImdhbnpqYWVocmlnIikgcmV0dXJuIHRydWU7CiAgaWYgKHJvdXRlLnNlYXNvbiA9PT0gImVoZXJfc29tbWVyIikgcmV0dXJuIG1vbnRoID49IDQgJiYgbW9udGggPD0gMTA7CiAgcmV0dXJuIG1vbnRoID49IDYgJiYgbW9udGggPD0gOTsKfQoKZnVuY3Rpb24gY29uZGl0aW9uTGV2ZWwoc2lnbmFsczogUmVjb21tZW5kYXRpb25TaWduYWxzKTogc3RyaW5nIHwgbnVsbCB7CiAgcmV0dXJuIHNpZ25hbHMuY29uZGl0aW9ucz8uWzBdPy5jb25kaXRpb24gPz8gbnVsbDsKfQoKZnVuY3Rpb24gc2NvcmVXZWF0aGVyKHNpZ25hbHM6IFJlY29tbWVuZGF0aW9uU2lnbmFscyk6IG51bWJlciB7CiAgc3dpdGNoIChzaWduYWxzLndlYXRoZXI/LnRyYWlsQ29uZGl0aW9uTGV2ZWwpIHsKICAgIGNhc2UgImd1dCI6CiAgICAgIHJldHVybiA4OwogICAgY2FzZSAidm9yc2ljaHQiOgogICAgICByZXR1cm4gLTE0OwogICAgY2FzZSAia3JpdGlzY2giOgogICAgICByZXR1cm4gLTQ1OwogICAgZGVmYXVsdDoKICAgICAgcmV0dXJuIDA7CiAgfQp9CgpmdW5jdGlvbiBzY29yZUNvbmRpdGlvbnMoc2lnbmFsczogUmVjb21tZW5kYXRpb25TaWduYWxzKTogbnVtYmVyIHsKICBzd2l0Y2ggKGNvbmRpdGlvbkxldmVsKHNpZ25hbHMpKSB7CiAgICBjYXNlICJleGNlbGxlbnQiOgogICAgY2FzZSAiY2xlYXIiOgogICAgICByZXR1cm4gNzsKICAgIGNhc2UgIm11ZGR5IjoKICAgICAgcmV0dXJuIC0xMDsKICAgIGNhc2UgInNub3ciOgogICAgY2FzZSAiaWN5IjoKICAgICAgcmV0dXJuIC0yODsKICAgIGNhc2UgImJsb2NrZWQiOgogICAgICByZXR1cm4gLTYwOwogICAgY2FzZSAidm9yc2ljaHQiOgogICAgICByZXR1cm4gLTEyOwogICAgY2FzZSAia3JpdGlzY2giOgogICAgICByZXR1cm4gLTQ1OwogICAgZGVmYXVsdDoKICAgICAgcmV0dXJuIDA7CiAgfQp9CgpmdW5jdGlvbiBzY29yZVRyYXZlbCgKICBwcmVmZXJlbmNlczogUmVjb21tZW5kYXRpb25QcmVmZXJlbmNlcywKICBzaWduYWxzOiBSZWNvbW1lbmRhdGlvblNpZ25hbHMsCik6IG51bWJlciB7CiAgaWYgKHByZWZlcmVuY2VzLnRyYXZlbCA9PT0gInB1YmxpY1RyYW5zcG9ydCIpIHsKICAgIGNvbnN0IHN0YXJ0ID0gc2lnbmFscy5zdGFydFRyYW5zcG9ydD8uc3RhdGlvbiA/IDcgOiAtODsKICAgIGNvbnN0IHJldHVybkRlcGFydHVyZXMgPSBzaWduYWxzLnJldHVyblRyYW5zcG9ydD8uZGVwYXJ0dXJlcy5sZW5ndGggPz8gMDsKICAgIGNvbnN0IHJldHVyblNjb3JlID0gcHJlZmVyZW5jZXMubmVlZHNSZXR1cm5Db25uZWN0aW9uCiAgICAgID8gcmV0dXJuRGVwYXJ0dXJlcyA+IDAKICAgICAgICA/IDIyCiAgICAgICAgOiAtMjQKICAgICAgOiByZXR1cm5EZXBhcnR1cmVzID4gMAogICAgICAgID8gOAogICAgICAgIDogLTQ7CiAgICByZXR1cm4gc3RhcnQgKyByZXR1cm5TY29yZTsKICB9CiAgaWYgKHByZWZlcmVuY2VzLnRyYXZlbCA9PT0gImNhciIpIHsKICAgIGlmIChzaWduYWxzLnBhcmtpbmdBdmFpbGFibGUgPT09IHRydWUpIHJldHVybiA4OwogICAgaWYgKHNpZ25hbHMucGFya2luZ0F2YWlsYWJsZSA9PT0gZmFsc2UpIHJldHVybiAtNzsKICB9CiAgcmV0dXJuIDA7Cn0KCmV4cG9ydCBmdW5jdGlvbiBzY29yZVJvdXRlKAogIHJvdXRlOiBIaWtpbmdSb3V0ZSwKICBwcmVmZXJlbmNlczogUmVjb21tZW5kYXRpb25QcmVmZXJlbmNlcywKICBzaWduYWxzOiBSZWNvbW1lbmRhdGlvblNpZ25hbHMgPSB7fSwKKTogU2NvcmVkUm91dGUgewogIGNvbnN0IHJlYXNvbnM6IFJlY29tbWVuZGF0aW9uUmVhc29uQ29kZVtdID0gW107CiAgY29uc3QgY2F1dGlvbnM6IFJlY29tbWVuZGF0aW9uUmVhc29uQ29kZVtdID0gW107CiAgY29uc3QgbGltaXRzID0gRklUTkVTU19MSU1JVFNbcHJlZmVyZW5jZXMuZml0bmVzc107CiAgbGV0IHNjb3JlID0gNTA7CgogIGNvbnN0IHRpbWVSYXRpbyA9IHJvdXRlLm1pbnV0ZXMgLyBNYXRoLm1heChwcmVmZXJlbmNlcy50aW1lQnVkZ2V0TWluLCAxKTsKICBpZiAodGltZVJhdGlvIDw9IDEpIHsKICAgIHNjb3JlICs9IDE4IC0gTWF0aC5hYnMoMC44MiAtIHRpbWVSYXRpbykgKiAxNTsKICAgIHJlYXNvbnMucHVzaCgidGltZSIpOwogIH0gZWxzZSB7CiAgICBzY29yZSAtPSBNYXRoLm1pbig0MiwgKHRpbWVSYXRpbyAtIDEpICogNTUpOwogICAgY2F1dGlvbnMucHVzaCgidGltZSIpOwogIH0KCiAgY29uc3QgbGV2ZWwgPSBzYWNMZXZlbChyb3V0ZS5zYWMpOwogIGNvbnN0IGFzY2VudEZpdHMgPSByb3V0ZS5hc2NlbnRNIDw9IGxpbWl0cy5hc2NlbnQ7CiAgaWYgKGFzY2VudEZpdHMgJiYgbGV2ZWwgIT0gbnVsbCAmJiBsZXZlbCA8PSBsaW1pdHMuc2FjKSB7CiAgICBzY29yZSArPSAxNTsKICAgIHJlYXNvbnMucHVzaCgiZml0bmVzcyIpOwogIH0gZWxzZSBpZiAoYXNjZW50Rml0cyAmJiBsZXZlbCA9PSBudWxsKSB7CiAgICAvLyBFaW4gdW5iZWthbm50ZXIgU0FDLUdyYWQgZGFyZiBuaWNodCB3aWUgZWluIHBhc3NlbmRlciBHcmFkIHrDpGhsZW4uCiAgICAvLyBEaWUgUm91dGUgYmxlaWJ0IHNpY2h0YmFyLCBlcmjDpGx0IGFiZXIgZWluZW4ga2xlaW5lbiBVbnNpY2hlcmhlaXRzYWJ6dWcuCiAgICBzY29yZSAtPSA0OwogICAgY2F1dGlvbnMucHVzaCgiZml0bmVzcyIpOwogIH0gZWxzZSB7CiAgICBzY29yZSAtPSAyODsKICAgIGNhdXRpb25zLnB1c2goImZpdG5lc3MiKTsKICB9CgogIGlmIChwcmVmZXJlbmNlcy5jb21wYW5pb24gPT09ICJjaGlsZHJlbiIpIHsKICAgIGlmIChyb3V0ZS5mYW1pbHlGcmllbmRseSA9PT0gdHJ1ZSkgewogICAgICBzY29yZSArPSAyMjsKICAgICAgcmVhc29ucy5wdXNoKCJjb21wYW5pb24iKTsKICAgIH0gZWxzZSBpZiAocm91dGUuZmFtaWx5RnJpZW5kbHkgPT09IGZhbHNlKSB7CiAgICAgIHNjb3JlIC09IDM1OwogICAgICBjYXV0aW9ucy5wdXNoKCJjb21wYW5pb24iKTsKICAgIH0KICB9IGVsc2UgaWYgKHByZWZlcmVuY2VzLmNvbXBhbmlvbiA9PT0gIndoZWVsY2hhaXIiKSB7CiAgICBpZiAocm91dGUud2hlZWxjaGFpckFjY2Vzc2libGUgPT09IHRydWUpIHsKICAgICAgc2NvcmUgKz0gMzU7CiAgICAgIHJlYXNvbnMucHVzaCgiY29tcGFuaW9uIik7CiAgICB9IGVsc2UgaWYgKHJvdXRlLndoZWVsY2hhaXJBY2Nlc3NpYmxlID09PSBmYWxzZSkgewogICAgICBzY29yZSAtPSA2MDsKICAgICAgY2F1dGlvbnMucHVzaCgiY29tcGFuaW9uIik7CiAgICB9CiAgfQoKICBjb25zdCB0aGVtZUV2aWRlbmNlQ29uZmlybWVkID0KICAgIEFycmF5LmlzQXJyYXkocm91dGUudGhlbWVLZXlzKSAmJiByb3V0ZS5xdWFsaXR5U3RhdHVzICE9PSAiaW52YWxpZCI7CiAgY29uc3QgbWF0Y2hlcyA9IHRoZW1lRXZpZGVuY2VDb25maXJtZWQKICAgID8gcHJlZmVyZW5jZXMuaW50ZXJlc3RzLmZpbHRlcigoaW50ZXJlc3QpID0+IHJvdXRlLnRoZW1lS2V5cz8uaW5jbHVkZXMoaW50ZXJlc3QpKQogICAgOiBbXTsKICBpZiAocHJlZmVyZW5jZXMuaW50ZXJlc3RzLmxlbmd0aCA+IDApIHsKICAgIGlmIChtYXRjaGVzLmxlbmd0aCA+IDApIHsKICAgICAgc2NvcmUgKz0gTWF0aC5taW4oMjgsIG1hdGNoZXMubGVuZ3RoICogMTQpOwogICAgICByZWFzb25zLnB1c2goImludGVyZXN0Iik7CiAgICB9IGVsc2UgewogICAgICBzY29yZSAtPSAxNDsKICAgICAgY2F1dGlvbnMucHVzaCgiaW50ZXJlc3QiKTsKICAgIH0KICB9CgogIGlmIChjdXJyZW50U2Vhc29uSXNTdWl0YWJsZShyb3V0ZSkpIHsKICAgIHNjb3JlICs9IDg7CiAgICByZWFzb25zLnB1c2goInNlYXNvbiIpOwogIH0gZWxzZSB7CiAgICBzY29yZSAtPSAxODsKICAgIGNhdXRpb25zLnB1c2goInNlYXNvbiIpOwogIH0KCiAgY29uc3Qgd2VhdGhlclNjb3JlID0gc2NvcmVXZWF0aGVyKHNpZ25hbHMpOwogIHNjb3JlICs9IHdlYXRoZXJTY29yZTsKICBpZiAod2VhdGhlclNjb3JlID4gMCkgcmVhc29ucy5wdXNoKCJ3ZWF0aGVyIik7CiAgaWYgKHdlYXRoZXJTY29yZSA8IDApIGNhdXRpb25zLnB1c2goIndlYXRoZXIiKTsKCiAgY29uc3QgY29uZGl0aW9uc1Njb3JlID0gc2NvcmVDb25kaXRpb25zKHNpZ25hbHMpOwogIHNjb3JlICs9IGNvbmRpdGlvbnNTY29yZTsKICBpZiAoY29uZGl0aW9uc1Njb3JlID4gMCkgcmVhc29ucy5wdXNoKCJjb25kaXRpb25zIik7CiAgaWYgKGNvbmRpdGlvbnNTY29yZSA8IDApIGNhdXRpb25zLnB1c2goImNvbmRpdGlvbnMiKTsKCiAgY29uc3QgdHJhdmVsU2NvcmUgPSBzY29yZVRyYXZlbChwcmVmZXJlbmNlcywgc2lnbmFscyk7CiAgc2NvcmUgKz0gdHJhdmVsU2NvcmU7CiAgaWYgKHByZWZlcmVuY2VzLm5lYXJieSkgewogICAgY29uc3QgZGlzdGFuY2VLbSA9IE1hdGguaHlwb3QoCiAgICAgIChyb3V0ZS5jb29yZGluYXRlcy5sYXQgLSBwcmVmZXJlbmNlcy5uZWFyYnkubGF0KSAqIDExMSwKICAgICAgKHJvdXRlLmNvb3JkaW5hdGVzLmxuZyAtIHByZWZlcmVuY2VzLm5lYXJieS5sbmcpICoKICAgICAgICAxMTEgKgogICAgICAgIE1hdGguY29zKChwcmVmZXJlbmNlcy5uZWFyYnkubGF0ICogTWF0aC5QSSkgLyAxODApLAogICAgKTsKICAgIGlmIChkaXN0YW5jZUttIDw9IDgpIHsKICAgICAgc2NvcmUgKz0gMjQ7CiAgICAgIHJlYXNvbnMucHVzaCgibmVhcmJ5Iik7CiAgICB9IGVsc2UgewogICAgICBzY29yZSAtPSBNYXRoLm1pbigyNCwgKGRpc3RhbmNlS20gLSA4KSAqIDAuNyk7CiAgICAgIGlmIChkaXN0YW5jZUttID4gMjUpIGNhdXRpb25zLnB1c2goIm5lYXJieSIpOwogICAgfQogIH0KICBpZiAocHJlZmVyZW5jZXMudHJhdmVsID09PSAicHVibGljVHJhbnNwb3J0IikgewogICAgaWYgKChzaWduYWxzLnJldHVyblRyYW5zcG9ydD8uZGVwYXJ0dXJlcy5sZW5ndGggPz8gMCkgPiAwKSByZWFzb25zLnB1c2goInJldHVybiIpOwogICAgaWYgKHNpZ25hbHMuc3RhcnRUcmFuc3BvcnQ/LnN0YXRpb24pIHJlYXNvbnMucHVzaCgiYXJyaXZhbCIpOwogICAgaWYgKHByZWZlcmVuY2VzLm5lZWRzUmV0dXJuQ29ubmVjdGlvbiAmJiAhc2lnbmFscy5yZXR1cm5UcmFuc3BvcnQ/LmRlcGFydHVyZXMubGVuZ3RoKSB7CiAgICAgIGNhdXRpb25zLnB1c2goInJldHVybiIpOwogICAgfQogICAgaWYgKCFzaWduYWxzLnN0YXJ0VHJhbnNwb3J0Py5zdGF0aW9uKSBjYXV0aW9ucy5wdXNoKCJhcnJpdmFsIik7CiAgfSBlbHNlIGlmIChwcmVmZXJlbmNlcy50cmF2ZWwgPT09ICJjYXIiICYmIHNpZ25hbHMucGFya2luZ0F2YWlsYWJsZSA9PT0gdHJ1ZSkgewogICAgcmVhc29ucy5wdXNoKCJwYXJraW5nIik7CiAgfQoKICByZXR1cm4gewogICAgcm91dGUsCiAgICBzY29yZTogTWF0aC5yb3VuZChzY29yZSAqIDEwKSAvIDEwLAogICAgcmVhc29uczogWy4uLm5ldyBTZXQocmVhc29ucyldLAogICAgY2F1dGlvbnM6IFsuLi5uZXcgU2V0KGNhdXRpb25zKV0sCiAgICBzaWduYWxzLAogIH07Cn0KCmV4cG9ydCBmdW5jdGlvbiByYW5rUm91dGVzKAogIHJvdXRlczogSGlraW5nUm91dGVbXSwKICBwcmVmZXJlbmNlczogUmVjb21tZW5kYXRpb25QcmVmZXJlbmNlcywKICBzaWduYWxzQnlSb3V0ZTogUmVhZG9ubHlNYXA8c3RyaW5nLCBSZWNvbW1lbmRhdGlvblNpZ25hbHM+ID0gbmV3IE1hcCgpLAopOiBTY29yZWRSb3V0ZVtdIHsKICByZXR1cm4gcm91dGVzCiAgICAubWFwKChyb3V0ZSkgPT4gc2NvcmVSb3V0ZShyb3V0ZSwgcHJlZmVyZW5jZXMsIHNpZ25hbHNCeVJvdXRlLmdldChyb3V0ZS5pZCkgPz8ge30pKQogICAgLnNvcnQoKGEsIGIpID0+IGIuc2NvcmUgLSBhLnNjb3JlKTsKfQoKZXhwb3J0IGZ1bmN0aW9uIHJvdXRlUmVjb21tZW5kYXRpb25GaWx0ZXJzKAogIHByZWZlcmVuY2VzOiBSZWNvbW1lbmRhdGlvblByZWZlcmVuY2VzLAopOiB7CiAgZGlzdE1heDogbnVtYmVyOwogIGFzY01heDogbnVtYmVyOwogIGRpZmZNYXg6IG51bWJlcjsKICBmYW1pbHlGcmllbmRseT86IGJvb2xlYW47CiAgd2hlZWxjaGFpckFjY2Vzc2libGU/OiBib29sZWFuOwogIG5lYXJMYXQ/OiBudW1iZXI7CiAgbmVhckxuZz86IG51bWJlcjsKfSB7CiAgY29uc3QgbGltaXRzID0gRklUTkVTU19MSU1JVFNbcHJlZmVyZW5jZXMuZml0bmVzc107CiAgY29uc3QgbWF4RGlzdGFuY2UgPSBNYXRoLm1heCg4LCBNYXRoLmNlaWwocHJlZmVyZW5jZXMudGltZUJ1ZGdldE1pbiAvIDEyKSk7CiAgcmV0dXJuIHsKICAgIGRpc3RNYXg6IG1heERpc3RhbmNlLAogICAgYXNjTWF4OiBsaW1pdHMuYXNjZW50LAogICAgZGlmZk1heDogbGltaXRzLnNhYywKICAgIC4uLihwcmVmZXJlbmNlcy5jb21wYW5pb24gPT09ICJjaGlsZHJlbiIgPyB7IGZhbWlseUZyaWVuZGx5OiB0cnVlIH0gOiB7fSksCiAgICAuLi4ocHJlZmVyZW5jZXMuY29tcGFuaW9uID09PSAid2hlZWxjaGFpciIgPyB7IHdoZWVsY2hhaXJBY2Nlc3NpYmxlOiB0cnVlIH0gOiB7fSksCiAgICAuLi4ocHJlZmVyZW5jZXMubmVhcmJ5CiAgICAgID8geyBuZWFyTGF0OiBwcmVmZXJlbmNlcy5uZWFyYnkubGF0LCBuZWFyTG5nOiBwcmVmZXJlbmNlcy5uZWFyYnkubG5nIH0KICAgICAgOiB7fSksCiAgfTsKfQ==
+import type {
+  TrailConditionReport,
+  WeatherReport,
+  TransportStationboard,
+} from "@workspace/api-client-react";
+
+import type { HikingRoute } from "@/constants/routes";
+import type { LatLng } from "@/types";
+import type { RouteThemeKey } from "@/lib/routeThemes";
+
+export type RecommendationFitness = "easy" | "moderate" | "strong";
+export type RecommendationCompanion = "solo" | "children" | "wheelchair";
+export type RecommendationTravel = "publicTransport" | "car" | "flexible";
+
+export interface RecommendationPreferences {
+  timeBudgetMin: number;
+  fitness: RecommendationFitness;
+  companion: RecommendationCompanion;
+  interests: RouteThemeKey[];
+  travel: RecommendationTravel;
+  needsReturnConnection: boolean;
+  nearby?: LatLng | null;
+}
+
+export interface RecommendationSignals {
+  weather?: WeatherReport | null;
+  conditions?: TrailConditionReport[];
+  returnTransport?: TransportStationboard | null;
+  startTransport?: TransportStationboard | null;
+  parkingAvailable?: boolean | null;
+}
+
+export type RecommendationReasonCode =
+  | "time"
+  | "fitness"
+  | "companion"
+  | "interest"
+  | "season"
+  | "weather"
+  | "conditions"
+  | "return"
+  | "arrival"
+  | "parking"
+  | "nearby";
+
+export interface ScoredRoute {
+  route: HikingRoute;
+  score: number;
+  reasons: RecommendationReasonCode[];
+  cautions: RecommendationReasonCode[];
+  signals: RecommendationSignals;
+}
+
+const FITNESS_LIMITS: Record<RecommendationFitness, { ascent: number; sac: number }> = {
+  easy: { ascent: 400, sac: 2 },
+  moderate: { ascent: 800, sac: 3 },
+  strong: { ascent: 1600, sac: 5 },
+};
+
+function sacLevel(sac: string | null | undefined): number | null {
+  const match = /T\s*([1-6])/i.exec(sac ?? "");
+  return match ? Number(match[1]) : null;
+}
+
+function currentSeasonIsSuitable(route: HikingRoute): boolean {
+  const month = new Date().getMonth() + 1;
+  if (route.season === "ganzjaehrig") return true;
+  if (route.season === "eher_sommer") return month >= 4 && month <= 10;
+  return month >= 6 && month <= 9;
+}
+
+function conditionLevel(signals: RecommendationSignals): string | null {
+  return signals.conditions?.[0]?.condition ?? null;
+}
+
+function scoreWeather(signals: RecommendationSignals): number {
+  switch (signals.weather?.trailConditionLevel) {
+    case "gut":
+      return 8;
+    case "vorsicht":
+      return -14;
+    case "kritisch":
+      return -45;
+    default:
+      return 0;
+  }
+}
+
+function scoreConditions(signals: RecommendationSignals): number {
+  switch (conditionLevel(signals)) {
+    case "excellent":
+    case "clear":
+      return 7;
+    case "muddy":
+      return -10;
+    case "snow":
+    case "icy":
+      return -28;
+    case "blocked":
+      return -60;
+    case "vorsicht":
+      return -12;
+    case "kritisch":
+      return -45;
+    default:
+      return 0;
+  }
+}
+
+function scoreTravel(
+  preferences: RecommendationPreferences,
+  signals: RecommendationSignals,
+): number {
+  if (preferences.travel === "publicTransport") {
+    const start = signals.startTransport?.station ? 7 : -8;
+    const returnDepartures = signals.returnTransport?.departures.length ?? 0;
+    const returnScore = preferences.needsReturnConnection
+      ? returnDepartures > 0
+        ? 22
+        : -24
+      : returnDepartures > 0
+        ? 8
+        : -4;
+    return start + returnScore;
+  }
+  if (preferences.travel === "car") {
+    if (signals.parkingAvailable === true) return 8;
+    if (signals.parkingAvailable === false) return -7;
+  }
+  return 0;
+}
+
+export function scoreRoute(
+  route: HikingRoute,
+  preferences: RecommendationPreferences,
+  signals: RecommendationSignals = {},
+): ScoredRoute {
+  const reasons: RecommendationReasonCode[] = [];
+  const cautions: RecommendationReasonCode[] = [];
+  const limits = FITNESS_LIMITS[preferences.fitness];
+  let score = 50;
+
+  const timeRatio = route.minutes / Math.max(preferences.timeBudgetMin, 1);
+  if (timeRatio <= 1) {
+    score += 18 - Math.abs(0.82 - timeRatio) * 15;
+    reasons.push("time");
+  } else {
+    score -= Math.min(42, (timeRatio - 1) * 55);
+    cautions.push("time");
+  }
+
+  const level = sacLevel(route.sac);
+  const ascentFits = route.ascentM <= limits.ascent;
+  if (ascentFits && level != null && level <= limits.sac) {
+    score += 15;
+    reasons.push("fitness");
+  } else if (ascentFits && level == null) {
+    // Ein unbekannter SAC-Grad darf nicht wie ein passender Grad zählen.
+    // Die Route bleibt sichtbar, erhält aber einen kleinen Unsicherheitsabzug.
+    score -= 4;
+    cautions.push("fitness");
+  } else {
+    score -= 28;
+    cautions.push("fitness");
+  }
+
+  if (preferences.companion === "children") {
+    if (route.familyFriendly === true) {
+      score += 22;
+      reasons.push("companion");
+    } else if (route.familyFriendly === false) {
+      score -= 35;
+      cautions.push("companion");
+    }
+  } else if (preferences.companion === "wheelchair") {
+    if (route.wheelchairAccessible === true) {
+      score += 35;
+      reasons.push("companion");
+    } else if (route.wheelchairAccessible === false) {
+      score -= 60;
+      cautions.push("companion");
+    }
+  }
+
+  const themeEvidenceConfirmed =
+    Array.isArray(route.themeKeys) && route.qualityStatus !== "invalid";
+  const matches = themeEvidenceConfirmed
+    ? preferences.interests.filter((interest) => route.themeKeys?.includes(interest))
+    : [];
+  if (preferences.interests.length > 0) {
+    if (matches.length > 0) {
+      score += Math.min(28, matches.length * 14);
+      reasons.push("interest");
+    } else {
+      score -= 14;
+      cautions.push("interest");
+    }
+  }
+
+  if (currentSeasonIsSuitable(route)) {
+    score += 8;
+    reasons.push("season");
+  } else {
+    score -= 18;
+    cautions.push("season");
+  }
+
+  const weatherScore = scoreWeather(signals);
+  score += weatherScore;
+  if (weatherScore > 0) reasons.push("weather");
+  if (weatherScore < 0) cautions.push("weather");
+
+  const conditionsScore = scoreConditions(signals);
+  score += conditionsScore;
+  if (conditionsScore > 0) reasons.push("conditions");
+  if (conditionsScore < 0) cautions.push("conditions");
+
+  const travelScore = scoreTravel(preferences, signals);
+  score += travelScore;
+  if (preferences.nearby) {
+    const distanceKm = Math.hypot(
+      (route.coordinates.lat - preferences.nearby.lat) * 111,
+      (route.coordinates.lng - preferences.nearby.lng) *
+        111 *
+        Math.cos((preferences.nearby.lat * Math.PI) / 180),
+    );
+    if (distanceKm <= 8) {
+      score += 24;
+      reasons.push("nearby");
+    } else {
+      score -= Math.min(24, (distanceKm - 8) * 0.7);
+      if (distanceKm > 25) cautions.push("nearby");
+    }
+  }
+  if (preferences.travel === "publicTransport") {
+    if ((signals.returnTransport?.departures.length ?? 0) > 0) reasons.push("return");
+    if (signals.startTransport?.station) reasons.push("arrival");
+    if (preferences.needsReturnConnection && !signals.returnTransport?.departures.length) {
+      cautions.push("return");
+    }
+    if (!signals.startTransport?.station) cautions.push("arrival");
+  } else if (preferences.travel === "car" && signals.parkingAvailable === true) {
+    reasons.push("parking");
+  }
+
+  return {
+    route,
+    score: Math.round(score * 10) / 10,
+    reasons: [...new Set(reasons)],
+    cautions: [...new Set(cautions)],
+    signals,
+  };
+}
+
+export function rankRoutes(
+  routes: HikingRoute[],
+  preferences: RecommendationPreferences,
+  signalsByRoute: ReadonlyMap<string, RecommendationSignals> = new Map(),
+): ScoredRoute[] {
+  return routes
+    .map((route) => scoreRoute(route, preferences, signalsByRoute.get(route.id) ?? {}))
+    .sort((a, b) => b.score - a.score);
+}
+
+export function routeRecommendationFilters(
+  preferences: RecommendationPreferences,
+): {
+  distMax: number;
+  ascMax: number;
+  diffMax: number;
+  familyFriendly?: boolean;
+  wheelchairAccessible?: boolean;
+  nearLat?: number;
+  nearLng?: number;
+} {
+  const limits = FITNESS_LIMITS[preferences.fitness];
+  const maxDistance = Math.max(8, Math.ceil(preferences.timeBudgetMin / 12));
+  return {
+    distMax: maxDistance,
+    ascMax: limits.ascent,
+    diffMax: limits.sac,
+    ...(preferences.companion === "children" ? { familyFriendly: true } : {}),
+    ...(preferences.companion === "wheelchair" ? { wheelchairAccessible: true } : {}),
+    ...(preferences.nearby
+      ? { nearLat: preferences.nearby.lat, nearLng: preferences.nearby.lng }
+      : {}),
+  };
+}

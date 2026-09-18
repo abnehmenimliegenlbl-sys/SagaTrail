@@ -1,1 +1,164 @@
-aW1wb3J0IHR5cGUgewogIEF2YWxhbmNoZUJ1bGxldGluLAogIFRyYWlsQ29uZGl0aW9uUmVwb3J0LAogIFdlYXRoZXJSZXBvcnQsCn0gZnJvbSAiQHdvcmtzcGFjZS9hcGktY2xpZW50LXJlYWN0IjsKCmV4cG9ydCB0eXBlIFNhZmV0eURlY2lzaW9uID0gInN0YXJ0IiB8ICJjYXV0aW9uIiB8ICJwb3N0cG9uZSIgfCAiYmxvY2tlZCI7CgpleHBvcnQgdHlwZSBTYWZldHlSZWFzb25Db2RlID0KICB8ICJ0aHVuZGVyc3Rvcm0iCiAgfCAiY3JpdGljYWwtd2VhdGhlciIKICB8ICJjYXV0aW9uLXdlYXRoZXIiCiAgfCAiYXZhbGFuY2hlLWhpZ2giCiAgfCAiYXZhbGFuY2hlLW1vZGVyYXRlIgogIHwgImNvbW11bml0eS1ibG9ja2VkIgogIHwgImNvbW11bml0eS1kaWZmaWN1bHQiCiAgfCAib2ZmaWNpYWwtY2xvc3VyZSIKICB8ICJjbG9zdXJlLXdhcm5pbmciCiAgfCAiY2xlYXIiOwoKZXhwb3J0IHR5cGUgU2FmZXR5UmVhc29uU291cmNlID0gIndlYXRoZXIiIHwgImVhd3MiIHwgImNvbW11bml0eSIgfCAib2ZmaWNpYWwiIHwgIm5vbmUiOwpleHBvcnQgdHlwZSBTYWZldHlSZWFzb25Ub25lID0gImRhbmdlciIgfCAid2FybiIgfCAibmV1dHJhbCI7CgpleHBvcnQgaW50ZXJmYWNlIFNhZmV0eUNsb3N1cmUgewogIGlkOiBzdHJpbmc7CiAgdGl0bGU6IHN0cmluZzsKICBkZXRhaWxzPzogc3RyaW5nIHwgbnVsbDsKICBhZmZlY3RzRnJvbT86IHN0cmluZyB8IG51bGw7CiAgYWZmZWN0c1VudGlsPzogc3RyaW5nIHwgbnVsbDsKICB1cmw/OiBzdHJpbmcgfCBudWxsOwogIGNhbnRvbj86IHN0cmluZyB8IG51bGw7CiAgdHlwPzogInNwZXJydW5nIiB8ICJ3ZWdzY2hhZGVuIiB8ICJ3YXJudW5nIiB8IHN0cmluZzsKICBzb3VyY2U/OiAiYWRtaW4iIHwgInJzcyIgfCBzdHJpbmc7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgUHJlU3RhcnRTYWZldHlJbnB1dCB7CiAgbm93TXM/OiBudW1iZXI7CiAgd2VhdGhlcjogV2VhdGhlclJlcG9ydCB8IG51bGw7CiAgd2VhdGhlckxvYWRpbmc6IGJvb2xlYW47CiAgd2VhdGhlckVycm9yOiBib29sZWFuOwogIGF2YWxhbmNoZTogQXZhbGFuY2hlQnVsbGV0aW4gfCBudWxsOwogIGF2YWxhbmNoZUxvYWRpbmc6IGJvb2xlYW47CiAgdHJhaWxDb25kaXRpb25zOiBUcmFpbENvbmRpdGlvblJlcG9ydFtdIHwgdW5kZWZpbmVkOwogIGNvbmRpdGlvbnNMb2FkaW5nOiBib29sZWFuOwogIHNwZXJydW5nZW46IFNhZmV0eUNsb3N1cmVbXTsKICBzcGVycnVuZ2VuTG9hZGluZzogYm9vbGVhbjsKfQoKZXhwb3J0IGludGVyZmFjZSBTYWZldHlSZWFzb24gewogIGNvZGU6IFNhZmV0eVJlYXNvbkNvZGU7CiAgc291cmNlOiBTYWZldHlSZWFzb25Tb3VyY2U7CiAgdG9uZTogU2FmZXR5UmVhc29uVG9uZTsKfQoKZXhwb3J0IGludGVyZmFjZSBQcmVTdGFydFNhZmV0eUFuYWx5c2lzIHsKICBkZWNpc2lvbjogU2FmZXR5RGVjaXNpb247CiAgcmVhc29uczogU2FmZXR5UmVhc29uW107CiAgZGF0YU1pc3Npbmc6IGJvb2xlYW47CiAgYWN0aXZlQ2xvc3VyZXM6IFNhZmV0eUNsb3N1cmVbXTsKICByZWNlbnRSZXBvcnRzOiBUcmFpbENvbmRpdGlvblJlcG9ydFtdOwp9CgpmdW5jdGlvbiBpc1JlY2VudChpc286IHN0cmluZyB8IERhdGUgfCBudWxsIHwgdW5kZWZpbmVkLCBub3dNczogbnVtYmVyLCBkYXlzID0gNyk6IGJvb2xlYW4gewogIGlmICghaXNvKSByZXR1cm4gZmFsc2U7CiAgY29uc3QgYWdlID0gbm93TXMgLSBuZXcgRGF0ZShpc28pLmdldFRpbWUoKTsKICByZXR1cm4gTnVtYmVyLmlzRmluaXRlKGFnZSkgJiYgYWdlID49IC02MF8wMDAgJiYgYWdlIDw9IGRheXMgKiAyNCAqIDYwICogNjAgKiAxMDAwOwp9CgpmdW5jdGlvbiBhY3RpdmVOb3coY2xvc3VyZTogU2FmZXR5Q2xvc3VyZSwgbm93TXM6IG51bWJlcik6IGJvb2xlYW4gewogIGNvbnN0IGZyb20gPSBjbG9zdXJlLmFmZmVjdHNGcm9tID8gbmV3IERhdGUoY2xvc3VyZS5hZmZlY3RzRnJvbSkuZ2V0VGltZSgpIDogLUluZmluaXR5OwogIGNvbnN0IHVudGlsID0gY2xvc3VyZS5hZmZlY3RzVW50aWwgPyBuZXcgRGF0ZShjbG9zdXJlLmFmZmVjdHNVbnRpbCkuZ2V0VGltZSgpIDogSW5maW5pdHk7CiAgcmV0dXJuIE51bWJlci5pc0Zpbml0ZShmcm9tKSB8fCBOdW1iZXIuaXNGaW5pdGUodW50aWwpCiAgICA/IG5vd01zID49IGZyb20gJiYgbm93TXMgPD0gdW50aWwKICAgIDogdHJ1ZTsKfQoKZXhwb3J0IGZ1bmN0aW9uIGV2YWx1YXRlUHJlU3RhcnRTYWZldHkoaW5wdXQ6IFByZVN0YXJ0U2FmZXR5SW5wdXQpOiBQcmVTdGFydFNhZmV0eUFuYWx5c2lzIHsKICBjb25zdCBub3dNcyA9IGlucHV0Lm5vd01zID8/IERhdGUubm93KCk7CiAgY29uc3QgcmVjZW50UmVwb3J0cyA9IChpbnB1dC50cmFpbENvbmRpdGlvbnMgPz8gW10pLmZpbHRlcigocmVwb3J0KSA9PgogICAgaXNSZWNlbnQocmVwb3J0LnJlcG9ydGVkQXQsIG5vd01zKSwKICApOwogIGNvbnN0IGJsb2NrZWRSZXBvcnQgPSByZWNlbnRSZXBvcnRzLnNvbWUoKHJlcG9ydCkgPT4gcmVwb3J0LmNvbmRpdGlvbiA9PT0gImJsb2NrZWQiKTsKICBjb25zdCBkaWZmaWN1bHRSZXBvcnQgPSByZWNlbnRSZXBvcnRzLnNvbWUoKHJlcG9ydCkgPT4KICAgIFsic25vdyIsICJpY3kiLCAibXVkZHkiXS5pbmNsdWRlcyhyZXBvcnQuY29uZGl0aW9uKSwKICApOwoKICAvLyBSU1MgZW50cmllcyBhcmUgbmF0aW9uYWwgYW5kIGhhdmUgbm8gcm91dGUgZ2VvbWV0cnkuIFRoZXkgbXVzdCBub3QgdHVybgogIC8vIGEgbm90aWNlIGZvciBhbm90aGVyIHJlZ2lvbiBpbnRvIGEgcm91dGUtc3BlY2lmaWMgd2FybmluZy4KICBjb25zdCBhY3RpdmVDbG9zdXJlcyA9IGlucHV0LnNwZXJydW5nZW4uZmlsdGVyKAogICAgKGNsb3N1cmUpID0+IGFjdGl2ZU5vdyhjbG9zdXJlLCBub3dNcykgJiYgY2xvc3VyZS5zb3VyY2UgIT09ICJyc3MiLAogICk7CiAgY29uc3Qgb2ZmaWNpYWxDbG9zdXJlSGludCA9IGFjdGl2ZUNsb3N1cmVzLnNvbWUoKGNsb3N1cmUpID0+IGNsb3N1cmUudHlwID09PSAic3BlcnJ1bmciKTsKICBjb25zdCBjbG9zdXJlV2FybmluZyA9IGFjdGl2ZUNsb3N1cmVzLnNvbWUoKGNsb3N1cmUpID0+IGNsb3N1cmUudHlwICE9PSAic3BlcnJ1bmciKTsKICBjb25zdCBhdmFsYW5jaGVMZXZlbCA9IGlucHV0LmF2YWxhbmNoZT8uYXZhaWxhYmxlCiAgICA/IChpbnB1dC5hdmFsYW5jaGUuZGFuZ2VyTGV2ZWwgPz8gMCkKICAgIDogMDsKICBjb25zdCBzdG9ybSA9IGlucHV0LndlYXRoZXI/LmlzVGh1bmRlcnN0b3JtID09PSB0cnVlOwogIGNvbnN0IGNyaXRpY2FsV2VhdGhlciA9IGlucHV0LndlYXRoZXI/LnRyYWlsQ29uZGl0aW9uTGV2ZWwgPT09ICJrcml0aXNjaCI7CiAgY29uc3QgY2F1dGlvbldlYXRoZXIgPSBpbnB1dC53ZWF0aGVyPy50cmFpbENvbmRpdGlvbkxldmVsID09PSAidm9yc2ljaHQiOwogIGNvbnN0IHdlYXRoZXJNaXNzaW5nID0KICAgICFpbnB1dC53ZWF0aGVyTG9hZGluZyAmJiAoaW5wdXQud2VhdGhlckVycm9yIHx8ICFpbnB1dC53ZWF0aGVyKTsKICBjb25zdCBhdmFsYW5jaGVNaXNzaW5nID0gaW5wdXQuYXZhbGFuY2hlPy5yZWFzb24gPT09ICJhcGktZXJyb3IiOwogIGNvbnN0IGRhdGFNaXNzaW5nID0KICAgIGlucHV0LndlYXRoZXJMb2FkaW5nIHx8CiAgICBpbnB1dC5hdmFsYW5jaGVMb2FkaW5nIHx8CiAgICB3ZWF0aGVyTWlzc2luZyB8fAogICAgYXZhbGFuY2hlTWlzc2luZyB8fAogICAgaW5wdXQuc3BlcnJ1bmdlbkxvYWRpbmcgfHwKICAgIGlucHV0LmNvbmRpdGlvbnNMb2FkaW5nOwoKICBsZXQgZGVjaXNpb246IFNhZmV0eURlY2lzaW9uID0gInN0YXJ0IjsKICAvLyBUaGVzZSBzaWduYWxzIGFyZSBzdHJvbmcgZW5vdWdoIHRvIHBvc3Rwb25lLCBidXQgbm9uZSBpcyBhbiBvZmZpY2lhbAogIC8vIHJvdXRlIGNsb3N1cmUuIEEgaGFyZCAiYmxvY2tlZCIgc3RhdGUgbmVlZHMgYXV0aG9yaXRhdGl2ZSByb3V0ZSBnZW9tZXRyeS4KICBpZiAoc3Rvcm0gfHwgYXZhbGFuY2hlTGV2ZWwgPj0gNCB8fCBibG9ja2VkUmVwb3J0KSB7CiAgICBkZWNpc2lvbiA9ICJwb3N0cG9uZSI7CiAgfSBlbHNlIGlmICgKICAgIGF2YWxhbmNoZUxldmVsID49IDMgfHwKICAgIGNyaXRpY2FsV2VhdGhlciB8fAogICAgZGlmZmljdWx0UmVwb3J0IHx8CiAgICBjYXV0aW9uV2VhdGhlciB8fAogICAgY2xvc3VyZVdhcm5pbmcgfHwKICAgIG9mZmljaWFsQ2xvc3VyZUhpbnQgfHwKICAgIGRhdGFNaXNzaW5nCiAgKSB7CiAgICBkZWNpc2lvbiA9ICJjYXV0aW9uIjsKICB9CgogIGNvbnN0IHJlYXNvbnM6IFNhZmV0eVJlYXNvbltdID0gW107CiAgaWYgKHN0b3JtKSB7CiAgICByZWFzb25zLnB1c2goeyBjb2RlOiAidGh1bmRlcnN0b3JtIiwgc291cmNlOiAid2VhdGhlciIsIHRvbmU6ICJkYW5nZXIiIH0pOwogIH0gZWxzZSBpZiAoY3JpdGljYWxXZWF0aGVyIHx8IGNhdXRpb25XZWF0aGVyKSB7CiAgICByZWFzb25zLnB1c2goewogICAgICBjb2RlOiBjcml0aWNhbFdlYXRoZXIgPyAiY3JpdGljYWwtd2VhdGhlciIgOiAiY2F1dGlvbi13ZWF0aGVyIiwKICAgICAgc291cmNlOiAid2VhdGhlciIsCiAgICAgIHRvbmU6IGNyaXRpY2FsV2VhdGhlciA/ICJ3YXJuIiA6ICJuZXV0cmFsIiwKICAgIH0pOwogIH0KICBpZiAoYXZhbGFuY2hlTGV2ZWwgPj0gNCkgewogICAgcmVhc29ucy5wdXNoKHsgY29kZTogImF2YWxhbmNoZS1oaWdoIiwgc291cmNlOiAiZWF3cyIsIHRvbmU6ICJkYW5nZXIiIH0pOwogIH0gZWxzZSBpZiAoYXZhbGFuY2hlTGV2ZWwgPj0gMykgewogICAgcmVhc29ucy5wdXNoKHsgY29kZTogImF2YWxhbmNoZS1tb2RlcmF0ZSIsIHNvdXJjZTogImVhd3MiLCB0b25lOiAid2FybiIgfSk7CiAgfQogIGlmIChibG9ja2VkUmVwb3J0KSB7CiAgICByZWFzb25zLnB1c2goeyBjb2RlOiAiY29tbXVuaXR5LWJsb2NrZWQiLCBzb3VyY2U6ICJjb21tdW5pdHkiLCB0b25lOiAiZGFuZ2VyIiB9KTsKICB9IGVsc2UgaWYgKGRpZmZpY3VsdFJlcG9ydCkgewogICAgcmVhc29ucy5wdXNoKHsgY29kZTogImNvbW11bml0eS1kaWZmaWN1bHQiLCBzb3VyY2U6ICJjb21tdW5pdHkiLCB0b25lOiAid2FybiIgfSk7CiAgfQogIGlmIChvZmZpY2lhbENsb3N1cmVIaW50KSB7CiAgICByZWFzb25zLnB1c2goeyBjb2RlOiAib2ZmaWNpYWwtY2xvc3VyZSIsIHNvdXJjZTogIm9mZmljaWFsIiwgdG9uZTogIndhcm4iIH0pOwogIH0gZWxzZSBpZiAoY2xvc3VyZVdhcm5pbmcpIHsKICAgIHJlYXNvbnMucHVzaCh7IGNvZGU6ICJjbG9zdXJlLXdhcm5pbmciLCBzb3VyY2U6ICJvZmZpY2lhbCIsIHRvbmU6ICJ3YXJuIiB9KTsKICB9CiAgaWYgKCFyZWFzb25zLmxlbmd0aCkgewogICAgcmVhc29ucy5wdXNoKHsgY29kZTogImNsZWFyIiwgc291cmNlOiAibm9uZSIsIHRvbmU6ICJuZXV0cmFsIiB9KTsKICB9CgogIHJldHVybiB7CiAgICBkZWNpc2lvbiwKICAgIHJlYXNvbnM6IHJlYXNvbnMuc2xpY2UoMCwgMyksCiAgICBkYXRhTWlzc2luZywKICAgIGFjdGl2ZUNsb3N1cmVzLAogICAgcmVjZW50UmVwb3J0cywKICB9Owp9
+import type {
+  AvalancheBulletin,
+  TrailConditionReport,
+  WeatherReport,
+} from "@workspace/api-client-react";
+
+export type SafetyDecision = "start" | "caution" | "postpone" | "blocked";
+
+export type SafetyReasonCode =
+  | "thunderstorm"
+  | "critical-weather"
+  | "caution-weather"
+  | "avalanche-high"
+  | "avalanche-moderate"
+  | "community-blocked"
+  | "community-difficult"
+  | "official-closure"
+  | "closure-warning"
+  | "clear";
+
+export type SafetyReasonSource = "weather" | "eaws" | "community" | "official" | "none";
+export type SafetyReasonTone = "danger" | "warn" | "neutral";
+
+export interface SafetyClosure {
+  id: string;
+  title: string;
+  details?: string | null;
+  affectsFrom?: string | null;
+  affectsUntil?: string | null;
+  url?: string | null;
+  canton?: string | null;
+  typ?: "sperrung" | "wegschaden" | "warnung" | string;
+  source?: "admin" | "rss" | string;
+}
+
+export interface PreStartSafetyInput {
+  nowMs?: number;
+  weather: WeatherReport | null;
+  weatherLoading: boolean;
+  weatherError: boolean;
+  avalanche: AvalancheBulletin | null;
+  avalancheLoading: boolean;
+  trailConditions: TrailConditionReport[] | undefined;
+  conditionsLoading: boolean;
+  sperrungen: SafetyClosure[];
+  sperrungenLoading: boolean;
+}
+
+export interface SafetyReason {
+  code: SafetyReasonCode;
+  source: SafetyReasonSource;
+  tone: SafetyReasonTone;
+}
+
+export interface PreStartSafetyAnalysis {
+  decision: SafetyDecision;
+  reasons: SafetyReason[];
+  dataMissing: boolean;
+  activeClosures: SafetyClosure[];
+  recentReports: TrailConditionReport[];
+}
+
+function isRecent(iso: string | Date | null | undefined, nowMs: number, days = 7): boolean {
+  if (!iso) return false;
+  const age = nowMs - new Date(iso).getTime();
+  return Number.isFinite(age) && age >= -60_000 && age <= days * 24 * 60 * 60 * 1000;
+}
+
+function activeNow(closure: SafetyClosure, nowMs: number): boolean {
+  const from = closure.affectsFrom ? new Date(closure.affectsFrom).getTime() : -Infinity;
+  const until = closure.affectsUntil ? new Date(closure.affectsUntil).getTime() : Infinity;
+  return Number.isFinite(from) || Number.isFinite(until)
+    ? nowMs >= from && nowMs <= until
+    : true;
+}
+
+export function evaluatePreStartSafety(input: PreStartSafetyInput): PreStartSafetyAnalysis {
+  const nowMs = input.nowMs ?? Date.now();
+  const recentReports = (input.trailConditions ?? []).filter((report) =>
+    isRecent(report.reportedAt, nowMs),
+  );
+  const blockedReport = recentReports.some((report) => report.condition === "blocked");
+  const difficultReport = recentReports.some((report) =>
+    ["snow", "icy", "muddy"].includes(report.condition),
+  );
+
+  // RSS entries are national and have no route geometry. They must not turn
+  // a notice for another region into a route-specific warning.
+  const activeClosures = input.sperrungen.filter(
+    (closure) => activeNow(closure, nowMs) && closure.source !== "rss",
+  );
+  const officialClosureHint = activeClosures.some((closure) => closure.typ === "sperrung");
+  const closureWarning = activeClosures.some((closure) => closure.typ !== "sperrung");
+  const avalancheLevel = input.avalanche?.available
+    ? (input.avalanche.dangerLevel ?? 0)
+    : 0;
+  const storm = input.weather?.isThunderstorm === true;
+  const criticalWeather = input.weather?.trailConditionLevel === "kritisch";
+  const cautionWeather = input.weather?.trailConditionLevel === "vorsicht";
+  const weatherMissing =
+    !input.weatherLoading && (input.weatherError || !input.weather);
+  const avalancheMissing = input.avalanche?.reason === "api-error";
+  const dataMissing =
+    input.weatherLoading ||
+    input.avalancheLoading ||
+    weatherMissing ||
+    avalancheMissing ||
+    input.sperrungenLoading ||
+    input.conditionsLoading;
+
+  let decision: SafetyDecision = "start";
+  // These signals are strong enough to postpone, but none is an official
+  // route closure. A hard "blocked" state needs authoritative route geometry.
+  if (storm || avalancheLevel >= 4 || blockedReport) {
+    decision = "postpone";
+  } else if (
+    avalancheLevel >= 3 ||
+    criticalWeather ||
+    difficultReport ||
+    cautionWeather ||
+    closureWarning ||
+    officialClosureHint ||
+    dataMissing
+  ) {
+    decision = "caution";
+  }
+
+  const reasons: SafetyReason[] = [];
+  if (storm) {
+    reasons.push({ code: "thunderstorm", source: "weather", tone: "danger" });
+  } else if (criticalWeather || cautionWeather) {
+    reasons.push({
+      code: criticalWeather ? "critical-weather" : "caution-weather",
+      source: "weather",
+      tone: criticalWeather ? "warn" : "neutral",
+    });
+  }
+  if (avalancheLevel >= 4) {
+    reasons.push({ code: "avalanche-high", source: "eaws", tone: "danger" });
+  } else if (avalancheLevel >= 3) {
+    reasons.push({ code: "avalanche-moderate", source: "eaws", tone: "warn" });
+  }
+  if (blockedReport) {
+    reasons.push({ code: "community-blocked", source: "community", tone: "danger" });
+  } else if (difficultReport) {
+    reasons.push({ code: "community-difficult", source: "community", tone: "warn" });
+  }
+  if (officialClosureHint) {
+    reasons.push({ code: "official-closure", source: "official", tone: "warn" });
+  } else if (closureWarning) {
+    reasons.push({ code: "closure-warning", source: "official", tone: "warn" });
+  }
+  if (!reasons.length) {
+    reasons.push({ code: "clear", source: "none", tone: "neutral" });
+  }
+
+  return {
+    decision,
+    reasons: reasons.slice(0, 3),
+    dataMissing,
+    activeClosures,
+    recentReports,
+  };
+}

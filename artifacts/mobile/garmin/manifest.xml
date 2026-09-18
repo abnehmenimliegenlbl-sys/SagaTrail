@@ -1,1 +1,27 @@
-PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPGlxOm1hbmlmZXN0IHZlcnNpb249IjMiIHhtbG5zOmlxPSJodHRwOi8vd3d3Lmdhcm1pbi5jb20veG1sL2Nvbm5lY3RpcSI+CiAgICA8aXE6YXBwbGljYXRpb24gaWQ9IjFmMjY0ZWFlLWVmMGQtNDVhZC05NTQ4LWVlNjQ0NjBiN2Q3ZiIKICAgICAgICB0eXBlPSJ3YXRjaC1hcHAiCiAgICAgICAgbmFtZT0iQFN0cmluZ3MuQXBwTmFtZSIKICAgICAgICBlbnRyeT0iU2FnYVRyYWlsQXBwIgogICAgICAgIGxhdW5jaGVySWNvbj0iQERyYXdhYmxlcy5MYXVuY2hlckljb24iCiAgICAgICAgbWluQXBpTGV2ZWw9IjMuMi4wIj4KICAgICAgICA8aXE6cHJvZHVjdHM+CiAgICAgICAgICAgIDxpcTpwcm9kdWN0IGlkPSJmZW5peDciLz4KICAgICAgICAgICAgPGlxOnByb2R1Y3QgaWQ9ImZlbml4N3MiLz4KICAgICAgICAgICAgPGlxOnByb2R1Y3QgaWQ9ImZlbml4N3giLz4KICAgICAgICAgICAgPGlxOnByb2R1Y3QgaWQ9ImVwaXgyIi8+CiAgICAgICAgICAgIDxpcTpwcm9kdWN0IGlkPSJ2ZW51MiIvPgogICAgICAgICAgICA8aXE6cHJvZHVjdCBpZD0idml2b2FjdGl2ZTQiLz4KICAgICAgICAgICAgPGlxOnByb2R1Y3QgaWQ9ImZyOTU1Ii8+CiAgICAgICAgPC9pcTpwcm9kdWN0cz4KICAgICAgICA8aXE6cGVybWlzc2lvbnM+CiAgICAgICAgICAgIDxpcTp1c2VzLXBlcm1pc3Npb24gaWQ9IkNvbW11bmljYXRpb25zIi8+CiAgICAgICAgICAgIDxpcTp1c2VzLXBlcm1pc3Npb24gaWQ9IlNlbnNvciIvPgogICAgICAgICAgICA8aXE6dXNlcy1wZXJtaXNzaW9uIGlkPSJTZW5zb3JIaXN0b3J5Ii8+CiAgICAgICAgPC9pcTpwZXJtaXNzaW9ucz4KICAgICAgICA8aXE6bGFuZ3VhZ2VzPgogICAgICAgICAgICA8aXE6bGFuZ3VhZ2U+ZW5nPC9pcTpsYW5ndWFnZT4KICAgICAgICA8L2lxOmxhbmd1YWdlcz4KICAgIDwvaXE6YXBwbGljYXRpb24+CjwvaXE6bWFuaWZlc3Q+
+<?xml version="1.0" encoding="UTF-8"?>
+<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <iq:application id="1f264eae-ef0d-45ad-9548-ee64460b7d7f"
+        type="watch-app"
+        name="@Strings.AppName"
+        entry="SagaTrailApp"
+        launcherIcon="@Drawables.LauncherIcon"
+        minApiLevel="3.2.0">
+        <iq:products>
+            <iq:product id="fenix7"/>
+            <iq:product id="fenix7s"/>
+            <iq:product id="fenix7x"/>
+            <iq:product id="epix2"/>
+            <iq:product id="venu2"/>
+            <iq:product id="vivoactive4"/>
+            <iq:product id="fr955"/>
+        </iq:products>
+        <iq:permissions>
+            <iq:uses-permission id="Communications"/>
+            <iq:uses-permission id="Sensor"/>
+            <iq:uses-permission id="SensorHistory"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+    </iq:application>
+</iq:manifest>

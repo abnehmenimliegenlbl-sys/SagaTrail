@@ -1,1 +1,139 @@
-aW1wb3J0IGFzc2VydCBmcm9tICJub2RlOmFzc2VydC9zdHJpY3QiOwppbXBvcnQgdGVzdCBmcm9tICJub2RlOnRlc3QiOwoKaW1wb3J0IHR5cGUgeyBUcmFpbENvbmRpdGlvblJlcG9ydCB9IGZyb20gIkB3b3Jrc3BhY2UvYXBpLWNsaWVudC1yZWFjdCI7CgppbXBvcnQgeyBldmFsdWF0ZVByZVN0YXJ0U2FmZXR5LCB0eXBlIFByZVN0YXJ0U2FmZXR5SW5wdXQsIHR5cGUgU2FmZXR5Q2xvc3VyZSB9IGZyb20gIi4vcHJlU3RhcnRTYWZldHkiOwoKY29uc3QgTk9XID0gRGF0ZS5wYXJzZSgiMjAyNi0wOS0xOFQxMDowMDowMC4wMDBaIik7CgpmdW5jdGlvbiBiYXNlSW5wdXQob3ZlcnJpZGVzOiBQYXJ0aWFsPFByZVN0YXJ0U2FmZXR5SW5wdXQ+ID0ge30pOiBQcmVTdGFydFNhZmV0eUlucHV0IHsKICByZXR1cm4gewogICAgbm93TXM6IE5PVywKICAgIHdlYXRoZXI6IHsKICAgICAgaXNUaHVuZGVyc3Rvcm06IGZhbHNlLAogICAgICB0cmFpbENvbmRpdGlvbkxldmVsOiAiZ3V0IiwKICAgICAgY29uZGl0aW9uTGFiZWw6ICJLbGFyIiwKICAgIH0gYXMgUHJlU3RhcnRTYWZldHlJbnB1dFsid2VhdGhlciJdLAogICAgd2VhdGhlckxvYWRpbmc6IGZhbHNlLAogICAgd2VhdGhlckVycm9yOiBmYWxzZSwKICAgIGF2YWxhbmNoZTogewogICAgICBhdmFpbGFibGU6IGZhbHNlLAogICAgICBkYW5nZXJMZXZlbDogbnVsbCwKICAgICAgcmVhc29uOiAibm8tYnVsbGV0aW4iLAogICAgfSBhcyBQcmVTdGFydFNhZmV0eUlucHV0WyJhdmFsYW5jaGUiXSwKICAgIGF2YWxhbmNoZUxvYWRpbmc6IGZhbHNlLAogICAgdHJhaWxDb25kaXRpb25zOiBbXSwKICAgIGNvbmRpdGlvbnNMb2FkaW5nOiBmYWxzZSwKICAgIHNwZXJydW5nZW46IFtdLAogICAgc3BlcnJ1bmdlbkxvYWRpbmc6IGZhbHNlLAogICAgLi4ub3ZlcnJpZGVzLAogIH07Cn0KCmZ1bmN0aW9uIGNvbmRpdGlvbihjb25kaXRpb246IFRyYWlsQ29uZGl0aW9uUmVwb3J0WyJjb25kaXRpb24iXSwgcmVwb3J0ZWRBdDogRGF0ZSk6IFRyYWlsQ29uZGl0aW9uUmVwb3J0IHsKICByZXR1cm4geyBpZDogYGNvbmRpdGlvbi0ke2NvbmRpdGlvbn1gLCByb3V0ZUlkOiAicm91dGUtMSIsIGNvbmRpdGlvbiwgcmVwb3J0ZWRBdDogcmVwb3J0ZWRBdC50b0lTT1N0cmluZygpIH07Cn0KCnRlc3QoInBvc3Rwb25lcyB0aGUgc3RhcnQgZm9yIGEgdGh1bmRlcnN0b3JtIiwgKCkgPT4gewogIGNvbnN0IHJlc3VsdCA9IGV2YWx1YXRlUHJlU3RhcnRTYWZldHkoCiAgICBiYXNlSW5wdXQoewogICAgICB3ZWF0aGVyOiB7CiAgICAgICAgaXNUaHVuZGVyc3Rvcm06IHRydWUsCiAgICAgICAgdHJhaWxDb25kaXRpb25MZXZlbDogImtyaXRpc2NoIiwKICAgICAgICBjb25kaXRpb25MYWJlbDogIkdld2l0dGVyIiwKICAgICAgfSBhcyBQcmVTdGFydFNhZmV0eUlucHV0WyJ3ZWF0aGVyIl0sCiAgICB9KSwKICApOwoKICBhc3NlcnQuZXF1YWwocmVzdWx0LmRlY2lzaW9uLCAicG9zdHBvbmUiKTsKICBhc3NlcnQuZXF1YWwocmVzdWx0LnJlYXNvbnNbMF0/LmNvZGUsICJ0aHVuZGVyc3Rvcm0iKTsKfSk7Cgp0ZXN0KCJwb3N0cG9uZXMgdGhlIHN0YXJ0IGZvciBoaWdoIGF2YWxhbmNoZSBkYW5nZXIiLCAoKSA9PiB7CiAgY29uc3QgcmVzdWx0ID0gZXZhbHVhdGVQcmVTdGFydFNhZmV0eSgKICAgIGJhc2VJbnB1dCh7CiAgICAgIGF2YWxhbmNoZTogewogICAgICAgIGF2YWlsYWJsZTogdHJ1ZSwKICAgICAgICBkYW5nZXJMZXZlbDogNCwKICAgICAgICByZWFzb246IG51bGwsCiAgICAgIH0gYXMgUHJlU3RhcnRTYWZldHlJbnB1dFsiYXZhbGFuY2hlIl0sCiAgICB9KSwKICApOwoKICBhc3NlcnQuZXF1YWwocmVzdWx0LmRlY2lzaW9uLCAicG9zdHBvbmUiKTsKICBhc3NlcnQub2socmVzdWx0LnJlYXNvbnMuc29tZSgocmVhc29uKSA9PiByZWFzb24uY29kZSA9PT0gImF2YWxhbmNoZS1oaWdoIikpOwp9KTsKCnRlc3QoInBvc3Rwb25lcyBmb3IgYSBmcmVzaCBibG9ja2VkIGNvbW11bml0eSByZXBvcnQgYnV0IG5vdCBhbiBvbGQgb25lIiwgKCkgPT4gewogIGNvbnN0IGZyZXNoID0gZXZhbHVhdGVQcmVTdGFydFNhZmV0eSgKICAgIGJhc2VJbnB1dCh7CiAgICAgIHRyYWlsQ29uZGl0aW9uczogWwogICAgICAgIGNvbmRpdGlvbigiYmxvY2tlZCIsIG5ldyBEYXRlKE5PVyAtIDYwICogNjAgKiAxMDAwKSksCiAgICAgIF0sCiAgICB9KSwKICApOwogIGNvbnN0IG9sZCA9IGV2YWx1YXRlUHJlU3RhcnRTYWZldHkoCiAgICBiYXNlSW5wdXQoewogICAgICB0cmFpbENvbmRpdGlvbnM6IFsKICAgICAgICBjb25kaXRpb24oImJsb2NrZWQiLCBuZXcgRGF0ZShOT1cgLSA4ICogMjQgKiA2MCAqIDYwICogMTAwMCkpLAogICAgICBdLAogICAgfSksCiAgKTsKCiAgYXNzZXJ0LmVxdWFsKGZyZXNoLmRlY2lzaW9uLCAicG9zdHBvbmUiKTsKICBhc3NlcnQuZXF1YWwob2xkLmRlY2lzaW9uLCAic3RhcnQiKTsKfSk7Cgp0ZXN0KCJrZWVwcyBSU1Mgbm90aWNlcyBvdXQgb2YgdGhlIHJvdXRlIHZlcmRpY3QiLCAoKSA9PiB7CiAgY29uc3QgcnNzQ2xvc3VyZTogU2FmZXR5Q2xvc3VyZSA9IHsKICAgIGlkOiAicnNzLTEiLAogICAgdGl0bGU6ICJOYXRpb25hbCBub3RpY2UiLAogICAgc291cmNlOiAicnNzIiwKICAgIHR5cDogInNwZXJydW5nIiwKICB9OwogIGNvbnN0IHJlc3VsdCA9IGV2YWx1YXRlUHJlU3RhcnRTYWZldHkoYmFzZUlucHV0KHsgc3BlcnJ1bmdlbjogW3Jzc0Nsb3N1cmVdIH0pKTsKCiAgYXNzZXJ0LmVxdWFsKHJlc3VsdC5kZWNpc2lvbiwgInN0YXJ0Iik7CiAgYXNzZXJ0LmVxdWFsKHJlc3VsdC5hY3RpdmVDbG9zdXJlcy5sZW5ndGgsIDApOwp9KTsKCnRlc3QoInVzZXMgY2F1dGlvbiBmb3IgY2FudG9uLXNjb3BlZCBhZG1pbiBub3RpY2VzIGFuZCBpbmNvbXBsZXRlIGRhdGEiLCAoKSA9PiB7CiAgY29uc3QgY2xvc3VyZVJlc3VsdCA9IGV2YWx1YXRlUHJlU3RhcnRTYWZldHkoCiAgICBiYXNlSW5wdXQoewogICAgICBzcGVycnVuZ2VuOiBbCiAgICAgICAgewogICAgICAgICAgaWQ6ICJhZG1pbi0xIiwKICAgICAgICAgIHRpdGxlOiAiV2Vnc2NoYWRlbiIsCiAgICAgICAgICBzb3VyY2U6ICJhZG1pbiIsCiAgICAgICAgICB0eXA6ICJ3ZWdzY2hhZGVuIiwKICAgICAgICB9LAogICAgICBdLAogICAgfSksCiAgKTsKICBjb25zdCBsb2FkaW5nUmVzdWx0ID0gZXZhbHVhdGVQcmVTdGFydFNhZmV0eSgKICAgIGJhc2VJbnB1dCh7CiAgICAgIHdlYXRoZXJMb2FkaW5nOiB0cnVlLAogICAgICB3ZWF0aGVyOiBudWxsLAogICAgfSksCiAgKTsKCiAgYXNzZXJ0LmVxdWFsKGNsb3N1cmVSZXN1bHQuZGVjaXNpb24sICJjYXV0aW9uIik7CiAgYXNzZXJ0LmVxdWFsKGxvYWRpbmdSZXN1bHQuZGVjaXNpb24sICJjYXV0aW9uIik7CiAgYXNzZXJ0LmVxdWFsKGxvYWRpbmdSZXN1bHQuZGF0YU1pc3NpbmcsIHRydWUpOwp9KTsKCnRlc3QoInVzZXMgY2F1dGlvbiBmb3IgYXZhbGFuY2hlIGxldmVsIHRocmVlIiwgKCkgPT4gewogIGNvbnN0IHJlc3VsdCA9IGV2YWx1YXRlUHJlU3RhcnRTYWZldHkoCiAgICBiYXNlSW5wdXQoewogICAgICBhdmFsYW5jaGU6IHsKICAgICAgICBhdmFpbGFibGU6IHRydWUsCiAgICAgICAgZGFuZ2VyTGV2ZWw6IDMsCiAgICAgICAgcmVhc29uOiBudWxsLAogICAgICB9IGFzIFByZVN0YXJ0U2FmZXR5SW5wdXRbImF2YWxhbmNoZSJdLAogICAgfSksCiAgKTsKCiAgYXNzZXJ0LmVxdWFsKHJlc3VsdC5kZWNpc2lvbiwgImNhdXRpb24iKTsKICBhc3NlcnQub2socmVzdWx0LnJlYXNvbnMuc29tZSgocmVhc29uKSA9PiByZWFzb24uY29kZSA9PT0gImF2YWxhbmNoZS1tb2RlcmF0ZSIpKTsKfSk7
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import type { TrailConditionReport } from "@workspace/api-client-react";
+
+import { evaluatePreStartSafety, type PreStartSafetyInput, type SafetyClosure } from "./preStartSafety";
+
+const NOW = Date.parse("2026-09-18T10:00:00.000Z");
+
+function baseInput(overrides: Partial<PreStartSafetyInput> = {}): PreStartSafetyInput {
+  return {
+    nowMs: NOW,
+    weather: {
+      isThunderstorm: false,
+      trailConditionLevel: "gut",
+      conditionLabel: "Klar",
+    } as PreStartSafetyInput["weather"],
+    weatherLoading: false,
+    weatherError: false,
+    avalanche: {
+      available: false,
+      dangerLevel: null,
+      reason: "no-bulletin",
+    } as PreStartSafetyInput["avalanche"],
+    avalancheLoading: false,
+    trailConditions: [],
+    conditionsLoading: false,
+    sperrungen: [],
+    sperrungenLoading: false,
+    ...overrides,
+  };
+}
+
+function condition(condition: TrailConditionReport["condition"], reportedAt: Date): TrailConditionReport {
+  return { id: `condition-${condition}`, routeId: "route-1", condition, reportedAt: reportedAt.toISOString() };
+}
+
+test("postpones the start for a thunderstorm", () => {
+  const result = evaluatePreStartSafety(
+    baseInput({
+      weather: {
+        isThunderstorm: true,
+        trailConditionLevel: "kritisch",
+        conditionLabel: "Gewitter",
+      } as PreStartSafetyInput["weather"],
+    }),
+  );
+
+  assert.equal(result.decision, "postpone");
+  assert.equal(result.reasons[0]?.code, "thunderstorm");
+});
+
+test("postpones the start for high avalanche danger", () => {
+  const result = evaluatePreStartSafety(
+    baseInput({
+      avalanche: {
+        available: true,
+        dangerLevel: 4,
+        reason: null,
+      } as PreStartSafetyInput["avalanche"],
+    }),
+  );
+
+  assert.equal(result.decision, "postpone");
+  assert.ok(result.reasons.some((reason) => reason.code === "avalanche-high"));
+});
+
+test("postpones for a fresh blocked community report but not an old one", () => {
+  const fresh = evaluatePreStartSafety(
+    baseInput({
+      trailConditions: [
+        condition("blocked", new Date(NOW - 60 * 60 * 1000)),
+      ],
+    }),
+  );
+  const old = evaluatePreStartSafety(
+    baseInput({
+      trailConditions: [
+        condition("blocked", new Date(NOW - 8 * 24 * 60 * 60 * 1000)),
+      ],
+    }),
+  );
+
+  assert.equal(fresh.decision, "postpone");
+  assert.equal(old.decision, "start");
+});
+
+test("keeps RSS notices out of the route verdict", () => {
+  const rssClosure: SafetyClosure = {
+    id: "rss-1",
+    title: "National notice",
+    source: "rss",
+    typ: "sperrung",
+  };
+  const result = evaluatePreStartSafety(baseInput({ sperrungen: [rssClosure] }));
+
+  assert.equal(result.decision, "start");
+  assert.equal(result.activeClosures.length, 0);
+});
+
+test("uses caution for canton-scoped admin notices and incomplete data", () => {
+  const closureResult = evaluatePreStartSafety(
+    baseInput({
+      sperrungen: [
+        {
+          id: "admin-1",
+          title: "Wegschaden",
+          source: "admin",
+          typ: "wegschaden",
+        },
+      ],
+    }),
+  );
+  const loadingResult = evaluatePreStartSafety(
+    baseInput({
+      weatherLoading: true,
+      weather: null,
+    }),
+  );
+
+  assert.equal(closureResult.decision, "caution");
+  assert.equal(loadingResult.decision, "caution");
+  assert.equal(loadingResult.dataMissing, true);
+});
+
+test("uses caution for avalanche level three", () => {
+  const result = evaluatePreStartSafety(
+    baseInput({
+      avalanche: {
+        available: true,
+        dangerLevel: 3,
+        reason: null,
+      } as PreStartSafetyInput["avalanche"],
+    }),
+  );
+
+  assert.equal(result.decision, "caution");
+  assert.ok(result.reasons.some((reason) => reason.code === "avalanche-moderate"));
+});

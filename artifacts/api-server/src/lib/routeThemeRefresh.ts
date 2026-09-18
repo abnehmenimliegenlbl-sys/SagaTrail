@@ -1,1 +1,537 @@
-aW1wb3J0IHR5cGUgeyBMb2dnZXIgfSBmcm9tICJwaW5vIjsKaW1wb3J0IHsgYW5kLCBlcSwgZ3RlIH0gZnJvbSAiZHJpenpsZS1vcm0iOwppbXBvcnQgewogIGRiLAogIGV4dGVybmFsUm91dGVzVGFibGUsCiAgcm91dGVQb2lFdmlkZW5jZVRhYmxlLAogIHR5cGUgRXh0ZXJuYWxSb3V0ZVJvdywKfSBmcm9tICJAd29ya3NwYWNlL2RiIjsKaW1wb3J0IHsKICBmZXRjaEhpc3RvcmljUG9pcywKICBmZXRjaFdhdGVyRmVhdHVyZXMsCiAgdHlwZSBSYXdQb2ksCiAgdHlwZSBSYXdXYXRlckZlYXR1cmUsCn0gZnJvbSAiLi9vdmVycGFzcyI7CmltcG9ydCB7IGFzc2Vzc1JvdXRlUXVhbGl0eSB9IGZyb20gIi4vcm91dGVRdWFsaXR5IjsKCmV4cG9ydCBjb25zdCBUSEVNRV9NQVhfRElTVEFOQ0VfS00gPSB7CiAgd2Fzc2Vyd2VnZTogMC4zLAogIGJ1cmdlbl9ydWluZW5fYWx0ZV93ZWdlOiAwLjIsCiAgZ2lwZmVsX3Bhbm9yYW1hOiAxLAogIGdlb2xvZ2llX2Vpc3plaXQ6IDAuMiwKICBob2VobGVuX2dyb3R0ZW46IDAuMiwKICB3YWxkX3dpbGR0aWVyZTogMC4yLAogIGFscGVuX2xhbmR3aXJ0c2NoYWZ0OiAwLjUsCiAgcGlsZ2VyX2hhbmRlbHN3ZWdlOiAwLjEsCiAgaW5kdXN0cmlla3VsdHVyOiAwLjIsCiAgZmFtaWxpZW5fZW50ZGVja2VyOiAxLAogIG5hY2h0X3N0ZXJuZTogMiwKICBmbG9yYV9qYWhyZXN6ZWl0ZW46IDAuMiwKICBiYWhuX3NlaWxiYWhuOiAwLjIsCn0gYXMgY29uc3Q7Cgp0eXBlIFJvdXRlVGhlbWVLZXkgPSBrZXlvZiB0eXBlb2YgVEhFTUVfTUFYX0RJU1RBTkNFX0tNOwpjb25zdCBUSEVNRV9LRVlTID0gT2JqZWN0LmtleXMoVEhFTUVfTUFYX0RJU1RBTkNFX0tNKSBhcyBSb3V0ZVRoZW1lS2V5W107CmNvbnN0IE1BWF9USEVNRV9ESVNUQU5DRV9LTSA9IE1hdGgubWF4KAogIC4uLk9iamVjdC52YWx1ZXMoVEhFTUVfTUFYX0RJU1RBTkNFX0tNKSwKKTsKY29uc3QgUkVGUkVTSF9ERUxBWV9NUyA9IE51bWJlcihwcm9jZXNzLmVudi5ST1VURV9USEVNRV9ERUxBWV9NUyB8fCAzMDAwKTsKY29uc3QgV0FURVJfUk9VVEVfRElTVEFOQ0VfS00gPSAwLjM7CmNvbnN0IFdBVEVSX1JPVVRFX01BWF9ESVNUQU5DRV9LTSA9IDAuMDU7CmNvbnN0IFdBVEVSRkFMTF9NQVhfRElTVEFOQ0VfS00gPSAwLjM7Cgp0eXBlIExhdExuZyA9IHsgbGF0OiBudW1iZXI7IGxuZzogbnVtYmVyIH07CnR5cGUgUG9pV2l0aERpc3RhbmNlID0gewogIHBvaTogUmF3UG9pOwogIGRpc3RhbmNlS206IG51bWJlcjsKICBlbmRwb2ludERpc3RhbmNlS206IG51bWJlcjsKfTsKdHlwZSBXYXRlckV2aWRlbmNlID0gewogIGZlYXR1cmU6IFJhd1dhdGVyRmVhdHVyZTsKICBkaXN0YW5jZUttOiBudW1iZXI7Cn07CgpmdW5jdGlvbiBzbGVlcChtczogbnVtYmVyKTogUHJvbWlzZTx2b2lkPiB7CiAgcmV0dXJuIG5ldyBQcm9taXNlKChyZXNvbHZlKSA9PiBzZXRUaW1lb3V0KHJlc29sdmUsIG1zKSk7Cn0KCmZ1bmN0aW9uIGFzR2VvbWV0cnkocmF3OiB1bmtub3duKTogTGF0TG5nW10gewogIGxldCB2YWx1ZSA9IHJhdzsKICBpZiAodHlwZW9mIHZhbHVlID09PSAic3RyaW5nIikgewogICAgdHJ5IHsKICAgICAgdmFsdWUgPSBKU09OLnBhcnNlKHZhbHVlKTsKICAgIH0gY2F0Y2ggewogICAgICByZXR1cm4gW107CiAgICB9CiAgfQogIGlmICghQXJyYXkuaXNBcnJheSh2YWx1ZSkpIHJldHVybiBbXTsKICByZXR1cm4gdmFsdWUKICAgIC5tYXAoKHBvaW50KTogTGF0TG5nIHwgbnVsbCA9PiB7CiAgICAgIGlmIChBcnJheS5pc0FycmF5KHBvaW50KSkgewogICAgICAgIHJldHVybiB7IGxhdDogTnVtYmVyKHBvaW50WzBdKSwgbG5nOiBOdW1iZXIocG9pbnRbMV0pIH07CiAgICAgIH0KICAgICAgaWYgKHBvaW50ICYmIHR5cGVvZiBwb2ludCA9PT0gIm9iamVjdCIpIHsKICAgICAgICBjb25zdCBjYW5kaWRhdGUgPSBwb2ludCBhcyB7IGxhdD86IHVua25vd247IGxuZz86IHVua25vd24gfTsKICAgICAgICByZXR1cm4geyBsYXQ6IE51bWJlcihjYW5kaWRhdGUubGF0KSwgbG5nOiBOdW1iZXIoY2FuZGlkYXRlLmxuZykgfTsKICAgICAgfQogICAgICByZXR1cm4gbnVsbDsKICAgIH0pCiAgICAuZmlsdGVyKAogICAgICAocG9pbnQpOiBwb2ludCBpcyBMYXRMbmcgPT4KICAgICAgICBwb2ludCAhPT0gbnVsbCAmJiBOdW1iZXIuaXNGaW5pdGUocG9pbnQubGF0KSAmJiBOdW1iZXIuaXNGaW5pdGUocG9pbnQubG5nKSwKICAgICk7Cn0KCmZ1bmN0aW9uIHJvdXRlQmJveCgKICBnZW9tZXRyeTogTGF0TG5nW10sCik6IHsgc291dGg6IG51bWJlcjsgd2VzdDogbnVtYmVyOyBub3J0aDogbnVtYmVyOyBlYXN0OiBudW1iZXIgfSB8IG51bGwgewogIGlmIChnZW9tZXRyeS5sZW5ndGggPCAyKSByZXR1cm4gbnVsbDsKICBjb25zdCBzb3V0aCA9IE1hdGgubWluKC4uLmdlb21ldHJ5Lm1hcCgocG9pbnQpID0+IHBvaW50LmxhdCkpOwogIGNvbnN0IG5vcnRoID0gTWF0aC5tYXgoLi4uZ2VvbWV0cnkubWFwKChwb2ludCkgPT4gcG9pbnQubGF0KSk7CiAgY29uc3Qgd2VzdCA9IE1hdGgubWluKC4uLmdlb21ldHJ5Lm1hcCgocG9pbnQpID0+IHBvaW50LmxuZykpOwogIGNvbnN0IGVhc3QgPSBNYXRoLm1heCguLi5nZW9tZXRyeS5tYXAoKHBvaW50KSA9PiBwb2ludC5sbmcpKTsKICBjb25zdCBjZW50ZXJMYXQgPSAoc291dGggKyBub3J0aCkgLyAyOwogIGNvbnN0IGxhdFBhZCA9IE1BWF9USEVNRV9ESVNUQU5DRV9LTSAvIDExMTsKICBjb25zdCBsbmdQYWQgPQogICAgTUFYX1RIRU1FX0RJU1RBTkNFX0tNIC8KICAgICgxMTEgKiBNYXRoLmNvcygoY2VudGVyTGF0ICogTWF0aC5QSSkgLyAxODApIHx8IDEpOwogIHJldHVybiB7CiAgICBzb3V0aDogc291dGggLSBsYXRQYWQsCiAgICB3ZXN0OiB3ZXN0IC0gbG5nUGFkLAogICAgbm9ydGg6IG5vcnRoICsgbGF0UGFkLAogICAgZWFzdDogZWFzdCArIGxuZ1BhZCwKICB9Owp9CgpmdW5jdGlvbiBiYm94S2V5KGJib3g6IHsKICBzb3V0aDogbnVtYmVyOwogIHdlc3Q6IG51bWJlcjsKICBub3J0aDogbnVtYmVyOwogIGVhc3Q6IG51bWJlcjsKfSk6IHN0cmluZyB7CiAgcmV0dXJuIFtiYm94LnNvdXRoLCBiYm94Lndlc3QsIGJib3gubm9ydGgsIGJib3guZWFzdF0KICAgIC5tYXAoKHZhbHVlKSA9PiB2YWx1ZS50b0ZpeGVkKDQpKQogICAgLmpvaW4oIiwiKTsKfQoKZnVuY3Rpb24gZGlzdGFuY2VUb1NlZ21lbnRLbShwb2ludDogTGF0TG5nLCBhOiBMYXRMbmcsIGI6IExhdExuZyk6IG51bWJlciB7CiAgY29uc3QgcmFkaXVzID0gNjM3MTsKICBjb25zdCByYWRpYW5zID0gTWF0aC5QSSAvIDE4MDsKICBjb25zdCBjb3NMYXQgPSBNYXRoLmNvcyhwb2ludC5sYXQgKiByYWRpYW5zKTsKICBjb25zdCBheCA9IChhLmxuZyAtIHBvaW50LmxuZykgKiByYWRpYW5zICogY29zTGF0ICogcmFkaXVzOwogIGNvbnN0IGF5ID0gKGEubGF0IC0gcG9pbnQubGF0KSAqIHJhZGlhbnMgKiByYWRpdXM7CiAgY29uc3QgYnggPSAoYi5sbmcgLSBwb2ludC5sbmcpICogcmFkaWFucyAqIGNvc0xhdCAqIHJhZGl1czsKICBjb25zdCBieSA9IChiLmxhdCAtIHBvaW50LmxhdCkgKiByYWRpYW5zICogcmFkaXVzOwogIGNvbnN0IGR4ID0gYnggLSBheDsKICBjb25zdCBkeSA9IGJ5IC0gYXk7CiAgY29uc3QgbGVuZ3RoMiA9IGR4ICogZHggKyBkeSAqIGR5OwogIGNvbnN0IHQgPQogICAgbGVuZ3RoMiA9PT0gMAogICAgICA/IDAKICAgICAgOiBNYXRoLm1heCgwLCBNYXRoLm1pbigxLCAtKGF4ICogZHggKyBheSAqIGR5KSAvIGxlbmd0aDIpKTsKICByZXR1cm4gTWF0aC5oeXBvdChheCArIHQgKiBkeCwgYXkgKyB0ICogZHkpOwp9CgpmdW5jdGlvbiBkaXN0YW5jZVRvUm91dGVLbShwb2ludDogTGF0TG5nLCBnZW9tZXRyeTogTGF0TG5nW10pOiBudW1iZXIgewogIGxldCBuZWFyZXN0ID0gSW5maW5pdHk7CiAgZm9yIChsZXQgaW5kZXggPSAxOyBpbmRleCA8IGdlb21ldHJ5Lmxlbmd0aDsgaW5kZXggKz0gMSkgewogICAgbmVhcmVzdCA9IE1hdGgubWluKAogICAgICBuZWFyZXN0LAogICAgICBkaXN0YW5jZVRvU2VnbWVudEttKHBvaW50LCBnZW9tZXRyeVtpbmRleCAtIDFdISwgZ2VvbWV0cnlbaW5kZXhdISksCiAgICApOwogIH0KICByZXR1cm4gbmVhcmVzdDsKfQoKZnVuY3Rpb24gc2VnbWVudExlbmd0aEttKGE6IExhdExuZywgYjogTGF0TG5nKTogbnVtYmVyIHsKICByZXR1cm4gZGlzdGFuY2VCZXR3ZWVuS20oYSwgYik7Cn0KCmZ1bmN0aW9uIGRpc3RhbmNlQmV0d2VlbkttKGE6IExhdExuZywgYjogTGF0TG5nKTogbnVtYmVyIHsKICBjb25zdCByYWRpdXMgPSA2MzcxOwogIGNvbnN0IHJhZGlhbnMgPSBNYXRoLlBJIC8gMTgwOwogIGNvbnN0IGRMYXQgPSAoYi5sYXQgLSBhLmxhdCkgKiByYWRpYW5zOwogIGNvbnN0IGRMbmcgPSAoYi5sbmcgLSBhLmxuZykgKiByYWRpYW5zOwogIGNvbnN0IG1lYW5MYXQgPSAoKGEubGF0ICsgYi5sYXQpIC8gMikgKiByYWRpYW5zOwogIHJldHVybiBNYXRoLmh5cG90KGRMYXQgKiByYWRpdXMsIGRMbmcgKiBNYXRoLmNvcyhtZWFuTGF0KSAqIHJhZGl1cyk7Cn0KCmZ1bmN0aW9uIGRpc3RhbmNlQmV0d2VlblNlZ21lbnRzS20oCiAgYTogTGF0TG5nLAogIGI6IExhdExuZywKICBjOiBMYXRMbmcsCiAgZDogTGF0TG5nLAopOiBudW1iZXIgewogIHJldHVybiBNYXRoLm1pbigKICAgIGRpc3RhbmNlVG9TZWdtZW50S20oYSwgYywgZCksCiAgICBkaXN0YW5jZVRvU2VnbWVudEttKGIsIGMsIGQpLAogICAgZGlzdGFuY2VUb1NlZ21lbnRLbShjLCBhLCBiKSwKICAgIGRpc3RhbmNlVG9TZWdtZW50S20oZCwgYSwgYiksCiAgICBkaXN0YW5jZVRvU2VnbWVudEttKAogICAgICB7IGxhdDogKGEubGF0ICsgYi5sYXQpIC8gMiwgbG5nOiAoYS5sbmcgKyBiLmxuZykgLyAyIH0sCiAgICAgIGMsCiAgICAgIGQsCiAgICApLAogICk7Cn0KCmZ1bmN0aW9uIGRpc3RhbmNlVG9XYXRlckZlYXR1cmVLbSgKICByb3V0ZVN0YXJ0OiBMYXRMbmcsCiAgcm91dGVFbmQ6IExhdExuZywKICBmZWF0dXJlOiBSYXdXYXRlckZlYXR1cmUsCik6IG51bWJlciB7CiAgaWYgKGZlYXR1cmUuZ2VvbWV0cnkubGVuZ3RoIDwgMikgewogICAgcmV0dXJuIE1hdGgubWluKAogICAgICBkaXN0YW5jZVRvU2VnbWVudEttKGZlYXR1cmUsIHJvdXRlU3RhcnQsIHJvdXRlRW5kKSwKICAgICAgZGlzdGFuY2VCZXR3ZWVuS20oZmVhdHVyZSwgcm91dGVTdGFydCksCiAgICAgIGRpc3RhbmNlQmV0d2VlbkttKGZlYXR1cmUsIHJvdXRlRW5kKSwKICAgICk7CiAgfQogIGxldCBuZWFyZXN0ID0gSW5maW5pdHk7CiAgZm9yIChsZXQgaW5kZXggPSAxOyBpbmRleCA8IGZlYXR1cmUuZ2VvbWV0cnkubGVuZ3RoOyBpbmRleCArPSAxKSB7CiAgICBuZWFyZXN0ID0gTWF0aC5taW4oCiAgICAgIG5lYXJlc3QsCiAgICAgIGRpc3RhbmNlQmV0d2VlblNlZ21lbnRzS20oCiAgICAgICAgcm91dGVTdGFydCwKICAgICAgICByb3V0ZUVuZCwKICAgICAgICBmZWF0dXJlLmdlb21ldHJ5W2luZGV4IC0gMV0hLAogICAgICAgIGZlYXR1cmUuZ2VvbWV0cnlbaW5kZXhdISwKICAgICAgKSwKICAgICk7CiAgfQogIHJldHVybiBuZWFyZXN0Owp9CgpmdW5jdGlvbiB3YXRlckV2aWRlbmNlRm9yUm91dGUoCiAgZmVhdHVyZXM6IFJhd1dhdGVyRmVhdHVyZVtdLAogIGdlb21ldHJ5OiBMYXRMbmdbXSwKKTogV2F0ZXJFdmlkZW5jZVtdIHsKICBjb25zdCBldmlkZW5jZTogV2F0ZXJFdmlkZW5jZVtdID0gW107CiAgZm9yIChjb25zdCBmZWF0dXJlIG9mIGZlYXR1cmVzKSB7CiAgICBpZiAoZmVhdHVyZS5raW5kLmluY2x1ZGVzKCJ3YXRlcmZhbGwiKSkgewogICAgICBjb25zdCBkaXN0YW5jZUttID0gZGlzdGFuY2VUb1JvdXRlS20oCiAgICAgICAgeyBsYXQ6IGZlYXR1cmUubGF0LCBsbmc6IGZlYXR1cmUubG5nIH0sCiAgICAgICAgZ2VvbWV0cnksCiAgICAgICk7CiAgICAgIGlmIChkaXN0YW5jZUttIDw9IFdBVEVSRkFMTF9NQVhfRElTVEFOQ0VfS00pIHsKICAgICAgICBldmlkZW5jZS5wdXNoKHsgZmVhdHVyZSwgZGlzdGFuY2VLbSB9KTsKICAgICAgfQogICAgICBjb250aW51ZTsKICAgIH0KICAgIGxldCBhbG9uZ0ttID0gMDsKICAgIGxldCBuZWFyZXN0S20gPSBJbmZpbml0eTsKICAgIGZvciAobGV0IGluZGV4ID0gMTsgaW5kZXggPCBnZW9tZXRyeS5sZW5ndGg7IGluZGV4ICs9IDEpIHsKICAgICAgY29uc3Qgc3RhcnQgPSBnZW9tZXRyeVtpbmRleCAtIDFdITsKICAgICAgY29uc3QgZW5kID0gZ2VvbWV0cnlbaW5kZXhdITsKICAgICAgY29uc3Qgcm91dGVTZWdtZW50TGVuZ3RoS20gPSBzZWdtZW50TGVuZ3RoS20oc3RhcnQsIGVuZCk7CiAgICAgIGNvbnN0IGRpc3RhbmNlS20gPSBkaXN0YW5jZVRvV2F0ZXJGZWF0dXJlS20oc3RhcnQsIGVuZCwgZmVhdHVyZSk7CiAgICAgIG5lYXJlc3RLbSA9IE1hdGgubWluKG5lYXJlc3RLbSwgZGlzdGFuY2VLbSk7CiAgICAgIGlmIChkaXN0YW5jZUttIDw9IFdBVEVSX1JPVVRFX01BWF9ESVNUQU5DRV9LTSkgewogICAgICAgIGFsb25nS20gKz0gcm91dGVTZWdtZW50TGVuZ3RoS207CiAgICAgICAgaWYgKGFsb25nS20gPj0gV0FURVJfUk9VVEVfRElTVEFOQ0VfS00pIHsKICAgICAgICAgIGV2aWRlbmNlLnB1c2goeyBmZWF0dXJlLCBkaXN0YW5jZUttOiBuZWFyZXN0S20gfSk7CiAgICAgICAgICBicmVhazsKICAgICAgICB9CiAgICAgIH0gZWxzZSB7CiAgICAgICAgYWxvbmdLbSA9IDA7CiAgICAgIH0KICAgIH0KICB9CiAgcmV0dXJuIGV2aWRlbmNlOwp9CgpmdW5jdGlvbiBuZWFyYnlQb2lzKHBvaXM6IFJhd1BvaVtdLCBnZW9tZXRyeTogTGF0TG5nW10pOiBQb2lXaXRoRGlzdGFuY2VbXSB7CiAgcmV0dXJuIHBvaXMuZmxhdE1hcCgocG9pKSA9PiB7CiAgICBjb25zdCBwb2ludCA9IHsgbGF0OiBOdW1iZXIocG9pLmxhdCksIGxuZzogTnVtYmVyKHBvaS5sbmcpIH07CiAgICBpZiAoIU51bWJlci5pc0Zpbml0ZShwb2ludC5sYXQpIHx8ICFOdW1iZXIuaXNGaW5pdGUocG9pbnQubG5nKSkgcmV0dXJuIFtdOwogICAgY29uc3QgZGlzdGFuY2VLbSA9IGRpc3RhbmNlVG9Sb3V0ZUttKHBvaW50LCBnZW9tZXRyeSk7CiAgICBjb25zdCBlbmRwb2ludERpc3RhbmNlS20gPQogICAgICBnZW9tZXRyeS5sZW5ndGggPiAwCiAgICAgICAgPyBNYXRoLm1pbigKICAgICAgICAgICAgZGlzdGFuY2VCZXR3ZWVuS20ocG9pbnQsIGdlb21ldHJ5WzBdISksCiAgICAgICAgICAgIGRpc3RhbmNlQmV0d2VlbkttKHBvaW50LCBnZW9tZXRyeVtnZW9tZXRyeS5sZW5ndGggLSAxXSEpLAogICAgICAgICAgKQogICAgICAgIDogSW5maW5pdHk7CiAgICByZXR1cm4gZGlzdGFuY2VLbSA8PSBNQVhfVEhFTUVfRElTVEFOQ0VfS00KICAgICAgPyBbeyBwb2ksIGRpc3RhbmNlS20sIGVuZHBvaW50RGlzdGFuY2VLbSB9XQogICAgICA6IFtdOwogIH0pOwp9CgpmdW5jdGlvbiBoYXNLaW5kKHBvaTogUmF3UG9pLCAuLi5raW5kczogc3RyaW5nW10pOiBib29sZWFuIHsKICByZXR1cm4ga2luZHMuaW5jbHVkZXMocG9pLmtpbmQpOwp9CgpmdW5jdGlvbiBpc1JhaWxPclRyYW0ocG9pOiBSYXdQb2kpOiBib29sZWFuIHsKICByZXR1cm4gaGFzS2luZChwb2ksICJyYWlsd2F5PXN0YXRpb24iLCAicmFpbHdheT1oYWx0IiwgInJhaWx3YXk9dHJhbV9zdG9wIik7Cn0KCmZ1bmN0aW9uIGRlcml2ZVRoZW1lcygKICBlbnRyaWVzOiBQb2lXaXRoRGlzdGFuY2VbXSwKICBmYW1pbHlGcmllbmRseTogYm9vbGVhbiB8IG51bGwsCik6IFJvdXRlVGhlbWVLZXlbXSB7CiAgY29uc3QgdGFncyA9IG5ldyBTZXQ8Um91dGVUaGVtZUtleT4oKTsKICBmb3IgKGNvbnN0IHsgcG9pLCBkaXN0YW5jZUttLCBlbmRwb2ludERpc3RhbmNlS20gfSBvZiBlbnRyaWVzKSB7CiAgICBjb25zdCBraW5kID0gcG9pLmtpbmQgfHwgIiI7CiAgICBjb25zdCBhZGRJZk5lYXIgPSAodGhlbWU6IFJvdXRlVGhlbWVLZXksIG1hdGNoZXM6IGJvb2xlYW4pID0+IHsKICAgICAgaWYgKG1hdGNoZXMgJiYgZGlzdGFuY2VLbSA8PSBUSEVNRV9NQVhfRElTVEFOQ0VfS01bdGhlbWVdKSB7CiAgICAgICAgdGFncy5hZGQodGhlbWUpOwogICAgICB9CiAgICB9OwoKICAgIGFkZElmTmVhcigiYnVyZ2VuX3J1aW5lbl9hbHRlX3dlZ2UiLCBbCiAgICAgICJoaXN0b3JpYz1jYXN0bGUiLAogICAgICAiaGlzdG9yaWM9cnVpbnMiLAogICAgICAiaGlzdG9yaWM9Zm9ydCIsCiAgICAgICJoaXN0b3JpYz1hcmNoYWVvbG9naWNhbF9zaXRlIiwKICAgICAgImhpc3RvcmljPXJvbWFuX3JvYWQiLAogICAgICAiaGlzdG9yaWM9cm9tYW5fdmlsbGEiLAogICAgICAiaGlzdG9yaWM9cm9tYW5fYnVpbGRpbmciLAogICAgICAiaGlzdG9yaWM9YmF0dGxlZmllbGQiLAogICAgICAiaGlzdG9yaWM9YnJpZGdlIiwKICAgIF0uaW5jbHVkZXMoa2luZCkpOwogICAgYWRkSWZOZWFyKAogICAgICAiZ2lwZmVsX3Bhbm9yYW1hIiwKICAgICAgaGFzS2luZChwb2ksICJ0b3VyaXNtPXZpZXdwb2ludCIpIHx8CiAgICAgICAgKGhhc0tpbmQocG9pLCAibmF0dXJhbD1wZWFrIiwgIm5hdHVyYWw9c2FkZGxlIikgJiYKICAgICAgICAgIHBvaS5lbGV2YXRpb24gIT09IG51bGwgJiYKICAgICAgICAgIHBvaS5lbGV2YXRpb24gPj0gMTAwMCksCiAgICApOwogICAgYWRkSWZOZWFyKAogICAgICAiZ2VvbG9naWVfZWlzemVpdCIsCiAgICAgIGtpbmQuc3RhcnRzV2l0aCgiZ2VvbG9naWNhbD0iKSB8fAogICAgICAgIGhhc0tpbmQocG9pLCAibmF0dXJhbD1yb2NrIiwgIm5hdHVyYWw9Z2xhY2llciIpLAogICAgKTsKICAgIGFkZElmTmVhcigKICAgICAgImhvZWhsZW5fZ3JvdHRlbiIsCiAgICAgIGhhc0tpbmQoCiAgICAgICAgcG9pLAogICAgICAgICJuYXR1cmFsPWFyY2giLAogICAgICAgICJuYXR1cmFsPWNhdmUiLAogICAgICAgICJuYXR1cmFsPWNhdmVfZW50cmFuY2UiLAogICAgICAgICJuYXR1cmFsPXJvY2tfc2hlbHRlciIsCiAgICAgICAgIm1hbl9tYWRlPWFkaXQiLAogICAgICApLAogICAgKTsKICAgIGFkZElmTmVhcigKICAgICAgIndhbGRfd2lsZHRpZXJlIiwKICAgICAgaGFzS2luZChwb2ksICJuYXR1cmFsPXdvb2QiLCAibmF0dXJhbD13ZXRsYW5kIiwgInRvdXJpc209d2lsZGxpZmVfaGlkZSIpLAogICAgKTsKICAgIGFkZElmTmVhcigKICAgICAgImFscGVuX2xhbmR3aXJ0c2NoYWZ0IiwKICAgICAgaGFzS2luZCgKICAgICAgICBwb2ksCiAgICAgICAgInRvdXJpc209YWxwaW5lX2h1dCIsCiAgICAgICAgImFtZW5pdHk9c2hlbHRlciIsCiAgICAgICAgInNob3A9Y2hlZXNlIiwKICAgICAgICAiZmFybT1BbHAiLAogICAgICAgICJsYW5kdXNlPW1lYWRvdyIsCiAgICAgICAgImxhbmR1c2U9cGFzdHVyZSIsCiAgICAgICksCiAgICApOwogICAgYWRkSWZOZWFyKAogICAgICAicGlsZ2VyX2hhbmRlbHN3ZWdlIiwKICAgICAgaGFzS2luZCgKICAgICAgICBwb2ksCiAgICAgICAgInJvdXRlPXBpbGdyaW1hZ2UiLAogICAgICAgICJoaXN0b3JpYz1jaHVyY2giLAogICAgICAgICJoaXN0b3JpYz13YXlzaWRlX2Nyb3NzIiwKICAgICAgICAiaGlzdG9yaWM9d2F5c2lkZV9zaHJpbmUiLAogICAgICAgICJoaXN0b3JpYz1taWxlc3RvbmUiLAogICAgICAgICJoaXN0b3JpYz1ib3VuZGFyeV9zdG9uZSIsCiAgICAgICksCiAgICApOwogICAgYWRkSWZOZWFyKAogICAgICAiaW5kdXN0cmlla3VsdHVyIiwKICAgICAgWwogICAgICAgICJtYW5fbWFkZT13YXRlcm1pbGwiLAogICAgICAgICJtYW5fbWFkZT13aW5kbWlsbCIsCiAgICAgICAgIm1hbl9tYWRlPXdvcmtzIiwKICAgICAgICAibWFuX21hZGU9cXVhcnJ5IiwKICAgICAgXS5pbmNsdWRlcyhraW5kKSwKICAgICk7CiAgICBhZGRJZk5lYXIoCiAgICAgICJmYW1pbGllbl9lbnRkZWNrZXIiLAogICAgICBoYXNLaW5kKHBvaSwgImFtZW5pdHk9cGxheWdyb3VuZCIsICJhbWVuaXR5PXBpY25pY19zaXRlIiksCiAgICApOwogICAgYWRkSWZOZWFyKAogICAgICAibmFjaHRfc3Rlcm5lIiwKICAgICAgaGFzS2luZChwb2ksICJhbWVuaXR5PW9ic2VydmF0b3J5IiwgInRvdXJpc209b2JzZXJ2YXRvcnkiKSwKICAgICk7CiAgICBhZGRJZk5lYXIoCiAgICAgICJmbG9yYV9qYWhyZXN6ZWl0ZW4iLAogICAgICBoYXNLaW5kKAogICAgICAgIHBvaSwKICAgICAgICAibmF0dXJhbD10cmVlIiwKICAgICAgICAibmF0dXJhbD13ZXRsYW5kIiwKICAgICAgICAibGFuZHVzZT1vcmNoYXJkIiwKICAgICAgICAibGFuZHVzZT12aW5leWFyZCIsCiAgICAgICAgIm5hdHVyYWw9aGVhdGgiLAogICAgICApLAogICAgKTsKICAgIGNvbnN0IGlzVHJhbnNwb3J0UG9pbnQgPSBoYXNLaW5kKAogICAgICBwb2ksCiAgICAgICJyYWlsd2F5PXN0YXRpb24iLAogICAgICAicmFpbHdheT1oYWx0IiwKICAgICAgInJhaWx3YXk9dHJhbV9zdG9wIiwKICAgICAgImhpZ2h3YXk9YnVzX3N0b3AiLAogICAgICAiYWVyaWFsd2F5PXN0YXRpb24iLAogICAgICAiYW1lbml0eT1mZXJyeV90ZXJtaW5hbCIsCiAgICApOwogICAgY29uc3QgaXNFbmRwb2ludFRyYW5zcG9ydCA9CiAgICAgIGlzUmFpbE9yVHJhbShwb2kpICYmCiAgICAgIGVuZHBvaW50RGlzdGFuY2VLbSA8PSBUSEVNRV9NQVhfRElTVEFOQ0VfS00uYmFobl9zZWlsYmFobjsKICAgIGFkZElmTmVhcigKICAgICAgImJhaG5fc2VpbGJhaG4iLAogICAgICBpc1RyYW5zcG9ydFBvaW50ICYmICghaXNSYWlsT3JUcmFtKHBvaSkgfHwgaXNFbmRwb2ludFRyYW5zcG9ydCksCiAgICApOwogIH0KICBpZiAoZmFtaWx5RnJpZW5kbHkgPT09IHRydWUpIHRhZ3MuYWRkKCJmYW1pbGllbl9lbnRkZWNrZXIiKTsKICByZXR1cm4gVEhFTUVfS0VZUy5maWx0ZXIoKGtleSkgPT4gdGFncy5oYXMoa2V5KSk7Cn0KCmV4cG9ydCBhc3luYyBmdW5jdGlvbiByZWZyZXNoQ2FudG9uUm91dGVUaGVtZXMoCiAgcm91dGVzOiBFeHRlcm5hbFJvdXRlUm93W10sCiAgbG9nOiBMb2dnZXIsCik6IFByb21pc2U8eyBjaGVja2VkOiBudW1iZXI7IHVwZGF0ZWQ6IG51bWJlcjsgc2tpcHBlZDogbnVtYmVyOyBmYWlsZWQ6IG51bWJlciB9PiB7CiAgbGV0IGNoZWNrZWQgPSAwOwogIGxldCB1cGRhdGVkID0gMDsKICBsZXQgc2tpcHBlZCA9IDA7CiAgbGV0IGZhaWxlZCA9IDA7CiAgY29uc3QgcG9pQ2FjaGUgPSBuZXcgTWFwPHN0cmluZywgUHJvbWlzZTxSYXdQb2lbXT4+KCk7CiAgY29uc3Qgd2F0ZXJDYWNoZSA9IG5ldyBNYXA8c3RyaW5nLCBQcm9taXNlPFJhd1dhdGVyRmVhdHVyZVtdPj4oKTsKCiAgY29uc3QgbG9hZFBvaXMgPSAoYmJveDogewogICAgc291dGg6IG51bWJlcjsKICAgIHdlc3Q6IG51bWJlcjsKICAgIG5vcnRoOiBudW1iZXI7CiAgICBlYXN0OiBudW1iZXI7CiAgfSk6IFByb21pc2U8UmF3UG9pW10+ID0+IHsKICAgIGNvbnN0IGtleSA9IGJib3hLZXkoYmJveCk7CiAgICBjb25zdCBjYWNoZWQgPSBwb2lDYWNoZS5nZXQoa2V5KTsKICAgIGlmIChjYWNoZWQpIHJldHVybiBjYWNoZWQ7CiAgICBjb25zdCBwZW5kaW5nID0gZmV0Y2hIaXN0b3JpY1BvaXMoYmJveCwgbG9nKTsKICAgIHBvaUNhY2hlLnNldChrZXksIHBlbmRpbmcpOwogICAgcmV0dXJuIHBlbmRpbmc7CiAgfTsKICBjb25zdCBsb2FkV2F0ZXJGZWF0dXJlcyA9IChiYm94OiB7CiAgICBzb3V0aDogbnVtYmVyOwogICAgd2VzdDogbnVtYmVyOwogICAgbm9ydGg6IG51bWJlcjsKICAgIGVhc3Q6IG51bWJlcjsKICB9KTogUHJvbWlzZTxSYXdXYXRlckZlYXR1cmVbXT4gPT4gewogICAgY29uc3Qga2V5ID0gYmJveEtleShiYm94KTsKICAgIGNvbnN0IGNhY2hlZCA9IHdhdGVyQ2FjaGUuZ2V0KGtleSk7CiAgICBpZiAoY2FjaGVkKSByZXR1cm4gY2FjaGVkOwogICAgY29uc3QgcGVuZGluZyA9IGZldGNoV2F0ZXJGZWF0dXJlcyhiYm94LCBsb2cpOwogICAgd2F0ZXJDYWNoZS5zZXQoa2V5LCBwZW5kaW5nKTsKICAgIHJldHVybiBwZW5kaW5nOwogIH07CgogIGZvciAoY29uc3Qgcm91dGUgb2Ygcm91dGVzKSB7CiAgICBjb25zdCBnZW9tZXRyeSA9IGFzR2VvbWV0cnkocm91dGUuZ2VvbWV0cnkpOwogICAgY29uc3QgcXVhbGl0eSA9IGFzc2Vzc1JvdXRlUXVhbGl0eShyb3V0ZSk7CiAgICBjb25zdCBjaGVja2VkQXQgPSBuZXcgRGF0ZSgpOwogICAgY29uc3QgYmJveCA9IHJvdXRlQmJveChnZW9tZXRyeSk7CiAgICBpZiAoIWJib3gpIHsKICAgICAgLy8gQW4gaW52YWxpZCBnZW9tZXRyeSBtdXN0IG5vdCBrZWVwIG9sZCB0aGVtZSBldmlkZW5jZSBhbGl2ZS4gVGhlIHJvdXRlCiAgICAgIC8vIGlzIHN0aWxsIG1hcmtlZCBzbyB0aGUgVUkgY2FuIGV4cGxhaW4gd2h5IGl0cyBtZXRyaWNzIGFyZSB1bnRydXN0ZWQuCiAgICAgIGF3YWl0IGRiLnRyYW5zYWN0aW9uKGFzeW5jICh0eCkgPT4gewogICAgICAgIGF3YWl0IHR4CiAgICAgICAgICAuZGVsZXRlKHJvdXRlUG9pRXZpZGVuY2VUYWJsZSkKICAgICAgICAgIC53aGVyZShlcShyb3V0ZVBvaUV2aWRlbmNlVGFibGUucm91dGVJZCwgcm91dGUuaWQpKTsKICAgICAgICBhd2FpdCB0eAogICAgICAgICAgLnVwZGF0ZShleHRlcm5hbFJvdXRlc1RhYmxlKQogICAgICAgICAgLnNldCh7CiAgICAgICAgICAgIHRoZW1lS2V5czogW10sCiAgICAgICAgICAgIHF1YWxpdHlDaGVja2VkQXQ6IGNoZWNrZWRBdCwKICAgICAgICAgICAgcXVhbGl0eVN0YXR1czogcXVhbGl0eS5zdGF0dXMsCiAgICAgICAgICB9KQogICAgICAgICAgLndoZXJlKAogICAgICAgICAgICBhbmQoCiAgICAgICAgICAgICAgZXEoZXh0ZXJuYWxSb3V0ZXNUYWJsZS5pZCwgcm91dGUuaWQpLAogICAgICAgICAgICAgIGd0ZShleHRlcm5hbFJvdXRlc1RhYmxlLmdlb21ldHJ5VmVyc2lvbiwgMSksCiAgICAgICAgICAgICksCiAgICAgICAgICApOwogICAgICB9KTsKICAgICAgc2tpcHBlZCArPSAxOwogICAgICBjb250aW51ZTsKICAgIH0KICAgIGNoZWNrZWQgKz0gMTsKICAgIHRyeSB7CiAgICAgIGNvbnN0IHBvaXMgPSBhd2FpdCBsb2FkUG9pcyhiYm94KTsKICAgICAgY29uc3QgbmVhcmJ5ID0gbmVhcmJ5UG9pcyhwb2lzLCBnZW9tZXRyeSk7CiAgICAgIGNvbnN0IHdhdGVyRXZpZGVuY2UgPSB3YXRlckV2aWRlbmNlRm9yUm91dGUoCiAgICAgICAgYXdhaXQgbG9hZFdhdGVyRmVhdHVyZXMoYmJveCksCiAgICAgICAgZ2VvbWV0cnksCiAgICAgICk7CiAgICAgIGNvbnN0IHRoZW1lcyA9IGRlcml2ZVRoZW1lcyhuZWFyYnksIHJvdXRlLmZhbWlseUZyaWVuZGx5KTsKICAgICAgaWYgKHdhdGVyRXZpZGVuY2UubGVuZ3RoID4gMCkgdGhlbWVzLnB1c2goIndhc3NlcndlZ2UiKTsKICAgICAgY29uc3QgZXZpZGVuY2UgPSBuZWFyYnkuZmxhdE1hcCgoeyBwb2ksIGRpc3RhbmNlS20sIGVuZHBvaW50RGlzdGFuY2VLbSB9KSA9PgogICAgICAgIGRlcml2ZVRoZW1lcyhbeyBwb2ksIGRpc3RhbmNlS20sIGVuZHBvaW50RGlzdGFuY2VLbSB9XSwgbnVsbCkubWFwKCh0aGVtZUtleSkgPT4gKHsKICAgICAgICAgIGlkOiBgJHtyb3V0ZS5pZH06JHtwb2kuaWR9OiR7dGhlbWVLZXl9YCwKICAgICAgICAgIHJvdXRlSWQ6IHJvdXRlLmlkLAogICAgICAgICAgcG9pSWQ6IHBvaS5pZCwKICAgICAgICAgIHRoZW1lS2V5LAogICAgICAgICAgbmFtZTogcG9pLm5hbWUsCiAgICAgICAgICBraW5kOiBwb2kua2luZCwKICAgICAgICAgIGxhdDogcG9pLmxhdCwKICAgICAgICAgIGxuZzogcG9pLmxuZywKICAgICAgICAgIGRpc3RhbmNlS20sCiAgICAgICAgICBzb3VyY2U6ICJPcGVuU3RyZWV0TWFwIiwKICAgICAgICAgIHNvdXJjZVVybDogYGh0dHBzOi8vd3d3Lm9wZW5zdHJlZXRtYXAub3JnLyR7cG9pLmlkfWAsCiAgICAgICAgICBsYXN0U2VlbkF0OiBuZXcgRGF0ZSgpLAogICAgICAgIH0pKSwKICAgICAgKTsKICAgICAgZXZpZGVuY2UucHVzaCgKICAgICAgICAuLi53YXRlckV2aWRlbmNlLm1hcCgoeyBmZWF0dXJlLCBkaXN0YW5jZUttIH0pID0+ICh7CiAgICAgICAgICBpZDogYCR7cm91dGUuaWR9OiR7ZmVhdHVyZS5pZH06d2Fzc2Vyd2VnZWAsCiAgICAgICAgICByb3V0ZUlkOiByb3V0ZS5pZCwKICAgICAgICAgIHBvaUlkOiBmZWF0dXJlLmlkLAogICAgICAgICAgdGhlbWVLZXk6ICJ3YXNzZXJ3ZWdlIiBhcyBjb25zdCwKICAgICAgICAgIG5hbWU6IGZlYXR1cmUubmFtZSwKICAgICAgICAgIGtpbmQ6IGZlYXR1cmUua2luZCwKICAgICAgICAgIGxhdDogZmVhdHVyZS5sYXQsCiAgICAgICAgICBsbmc6IGZlYXR1cmUubG5nLAogICAgICAgICAgZGlzdGFuY2VLbSwKICAgICAgICAgIHNvdXJjZTogIk9wZW5TdHJlZXRNYXAiLAogICAgICAgICAgc291cmNlVXJsOiBgaHR0cHM6Ly93d3cub3BlbnN0cmVldG1hcC5vcmcvJHtmZWF0dXJlLmlkfWAsCiAgICAgICAgICBsYXN0U2VlbkF0OiBuZXcgRGF0ZSgpLAogICAgICAgIH0pKSwKICAgICAgKTsKICAgICAgYXdhaXQgZGIudHJhbnNhY3Rpb24oYXN5bmMgKHR4KSA9PiB7CiAgICAgICAgLy8gQSBzdWNjZXNzZnVsIHNvdXJjZSByZXNwb25zZSBpcyBhdXRob3JpdGF0aXZlIGZvciB0aGlzIHJvdXRlLiBBbnkKICAgICAgICAvLyBQT0kgbWlzc2luZyBmcm9tIGl0IGlzIHJlbW92ZWQgaW5zdGVhZCBvZiBiZWluZyBzaG93biBpbmRlZmluaXRlbHkuCiAgICAgICAgYXdhaXQgdHgKICAgICAgICAgIC5kZWxldGUocm91dGVQb2lFdmlkZW5jZVRhYmxlKQogICAgICAgICAgLndoZXJlKGVxKHJvdXRlUG9pRXZpZGVuY2VUYWJsZS5yb3V0ZUlkLCByb3V0ZS5pZCkpOwogICAgICAgIGlmIChldmlkZW5jZS5sZW5ndGggPiAwKSB7CiAgICAgICAgICBhd2FpdCB0eC5pbnNlcnQocm91dGVQb2lFdmlkZW5jZVRhYmxlKS52YWx1ZXMoZXZpZGVuY2UpOwogICAgICAgIH0KICAgICAgICBhd2FpdCB0eAogICAgICAgICAgLnVwZGF0ZShleHRlcm5hbFJvdXRlc1RhYmxlKQogICAgICAgICAgLnNldCh7CiAgICAgICAgICAgIHRoZW1lS2V5czogdGhlbWVzLAogICAgICAgICAgICBxdWFsaXR5Q2hlY2tlZEF0OiBjaGVja2VkQXQsCiAgICAgICAgICAgIHF1YWxpdHlTdGF0dXM6IHF1YWxpdHkuc3RhdHVzLAogICAgICAgICAgfSkKICAgICAgICAgIC53aGVyZSgKICAgICAgICAgICAgYW5kKAogICAgICAgICAgICAgIGVxKGV4dGVybmFsUm91dGVzVGFibGUuaWQsIHJvdXRlLmlkKSwKICAgICAgICAgICAgICBndGUoZXh0ZXJuYWxSb3V0ZXNUYWJsZS5nZW9tZXRyeVZlcnNpb24sIDEpLAogICAgICAgICAgICApLAogICAgICAgICAgKTsKICAgICAgfSk7CiAgICAgIHVwZGF0ZWQgKz0gMTsKICAgIH0gY2F0Y2ggKGVycikgewogICAgICBmYWlsZWQgKz0gMTsKICAgICAgbG9nLndhcm4oCiAgICAgICAgeyBlcnIsIHJvdXRlSWQ6IHJvdXRlLmlkLCBjYW50b246IHJvdXRlLmNhbnRvbiB9LAogICAgICAgICJQT0ktVGhlbWVuYWt0dWFsaXNpZXJ1bmcgZmVobGdlc2NobGFnZW47IGFsdGUgVGhlbWVuIGJsZWliZW4gZXJoYWx0ZW4iLAogICAgICApOwogICAgfQogICAgYXdhaXQgc2xlZXAoUkVGUkVTSF9ERUxBWV9NUyk7CiAgfQoKICByZXR1cm4geyBjaGVja2VkLCB1cGRhdGVkLCBza2lwcGVkLCBmYWlsZWQgfTsKfQ==
+import type { Logger } from "pino";
+import { and, eq, gte } from "drizzle-orm";
+import {
+  db,
+  externalRoutesTable,
+  routePoiEvidenceTable,
+  type ExternalRouteRow,
+} from "@workspace/db";
+import {
+  fetchHistoricPois,
+  fetchWaterFeatures,
+  type RawPoi,
+  type RawWaterFeature,
+} from "./overpass";
+import { assessRouteQuality } from "./routeQuality";
+
+export const THEME_MAX_DISTANCE_KM = {
+  wasserwege: 0.3,
+  burgen_ruinen_alte_wege: 0.2,
+  gipfel_panorama: 1,
+  geologie_eiszeit: 0.2,
+  hoehlen_grotten: 0.2,
+  wald_wildtiere: 0.2,
+  alpen_landwirtschaft: 0.5,
+  pilger_handelswege: 0.1,
+  industriekultur: 0.2,
+  familien_entdecker: 1,
+  nacht_sterne: 2,
+  flora_jahreszeiten: 0.2,
+  bahn_seilbahn: 0.2,
+} as const;
+
+type RouteThemeKey = keyof typeof THEME_MAX_DISTANCE_KM;
+const THEME_KEYS = Object.keys(THEME_MAX_DISTANCE_KM) as RouteThemeKey[];
+const MAX_THEME_DISTANCE_KM = Math.max(
+  ...Object.values(THEME_MAX_DISTANCE_KM),
+);
+const REFRESH_DELAY_MS = Number(process.env.ROUTE_THEME_DELAY_MS || 3000);
+const WATER_ROUTE_DISTANCE_KM = 0.3;
+const WATER_ROUTE_MAX_DISTANCE_KM = 0.05;
+const WATERFALL_MAX_DISTANCE_KM = 0.3;
+
+type LatLng = { lat: number; lng: number };
+type PoiWithDistance = {
+  poi: RawPoi;
+  distanceKm: number;
+  endpointDistanceKm: number;
+};
+type WaterEvidence = {
+  feature: RawWaterFeature;
+  distanceKm: number;
+};
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function asGeometry(raw: unknown): LatLng[] {
+  let value = raw;
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((point): LatLng | null => {
+      if (Array.isArray(point)) {
+        return { lat: Number(point[0]), lng: Number(point[1]) };
+      }
+      if (point && typeof point === "object") {
+        const candidate = point as { lat?: unknown; lng?: unknown };
+        return { lat: Number(candidate.lat), lng: Number(candidate.lng) };
+      }
+      return null;
+    })
+    .filter(
+      (point): point is LatLng =>
+        point !== null && Number.isFinite(point.lat) && Number.isFinite(point.lng),
+    );
+}
+
+function routeBbox(
+  geometry: LatLng[],
+): { south: number; west: number; north: number; east: number } | null {
+  if (geometry.length < 2) return null;
+  const south = Math.min(...geometry.map((point) => point.lat));
+  const north = Math.max(...geometry.map((point) => point.lat));
+  const west = Math.min(...geometry.map((point) => point.lng));
+  const east = Math.max(...geometry.map((point) => point.lng));
+  const centerLat = (south + north) / 2;
+  const latPad = MAX_THEME_DISTANCE_KM / 111;
+  const lngPad =
+    MAX_THEME_DISTANCE_KM /
+    (111 * Math.cos((centerLat * Math.PI) / 180) || 1);
+  return {
+    south: south - latPad,
+    west: west - lngPad,
+    north: north + latPad,
+    east: east + lngPad,
+  };
+}
+
+function bboxKey(bbox: {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+}): string {
+  return [bbox.south, bbox.west, bbox.north, bbox.east]
+    .map((value) => value.toFixed(4))
+    .join(",");
+}
+
+function distanceToSegmentKm(point: LatLng, a: LatLng, b: LatLng): number {
+  const radius = 6371;
+  const radians = Math.PI / 180;
+  const cosLat = Math.cos(point.lat * radians);
+  const ax = (a.lng - point.lng) * radians * cosLat * radius;
+  const ay = (a.lat - point.lat) * radians * radius;
+  const bx = (b.lng - point.lng) * radians * cosLat * radius;
+  const by = (b.lat - point.lat) * radians * radius;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const length2 = dx * dx + dy * dy;
+  const t =
+    length2 === 0
+      ? 0
+      : Math.max(0, Math.min(1, -(ax * dx + ay * dy) / length2));
+  return Math.hypot(ax + t * dx, ay + t * dy);
+}
+
+function distanceToRouteKm(point: LatLng, geometry: LatLng[]): number {
+  let nearest = Infinity;
+  for (let index = 1; index < geometry.length; index += 1) {
+    nearest = Math.min(
+      nearest,
+      distanceToSegmentKm(point, geometry[index - 1]!, geometry[index]!),
+    );
+  }
+  return nearest;
+}
+
+function segmentLengthKm(a: LatLng, b: LatLng): number {
+  return distanceBetweenKm(a, b);
+}
+
+function distanceBetweenKm(a: LatLng, b: LatLng): number {
+  const radius = 6371;
+  const radians = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * radians;
+  const dLng = (b.lng - a.lng) * radians;
+  const meanLat = ((a.lat + b.lat) / 2) * radians;
+  return Math.hypot(dLat * radius, dLng * Math.cos(meanLat) * radius);
+}
+
+function distanceBetweenSegmentsKm(
+  a: LatLng,
+  b: LatLng,
+  c: LatLng,
+  d: LatLng,
+): number {
+  return Math.min(
+    distanceToSegmentKm(a, c, d),
+    distanceToSegmentKm(b, c, d),
+    distanceToSegmentKm(c, a, b),
+    distanceToSegmentKm(d, a, b),
+    distanceToSegmentKm(
+      { lat: (a.lat + b.lat) / 2, lng: (a.lng + b.lng) / 2 },
+      c,
+      d,
+    ),
+  );
+}
+
+function distanceToWaterFeatureKm(
+  routeStart: LatLng,
+  routeEnd: LatLng,
+  feature: RawWaterFeature,
+): number {
+  if (feature.geometry.length < 2) {
+    return Math.min(
+      distanceToSegmentKm(feature, routeStart, routeEnd),
+      distanceBetweenKm(feature, routeStart),
+      distanceBetweenKm(feature, routeEnd),
+    );
+  }
+  let nearest = Infinity;
+  for (let index = 1; index < feature.geometry.length; index += 1) {
+    nearest = Math.min(
+      nearest,
+      distanceBetweenSegmentsKm(
+        routeStart,
+        routeEnd,
+        feature.geometry[index - 1]!,
+        feature.geometry[index]!,
+      ),
+    );
+  }
+  return nearest;
+}
+
+function waterEvidenceForRoute(
+  features: RawWaterFeature[],
+  geometry: LatLng[],
+): WaterEvidence[] {
+  const evidence: WaterEvidence[] = [];
+  for (const feature of features) {
+    if (feature.kind.includes("waterfall")) {
+      const distanceKm = distanceToRouteKm(
+        { lat: feature.lat, lng: feature.lng },
+        geometry,
+      );
+      if (distanceKm <= WATERFALL_MAX_DISTANCE_KM) {
+        evidence.push({ feature, distanceKm });
+      }
+      continue;
+    }
+    let alongKm = 0;
+    let nearestKm = Infinity;
+    for (let index = 1; index < geometry.length; index += 1) {
+      const start = geometry[index - 1]!;
+      const end = geometry[index]!;
+      const routeSegmentLengthKm = segmentLengthKm(start, end);
+      const distanceKm = distanceToWaterFeatureKm(start, end, feature);
+      nearestKm = Math.min(nearestKm, distanceKm);
+      if (distanceKm <= WATER_ROUTE_MAX_DISTANCE_KM) {
+        alongKm += routeSegmentLengthKm;
+        if (alongKm >= WATER_ROUTE_DISTANCE_KM) {
+          evidence.push({ feature, distanceKm: nearestKm });
+          break;
+        }
+      } else {
+        alongKm = 0;
+      }
+    }
+  }
+  return evidence;
+}
+
+function nearbyPois(pois: RawPoi[], geometry: LatLng[]): PoiWithDistance[] {
+  return pois.flatMap((poi) => {
+    const point = { lat: Number(poi.lat), lng: Number(poi.lng) };
+    if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng)) return [];
+    const distanceKm = distanceToRouteKm(point, geometry);
+    const endpointDistanceKm =
+      geometry.length > 0
+        ? Math.min(
+            distanceBetweenKm(point, geometry[0]!),
+            distanceBetweenKm(point, geometry[geometry.length - 1]!),
+          )
+        : Infinity;
+    return distanceKm <= MAX_THEME_DISTANCE_KM
+      ? [{ poi, distanceKm, endpointDistanceKm }]
+      : [];
+  });
+}
+
+function hasKind(poi: RawPoi, ...kinds: string[]): boolean {
+  return kinds.includes(poi.kind);
+}
+
+function isRailOrTram(poi: RawPoi): boolean {
+  return hasKind(poi, "railway=station", "railway=halt", "railway=tram_stop");
+}
+
+function deriveThemes(
+  entries: PoiWithDistance[],
+  familyFriendly: boolean | null,
+): RouteThemeKey[] {
+  const tags = new Set<RouteThemeKey>();
+  for (const { poi, distanceKm, endpointDistanceKm } of entries) {
+    const kind = poi.kind || "";
+    const addIfNear = (theme: RouteThemeKey, matches: boolean) => {
+      if (matches && distanceKm <= THEME_MAX_DISTANCE_KM[theme]) {
+        tags.add(theme);
+      }
+    };
+
+    addIfNear("burgen_ruinen_alte_wege", [
+      "historic=castle",
+      "historic=ruins",
+      "historic=fort",
+      "historic=archaeological_site",
+      "historic=roman_road",
+      "historic=roman_villa",
+      "historic=roman_building",
+      "historic=battlefield",
+      "historic=bridge",
+    ].includes(kind));
+    addIfNear(
+      "gipfel_panorama",
+      hasKind(poi, "tourism=viewpoint") ||
+        (hasKind(poi, "natural=peak", "natural=saddle") &&
+          poi.elevation !== null &&
+          poi.elevation >= 1000),
+    );
+    addIfNear(
+      "geologie_eiszeit",
+      kind.startsWith("geological=") ||
+        hasKind(poi, "natural=rock", "natural=glacier"),
+    );
+    addIfNear(
+      "hoehlen_grotten",
+      hasKind(
+        poi,
+        "natural=arch",
+        "natural=cave",
+        "natural=cave_entrance",
+        "natural=rock_shelter",
+        "man_made=adit",
+      ),
+    );
+    addIfNear(
+      "wald_wildtiere",
+      hasKind(poi, "natural=wood", "natural=wetland", "tourism=wildlife_hide"),
+    );
+    addIfNear(
+      "alpen_landwirtschaft",
+      hasKind(
+        poi,
+        "tourism=alpine_hut",
+        "amenity=shelter",
+        "shop=cheese",
+        "farm=Alp",
+        "landuse=meadow",
+        "landuse=pasture",
+      ),
+    );
+    addIfNear(
+      "pilger_handelswege",
+      hasKind(
+        poi,
+        "route=pilgrimage",
+        "historic=church",
+        "historic=wayside_cross",
+        "historic=wayside_shrine",
+        "historic=milestone",
+        "historic=boundary_stone",
+      ),
+    );
+    addIfNear(
+      "industriekultur",
+      [
+        "man_made=watermill",
+        "man_made=windmill",
+        "man_made=works",
+        "man_made=quarry",
+      ].includes(kind),
+    );
+    addIfNear(
+      "familien_entdecker",
+      hasKind(poi, "amenity=playground", "amenity=picnic_site"),
+    );
+    addIfNear(
+      "nacht_sterne",
+      hasKind(poi, "amenity=observatory", "tourism=observatory"),
+    );
+    addIfNear(
+      "flora_jahreszeiten",
+      hasKind(
+        poi,
+        "natural=tree",
+        "natural=wetland",
+        "landuse=orchard",
+        "landuse=vineyard",
+        "natural=heath",
+      ),
+    );
+    const isTransportPoint = hasKind(
+      poi,
+      "railway=station",
+      "railway=halt",
+      "railway=tram_stop",
+      "highway=bus_stop",
+      "aerialway=station",
+      "amenity=ferry_terminal",
+    );
+    const isEndpointTransport =
+      isRailOrTram(poi) &&
+      endpointDistanceKm <= THEME_MAX_DISTANCE_KM.bahn_seilbahn;
+    addIfNear(
+      "bahn_seilbahn",
+      isTransportPoint && (!isRailOrTram(poi) || isEndpointTransport),
+    );
+  }
+  if (familyFriendly === true) tags.add("familien_entdecker");
+  return THEME_KEYS.filter((key) => tags.has(key));
+}
+
+export async function refreshCantonRouteThemes(
+  routes: ExternalRouteRow[],
+  log: Logger,
+): Promise<{ checked: number; updated: number; skipped: number; failed: number }> {
+  let checked = 0;
+  let updated = 0;
+  let skipped = 0;
+  let failed = 0;
+  const poiCache = new Map<string, Promise<RawPoi[]>>();
+  const waterCache = new Map<string, Promise<RawWaterFeature[]>>();
+
+  const loadPois = (bbox: {
+    south: number;
+    west: number;
+    north: number;
+    east: number;
+  }): Promise<RawPoi[]> => {
+    const key = bboxKey(bbox);
+    const cached = poiCache.get(key);
+    if (cached) return cached;
+    const pending = fetchHistoricPois(bbox, log);
+    poiCache.set(key, pending);
+    return pending;
+  };
+  const loadWaterFeatures = (bbox: {
+    south: number;
+    west: number;
+    north: number;
+    east: number;
+  }): Promise<RawWaterFeature[]> => {
+    const key = bboxKey(bbox);
+    const cached = waterCache.get(key);
+    if (cached) return cached;
+    const pending = fetchWaterFeatures(bbox, log);
+    waterCache.set(key, pending);
+    return pending;
+  };
+
+  for (const route of routes) {
+    const geometry = asGeometry(route.geometry);
+    const quality = assessRouteQuality(route);
+    const checkedAt = new Date();
+    const bbox = routeBbox(geometry);
+    if (!bbox) {
+      // An invalid geometry must not keep old theme evidence alive. The route
+      // is still marked so the UI can explain why its metrics are untrusted.
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(routePoiEvidenceTable)
+          .where(eq(routePoiEvidenceTable.routeId, route.id));
+        await tx
+          .update(externalRoutesTable)
+          .set({
+            themeKeys: [],
+            qualityCheckedAt: checkedAt,
+            qualityStatus: quality.status,
+          })
+          .where(
+            and(
+              eq(externalRoutesTable.id, route.id),
+              gte(externalRoutesTable.geometryVersion, 1),
+            ),
+          );
+      });
+      skipped += 1;
+      continue;
+    }
+    checked += 1;
+    try {
+      const pois = await loadPois(bbox);
+      const nearby = nearbyPois(pois, geometry);
+      const waterEvidence = waterEvidenceForRoute(
+        await loadWaterFeatures(bbox),
+        geometry,
+      );
+      const themes = deriveThemes(nearby, route.familyFriendly);
+      if (waterEvidence.length > 0) themes.push("wasserwege");
+      const evidence = nearby.flatMap(({ poi, distanceKm, endpointDistanceKm }) =>
+        deriveThemes([{ poi, distanceKm, endpointDistanceKm }], null).map((themeKey) => ({
+          id: `${route.id}:${poi.id}:${themeKey}`,
+          routeId: route.id,
+          poiId: poi.id,
+          themeKey,
+          name: poi.name,
+          kind: poi.kind,
+          lat: poi.lat,
+          lng: poi.lng,
+          distanceKm,
+          source: "OpenStreetMap",
+          sourceUrl: `https://www.openstreetmap.org/${poi.id}`,
+          lastSeenAt: new Date(),
+        })),
+      );
+      evidence.push(
+        ...waterEvidence.map(({ feature, distanceKm }) => ({
+          id: `${route.id}:${feature.id}:wasserwege`,
+          routeId: route.id,
+          poiId: feature.id,
+          themeKey: "wasserwege" as const,
+          name: feature.name,
+          kind: feature.kind,
+          lat: feature.lat,
+          lng: feature.lng,
+          distanceKm,
+          source: "OpenStreetMap",
+          sourceUrl: `https://www.openstreetmap.org/${feature.id}`,
+          lastSeenAt: new Date(),
+        })),
+      );
+      await db.transaction(async (tx) => {
+        // A successful source response is authoritative for this route. Any
+        // POI missing from it is removed instead of being shown indefinitely.
+        await tx
+          .delete(routePoiEvidenceTable)
+          .where(eq(routePoiEvidenceTable.routeId, route.id));
+        if (evidence.length > 0) {
+          await tx.insert(routePoiEvidenceTable).values(evidence);
+        }
+        await tx
+          .update(externalRoutesTable)
+          .set({
+            themeKeys: themes,
+            qualityCheckedAt: checkedAt,
+            qualityStatus: quality.status,
+          })
+          .where(
+            and(
+              eq(externalRoutesTable.id, route.id),
+              gte(externalRoutesTable.geometryVersion, 1),
+            ),
+          );
+      });
+      updated += 1;
+    } catch (err) {
+      failed += 1;
+      log.warn(
+        { err, routeId: route.id, canton: route.canton },
+        "POI-Themenaktualisierung fehlgeschlagen; alte Themen bleiben erhalten",
+      );
+    }
+    await sleep(REFRESH_DELAY_MS);
+  }
+
+  return { checked, updated, skipped, failed };
+}
