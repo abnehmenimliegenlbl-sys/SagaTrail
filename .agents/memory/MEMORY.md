@@ -13,7 +13,6 @@
 - [EAWS avalanche API](sagatrail-eaws-avalanche.md) — EAWS v6 Connect-JSON; empty body in summer = correct no-bulletin; HikingRoute has no .canton; get canton via sagas.find(s=>s.id===route.sagaId)?.canton + kantonSlug().
 - [DB schema dist rebuild](db-schema-dist-rebuild.md) — after adding columns to profiles.ts, run `cd lib/db && npx tsc -p tsconfig.json` to regenerate dist/*.d.ts; without this api-server typecheck sees stale types (property does not exist errors).
 - [Drizzle dev schema push](drizzle-dev-schema-push.md) — new tables and existing constraint conflicts can require a pseudo-TTY; choose create/no-truncate, then restart the API.
-- [SagaTrail route fetching](sagatrail-route-fetching.md) — per-canton OSM routes use a bbox pre-scan (lower-bound length) to surface short routes; cap goes AFTER the distance filter, never before.
 - [OSM stitching lessons](sagatrail-stitching-ordered-traversal.md) — stitch in OSM member order (greedy fails on loops); kink-optimizers need a length budget; version-gate cleanups; never grep for literal version numbers left behind.
 - [SagaTrail Swiss geo/hiking data](sagatrail-swiss-geo-data.md) — SAC difficulty from swissTLM3D identify (hikingtype), tolerance is in pixels, ASTRA Wanderland is WMS-only (not identifiable).
 - [Orval query params -> api-zod barrel clash](orval-query-params-barrel.md) — first endpoint with query params breaks the api-zod barrel (TS2308); fix by `export * as types` in its index.ts.
@@ -70,15 +69,12 @@
 - [Server-side background jobs](background-jobs-server-side.md) — nohup/setsid shell jobs get killed & /tmp wiped on restart; long batch loops must run im API-Server (warm-all-Muster, z.B. /admin/routes/enrich-all).
 - [Enrich-loop self-healing](enrich-loop-self-healing.md) — loop must never break permanently on failures; after 6 bad batches → 30-min sleep + reset counter (not break); catch block → setTimeout(startEnrichAllIfNeeded, 30min).
 - [Canton sync startpoint filter](canton-sync-startpoint.md) — enrichAndStore filters by reverseGeocode(start) === canton (sequential, 1.1s/route); nwn/rwn/lwn all included; MAX_KM removed; ref-based dedup prevents schweizmobil-* duplicates as osm-*.
-- [SagaTrail distanceTagKm two-value design](sagatrail-distance-two-values.md) — distanceKm=geometry-computed (white tile, navigation); distanceTagKm=OSM tag ?? distanceKm (red bar canton list); stored separately in DB (distance_tag_km nullable); toRoute() returns tagKm ?? geomKm so always set in API.
 - [Route geometry formats + restitch](sagatrail-geometry-formats-restitch.md) — geometry points sind {lat,lng} ODER [lat,lng]; Analysen brauchen COALESCE beider Formate; restitch_parents.cjs baut Gesamtrouten aus Etappen neu.
 - [Geometry double-encoding bug](sagatrail-geometry-double-encoding.md) — JSON.stringify() vor JSONB-Write erzeugt string-Typ; Zod strippt es lautlos; immer plain JS array übergeben (as any).
 - [Express duplicate route after task merge](express-duplicate-route-merge.md) — same path added by dir + task agent → first handler wins silently; grep route paths after merges.
 - [Amtliche SchweizMobil-Werte aus OSM-Tags](sagatrail-official-tag-values.md) — distance/ascent-Tags haben Vorrang; tag-sweep (POST /admin/routes/tag-sweep) füllt distance_tag_km für osm-* mit gv≥1 nach; parseNumericTag-Caps: 5000 km / 100000 m.
 - [Restitch gerade Linien ausschließen](sagatrail-restitch-straight-exclusion.md) — restitch_parents.cjs muss schweizmobil-* aus allEtappen ausschließen (verhindert dass falsch benannte Parents sich selbst stitchen) + wiki-* mit ≤2 Punkten (verhindert Gerade-Linien einfrieren).
-- [Legacy-Routen-IDs ohne OSM-ID](sagatrail-legacy-route-ids.md) — schweizmobil-*/placeholder-* IDs werden per gecachtem Netzwerk-Index (network+ref) auf OSM-Relationen aufgelöst; 54 dauerhaft -1, Liste in docs/unenrichable-routes.md.
 - [SagaTrail R2 Object Storage](sagatrail-r2-storage.md) — Narrations-Cache auf Cloudflare R2 migriert; GCS-Sidecar in Prod war 401; R2 via @aws-sdk/client-s3, Bucket "sagatrail", Account ae2d32c2f9bc47f08cca887f689853b5.
-- [SagaTrail Route Naming & Sorting](sagatrail-route-naming-sorting.md) — nwn+1-9/rwn+10-99/lwn+100-999 bestimmt Nummer; K-Routen: "K4 AG Name" sequentiell pro Kanton; Sort 4-stellig; Etappen-Labels VOR Sort anwenden.
 - [Anthropic image url-source](anthropic-image-url-source.md) — Vision mit source type "url" scheitert an Wikimedia-Bildern (400); serverseitig laden und als base64 schicken, fail-open.
 - [Localized saga titles](sagatrail-localized-saga-titles.md) — sichtbare Sagentitel kommen aus einer versionierten lokalen Zuordnung, damit Übersetzungen per OTA ohne nativen Build ausgerollt werden können.
 - [UI translation audit](sagatrail-ui-translation-audit.md) — StringsDict prüft Pflichtschlüssel, aber optionale Felder und direkte JSX-Texte müssen separat auf sichtbare Fallbacks geprüft werden.
@@ -96,7 +92,6 @@
 - [POI story deduplication](sagatrail-poi-story-dedup.md) — general and approach POI flows share one physical-place claim so leaving/re-entering cannot replay a full story.
 - [EAS OTA monorepo release](sagatrail-eas-ota-monorepo.md) — run OTA from the mobile app root; pin pnpm, export platforms sequentially, and exclude workspace caches.
 - [Prod-Secret-Dialog-Fallback](prod-secret-dialog-fallback.md) — requestSecrets kann trotz Bestätigung false liefern; gewährte Secrets ggf. nur als Boolean im Workflow-Env prüfen, nie ausgeben.
-- [Viro/Expo compatibility](sagatrail-viro-expo-compatibility.md) — main uses Viro 2.54.0; isolated Expo57/RN0.86 uses 2.58.1 plus plugin-based config and native-build validation.
 - [Viro iOS 26 camera crash](sagatrail-viro-ios26-crash.md) — ARKit can abort natively before JS errors; verify the physical-device crash report before further Viro changes.
 - [Viro initial scene data](viro-initial-scene-data.md) — initialScene is captured only once; live marker data must flow through viroAppProps without remounting the AR navigator.
 - [AR tracking callback stability](sagatrail-ar-tracking-callback-stability.md) — keep support/error callbacks stable; parent inline callbacks can restart Viro support checks before native tracking becomes ready.
@@ -122,6 +117,7 @@
 - [Route suitability sources](sagatrail-route-suitability-sources.md) — OSM lacks dependable suitability flags; SchweizMobil `Typ_TR=handicap` is authoritative for accessibility, other filters stay recommendations.
 - [GPS-based recommendations](sagatrail-recommendation-gps.md) — onboarding must not ask for a home canton; recommendations use live GPS across all cantons with an explicit fallback.
 - [Shared GL terrain renderer](sagatrail-gl-terrain.md) — normal panorama and future full-route animation share Expo GL/Three; Viro stays AR-only and SVG remains fallback.
+- [Route terrain data gaps](sagatrail-route-terrain-gaps.md) — missing SwissTopo DTM cells stay visible holes; never fill them from neighbours or bridge them with mesh triangles.
 - [Native Three texture and props](native-three-texture-props.md) — avoid browser TextureLoader and mutable Vector3 JSX props in Expo GL; both fail only on physical devices.
 - [Swissimage border coverage](sagatrail-swissimage-border.md) — near borders, SwissTopo detail can be sharp toward Switzerland and weaker across the national border despite complete 360° meshes.
 - [SagaTrail exclusive speech](sagatrail-exclusive-speech.md) — audible narration and navigation clips must share one exclusive channel; route changes await complete cancellation.
@@ -154,3 +150,4 @@
 - [Treffpunkt vs. Gruppenwanderung](sagatrail-meetup-group-separation.md) — public meetup attendance/safety and private synchronized group hiking must remain separate systems.
 - [Treffpunkt-Nachrichtenhistorie](sagatrail-meetup-message-history.md) — echte Nachrichten einmal speichern; Push-Outbox pro Empfänger verteilen und Limits nur auf Historieneinträge anwenden.
 - [Route quality provenance](sagatrail-route-quality-provenance.md) — route APIs expose check status/date and independent source links; successful POI refresh replaces evidence, failures preserve it.
+- [Theme evidence independence](sagatrail-theme-evidence-independence.md) — themeKeys and general route quality timestamps are independent; do not hide valid themed routes until every quality check has run.

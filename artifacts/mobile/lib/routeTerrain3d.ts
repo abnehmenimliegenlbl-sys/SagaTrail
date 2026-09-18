@@ -12,6 +12,22 @@ export type TerrainGrid = {
   grid: TerrainGridCell[][];
 };
 
+export function hasRealTerrainTriangle(
+  grid: TerrainGrid,
+  row: number,
+  column: number,
+  half: "upperLeft" | "lowerRight",
+): boolean {
+  const offsets =
+    half === "upperLeft"
+      ? ([[0, 0], [1, 0], [0, 1]] as const)
+      : ([[0, 1], [1, 0], [1, 1]] as const);
+  return offsets.every(
+    ([rowOffset, columnOffset]) =>
+      grid.grid[row + rowOffset]?.[column + columnOffset]?.elevationM != null,
+  );
+}
+
 type UnknownRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): UnknownRecord | null {

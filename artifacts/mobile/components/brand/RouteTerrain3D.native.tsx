@@ -1,334 +1,4 @@
-import { Feather } from "@expo/vector-icons";
-import { Canvas, useFrame, useThree } from "@react-three/fiber/native";
-import * as FileSystem from "expo-file-system/legacy";
-import { GLView } from "expo-gl";
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  AdditiveBlending,
-  BackSide,
-  BufferAttribute,
-  BufferGeometry,
-  Box3,
-  DoubleSide,
-  Group,
-  NormalBlending,
-  SRGBColorSpace,
-  Texture,
-  Vector3,
-  Mesh,
-} from "three";
-
-import { createTerrainArea } from "@workspace/api-client-react";
-import { BackButton } from "@/components/brand/BackButton";
-import { useColors } from "@/hooks/useColors";
-import {
-  buildRouteGradeSegments,
-  getSmoothedGradePctAtDistance,
-  type TerrainProfilePoint,
-} from "@/lib/terrainCues";
-import { hapticRigid } from "@/lib/haptics";
-import { parseTerrainCorridor, type TerrainGrid } from "@/lib/routeTerrain3d";
-
-type Props = {
-  visible: boolean;
-  onClose: () => void;
-  geometry: number[][] | null | undefined;
-  terrainProfile: TerrainProfilePoint[] | null;
-};
-
-type Model = {
-  grid: TerrainGrid;
-  geometry: number[][];
-  profile: TerrainProfilePoint[];
-};
-type ViewMode = "overview" | "walk" | "flight";
-type WalkProgress = {
-  distanceM: number;
-  ascentM: number;
-  minutes: number;
-  bearingDeg: number;
-};
-type MapBounds = TerrainGrid["bounds"];
-type MapTile = {
-  bounds: MapBounds;
-  key: string;
-  rowStart?: number;
-  rowEnd?: number;
-  columnStart?: number;
-  columnEnd?: number;
-};
-type LoadedFlightTile = {
-  tile: MapTile;
-  texture: Texture;
-  geometry: BufferGeometry;
-};
-
-const gradeColors = {
-  green: "#39FF14",
-  yellow: "#FFFF00",
-  orange: "#FF8000",
-  red: "#FF003C",
-};
-const ThreeLine: any = "line";
-const radians = Math.PI / 180;
-const mapTextureSizes: readonly number[] = [1024, 768];
-const walkSpeedKmPerSecond = 1;
-const flightSpeedKmPerSecond = 0.32;
-const flightTileSpacingKm = 1.2;
-const flightSkyColor = "#8EA6AA";
-const maxTerrainAreaGeometryPoints = 500;
-
-function gradeInstrumentColor(gradePct: number | null): string {
-  const absoluteGrade = Math.abs(gradePct ?? 0);
-  if (absoluteGrade >= 30) return gradeColors.red;
-  if (absoluteGrade >= 20) return gradeColors.orange;
-  if (absoluteGrade >= 10) return gradeColors.yellow;
-  return gradeColors.green;
-}
-
-function gradeInstrumentLabel(gradePct: number | null): string {
-  if (gradePct == null || !Number.isFinite(gradePct)) return "—";
-  const rounded = Math.round(gradePct);
-  return `${rounded > 0 ? "+" : ""}${rounded}%`;
-}
-
-function gradeInstrumentAccessibilityLabel(gradePct: number | null): string {
-  if (gradePct == null || !Number.isFinite(gradePct)) return "Neigung wird berechnet";
-  const rounded = Math.round(gradePct);
-  if (rounded > 0) return `Steigung ${rounded} Prozent`;
-  if (rounded < 0) return `Gefälle ${Math.abs(rounded)} Prozent`;
-  return "Ebene Route, 0 Prozent";
-}
-const flightSkyVertexShader = `
-  varying vec3 vWorldDirection;
-
-  void main() {
-    vWorldDirection = normalize((modelMatrix * vec4(position, 0.0)).xyz);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-const flightSkyFragmentShader = `
-  varying vec3 vWorldDirection;
-
-  void main() {
-    vec3 direction = normalize(vWorldDirection);
-    float height = direction.y;
-
-    vec3 horizon = vec3(0.72, 0.80, 0.80);
-    vec3 zenith = vec3(0.19, 0.39, 0.60);
-    float skyBlend = smoothstep(-0.12, 0.72, height);
-    vec3 color = mix(horizon, zenith, skyBlend);
-
-    // Thin atmospheric haze keeps the horizon bright without making the
-    // background look like a flat UI color.
-    float horizonHaze = exp(-max(height, -0.05) * 8.0);
-    color = mix(color, vec3(0.86, 0.88, 0.85), horizonHaze * 0.22);
-
-    // Two low-frequency layers create very soft cloud banks. They are kept
-    // subtle so the route and terrain remain the visual focus.
-    vec2 cloudCoordinates = direction.xz / max(height + 0.16, 0.16);
-    float cloudWave =
-      sin(cloudCoordinates.x * 2.4 + sin(cloudCoordinates.y * 1.7)) * 0.5 +
-      sin(cloudCoordinates.y * 3.1 + sin(cloudCoordinates.x * 1.3)) * 0.3 +
-      sin((cloudCoordinates.x + cloudCoordinates.y) * 5.2) * 0.2;
-    float cloudBand = smoothstep(0.42, 0.82, cloudWave);
-    float cloudVisibility = smoothstep(-0.02, 0.5, height) * 0.12;
-    color = mix(color, vec3(0.94, 0.95, 0.92), cloudBand * cloudVisibility);
-
-    vec3 sunDirection = normalize(vec3(-0.38, 0.72, -0.52));
-    float sunAlignment = max(dot(direction, sunDirection), 0.0);
-    float sunGlow = pow(sunAlignment, 10.0) * 0.16;
-    float sunCore = pow(sunAlignment, 180.0) * 0.72;
-    color += vec3(1.0, 0.88, 0.66) * (sunGlow + sunCore);
-
-    gl_FragColor = vec4(color, 1.0);
-  }
-`;
-
-function stableUrlHash(value: string): string {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0).toString(36);
-}
-
-function mapTiles(grid: TerrainGrid): MapTile[] {
-  const rowBreaks = [0, Math.floor((grid.rows - 1) / 2), grid.rows - 1];
-  const columnBreaks = [
-    0,
-    Math.floor((grid.columns - 1) / 3),
-    Math.floor(((grid.columns - 1) * 2) / 3),
-    grid.columns - 1,
-  ];
-  return Array.from({ length: 2 }, (_, row) =>
-    Array.from({ length: 3 }, (_, column) => {
-      const rowStart = rowBreaks[row];
-      const rowEnd = rowBreaks[row + 1];
-      const columnStart = columnBreaks[column];
-      const columnEnd = columnBreaks[column + 1];
-      const corners = [
-        grid.grid[rowStart][columnStart],
-        grid.grid[rowStart][columnEnd],
-        grid.grid[rowEnd][columnStart],
-        grid.grid[rowEnd][columnEnd],
-      ];
-      return {
-        key: `${row}-${column}`,
-        rowStart,
-        rowEnd,
-        columnStart,
-        columnEnd,
-        bounds: {
-          south: Math.min(...corners.map((cell) => cell.lat)),
-          north: Math.max(...corners.map((cell) => cell.lat)),
-          west: Math.min(...corners.map((cell) => cell.lng)),
-          east: Math.max(...corners.map((cell) => cell.lng)),
-        },
-      };
-    }),
-  ).flat();
-}
-
-function imageSize(uri: string): Promise<{ width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    Image.getSize(
-      uri,
-      (width, height) => resolve({ width, height }),
-      reject,
-    );
-  });
-}
-
-async function loadRouteMapTexture(
-  url: string,
-  cacheName: string,
-): Promise<Texture> {
-  const cacheDirectory = FileSystem.cacheDirectory;
-  if (!cacheDirectory) throw new Error("Kein Textur-Cache verfügbar.");
-  const localUri = `${cacheDirectory}${cacheName}-${stableUrlHash(url)}.jpg`;
-  const cached = await FileSystem.getInfoAsync(localUri);
-  let imageUri = localUri;
-  if (!cached.exists || cached.size === 0) {
-    if (cached.exists) {
-      await FileSystem.deleteAsync(localUri, { idempotent: true });
-    }
-    const temporaryUri = `${localUri}.download`;
-    await FileSystem.deleteAsync(temporaryUri, { idempotent: true });
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-    try {
-      const result = await Promise.race([
-        FileSystem.downloadAsync(url, temporaryUri),
-        new Promise<never>((_, reject) => {
-          timeout = setTimeout(
-            () => reject(new Error("Textur-Download hat zu lange gedauert.")),
-            25_000,
-          );
-        }),
-      ]);
-      if (result.status < 200 || result.status >= 300) {
-        throw new Error(`Textur-Download fehlgeschlagen (${result.status}).`);
-      }
-      await FileSystem.moveAsync({ from: temporaryUri, to: localUri });
-    } catch (error) {
-      await FileSystem.deleteAsync(temporaryUri, { idempotent: true });
-      throw error;
-    } finally {
-      if (timeout) clearTimeout(timeout);
-    }
-  }
-  const { width, height } = await imageSize(imageUri);
-  const texture = new Texture();
-  texture.image = {
-    data: { localUri: imageUri },
-    width,
-    height,
-  };
-  texture.flipY = true;
-  texture.colorSpace = SRGBColorSpace;
-  texture.needsUpdate = true;
-  (texture as Texture & { isDataTexture: boolean }).isDataTexture = true;
-  return texture;
-}
-
-function distanceKm(a: number[], b: number[]): number {
-  const deltaLat = (b[0] - a[0]) * radians;
-  const deltaLng = (b[1] - a[1]) * radians;
-  const longitude = deltaLng * Math.cos(((a[0] + b[0]) / 2) * radians);
-  return 6371 * Math.sqrt(deltaLat * deltaLat + longitude * longitude);
-}
-
-function sampleTerrainAreaGeometry(
-  geometry: [number, number][],
-): [number, number][] {
-  if (geometry.length <= maxTerrainAreaGeometryPoints) return geometry;
-
-  return Array.from(
-    { length: maxTerrainAreaGeometryPoints },
-    (_, index) => {
-      const sourceIndex = Math.round(
-        (index * (geometry.length - 1)) /
-          (maxTerrainAreaGeometryPoints - 1),
-      );
-      return geometry[sourceIndex]!;
-    },
-  );
-}
-
-function clampNumber(value: number, minimum: number, maximum: number): number {
-  return Math.min(maximum, Math.max(minimum, value));
-}
-
-type FlightCameraPlan = {
-  cameraPosition: Vector3;
-  target: Vector3;
-  markerFocus: Vector3;
-  horizontalDirection: Vector3;
-};
-
-function flightCorridorCenter(
-  route: Vector3[],
-  routeDistanceList: number[],
-  distanceKm: number,
-): Vector3 | null {
-  const routeLengthKm = routeDistanceList.at(-1) ?? 0;
-  const corridorWindowKm = 0.45;
-  const sampleCount = 9;
-  const center = new Vector3();
-  let weightTotal = 0;
-
-  for (let index = 0; index < sampleCount; index += 1) {
-    const normalized = index / (sampleCount - 1);
-    const offsetKm = (normalized * 2 - 1) * corridorWindowKm;
-    const sample = pointAtRouteDistance(
-      route,
-      routeDistanceList,
-      clampNumber(distanceKm + offsetKm, 0, routeLengthKm),
-    );
-    if (!sample) continue;
-    const weight = 1 - Math.abs(normalized * 2 - 1) * 0.78;
-    center.addScaledVector(sample, weight);
-    weightTotal += weight;
-  }
-
-  return weightTotal > 0 ? center.multiplyScalar(1 / weightTotal) : null;
-}
-
-function clampFlightPointToTerrain(
-  point: Vector3,
-  terrainBounds: Box3,
+ Box3,
   marginM: number,
 ): { point: Vector3; outside: boolean } {
   const width = Math.max(0, terrainBounds.max.x - terrainBounds.min.x);
@@ -635,54 +305,6 @@ function toWorld(
   );
 }
 
-function renderTerrainElevations(
-  grid: TerrainGrid,
-): Array<Array<number | null>> {
-  const elevations = grid.grid.map((row) =>
-    row.map((cell) => cell.elevationM),
-  );
-  const maxRadius = Math.max(grid.rows, grid.columns);
-
-  for (let row = 0; row < grid.rows; row += 1) {
-    for (let column = 0; column < grid.columns; column += 1) {
-      if (elevations[row][column] != null) continue;
-
-      let nearest: number | null = null;
-      for (let radius = 1; radius <= maxRadius && nearest == null; radius += 1) {
-        const rowStart = Math.max(0, row - radius);
-        const rowEnd = Math.min(grid.rows - 1, row + radius);
-        const columnStart = Math.max(0, column - radius);
-        const columnEnd = Math.min(grid.columns - 1, column + radius);
-        for (let candidateRow = rowStart; candidateRow <= rowEnd; candidateRow += 1) {
-          for (
-            let candidateColumn = columnStart;
-            candidateColumn <= columnEnd;
-            candidateColumn += 1
-          ) {
-            if (
-              Math.max(
-                Math.abs(candidateRow - row),
-                Math.abs(candidateColumn - column),
-              ) !== radius
-            ) {
-              continue;
-            }
-            const candidate = elevations[candidateRow][candidateColumn];
-            if (candidate != null) {
-              nearest = candidate;
-              break;
-            }
-          }
-          if (nearest != null) break;
-        }
-      }
-      elevations[row][column] = nearest;
-    }
-  }
-
-  return elevations;
-}
-
 function buildTerrainGeometry(
   grid: TerrainGrid,
   textureBounds: MapBounds = grid.bounds,
@@ -691,7 +313,11 @@ function buildTerrainGeometry(
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
-  const elevations = renderTerrainElevations(grid);
+  // Missing SwissTopo cells stay missing. Filling them from a neighbour would
+  // invent terrain and create surfaces across real DTM coverage gaps.
+  const elevations = grid.grid.map((row) =>
+    row.map((cell) => cell.elevationM),
+  );
   const clipToTextureBounds =
     tile != null &&
     tile.rowStart == null &&
@@ -751,8 +377,6 @@ function buildTerrainGeometry(
     }
   };
 
-  const valid = (row: number, column: number) =>
-    elevations[row][column] != null;
   for (let row = 0; row < grid.rows - 1; row++) {
     for (let column = 0; column < grid.columns - 1; column++) {
       if (
@@ -787,22 +411,14 @@ function buildTerrainGeometry(
       const topRight = topLeft + 1;
       const bottomLeft = topLeft + grid.columns;
       const bottomRight = bottomLeft + 1;
-      if (
-        valid(row, column) &&
-        valid(row, column + 1) &&
-        valid(row + 1, column)
-      ) {
+      if (hasRealTerrainTriangle(grid, row, column, "upperLeft")) {
         if (clipToTextureBounds) {
           appendClippedTriangle([topLeft, bottomLeft, topRight]);
         } else {
           indices.push(topLeft, bottomLeft, topRight);
         }
       }
-      if (
-        valid(row, column + 1) &&
-        valid(row + 1, column) &&
-        valid(row + 1, column + 1)
-      ) {
+      if (hasRealTerrainTriangle(grid, row, column, "lowerRight")) {
         if (clipToTextureBounds) {
           appendClippedTriangle([topRight, bottomLeft, bottomRight]);
         } else {

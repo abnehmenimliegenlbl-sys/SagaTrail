@@ -22,6 +22,8 @@ export type NarrationQueueItem = {
   kind?: NarrationKind;
   chapterIndex?: number;
   displayTitle?: string;
+  traceId?: string;
+  audioRole?: "decision-prompt" | "decision-ack" | "decision-feedback";
 };
 
 /**

@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { GetCantonRoutesResponse } from "@workspace/api-zod";
 import { db, externalRoutesTable, type ExternalRouteRow } from "@workspace/db";
-import { and, isNotNull, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { loadCachedRoutes, loadOfficialSchweizMobilDifficulties } from "../lib/routeService";
 import { deriveSeason } from "../lib/season";
 import { haversineM } from "../lib/geo";
@@ -404,6 +404,12 @@ const THEME_KEYS = new Set([
  * Themenwelten werden direkt aus der serverseitig geprüften Themen-Spalte
  * geladen. Das vermeidet die frühere Kaskade aus 26 Kantonsabfragen plus
  * separaten POI-Abfragen pro Kanton.
+ *
+ * `qualityCheckedAt` darf hier nicht zusätzlich verlangt werden: Die
+ * Themenbelege wurden bereits vor Einführung des allgemeinen
+ * Routen-Qualitätschecks gespeichert. Solange dieser Check noch nicht für
+ * alle bestehenden Routen gelaufen ist, würde die Zusatzbedingung sonst jede
+ * Themenwelt fälschlich leer zurückgeben.
  */
 router.get("/themes/:theme/routes", async (req, res): Promise<void> => {
   const theme = Array.isArray(req.params.theme) ? req.params.theme[0] : req.params.theme;
@@ -415,12 +421,7 @@ router.get("/themes/:theme/routes", async (req, res): Promise<void> => {
     const rows = await db
       .select()
       .from(externalRoutesTable)
-      .where(
-        and(
-          sql`${externalRoutesTable.themeKeys} @> ARRAY[${theme}]::text[]`,
-          isNotNull(externalRoutesTable.qualityCheckedAt),
-        ),
-      );
+      .where(sql`${externalRoutesTable.themeKeys} @> ARRAY[${theme}]::text[]`);
     rows.sort(byRelevance);
     res.json(GetCantonRoutesResponse.parse(rows.map((row) => toRoute(row))));
   } catch (err) {

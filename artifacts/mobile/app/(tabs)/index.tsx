@@ -104,7 +104,11 @@ export default function Entdecken() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
-          <ProfileAvatar avatarUrl={profile?.avatarUrl} name={profile?.name} size={58} />
+          <ProfileAvatar
+            avatarUrl={profile?.avatarUrl}
+            name={profile?.name}
+            size={58}
+          />
           <View style={{ flex: 1 }}>
             <Text style={[styles.greeting, { color: colors.mutedForeground }]}>
               {t.welcomeBack}
@@ -119,7 +123,10 @@ export default function Entdecken() {
         </View>
 
         {activeHike && (
-          <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
+          <Animated.View
+            entering={FadeInDown.duration(400)}
+            style={{ paddingHorizontal: 20, marginTop: 20 }}
+          >
             <Pressable
               onPress={() =>
                 router.push(
@@ -129,19 +136,28 @@ export default function Entdecken() {
               style={[
                 styles.resumeCard,
                 styles.resumeCardCompact,
-                { backgroundColor: colors.glassBgStrong, borderColor: colors.accent, borderRadius: colors.radius },
+                {
+                  backgroundColor: colors.glassBgStrong,
+                  borderColor: colors.accent,
+                  borderRadius: colors.radius,
+                },
               ]}
             >
               <View style={{ flex: 1 }}>
                 <Text style={[styles.resumeEyebrow, { color: colors.accent }]}>
                   {t.resumeTitle.toUpperCase()}
                 </Text>
-                <Text style={[styles.resumeName, { color: colors.foreground }]} numberOfLines={1}>
+                <Text
+                  style={[styles.resumeName, { color: colors.foreground }]}
+                  numberOfLines={1}
+                >
                   {activeHike.routeName}
                 </Text>
                 <View style={styles.resumeCtaRowCompact}>
                   <Feather name="play" size={14} color={colors.accent} />
-                  <Text style={[styles.resumeCta, { color: colors.accent }]}>{t.resumeCta}</Text>
+                  <Text style={[styles.resumeCta, { color: colors.accent }]}>
+                    {t.resumeCta}
+                  </Text>
                 </View>
               </View>
               <Pressable
@@ -161,7 +177,10 @@ export default function Entdecken() {
         )}
 
         {freeHikeUsed && !premium && !isElite && (
-          <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
+          <Animated.View
+            entering={FadeInDown.duration(400)}
+            style={{ paddingHorizontal: 20, marginTop: 20 }}
+          >
             <PremiumUpsellBanner
               title={t.premiumBannerTitle}
               body={t.premiumBannerBody}
@@ -171,12 +190,19 @@ export default function Entdecken() {
         )}
 
         {pendingPackRewards > 0 && (
-          <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
+          <Animated.View
+            entering={FadeInDown.duration(400)}
+            style={{ paddingHorizontal: 20, marginTop: 20 }}
+          >
             <Pressable
               onPress={() => router.push("/referral-reward")}
               style={[
                 styles.resumeCard,
-                { backgroundColor: colors.glassBgStrong, borderColor: colors.accent, borderRadius: colors.radius },
+                {
+                  backgroundColor: colors.glassBgStrong,
+                  borderColor: colors.accent,
+                  borderRadius: colors.radius,
+                },
               ]}
             >
               <View style={{ flex: 1 }}>
@@ -192,7 +218,10 @@ export default function Entdecken() {
           </Animated.View>
         )}
 
-        <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
+        <Animated.View
+          entering={FadeInDown.duration(400)}
+          style={{ paddingHorizontal: 20, marginTop: 20 }}
+        >
           <Pressable
             onPress={() => router.push("/treffpunkte")}
             style={[
@@ -215,14 +244,25 @@ export default function Entdecken() {
               style={StyleSheet.absoluteFill}
             />
             <View style={styles.themeWorldCardContent}>
-              <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "D9" }]}>
+              <View
+                style={[
+                  styles.themeWorldIcon,
+                  { backgroundColor: colors.accent + "D9" },
+                ]}
+              >
                 <Feather name="users" size={19} color={colors.backgroundDeep} />
               </View>
               <View style={styles.themeWorldCardText}>
                 <Text style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}>
                   {meetupT.title}
                 </Text>
-                <Text style={[styles.themeWorldHint, { color: "rgba(255,255,255,0.78)" }]} numberOfLines={2}>
+                <Text
+                  style={[
+                    styles.themeWorldHint,
+                    { color: "rgba(255,255,255,0.78)" },
+                  ]}
+                  numberOfLines={2}
+                >
                   {meetupT.intro}
                 </Text>
               </View>
@@ -231,7 +271,10 @@ export default function Entdecken() {
           </Pressable>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(400)} style={styles.themeWorldsSection}>
+        <Animated.View
+          entering={FadeInDown.duration(400)}
+          style={styles.themeWorldsSection}
+        >
           <Pressable
             onPress={() => router.push("/themenwelten")}
             accessibilityRole="button"
@@ -254,14 +297,28 @@ export default function Entdecken() {
               style={StyleSheet.absoluteFill}
             />
             <View style={styles.themeWorldCardContent}>
-              <View style={[styles.themeWorldIcon, { backgroundColor: colors.accent + "D9" }]}>
-                <Feather name="compass" size={19} color={colors.backgroundDeep} />
+              <View
+                style={[
+                  styles.themeWorldIcon,
+                  { backgroundColor: colors.accent + "D9" },
+                ]}
+              >
+                <Feather
+                  name="compass"
+                  size={19}
+                  color={colors.backgroundDeep}
+                />
               </View>
               <View style={styles.themeWorldCardText}>
                 <Text style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}>
                   {t.themeWorldsTitle}
                 </Text>
-                <Text style={[styles.themeWorldHint, { color: "rgba(255,255,255,0.78)" }]}>
+                <Text
+                  style={[
+                    styles.themeWorldHint,
+                    { color: "rgba(255,255,255,0.78)" },
+                  ]}
+                >
                   {t.themeWorldsHint}
                 </Text>
               </View>
@@ -270,7 +327,10 @@ export default function Entdecken() {
           </Pressable>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(400)} style={styles.themeWorldsSection}>
+        <Animated.View
+          entering={FadeInDown.duration(400)}
+          style={styles.themeWorldsSection}
+        >
           <Pressable
             onPress={() => router.push("/empfehlung")}
             accessibilityRole="button"
@@ -283,42 +343,86 @@ export default function Entdecken() {
               },
             ]}
           >
+            <ExpoImage
+              source={require("../../assets/images/banner-wanderroute-heute.jpg")}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
             <LinearGradient
-              colors={[colors.accent + "18", colors.glassBgStrong, colors.glassBgStrong]}
+              colors={[
+                "rgba(7,16,20,0.06)",
+                "rgba(7,16,20,0.42)",
+                "rgba(7,16,20,0.86)",
+              ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
-            <View style={[styles.recommendationBannerGlow, { backgroundColor: colors.accent + "18" }]} />
-            <View style={[styles.recommendationBannerRoute, { borderColor: colors.accent + "45" }]}>
-              <View style={[styles.recommendationBannerRouteDot, { backgroundColor: colors.accent }]} />
-            </View>
             <View style={styles.recommendationBannerContent}>
               <View
                 style={[
                   styles.recommendationBannerIcon,
-                  { backgroundColor: colors.accent, borderColor: colors.accent },
+                  {
+                    backgroundColor: colors.accent,
+                    borderColor: colors.accent,
+                  },
                 ]}
               >
-                <Feather name="sunrise" size={21} color={colors.accentForeground} />
+                <Feather
+                  name="sunrise"
+                  size={21}
+                  color={colors.accentForeground}
+                />
               </View>
               <View style={styles.recommendationBannerText}>
-                <Text style={[styles.recommendationBannerEyebrow, { color: colors.accent }]}>
+                <Text
+                  style={[
+                    styles.recommendationBannerEyebrow,
+                    { color: colors.accent },
+                  ]}
+                >
                   {recommendationCopy.eyebrow}
                 </Text>
-                <Text style={[styles.recommendationBannerTitle, { color: colors.foreground }]} numberOfLines={1}>
+                <Text
+                  style={[
+                    styles.recommendationBannerTitle,
+                    { color: colors.foreground },
+                  ]}
+                  numberOfLines={1}
+                >
                   {recommendationCopy.title}
                 </Text>
-                <Text style={[styles.recommendationBannerHint, { color: colors.mutedForeground }]} numberOfLines={2}>
+                <Text
+                  style={[
+                    styles.recommendationBannerHint,
+                    { color: colors.mutedForeground },
+                  ]}
+                  numberOfLines={2}
+                >
                   {recommendationCopy.hint}
                 </Text>
               </View>
               <View style={styles.recommendationBannerAction}>
-                <Text style={[styles.recommendationBannerCta, { color: colors.accent }]} numberOfLines={1}>
+                <Text
+                  style={[
+                    styles.recommendationBannerCta,
+                    { color: colors.accent },
+                  ]}
+                  numberOfLines={1}
+                >
                   {recommendationCopy.cta}
                 </Text>
-                <View style={[styles.recommendationBannerArrow, { backgroundColor: colors.accent }]}>
-                  <Feather name="arrow-up-right" size={17} color={colors.accentForeground} />
+                <View
+                  style={[
+                    styles.recommendationBannerArrow,
+                    { backgroundColor: colors.accent },
+                  ]}
+                >
+                  <Feather
+                    name="arrow-up-right"
+                    size={17}
+                    color={colors.accentForeground}
+                  />
                 </View>
               </View>
             </View>
@@ -334,7 +438,16 @@ export default function Entdecken() {
           </Text>
         </View>
 
-        <View style={[styles.searchBox, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder, borderRadius: colors.radius }]}>
+        <View
+          style={[
+            styles.searchBox,
+            {
+              backgroundColor: colors.glassBg,
+              borderColor: colors.glassBorder,
+              borderRadius: colors.radius,
+            },
+          ]}
+        >
           <Feather name="search" size={17} color={colors.mutedForeground} />
           <TextInput
             value={cantonQuery}
@@ -346,8 +459,16 @@ export default function Entdecken() {
             returnKeyType="search"
           />
           {cantonQuery.length > 0 && (
-            <Pressable onPress={() => setCantonQuery("")} hitSlop={10} accessibilityLabel={t.clearSearch}>
-              <Feather name="x-circle" size={17} color={colors.mutedForeground} />
+            <Pressable
+              onPress={() => setCantonQuery("")}
+              hitSlop={10}
+              accessibilityLabel={t.clearSearch}
+            >
+              <Feather
+                name="x-circle"
+                size={17}
+                color={colors.mutedForeground}
+              />
             </Pressable>
           )}
         </View>
@@ -355,7 +476,12 @@ export default function Entdecken() {
         <View style={{ paddingHorizontal: 20 }}>
           {!ready
             ? [0, 1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} height={76} radius={colors.radius} style={{ marginBottom: 12 }} />
+                <Skeleton
+                  key={i}
+                  height={76}
+                  radius={colors.radius}
+                  style={{ marginBottom: 12 }}
+                />
               ))
             : visibleCantons.map((entry, i) => (
                 <CantonCard
@@ -372,9 +498,14 @@ export default function Entdecken() {
         <SparkDivider style={{ marginHorizontal: 20, marginVertical: 24 }} />
 
         <View style={{ paddingHorizontal: 20 }}>
-             <Animated.View entering={FadeInDown.delay(visibleCantons.length * 60)}>
+          <Animated.View
+            entering={FadeInDown.delay(visibleCantons.length * 60)}
+          >
             <Pressable
-              onPress={() => { hapticSelection(); router.push("/eigene-route"); }}
+              onPress={() => {
+                hapticSelection();
+                router.push("/eigene-route");
+              }}
               accessibilityRole="button"
               accessibilityLabel={t.customRouteTitle}
               style={[
@@ -393,11 +524,17 @@ export default function Entdecken() {
                 <Text style={[styles.cantonName, { color: colors.foreground }]}>
                   {t.customRouteTitle}
                 </Text>
-                <Text style={[styles.cantonMeta, { color: colors.mutedForeground }]}>
+                <Text
+                  style={[styles.cantonMeta, { color: colors.mutedForeground }]}
+                >
                   {t.customRouteHint}
                 </Text>
               </View>
-              <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
+              <Feather
+                name="chevron-right"
+                size={20}
+                color={colors.mutedForeground}
+              />
             </Pressable>
           </Animated.View>
         </View>
@@ -427,7 +564,7 @@ function CantonCard({
   // Sagen-Fortschritt des Kantons — nur wenn der Kanton kuratierte Sagen hat.
   const cantonSagas = sagas.filter((s) => s.canton === entry.canton);
   const discovered = cantonSagas.filter((s) =>
-    achievements.some((a) => a.id === s.id)
+    achievements.some((a) => a.id === s.id),
   ).length;
   const availablePurchasedPacks = Array.from(
     new Set([...purchasedPacks, ...(profile?.purchasedPacks ?? [])]),
@@ -436,7 +573,8 @@ function CantonCard({
   const packUnlocked =
     isElite ||
     hasPurchasedPack(availablePurchasedPacks, packSlug) ||
-    (subscription.hatEntitlement?.(packEntitlementFuerKanton(packSlug)) ?? false);
+    (subscription.hatEntitlement?.(packEntitlementFuerKanton(packSlug)) ??
+      false);
   const accessibleTotal = packUnlocked
     ? cantonSagas.length
     : Math.min(1, cantonSagas.length);
@@ -446,7 +584,10 @@ function CantonCard({
   return (
     <Animated.View entering={FadeInDown.delay(index * 60)}>
       <Pressable
-        onPress={() => { hapticSelection(); onPress(); }}
+        onPress={() => {
+          hapticSelection();
+          onPress();
+        }}
         accessibilityRole="button"
         accessibilityLabel={`${cantonLabel} — ${entry.routeCount > 0 ? t.routeCount(entry.routeCount) : t.liveFromSwisstopo}`}
         style={[
@@ -482,14 +623,23 @@ function CantonCard({
             <Text
               style={[
                 styles.cantonMeta,
-                 { color: progressDiscovered > 0 ? colors.accent : colors.mutedForeground },
+                {
+                  color:
+                    progressDiscovered > 0
+                      ? colors.accent
+                      : colors.mutedForeground,
+                },
               ]}
             >
               {t.sagaProgress(progressDiscovered, accessibleTotal)}
             </Text>
           )}
         </View>
-        <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
+        <Feather
+          name="chevron-right"
+          size={20}
+          color={colors.mutedForeground}
+        />
       </Pressable>
     </Animated.View>
   );
@@ -510,8 +660,18 @@ const styles = StyleSheet.create({
   resumeEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.5 },
   resumeName: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 4 },
   resumeHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 4 },
-  resumeCtaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
-  resumeCtaRowCompact: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 },
+  resumeCtaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 10,
+  },
+  resumeCtaRowCompact: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 6,
+  },
   resumeCta: { fontFamily: fonts.bodyBold, fontSize: 14 },
   resumeClose: { padding: 2 },
   searchBox: {
@@ -524,7 +684,12 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderWidth: 1,
   },
-  searchInput: { flex: 1, fontFamily: fonts.body, fontSize: 15, paddingVertical: 10 },
+  searchInput: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    paddingVertical: 10,
+  },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -591,11 +756,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   recommendationBannerText: { flex: 1, minWidth: 0 },
-  recommendationBannerEyebrow: { fontFamily: fonts.monoBold, fontSize: 9, letterSpacing: 1.5 },
-  recommendationBannerTitle: { fontFamily: fonts.titleBold, fontSize: 17, lineHeight: 21, marginTop: 3 },
-  recommendationBannerHint: { fontFamily: fonts.body, fontSize: 11, lineHeight: 15, marginTop: 3, maxWidth: 210 },
+  recommendationBannerEyebrow: {
+    fontFamily: fonts.monoBold,
+    fontSize: 9,
+    letterSpacing: 1.5,
+  },
+  recommendationBannerTitle: {
+    fontFamily: fonts.titleBold,
+    fontSize: 17,
+    lineHeight: 21,
+    marginTop: 3,
+  },
+  recommendationBannerHint: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 3,
+    maxWidth: 210,
+  },
   recommendationBannerAction: { alignItems: "center", gap: 5 },
-  recommendationBannerCta: { fontFamily: fonts.monoBold, fontSize: 8, letterSpacing: 0.5, maxWidth: 54, textAlign: "center" },
+  recommendationBannerCta: {
+    fontFamily: fonts.monoBold,
+    fontSize: 8,
+    letterSpacing: 0.5,
+    maxWidth: 54,
+    textAlign: "center",
+  },
   recommendationBannerArrow: {
     width: 34,
     height: 34,
@@ -640,7 +826,8 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: 20, marginTop: 28, marginBottom: 14 },
   sectionTitle: { fontFamily: fonts.titleBold, fontSize: 22 },
   sectionHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 2 },
-  cantonCard: { ...GLAS_3D,
+  cantonCard: {
+    ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
