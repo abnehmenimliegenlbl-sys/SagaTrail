@@ -28,6 +28,7 @@ import { Background } from "@/components/brand/Background";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { CANTONS } from "@/constants/onboarding";
+import { GLAS_3D } from "@/constants/depth";
 import type { HikingRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
@@ -79,6 +80,10 @@ type Copy = {
   placeSearching: string;
   placeNoResults: string;
   placeSelected: (place: string) => string;
+  locationGroup: string;
+  profileGroup: string;
+  travelGroup: string;
+  interestsGroup: string;
   interests: string;
   find: string;
   searching: string;
@@ -127,6 +132,10 @@ const COPY_DE: Copy = {
   placeSearching: "Orte werden gesucht …",
   placeNoResults: "Kein passender Ort gefunden",
   placeSelected: (place) => `Suche nahe ${place}`,
+  locationGroup: "Suchort",
+  profileGroup: "Wegprofil",
+  travelGroup: "Begleitung & Anreise",
+  interestsGroup: "Interessen",
   interests: "Was möchtest du unterwegs sehen?",
   find: "Beste Route für heute finden",
   searching: "Route, Wetter, Bedingungen und Anreise werden verglichen …",
@@ -198,6 +207,10 @@ const COPY_EN: Copy = {
   placeSearching: "Searching places …",
   placeNoResults: "No matching place found",
   placeSelected: (place) => `Searching near ${place}`,
+  locationGroup: "Search area",
+  profileGroup: "Trail profile",
+  travelGroup: "Company & travel",
+  interestsGroup: "Interests",
   interests: "What would you like to see?",
   find: "Find my best route today",
   searching: "Comparing routes, weather, conditions and transport …",
@@ -472,127 +485,77 @@ export default function Empfehlung() {
       >
         <ScreenHeader eyebrow={copy.eyebrow} title={copy.title} onBack />
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>{copy.intro}</Text>
-        <View style={[styles.cantonHint, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
-          <Feather name="map-pin" size={15} color={colors.accent} />
-          <Text style={[styles.cantonText, { color: colors.mutedForeground }]}>
-            {nearbySearch && nearbyPosition
-              ? copy.locationScope
-              : selectedPlace
-                ? copy.placeSelected(selectedPlace.label)
-                : copy.allCantons}
-          </Text>
-        </View>
-        {!nearbySearch && (
-          <View style={styles.placeSearch}>
-            <Text style={[styles.placeLabel, { color: colors.foreground }]}>{copy.placeOptional}</Text>
-            <View
-              style={[
-                styles.placeInputWrap,
-                { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-              ]}
-            >
-              <Feather name="search" size={15} color={colors.mutedForeground} />
-              <TextInput
-                value={placeQuery}
-                onChangeText={(value) => {
-                  setPlaceQuery(value);
-                  setSelectedPlace(null);
-                }}
-                placeholder={copy.placePlaceholder}
-                placeholderTextColor={colors.mutedForeground}
-                style={[styles.placeInput, { color: colors.foreground }]}
-                returnKeyType="search"
-                accessibilityLabel={copy.placeOptional}
-              />
-              {placeSearching && <ActivityIndicator size="small" color={colors.accent} />}
-            </View>
-            {(placeSearching || placeSuggestions.length > 0 ||
-              (placeQuery.trim().length >= 2 && !selectedPlace)) && (
-              <View style={[styles.placeSuggestions, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
-                {placeSearching ? (
-                  <Text style={[styles.placeSuggestionText, { color: colors.mutedForeground }]}>
-                    {copy.placeSearching}
-                  </Text>
-                ) : placeSuggestions.length === 0 ? (
-                  <Text style={[styles.placeSuggestionText, { color: colors.mutedForeground }]}>
-                    {copy.placeNoResults}
-                  </Text>
-                ) : (
-                  placeSuggestions.map((place, index) => (
-                    <Pressable
-                      key={`${place.lat}-${place.lng}-${index}`}
-                      onPress={() => {
-                        setSelectedPlace(place);
-                        setPlaceQuery(place.label);
-                        setPlaceSuggestions([]);
-                        setNearbyPosition({ lat: place.lat, lng: place.lng });
-                      }}
-                      style={[
-                        styles.placeSuggestionRow,
-                        index > 0 && { borderTopWidth: 1, borderTopColor: colors.glassBorder },
-                      ]}
-                    >
-                      <Feather name="map-pin" size={14} color={colors.accent} />
-                      <Text style={[styles.placeSuggestionText, { color: colors.foreground }]} numberOfLines={2}>
-                        {place.label}
-                      </Text>
-                    </Pressable>
-                  ))
-                )}
-              </View>
-            )}
+        <PreferenceGroup icon="map-pin" title={copy.locationGroup} colors={colors}>
+          <View style={[styles.cantonHint, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+            <Feather name="map-pin" size={15} color={colors.accent} />
+            <Text style={[styles.cantonText, { color: colors.mutedForeground }]}>
+              {nearbySearch && nearbyPosition
+                ? copy.locationScope
+                : selectedPlace
+                  ? copy.placeSelected(selectedPlace.label)
+                  : copy.allCantons}
+            </Text>
           </View>
-        )}
-
-        <Section title={copy.time} colors={colors}>
-          <ChoiceRow
-            values={[90, 180, 300]}
-            selected={timeBudgetMin}
-            label={(value) => copy.values.time[value]}
-            onSelect={setTimeBudgetMin}
-            colors={colors}
-          />
-        </Section>
-        <Section title={copy.fitness} colors={colors}>
-          <ChoiceRow
-            values={["easy", "moderate", "strong"] as RecommendationFitness[]}
-            selected={fitness}
-            label={(value) => copy.values.fitness[value]}
-            onSelect={setFitness}
-            colors={colors}
-          />
-        </Section>
-        <Section title={copy.companion} colors={colors}>
-          <ChoiceRow
-            values={["solo", "children", "wheelchair"] as RecommendationCompanion[]}
-            selected={companion}
-            label={(value) => copy.values.companion[value]}
-            onSelect={setCompanion}
-            colors={colors}
-          />
-        </Section>
-        <Section title={copy.travel} colors={colors}>
-          <ChoiceRow
-            values={["publicTransport", "car", "flexible"] as RecommendationTravel[]}
-            selected={travel}
-            label={(value) => copy.values.travel[value]}
-            onSelect={setTravel}
-            colors={colors}
-          />
-          {travel === "publicTransport" && (
-            <Pressable
-              onPress={() => setNeedsReturnConnection((value) => !value)}
-              style={styles.toggleRow}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: needsReturnConnection }}
-            >
-              <Feather
-                name={needsReturnConnection ? "check-square" : "square"}
-                size={18}
-                color={needsReturnConnection ? colors.accent : colors.mutedForeground}
-              />
-              <Text style={[styles.toggleText, { color: colors.foreground }]}>{copy.returnConnection}</Text>
-            </Pressable>
+          {!nearbySearch && (
+            <View style={styles.placeSearch}>
+              <Text style={[styles.placeLabel, { color: colors.foreground }]}>{copy.placeOptional}</Text>
+              <View
+                style={[
+                  styles.placeInputWrap,
+                  { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                ]}
+              >
+                <Feather name="search" size={15} color={colors.mutedForeground} />
+                <TextInput
+                  value={placeQuery}
+                  onChangeText={(value) => {
+                    setPlaceQuery(value);
+                    setSelectedPlace(null);
+                  }}
+                  placeholder={copy.placePlaceholder}
+                  placeholderTextColor={colors.mutedForeground}
+                  style={[styles.placeInput, { color: colors.foreground }]}
+                  returnKeyType="search"
+                  accessibilityLabel={copy.placeOptional}
+                />
+                {placeSearching && <ActivityIndicator size="small" color={colors.accent} />}
+              </View>
+              {(placeSearching || placeSuggestions.length > 0 ||
+                (placeQuery.trim().length >= 2 && !selectedPlace)) && (
+                <View style={[styles.placeSuggestions, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+                  {placeSearching ? (
+                    <Text style={[styles.placeSuggestionText, { color: colors.mutedForeground }]}>
+                      {copy.placeSearching}
+                    </Text>
+                  ) : placeSuggestions.length === 0 ? (
+                    <Text style={[styles.placeSuggestionText, { color: colors.mutedForeground }]}>
+                      {copy.placeNoResults}
+                    </Text>
+                  ) : (
+                    placeSuggestions.map((place, index) => (
+                      <Pressable
+                        key={`${place.lat}-${place.lng}-${index}`}
+                        onPress={() => {
+                          setSelectedPlace(place);
+                          setPlaceQuery(place.label);
+                          setPlaceSuggestions([]);
+                          setNearbyPosition({ lat: place.lat, lng: place.lng });
+                        }}
+                        style={[
+                          styles.placeSuggestionRow,
+                          index > 0 && { borderTopWidth: 1, borderTopColor: colors.glassBorder },
+                        ]}
+                      >
+                        <Feather name="map-pin" size={14} color={colors.accent} />
+                        <Text style={[styles.placeSuggestionText, { color: colors.foreground }]} numberOfLines={2}>
+                          {place.label}
+                        </Text>
+                      </Pressable>
+                    ))
+                  )}
+                </View>
+              )}
+            </View>
           )}
           <Pressable
             onPress={() => void toggleNearbySearch()}
@@ -615,8 +578,67 @@ export default function Empfehlung() {
               {copy.nearbyDenied}
             </Text>
           )}
-        </Section>
-        <Section title={copy.interests} colors={colors}>
+        </PreferenceGroup>
+
+        <PreferenceGroup icon="sliders" title={copy.profileGroup} colors={colors}>
+          <PreferenceField title={copy.time} colors={colors}>
+            <ChoiceRow
+              values={[90, 180, 300]}
+              selected={timeBudgetMin}
+              label={(value) => copy.values.time[value]}
+              onSelect={setTimeBudgetMin}
+              colors={colors}
+            />
+          </PreferenceField>
+          <PreferenceField title={copy.fitness} colors={colors}>
+            <ChoiceRow
+              values={["easy", "moderate", "strong"] as RecommendationFitness[]}
+              selected={fitness}
+              label={(value) => copy.values.fitness[value]}
+              onSelect={setFitness}
+              colors={colors}
+            />
+          </PreferenceField>
+        </PreferenceGroup>
+
+        <PreferenceGroup icon="users" title={copy.travelGroup} colors={colors}>
+          <PreferenceField title={copy.companion} colors={colors}>
+            <ChoiceRow
+              values={["solo", "children", "wheelchair"] as RecommendationCompanion[]}
+              selected={companion}
+              label={(value) => copy.values.companion[value]}
+              onSelect={setCompanion}
+              colors={colors}
+            />
+          </PreferenceField>
+          <PreferenceField title={copy.travel} colors={colors}>
+            <ChoiceRow
+              values={["publicTransport", "car", "flexible"] as RecommendationTravel[]}
+              selected={travel}
+              label={(value) => copy.values.travel[value]}
+              onSelect={setTravel}
+              colors={colors}
+            />
+            {travel === "publicTransport" && (
+              <Pressable
+                onPress={() => setNeedsReturnConnection((value) => !value)}
+                style={styles.toggleRow}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: needsReturnConnection }}
+              >
+                <Feather
+                  name={needsReturnConnection ? "check-square" : "square"}
+                  size={18}
+                  color={needsReturnConnection ? colors.accent : colors.mutedForeground}
+                />
+                <Text style={[styles.toggleText, { color: colors.foreground }]}>{copy.returnConnection}</Text>
+              </Pressable>
+            )}
+          </PreferenceField>
+        </PreferenceGroup>
+
+        <PreferenceGroup icon="compass" title={copy.interestsGroup} colors={colors}>
+          <Text style={[styles.preferenceHint, { color: colors.mutedForeground }]}>{copy.interests}</Text>
           <View style={styles.chipWrap}>
             {INTERESTS.map((theme) => {
               const active = interests.includes(theme);
@@ -639,7 +661,7 @@ export default function Empfehlung() {
               );
             })}
           </View>
-        </Section>
+        </PreferenceGroup>
 
         <PrimaryButton
           label={copy.find}
