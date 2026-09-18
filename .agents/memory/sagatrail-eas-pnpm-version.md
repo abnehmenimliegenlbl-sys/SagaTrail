@@ -1,10 +1,1 @@
----
-name: EAS pnpm version
-description: EAS OTA archives need the workspace pnpm version pinned to accept the frozen lockfile.
----
-
-Pin the workspace package manager to the pnpm version that generated the lockfile. Otherwise EAS can find `pnpm-lock.yaml` but reject it as incompatible before the OTA export.
-
-**Why:** The local workspace uses pnpm 10 and a lockfile v9; the EAS workflow did not have a package-manager version pinned and rejected the lockfile during frozen install.
-
-**How to apply:** Keep `packageManager` in the root package manifest synchronized with the lockfile generator before triggering OTA workflows.
+LS0tCm5hbWU6IEVBUyBwbnBtIHZlcnNpb24KZGVzY3JpcHRpb246IEVBUyBPVEEgYXJjaGl2ZXMgbmVlZCB0aGUgd29ya3NwYWNlIHBucG0gdmVyc2lvbiBwaW5uZWQgdG8gYWNjZXB0IHRoZSBmcm96ZW4gbG9ja2ZpbGUuCi0tLQoKUGluIHRoZSB3b3Jrc3BhY2UgcGFja2FnZSBtYW5hZ2VyIHRvIHRoZSBwbnBtIHZlcnNpb24gdGhhdCBnZW5lcmF0ZWQgdGhlIGxvY2tmaWxlLiBPdGhlcndpc2UgRUFTIGNhbiBmaW5kIGBwbnBtLWxvY2sueWFtbGAgYnV0IHJlamVjdCBpdCBhcyBpbmNvbXBhdGlibGUgYmVmb3JlIHRoZSBPVEEgZXhwb3J0LgoKKipXaHk6KiogVGhlIGxvY2FsIHdvcmtzcGFjZSB1c2VzIHBucG0gMTAgYW5kIGEgbG9ja2ZpbGUgdjk7IHRoZSBFQVMgd29ya2Zsb3cgZGlkIG5vdCBoYXZlIGEgcGFja2FnZS1tYW5hZ2VyIHZlcnNpb24gcGlubmVkIGFuZCByZWplY3RlZCB0aGUgbG9ja2ZpbGUgZHVyaW5nIGZyb3plbiBpbnN0YWxsLgoKKipIb3cgdG8gYXBwbHk6KiogS2VlcCBgcGFja2FnZU1hbmFnZXJgIGluIHRoZSByb290IHBhY2thZ2UgbWFuaWZlc3Qgc3luY2hyb25pemVkIHdpdGggdGhlIGxvY2tmaWxlIGdlbmVyYXRvciBiZWZvcmUgdHJpZ2dlcmluZyBPVEEgd29ya2Zsb3dzLg==
