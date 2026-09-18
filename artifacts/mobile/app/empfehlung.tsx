@@ -740,7 +740,46 @@ export default function Empfehlung() {
   );
 }
 
-function Section({
+function PreferenceGroup({
+  icon,
+  title,
+  colors,
+  children,
+}: {
+  icon: React.ComponentProps<typeof Feather>["name"];
+  title: string;
+  colors: ReturnType<typeof useColors>;
+  children: React.ReactNode;
+}) {
+  return (
+    <View
+      style={[
+        styles.preferenceGroup,
+        GLAS_3D,
+        {
+          backgroundColor: colors.glassBg,
+          borderColor: colors.glassBorder,
+          borderRadius: colors.radius,
+        },
+      ]}
+    >
+      <View style={styles.preferenceGroupHeader}>
+        <View
+          style={[
+            styles.preferenceIcon,
+            { backgroundColor: colors.accent + "18", borderColor: colors.accent + "55" },
+          ]}
+        >
+          <Feather name={icon} size={16} color={colors.accent} />
+        </View>
+        <Text style={[styles.preferenceGroupTitle, { color: colors.foreground }]}>{title}</Text>
+      </View>
+      <View style={styles.preferenceGroupContent}>{children}</View>
+    </View>
+  );
+}
+
+function PreferenceField({
   title,
   colors,
   children,
@@ -750,8 +789,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{title}</Text>
+    <View style={styles.preferenceField}>
+      <Text style={[styles.preferenceFieldTitle, { color: colors.mutedForeground }]}>{title}</Text>
       {children}
     </View>
   );
@@ -797,7 +836,22 @@ function ChoiceRow<T extends string | number>({
 }
 
 const styles = StyleSheet.create({
-  intro: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, marginTop: 5, marginBottom: 14 },
+  intro: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, marginTop: 5, marginBottom: 12 },
+  preferenceGroup: { borderWidth: 1, padding: 14, marginTop: 14 },
+  preferenceGroupHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  preferenceIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  preferenceGroupTitle: { fontFamily: fonts.titleBold, fontSize: 17, flex: 1 },
+  preferenceGroupContent: { marginTop: 2 },
+  preferenceField: { marginTop: 15 },
+  preferenceFieldTitle: { fontFamily: fonts.monoBold, fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 8 },
+  preferenceHint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 13, marginBottom: 9 },
   cantonHint: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 12, padding: 11 },
   cantonText: { fontFamily: fonts.body, fontSize: 12, flex: 1 },
   section: { marginTop: 22 },
