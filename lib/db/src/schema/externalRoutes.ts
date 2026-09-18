@@ -1,6 +1,7 @@
 import {
   boolean,
   doublePrecision,
+  index,
   jsonb,
   pgTable,
   text,
@@ -85,7 +86,13 @@ export const externalRoutesTable = pgTable("external_routes", {
   fetchedAt: timestamp("fetched_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  cantonIdx: index("external_routes_canton_idx").on(table.canton),
+  themeKeysGinIdx: index("external_routes_theme_keys_gin_idx").using(
+    "gin",
+    table.themeKeys,
+  ),
+}));
 
 export const insertExternalRouteSchema = createInsertSchema(externalRoutesTable);
 export type InsertExternalRoute = z.infer<typeof insertExternalRouteSchema>;

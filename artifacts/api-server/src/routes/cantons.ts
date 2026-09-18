@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { GetCantonRoutesResponse } from "@workspace/api-zod";
-import type { ExternalRouteRow } from "@workspace/db";
+import { db, externalRoutesTable, type ExternalRouteRow } from "@workspace/db";
+import { sql } from "drizzle-orm";
 import { loadCachedRoutes, loadOfficialSchweizMobilDifficulties } from "../lib/routeService";
 import { deriveSeason } from "../lib/season";
 import { haversineM } from "../lib/geo";
@@ -190,7 +191,7 @@ function deriveSuitability(
   };
 }
 
-function toRoute(row: ExternalRouteRow, suitability = deriveSuitability(row)) {
+export function toRoute(row: ExternalRouteRow, suitability = deriveSuitability(row)) {
   return {
     id: row.id,
     sagaId: row.sagaId,
@@ -378,6 +379,46 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
   } catch (err) {
     req.log.error({ err, canton }, "Kanton-Routen konnten nicht geladen werden");
     res.status(502).json({ error: "Routen konnten nicht geladen werden" });
+  }
+});
+
+const THEME_KEYS = new Set([
+  "wasserwege",
+  "burgen_ruinen_alte_wege",
+  "gipfel_panorama",
+  "geologie_eiszeit",
+  "hoehlen_grotten",
+  "wald_wildtiere",
+  "alpen_landwirtschaft",
+  "pilger_handelswege",
+  "industriekultur",
+  "familien_entdecker",
+  "nacht_sterne",
+  "flora_jahreszeiten",
+  "bahn_seilbahn",
+]);
+
+/**
+ * Themenwelten werden direkt aus der serverseitig geprüften Themen-Spalte
+ * geladen. Das vermeidet die frühere Kaskade aus 26 Kantonsabfragen plus
+ * separaten POI-Abfragen pro Kanton.
+ */
+router.get("/themes/:theme/routes", async (req, res): Promise<void> => {
+  const theme = Array.isArray(req.params.theme) ? req.params.theme[0] : req.params.theme;
+  if (!theme || !THEME_KEYS.has(theme)) {
+    res.status(400).json({ error: "Unbekannte Themenwelt" });
+    return;
+  }
+  try {
+    const rows = await db
+      .select()
+      .from(externalRoutesTable)
+      .where(sql`${externalRoutesTable.themeKeys} @> ARRAY[${theme}]::text[]`);
+    rows.sort(byRelevance);
+    res.json(GetCantonRoutesResponse.parse(rows.map((row) => toRoute(row))));
+  } catch (err) {
+    req.log.error({ err, theme }, "Themenwelt-Routen konnten nicht geladen werden");
+    res.status(502).json({ error: "Themenwelt-Routen konnten nicht geladen werden" });
   }
 });
 

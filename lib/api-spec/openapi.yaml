@@ -244,6 +244,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /themes/{theme}/routes:
+    get:
+      operationId: getThemeRoutes
+      tags: [routes]
+      summary: Serverseitig geprüfte Routen einer Themenwelt
+      description: >
+        Liefert die Routen einer Themenwelt direkt aus den serverseitig
+        geprüften Themenbelegen. Die Abfrage erfolgt kantonsübergreifend in
+        einer Datenbankabfrage.
+      parameters:
+        - name: theme
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - wasserwege
+              - burgen_ruinen_alte_wege
+              - gipfel_panorama
+              - geologie_eiszeit
+              - hoehlen_grotten
+              - wald_wildtiere
+              - alpen_landwirtschaft
+              - pilger_handelswege
+              - industriekultur
+              - familien_entdecker
+              - nacht_sterne
+              - flora_jahreszeiten
+              - bahn_seilbahn
+      responses:
+        "200":
+          description: Themenwelt-Routen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Unbekannte Themenwelt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Themenwelt-Routen konnten nicht geladen werden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/pois:
     get:
       operationId: getPois
