@@ -276,41 +276,50 @@ export default function Entdecken() {
             accessibilityRole="button"
             accessibilityLabel={recommendationCopy.title}
             style={[
-              styles.recommendationCard,
+              styles.recommendationBanner,
               {
-                backgroundColor: colors.glassBgStrong,
                 borderColor: colors.accent,
                 borderRadius: colors.radius,
               },
             ]}
           >
-            <View style={[styles.recommendationGlow, { backgroundColor: colors.accent + "18" }]} />
-            <View style={styles.recommendationContent}>
-              <View style={styles.recommendationTopline}>
-                <View
-                  style={[
-                    styles.recommendationIcon,
-                    { backgroundColor: colors.accent + "1F", borderColor: colors.accent + "66" },
-                  ]}
-                >
-                  <Feather name="sunrise" size={19} color={colors.accent} />
-                </View>
-                <Text style={[styles.recommendationEyebrow, { color: colors.accent }]}>
+            <LinearGradient
+              colors={[colors.accent + "18", colors.glassBgStrong, colors.glassBgStrong]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={[styles.recommendationBannerGlow, { backgroundColor: colors.accent + "18" }]} />
+            <View style={[styles.recommendationBannerRoute, { borderColor: colors.accent + "45" }]}>
+              <View style={[styles.recommendationBannerRouteDot, { backgroundColor: colors.accent }]} />
+            </View>
+            <View style={styles.recommendationBannerContent}>
+              <View
+                style={[
+                  styles.recommendationBannerIcon,
+                  { backgroundColor: colors.accent, borderColor: colors.accent },
+                ]}
+              >
+                <Feather name="sunrise" size={21} color={colors.accentForeground} />
+              </View>
+              <View style={styles.recommendationBannerText}>
+                <Text style={[styles.recommendationBannerEyebrow, { color: colors.accent }]}>
                   {recommendationCopy.eyebrow}
                 </Text>
-                <Feather name="arrow-up-right" size={20} color={colors.accent} />
+                <Text style={[styles.recommendationBannerTitle, { color: colors.foreground }]} numberOfLines={1}>
+                  {recommendationCopy.title}
+                </Text>
+                <Text style={[styles.recommendationBannerHint, { color: colors.mutedForeground }]} numberOfLines={2}>
+                  {recommendationCopy.hint}
+                </Text>
               </View>
-              <Text style={[styles.recommendationTitle, { color: colors.foreground }]}>
-                {recommendationCopy.title}
-              </Text>
-              <Text style={[styles.recommendationHint, { color: colors.mutedForeground }]}>
-                {recommendationCopy.hint}
-              </Text>
-              <View style={styles.recommendationCta}>
-                <Text style={[styles.recommendationCtaText, { color: colors.accent }]}>
+              <View style={styles.recommendationBannerAction}>
+                <Text style={[styles.recommendationBannerCta, { color: colors.accent }]} numberOfLines={1}>
                   {recommendationCopy.cta}
                 </Text>
-                <View style={[styles.recommendationCtaLine, { backgroundColor: colors.accent }]} />
+                <View style={[styles.recommendationBannerArrow, { backgroundColor: colors.accent }]}>
+                  <Feather name="arrow-up-right" size={17} color={colors.accentForeground} />
+                </View>
               </View>
             </View>
           </Pressable>
@@ -533,37 +542,67 @@ const styles = StyleSheet.create({
     ...GLAS_3D,
   },
   themeWorldsSection: { marginTop: 8 },
-  recommendationCard: {
+  recommendationBanner: {
     marginHorizontal: 20,
-    minHeight: 188,
+    aspectRatio: 3,
     borderWidth: 1,
     overflow: "hidden",
     ...GLAS_3D_STARK,
   },
-  recommendationGlow: {
+  recommendationBannerGlow: {
     position: "absolute",
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    top: -130,
-    right: -54,
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    top: -100,
+    right: -35,
   },
-  recommendationContent: { flex: 1, padding: 17 },
-  recommendationTopline: { flexDirection: "row", alignItems: "center", gap: 10 },
-  recommendationIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 13,
+  recommendationBannerRoute: {
+    position: "absolute",
+    width: 155,
+    height: 155,
+    borderRadius: 78,
+    borderWidth: 1,
+    right: -47,
+    bottom: -95,
+    transform: [{ rotate: "-24deg" }],
+  },
+  recommendationBannerRouteDot: {
+    position: "absolute",
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    top: 13,
+    left: 24,
+  },
+  recommendationBannerContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    padding: 15,
+  },
+  recommendationBannerIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-  recommendationEyebrow: { fontFamily: fonts.monoBold, fontSize: 10, letterSpacing: 1.6, flex: 1 },
-  recommendationTitle: { fontFamily: fonts.titleBold, fontSize: 22, lineHeight: 27, marginTop: 18 },
-  recommendationHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, marginTop: 5, maxWidth: 310 },
-  recommendationCta: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 16 },
-  recommendationCtaText: { fontFamily: fonts.bodyBold, fontSize: 13 },
-  recommendationCtaLine: { width: 34, height: 2, borderRadius: 1 },
+  recommendationBannerText: { flex: 1, minWidth: 0 },
+  recommendationBannerEyebrow: { fontFamily: fonts.monoBold, fontSize: 9, letterSpacing: 1.5 },
+  recommendationBannerTitle: { fontFamily: fonts.titleBold, fontSize: 17, lineHeight: 21, marginTop: 3 },
+  recommendationBannerHint: { fontFamily: fonts.body, fontSize: 11, lineHeight: 15, marginTop: 3, maxWidth: 210 },
+  recommendationBannerAction: { alignItems: "center", gap: 5 },
+  recommendationBannerCta: { fontFamily: fonts.monoBold, fontSize: 8, letterSpacing: 0.5, maxWidth: 54, textAlign: "center" },
+  recommendationBannerArrow: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   themeWorldCard: {
     aspectRatio: 3,
     marginHorizontal: 20,
