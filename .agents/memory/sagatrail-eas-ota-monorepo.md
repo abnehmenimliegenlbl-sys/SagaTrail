@@ -1,10 +1,12 @@
 ---
-name: EAS OTA monorepo root
-description: SagaTrail's EAS OTA workflow belongs to the mobile app root, not the repository root.
+name: EAS OTA monorepo release
+description: Constraints for publishing SagaTrail OTA updates from its nested Expo app.
 ---
 
-EAS Workflows must be discovered from the Expo app directory that contains `eas.json`; for SagaTrail that directory is `artifacts/mobile`. Linking the GitHub repository at the monorepo root makes EAS report that no workflow files exist.
+EAS OTA publishing must run with the Expo app directory as the project root. The prepackaged update job ignores `defaults.run.working_directory`; an unknown `params.working_directory` may validate but is ignored. The EAS project/GitHub link must therefore use the mobile app as its base directory.
 
-**Why:** The repository root contains a different Expo configuration, while the production update workflow and SagaTrail project configuration live under the mobile artifact.
+Pin pnpm through workflow `defaults.tools.pnpm` so the automatic frozen install accepts the workspace lockfile. Keep iOS and Android exports sequential on cold caches, and exclude workspace caches/local data from archives. A direct platform-specific update remains the fallback when linked workflows cannot honor the app root.
 
-**How to apply:** Restore an EAS project/app-root-aware trigger for `artifacts/mobile` before troubleshooting code or creating root-level workflow files; do not publish from the root Expo project.
+**Why:** Root-linked update jobs successfully installed dependencies but then failed because Expo was resolved and executed from the repository root instead of the nested app. Earlier concurrent exports were also killed under cold-cache memory pressure.
+
+**How to apply:** Ensure the EAS trigger is app-root-aware before debugging bundle code. Do not rely on workflow run-step working directories to relocate a prepackaged update job.

@@ -94,10 +94,7 @@
 - [POI approach categories](sagatrail-poi-approach-categories.md) — a POI can load and be tappable yet miss the 200/50 m flow when its OSM kind is absent from the mobile approach set.
 - [POI tile closing](sagatrail-poi-tile-closing.md) — auto-opened POI tiles close after three clear consecutive distance increases, with a 5 m GPS-noise tolerance.
 - [POI story deduplication](sagatrail-poi-story-dedup.md) — general and approach POI flows share one physical-place claim so leaving/re-entering cannot replay a full story.
-- [EAS OTA release](eas-ota-release.md) — direct platform-specific eas update is the reliable fallback when workflow archives or GitHub-linked EAS triggers fail.
-- [EAS OTA monorepo root](sagatrail-eas-ota-monorepo.md) — SagaTrail's EAS workflow belongs to the mobile app root, not the repository root.
-- [EAS OTA concurrent export](eas-ota-concurrent-export.md) — cold-cache iOS and Android exports can SIGKILL when run concurrently; publish platforms sequentially.
-- [EAS workspace archive exclusions](sagatrail-eas-workspace-ignore.md) — builds from artifacts/mobile can archive the Git root; root .easignore must exclude workspace caches and local data.
+- [EAS OTA monorepo release](sagatrail-eas-ota-monorepo.md) — run OTA from the mobile app root; pin pnpm, export platforms sequentially, and exclude workspace caches.
 - [Prod-Secret-Dialog-Fallback](prod-secret-dialog-fallback.md) — requestSecrets kann trotz Bestätigung false liefern; gewährte Secrets ggf. nur als Boolean im Workflow-Env prüfen, nie ausgeben.
 - [Viro/Expo compatibility](sagatrail-viro-expo-compatibility.md) — main uses Viro 2.54.0; isolated Expo57/RN0.86 uses 2.58.1 plus plugin-based config and native-build validation.
 - [Viro iOS 26 camera crash](sagatrail-viro-ios26-crash.md) — ARKit can abort natively before JS errors; verify the physical-device crash report before further Viro changes.

@@ -7,8 +7,6 @@ on:
 defaults:
   tools:
     pnpm: 10.26.1
-  run:
-    working_directory: ./artifacts/mobile
 
 jobs:
   publish_production_update:
@@ -16,4 +14,3 @@ jobs:
     type: update
     params:
       branch: production
-      working_directory: ./artifacts/mobile
