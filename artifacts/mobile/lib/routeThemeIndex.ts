@@ -10,6 +10,7 @@ import {
 } from "@/lib/routeThemes";
 
 const THEME_POI_RETRY_MS = 5000;
+const THEME_POI_MAX_RETRIES = 12;
 
 /**
  * In-memory cache shared by the canton filter and the global theme browser.
@@ -21,10 +22,21 @@ export const routeThemeCache = new Map<string, RouteThemeKey[]>();
 async function loadThemePois(
   bbox: ReturnType<typeof bboxAroundGeometry>,
 ): Promise<Awaited<ReturnType<typeof getPois>>> {
-  const initial = await getPois(bbox);
-  if (initial.length > 0) return initial;
-  await new Promise((resolve) => setTimeout(resolve, THEME_POI_RETRY_MS));
-  return getPois(bbox);
+  let pois = await getPois(bbox);
+  for (let attempt = 0; attempt < THEME_POI_MAX_RETRIES && pois.length === 0; attempt += 1) {
+    // Der Server startet beim ersten Cache-Miss den Overpass-Refresh
+    // asynchron. Mehrere Abfragen sind nötig, bis dessen Ergebnis vorliegt.
+    await new Promise((resolve) => setTimeout(resolve, THEME_POI_RETRY_MS));
+    pois = await getPois(bbox);
+  }
+  return pois;
+}
+
+function hasServerThemeEvidence(route: HikingRoute): boolean {
+  return (
+    Array.isArray(route.themeKeys) &&
+    (route.themeKeys.length > 0 || Boolean(route.qualityCheckedAt))
+  );
 }
 
 function themesFromPois(route: HikingRoute, pois: Poi[]): RouteThemeKey[] {
@@ -40,31 +52,36 @@ export function getRouteThemesFromPois(
   route: HikingRoute,
   pois: Poi[],
 ): RouteThemeKey[] {
-  const cached = routeThemeCache.get(route.id);
-  if (cached) return cached;
-
   // Die Routen-Endpunkte liefern die geprüften Themenbelege. Ein leeres Array
-  // ist ein belastbares "kein Treffer" und darf nicht durch eine teure,
-  // flüchtige Live-Suche überschrieben werden. qualityCheckedAt ist nicht in
-  // jedem Routen-Endpunkt Teil der Antwort, daher ist themeKeys selbst das
-  // maßgebliche Vorhandensein-Signal.
-  if (Array.isArray(route.themeKeys)) {
-    const themes = route.themeKeys.filter(
+  // ist aber nur zusammen mit qualityCheckedAt ein belastbares "kein Treffer".
+  // Alte/noch nicht geprüfte Produktionsrouten liefern themeKeys: [] und
+  // brauchen deshalb den Live-POI-Rückfall.
+  if (hasServerThemeEvidence(route)) {
+    const themes = (route.themeKeys ?? []).filter(
       (key): key is RouteThemeKey => ROUTE_THEME_KEYS.includes(key as RouteThemeKey),
     );
     routeThemeCache.set(route.id, themes);
     return themes;
   }
 
+  const cached = routeThemeCache.get(route.id);
+  if (cached?.length) return cached;
+
   const themes = themesFromPois(route, pois);
-  routeThemeCache.set(route.id, themes);
+  // Leere Live-Ergebnisse nicht dauerhaft cachen: Der Server kann den
+  // asynchron gestarteten POI-Refresh erst bei einer späteren Abfrage liefern.
+  if (themes.length > 0) routeThemeCache.set(route.id, themes);
+  else routeThemeCache.delete(route.id);
   return themes;
 }
 
 /** Einzelrouten-Rückfall für den normalen Kantonsfilter. */
 export async function getRouteThemes(route: HikingRoute): Promise<RouteThemeKey[]> {
+  if (hasServerThemeEvidence(route)) {
+    return getRouteThemesFromPois(route, []);
+  }
   const cached = routeThemeCache.get(route.id);
-  if (cached) return cached;
+  if (cached?.length) return cached;
   const geometry = route.geometry ?? [];
   const pois = await loadThemePois(
     bboxAroundGeometry(geometry, route.coordinates, MAX_THEME_DISTANCE_KM),
@@ -82,7 +99,7 @@ export async function loadThemePoisForRoutes(
   // Bereits serverseitig geprüfte Routen brauchen keine Live-POI-Abfrage.
   // Neben der unnötigen Last war eine fehlgeschlagene Sammelabfrage sonst
   // ausreichend, um alle Themenrouten eines Kantons zu verwerfen.
-  const routesNeedingPois = routes.filter((route) => !Array.isArray(route.themeKeys));
+  const routesNeedingPois = routes.filter((route) => !hasServerThemeEvidence(route));
   if (routesNeedingPois.length === 0) return [];
 
   const points = routesNeedingPois.flatMap((route) =>

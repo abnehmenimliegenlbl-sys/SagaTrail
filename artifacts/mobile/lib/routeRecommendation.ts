@@ -5,10 +5,11 @@ import type {
 } from "@workspace/api-client-react";
 
 import type { HikingRoute } from "@/constants/routes";
+import type { LatLng } from "@/types";
 import type { RouteThemeKey } from "@/lib/routeThemes";
 
 export type RecommendationFitness = "easy" | "moderate" | "strong";
-export type RecommendationCompanion = "solo" | "children" | "dog" | "wheelchair";
+export type RecommendationCompanion = "solo" | "children" | "wheelchair";
 export type RecommendationTravel = "publicTransport" | "car" | "flexible";
 
 export interface RecommendationPreferences {
@@ -18,6 +19,7 @@ export interface RecommendationPreferences {
   interests: RouteThemeKey[];
   travel: RecommendationTravel;
   needsReturnConnection: boolean;
+  nearby?: LatLng | null;
 }
 
 export interface RecommendationSignals {
@@ -38,7 +40,8 @@ export type RecommendationReasonCode =
   | "conditions"
   | "return"
   | "arrival"
-  | "parking";
+  | "parking"
+  | "nearby";
 
 export interface ScoredRoute {
   route: HikingRoute;
@@ -177,9 +180,6 @@ export function scoreRoute(
       score -= 60;
       cautions.push("companion");
     }
-  } else if (preferences.companion === "dog" && level != null && level <= 3) {
-    score += 7;
-    reasons.push("companion");
   }
 
   const matches = preferences.interests.filter((interest) =>
@@ -215,6 +215,21 @@ export function scoreRoute(
 
   const travelScore = scoreTravel(preferences, signals);
   score += travelScore;
+  if (preferences.nearby) {
+    const distanceKm = Math.hypot(
+      (route.coordinates.lat - preferences.nearby.lat) * 111,
+      (route.coordinates.lng - preferences.nearby.lng) *
+        111 *
+        Math.cos((preferences.nearby.lat * Math.PI) / 180),
+    );
+    if (distanceKm <= 8) {
+      score += 24;
+      reasons.push("nearby");
+    } else {
+      score -= Math.min(24, (distanceKm - 8) * 0.7);
+      if (distanceKm > 25) cautions.push("nearby");
+    }
+  }
   if (preferences.travel === "publicTransport") {
     if ((signals.returnTransport?.departures.length ?? 0) > 0) reasons.push("return");
     if (signals.startTransport?.station) reasons.push("arrival");
@@ -253,6 +268,8 @@ export function routeRecommendationFilters(
   diffMax: number;
   familyFriendly?: boolean;
   wheelchairAccessible?: boolean;
+  nearLat?: number;
+  nearLng?: number;
 } {
   const limits = FITNESS_LIMITS[preferences.fitness];
   const maxDistance = Math.max(8, Math.ceil(preferences.timeBudgetMin / 12));
@@ -262,5 +279,8 @@ export function routeRecommendationFilters(
     diffMax: limits.sac,
     ...(preferences.companion === "children" ? { familyFriendly: true } : {}),
     ...(preferences.companion === "wheelchair" ? { wheelchairAccessible: true } : {}),
+    ...(preferences.nearby
+      ? { nearLat: preferences.nearby.lat, nearLng: preferences.nearby.lng }
+      : {}),
   };
 }

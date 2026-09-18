@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import * as Location from "expo-location";
 import {
   getRouteConditions,
   getTransportStationboard,
@@ -29,6 +30,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { getApiBaseUrl } from "@/lib/apiConfig";
+import type { LatLng } from "@/types";
 import {
   rankRoutes,
   routeRecommendationFilters,
@@ -59,11 +61,15 @@ type Copy = {
   title: string;
   intro: string;
   canton: (name: string) => string;
+  nearbyCanton: string;
   time: string;
   fitness: string;
   companion: string;
   travel: string;
   returnConnection: string;
+  nearbySearch: string;
+  nearbyLocating: string;
+  nearbyDenied: string;
   interests: string;
   find: string;
   searching: string;
@@ -98,11 +104,15 @@ const COPY_DE: Copy = {
   title: "Was passt heute?",
   intro: "Sag uns kurz, wie dein Tag aussieht. SagaTrail wählt eine konkrete Route und zeigt dir offen, warum sie passt.",
   canton: (name) => `Suche zuerst in deinem Heimatkanton · ${name}`,
+  nearbyCanton: "Suche in deiner Nähe statt nur im Heimatkanton",
   time: "Wie viel Zeit hast du?",
   fitness: "Wie viel möchtest du heute leisten?",
   companion: "Wer ist dabei?",
   travel: "Wie möchtest du anreisen?",
   returnConnection: "ÖV-Rückweg soll heute gut funktionieren",
+  nearbySearch: "Noch in meiner Nähe suchen",
+  nearbyLocating: "Standort wird ermittelt …",
+  nearbyDenied: "Standort nicht verfügbar – Suche bleibt im Heimatkanton.",
   interests: "Was möchtest du unterwegs sehen?",
   find: "Beste Route für heute finden",
   searching: "Route, Wetter, Bedingungen und Anreise werden verglichen …",
@@ -125,7 +135,7 @@ const COPY_DE: Copy = {
   values: {
     time: { 90: "1½ Stunden", 180: "3 Stunden", 300: "5 Stunden" },
     fitness: { easy: "Locker", moderate: "Mittel", strong: "Anspruchsvoll" },
-    companion: { solo: "Allein / Erwachsene", children: "Mit Kindern", dog: "Mit Hund", wheelchair: "Mit Rollstuhl" },
+    companion: { solo: "Allein / Erwachsene", children: "Mit Kindern", wheelchair: "Mit Rollstuhl" },
     travel: { publicTransport: "ÖV", car: "Auto", flexible: "Offen" },
   },
   reason: {
@@ -133,6 +143,7 @@ const COPY_DE: Copy = {
     fitness: () => "passt zu deiner gewünschten Belastung",
     companion: () => "passt zu deiner Begleitung",
     interest: () => "trifft mindestens eines deiner Themen",
+    nearby: () => "liegt in deiner Nähe",
     season: () => "ist für die aktuelle Saison eingeordnet",
     weather: () => "das aktuelle Wetter spricht dafür",
     conditions: () => "die aktuellen Wegbedingungen sprechen dafür",
@@ -149,6 +160,7 @@ const COPY_DE: Copy = {
     weather: "das aktuelle Wetter verlangt Vorsicht",
     conditions: "es gibt aktuelle Hinweise zu den Wegbedingungen",
     return: "ÖV-Rückweg ist nicht zuverlässig belegt",
+    nearby: "liegt weiter von deinem Standort entfernt",
   },
 };
 
@@ -158,11 +170,15 @@ const COPY_EN: Copy = {
   title: "What fits today?",
   intro: "Tell us how your day looks. SagaTrail chooses one concrete route and explains why it fits.",
   canton: (name) => `Starting in your home canton · ${name}`,
+  nearbyCanton: "Search near you instead of only in your home canton",
   time: "How much time do you have?",
   fitness: "How much effort do you want today?",
   companion: "Who is joining?",
   travel: "How do you want to travel?",
   returnConnection: "A reliable public-transport return matters today",
+  nearbySearch: "Also search near me",
+  nearbyLocating: "Getting your location …",
+  nearbyDenied: "Location unavailable – continuing with your home canton.",
   interests: "What would you like to see?",
   find: "Find my best route today",
   searching: "Comparing routes, weather, conditions and transport …",
@@ -186,7 +202,7 @@ const COPY_EN: Copy = {
     ...COPY_DE.values,
     time: { 90: "1½ hours", 180: "3 hours", 300: "5 hours" },
     fitness: { easy: "Easy", moderate: "Moderate", strong: "Demanding" },
-    companion: { solo: "Solo / adults", children: "With children", dog: "With a dog", wheelchair: "With wheelchair" },
+    companion: { solo: "Solo / adults", children: "With children", wheelchair: "With wheelchair" },
     travel: { publicTransport: "Public transport", car: "Car", flexible: "Open" },
   },
 };
@@ -238,6 +254,10 @@ export default function Empfehlung() {
   const [companion, setCompanion] = useState<RecommendationCompanion>("solo");
   const [travel, setTravel] = useState<RecommendationTravel>("publicTransport");
   const [needsReturnConnection, setNeedsReturnConnection] = useState(true);
+  const [nearbyPosition, setNearbyPosition] = useState<LatLng | null>(null);
+  const [nearbySearch, setNearbySearch] = useState(false);
+  const [nearbyLocating, setNearbyLocating] = useState(false);
+  const [nearbyDenied, setNearbyDenied] = useState(false);
   const [interests, setInterests] = useState<RouteThemeKey[]>(["wasserwege"]);
   const [recommendations, setRecommendations] = useState<ScoredRoute[]>([]);
   const [loading, setLoading] = useState(false);
@@ -252,9 +272,41 @@ export default function Empfehlung() {
       travel,
       needsReturnConnection: travel === "publicTransport" && needsReturnConnection,
       interests,
+      nearby: nearbyPosition,
     }),
-    [companion, fitness, interests, needsReturnConnection, timeBudgetMin, travel],
+    [companion, fitness, interests, nearbyPosition, needsReturnConnection, timeBudgetMin, travel],
   );
+
+  const toggleNearbySearch = async () => {
+    if (nearbySearch) {
+      setNearbySearch(false);
+      setNearbyPosition(null);
+      setNearbyDenied(false);
+      return;
+    }
+
+    setNearbyLocating(true);
+    setNearbyDenied(false);
+    try {
+      let permission = await Location.getForegroundPermissionsAsync();
+      if (permission.status !== Location.PermissionStatus.GRANTED) {
+        permission = await Location.requestForegroundPermissionsAsync();
+      }
+      if (permission.status !== Location.PermissionStatus.GRANTED) {
+        setNearbyDenied(true);
+        return;
+      }
+      const position = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setNearbyPosition({ lat: position.coords.latitude, lng: position.coords.longitude });
+      setNearbySearch(true);
+    } catch {
+      setNearbyDenied(true);
+    } finally {
+      setNearbyLocating(false);
+    }
+  };
 
   const findRecommendation = async () => {
     setLoading(true);
@@ -262,8 +314,21 @@ export default function Empfehlung() {
     setSearched(true);
     setRecommendations([]);
     try {
-      const result = await loadCantonRoutes(canton, routeRecommendationFilters(preferences));
-      const base = rankRoutes(result.routes, preferences).slice(0, 8);
+      const routeFilter = routeRecommendationFilters(preferences);
+      const cantons = nearbyPosition ? [...CANTONS] : [canton];
+      const routeResults: HikingRoute[] = [];
+      let cursor = 0;
+      const loadNextCanton = async (): Promise<void> => {
+        const nextCanton = cantons[cursor++];
+        if (!nextCanton) return;
+        const result = await loadCantonRoutes(nextCanton, routeFilter);
+        routeResults.push(...result.routes);
+        await loadNextCanton();
+      };
+      await Promise.all(
+        Array.from({ length: Math.min(4, cantons.length) }, () => loadNextCanton()),
+      );
+      const base = rankRoutes(routeResults, preferences).slice(0, 8);
       const signalsByRoute = new Map<string, RecommendationSignals>();
       await Promise.all(
         base.map(async ({ route }) => {
