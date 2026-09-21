@@ -131,6 +131,11 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
     promise.resolve(garminStatus())
   }
 
+  private fun JSONObject.putIfPresent(key: String, value: Any?): JSONObject {
+    if (value != null) put(key, value)
+    return this
+  }
+
   private fun publishWearLiveState(snapshot: ReadableMap) {
     try {
       val hasFreshGps = snapshot.requiredBoolean("hasFreshGps")
@@ -187,6 +192,21 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
     } catch (error: ServiceUnavailableException) {
       promise.reject("GARMIN_SERVICE_UNAVAILABLE", error.message, error)
     }
+  }
+
+  private fun flushPendingGarminPublishes() {
+    if (!garminSdkReady) return
+    val device = activeGarminDevice
+    if (device == null || device.status != IQDevice.IQDeviceStatus.CONNECTED) return
+    val pending = pendingGarminPublishes.toList()
+    pendingGarminPublishes.removeAll(pending.toSet())
+    pending.forEach { sendGarminPayload(it.payload, it.promise) }
+  }
+
+  private fun rejectPendingGarminPublishes(code: String, message: String) {
+    val pending = pendingGarminPublishes.toList()
+    pendingGarminPublishes.removeAll(pending.toSet())
+    pending.forEach { it.promise.reject(code, message) }
   }
 
   private fun refreshGarminDevices() {
@@ -331,7 +351,9 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
     if (hasKey(key) && !isNull(key) && getType(key) == ReadableType.Array) getArray(key) else null
 
   private fun ReadableMap.toGarminMap(): Map<String, Any> = linkedMapOf<String, Any>().apply {
-    for (key in keySetIterator()) {
+    val iterator = keySetIterator()
+    while (iterator.hasNextKey()) {
+      val key = iterator.nextKey()
       if (!hasKey(key) || isNull(key)) continue
       when (getType(key)) {
         ReadableType.Boolean -> put(key, getBoolean(key))
@@ -364,9 +386,9 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
         ),
       "hasFreshGps" to (optionalString("gpsFreshness") == "fresh"),
       "audioPlaying" to (optionalBoolean("audioPlaying") == true),
-      "sosAcknowledgement" to optionalString("sosAcknowledgement")
+      "sosAcknowledgement" to (optionalString("sosAcknowledgement")
         ?.takeIf { it == "acknowledged" || it == "failed" }
-        ?: "none",
+        ?: "none").toString(),
     )
     nextNavigation?.optionalDouble("bearingDeg")?.let { payload["heading"] = it }
     optionalMap("heartRate")?.optionalDouble("bpm")?.let { payload["heartRateBpm"] = it }
