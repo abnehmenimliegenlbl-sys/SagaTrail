@@ -13,7 +13,6 @@ export interface Profile {
   avatarUrl?: string | null;
   dateOfBirth?: string | null;
   archetype: Archetype;
-  homeCanton?: string;
   language: string;
   ageTier: AgeTier;
   navAnnouncementsEnabled?: boolean;

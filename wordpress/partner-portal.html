@@ -118,8 +118,8 @@
         </div>
       </div>
       <div class="spp-stat-row">
-        <div class="spp-stat"><div class="num" id="spp-views">–</div><div class="lbl">👁 Profil-Aufrufe</div></div>
-        <div class="spp-stat"><div class="num" id="spp-taps">–</div><div class="lbl">🛍 Angebot-Tipps</div></div>
+        <div class="spp-stat"><div class="num" id="spp-views">–</div><div class="lbl" id="spp-views-label">👁 Profil-Aufrufe</div></div>
+        <div class="spp-stat"><div class="num" id="spp-taps">–</div><div class="lbl" id="spp-taps-label">🛍 Angebot-Tipps</div></div>
       </div>
       <div id="spp-paket-info" class="spp-paket-info" style="display:none"></div>
 
@@ -682,8 +682,15 @@
           '<span style="font-size:13px;color:#777">' + katLabel(p.kategorie) +
           ' · ' + (p.canton || '') +
           (p.paket ? ' · Paket <strong>' + p.paket.charAt(0).toUpperCase() + p.paket.slice(1) + '</strong>' : '') + '</span>';
-        document.getElementById('spp-views').textContent = fmt(p.views);
-        document.getElementById('spp-taps').textContent = fmt(p.offersTapped);
+        if (p.portalKind === 'community') {
+          document.getElementById('spp-views-label').textContent = '👥 Community-Mitglieder';
+          document.getElementById('spp-taps-label').textContent  = '🥾 Abgeschlossene Wanderungen';
+          document.getElementById('spp-views').textContent = fmt(p.communityMemberCount);
+          document.getElementById('spp-taps').textContent  = fmt(p.completedMeetupCount);
+        } else {
+          document.getElementById('spp-views').textContent = fmt(p.views);
+          document.getElementById('spp-taps').textContent = fmt(p.offersTapped);
+        }
         document.getElementById('spp-status-badge').innerHTML =
           p.isActive
             ? '<span class="spp-badge spp-badge-green">✓ Aktiv in der App</span>'

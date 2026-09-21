@@ -569,7 +569,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         avatarUrl: serverProfile.avatarUrl ?? null,
         dateOfBirth: serverProfile.dateOfBirth ?? null,
         archetype: serverProfile.archetype,
-        ...(serverProfile.homeCanton ? { homeCanton: serverProfile.homeCanton } : {}),
         language: serverProfile.language,
         ageTier: serverProfile.ageTier,
         navAnnouncementsEnabled: serverProfile.navAnnouncementsEnabled ?? true,
@@ -820,7 +819,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       avatarUrl?: string | null;
       dateOfBirth?: string | null;
       archetype: string;
-      homeCanton?: string;
       language: string;
       ageTier: string;
       navAnnouncementsEnabled?: boolean;
@@ -848,7 +846,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             ? result.dateOfBirth
             : profileRef.current?.dateOfBirth ?? null,
         archetype: result.archetype,
-        ...(result.homeCanton ? { homeCanton: result.homeCanton } : {}),
         language: result.language,
         ageTier: result.ageTier,
         navAnnouncementsEnabled:
@@ -883,7 +880,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           bio: next.bio,
           dateOfBirth: next.dateOfBirth ?? null,
           archetype: next.archetype,
-          ...(next.homeCanton ? { homeCanton: next.homeCanton } : {}),
           language: next.language,
           ageTier: next.ageTier,
           ...(next.navAnnouncementsEnabled !== undefined
@@ -907,7 +903,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           bio: merged.bio,
           dateOfBirth: merged.dateOfBirth ?? null,
           archetype: merged.archetype,
-          ...(merged.homeCanton ? { homeCanton: merged.homeCanton } : {}),
           language: merged.language,
           ageTier: merged.ageTier,
           ...(merged.navAnnouncementsEnabled !== undefined

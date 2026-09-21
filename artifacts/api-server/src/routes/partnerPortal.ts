@@ -1,8 +1,17 @@
 import { randomBytes, randomUUID } from "crypto";
 import { Router, type IRouter } from "express";
-import { and, eq, gt } from "drizzle-orm";
+import { and, count, eq, gt } from "drizzle-orm";
 import { z } from "zod/v4";
-import { db, partnersTable, partnerTokensTable, verbandsTable, verbandTokensTable } from "@workspace/db";
+import {
+  communityAdminsTable,
+  communityMembersTable,
+  db,
+  meetupsTable,
+  partnersTable,
+  partnerTokensTable,
+  verbandsTable,
+  verbandTokensTable,
+} from "@workspace/db";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
 import { getUncachableStripeClient } from "../lib/stripeClient";
 
@@ -51,6 +60,43 @@ async function resolveVerbandToken(token: string) {
     .where(eq(verbandsTable.id, row.verbandId))
     .limit(1);
   return verband ?? null;
+}
+
+async function getCommunityStats(email: string | null) {
+  if (!email) return null;
+  const [admin] = await db
+    .select({ communityId: communityAdminsTable.communityId })
+    .from(communityAdminsTable)
+    .where(
+      and(
+        eq(communityAdminsTable.email, email.trim().toLowerCase()),
+        eq(communityAdminsTable.active, true),
+      ),
+    )
+    .limit(1);
+
+  if (!admin?.communityId) return null;
+
+  const [members, completedMeetups] = await Promise.all([
+    db
+      .select({ value: count() })
+      .from(communityMembersTable)
+      .where(eq(communityMembersTable.communityId, admin.communityId)),
+    db
+      .select({ value: count() })
+      .from(meetupsTable)
+      .where(
+        and(
+          eq(meetupsTable.communityId, admin.communityId),
+          eq(meetupsTable.status, "completed"),
+        ),
+      ),
+  ]);
+
+  return {
+    communityMemberCount: Number(members[0]?.value ?? 0),
+    completedMeetupCount: Number(completedMeetups[0]?.value ?? 0),
+  };
 }
 
 router.post("/partner/portal/token", async (req, res): Promise<void> => {
@@ -107,8 +153,13 @@ router.get("/partner/portal/me", async (req, res): Promise<void> => {
   // Partner-Token prüfen
   const partner = await resolveToken(token);
   if (partner) {
+    const communityStats =
+      partner.kategorie.trim().toLowerCase() === "community-administrator"
+        ? await getCommunityStats(partner.email)
+        : null;
     res.json({
       type: "partner",
+      portalKind: communityStats ? "community" : "partner",
       id: partner.id,
       name: partner.name,
       kategorie: partner.kategorie,
@@ -125,8 +176,10 @@ router.get("/partner/portal/me", async (req, res): Promise<void> => {
       lat: partner.lat,
       lng: partner.lng,
       isActive: partner.isActive,
-      views: partner.views,
-      offersTapped: partner.offersTapped,
+      ...(communityStats ?? {
+        views: partner.views,
+        offersTapped: partner.offersTapped,
+      }),
       laufzeitStart: partner.laufzeitStart,
       laufzeitEnde: partner.laufzeitEnde,
       hasStripeAccount: !!partner.stripeCustomerId,
