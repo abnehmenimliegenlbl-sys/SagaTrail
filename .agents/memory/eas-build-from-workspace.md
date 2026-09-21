@@ -11,6 +11,12 @@ Bash tool has a hard 120s limit — long `eas` uploads get killed. The notebook 
 
 **Build numbers:** appVersionSource is "remote", so local ios.buildNumber is ignored for EAS. `eas build:version:set` is prompt-only (fails without TTY, ignores stdin) and can return a generic GraphQL error; prefer autoIncrement in every profile that builds native binaries so the remote counter bumps automatically and the embedded Watch target can be kept in sync.
 
+For a checked-in iOS native project, changing `expo.version` alone does not change the submitted marketing version; align the remote EAS app version and every native Xcode `MARKETING_VERSION` before submitting to TestFlight.
+
+**Why:** EAS built `2.0.0` from the checked-in Xcode project even after `app.json` was changed to `2.0.1`, and App Store Connect rejected the closed 2.0.0 version train.
+
+**How to apply:** Before a new iOS build, verify the build's reported `appVersion` and `appBuildVersion`; if the version train is closed, set the remote app version, update native Xcode marketing settings, rebuild, and only then submit.
+
 **Polling:** `timeout 90 npx eas build:view <id> --json` from bash (plain calls can exceed 120s). Log URLs from logFiles expire in 900s; fetch with `curl --compressed`.
 
 **Submission status:** this EAS CLI version has no `submit:view` or `submit:list`; query `submissions.byId(submissionId: ...)` through authenticated GraphQL at `https://api.expo.dev/graphql` and inspect `status`, `error`, and `completedAt`.

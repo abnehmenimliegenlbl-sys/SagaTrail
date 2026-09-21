@@ -425,7 +425,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sagatrail2.app.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -452,7 +452,7 @@ MARKETING_VERSION = 2.0.0;
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sagatrail2.app.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -482,7 +482,7 @@ CLANG_ENABLE_MODULES = YES;
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -512,7 +512,7 @@ MARKETING_VERSION = 2.0.0;
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
