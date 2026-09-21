@@ -7,7 +7,8 @@ import {
   type Meetup,
 } from "@workspace/api-client-react";
 import { useRouter } from "expo-router";
-import React from "react";
+import * as Location from "expo-location";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -29,6 +30,13 @@ import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 import type { LanguageCode } from "@/lib/i18n/languageCode";
 import { translateCanton } from "@/lib/i18n/cantonNames";
 import { alert } from "@/lib/appAlert";
+import { MeetupSortControl } from "@/components/MeetupSortControl";
+import {
+  getMeetupDistanceKm,
+  sortMeetups,
+  type MeetupPosition,
+  type MeetupSortMode,
+} from "@/lib/meetupSorting";
 
 const WEB_TOP = 67;
 
@@ -41,10 +49,45 @@ export default function Treffpunkte() {
   const meetups = useGetMeetups();
   const join = useJoinMeetup();
   const leave = useLeaveMeetup();
+  const [sortMode, setSortMode] = useState<MeetupSortMode>("date");
+  const [currentPosition, setCurrentPosition] = useState<MeetupPosition | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCurrentPosition = async () => {
+      try {
+        const permission = await Location.getForegroundPermissionsAsync();
+        if (permission.status !== "granted") return;
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        if (!cancelled) {
+          setCurrentPosition({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        }
+      } catch {
+        // Ohne frischen GPS-Fix bleibt die Datumssortierung verfügbar.
+      }
+    };
+
+    void loadCurrentPosition();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const refresh = () => {
     void meetups.refetch();
   };
+
+  const sortedMeetups = sortMeetups(
+    meetups.data?.meetups ?? [],
+    sortMode,
+    currentPosition,
+  );
 
   const toggleParticipation = async (meetup: Meetup) => {
     try {
@@ -108,11 +151,18 @@ export default function Treffpunkte() {
           </View>
         ) : (
           <View style={{ marginTop: 22 }}>
-            {meetups.data.meetups.map((meetup) => (
+            <MeetupSortControl
+              mode={sortMode}
+              onChange={setSortMode}
+              distanceAvailable={Boolean(currentPosition)}
+              strings={t}
+            />
+            {sortedMeetups.map((meetup) => (
               <MeetupCard
                 key={meetup.id}
                 meetup={meetup}
                 language={language as LanguageCode}
+                currentPosition={currentPosition}
                 onDetail={() => router.push(`/treffpunkte/${meetup.id}`)}
                 onToggle={() => void toggleParticipation(meetup)}
                 busy={join.isPending || leave.isPending}
@@ -129,6 +179,7 @@ export default function Treffpunkte() {
 function MeetupCard({
   meetup,
   language,
+  currentPosition,
   onDetail,
   onToggle,
   busy,
@@ -136,6 +187,7 @@ function MeetupCard({
 }: {
   meetup: Meetup;
   language: LanguageCode;
+  currentPosition: MeetupPosition | null;
   onDetail: () => void;
   onToggle: () => void;
   busy: boolean;
@@ -147,6 +199,7 @@ function MeetupCard({
   const date = start.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" });
   const time = start.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   const isFull = meetup.participantCount >= meetup.maxParticipants && !meetup.joined;
+  const distanceToMeetingPoint = getMeetupDistanceKm(meetup, currentPosition);
 
   return (
     <View style={[styles.card, GLAS_3D, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
@@ -171,6 +224,14 @@ function MeetupCard({
         <Detail icon="users" text={`${meetup.participantCount}/${meetup.maxParticipants}`} />
         <Detail icon="activity" text={paceLabel(meetup.pace, t)} />
         <Detail icon="user" text={meetup.organizerName} />
+      </View>
+      <View style={styles.distanceRow}>
+        <Feather name="map-pin" size={13} color={colors.mutedForeground} />
+        <Text style={[styles.distanceText, { color: colors.mutedForeground }]}>
+          {distanceToMeetingPoint != null
+            ? t.meetingDistance(distanceToMeetingPoint)
+            : t.locationUnavailable}
+        </Text>
       </View>
       {meetup.note ? (
         <Text style={[styles.note, { color: colors.mutedForeground }]}>{meetup.note}</Text>
@@ -233,6 +294,8 @@ const styles = StyleSheet.create({
   routeName: { fontFamily: fonts.titleBold, fontSize: 18, lineHeight: 21 },
   meta: { fontFamily: fonts.mono, fontSize: 11, marginTop: 5 },
   detailsRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 },
+  distanceRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 9 },
+  distanceText: { fontFamily: fonts.mono, fontSize: 11 },
   detail: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: "42%" },
   detailText: { fontFamily: fonts.mono, fontSize: 11 },
   note: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, marginTop: 10 },

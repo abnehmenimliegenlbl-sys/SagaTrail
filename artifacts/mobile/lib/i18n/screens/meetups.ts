@@ -79,6 +79,14 @@ export interface MeetupStrings {
   audiencePublic: string;
   audienceCommunity: string;
   communityRequired: string;
+  plannedHikes: string;
+  sortBy: string;
+  sortDate: string;
+  sortDistance: string;
+  meetingDistance: (distanceKm: number) => string;
+  routeMeta: (difficulty: string, distanceKm: number) => string;
+  routeMetaUnavailable: string;
+  locationUnavailable: string;
 }
 
 const STRINGS: StringsDict<MeetupStrings> = {
@@ -161,6 +169,14 @@ const STRINGS: StringsDict<MeetupStrings> = {
     audiencePublic: "Öffentlich in SagaTrail",
     audienceCommunity: "In einer Community",
     communityRequired: "Wähle eine Community aus.",
+    plannedHikes: "Geplante Wanderungen",
+    sortBy: "Sortieren nach",
+    sortDate: "Datum",
+    sortDistance: "Entfernung",
+    meetingDistance: (distanceKm) => `${distanceKm.toFixed(1)} km bis zum Treffpunkt`,
+    routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
+    routeMetaUnavailable: "Routendaten nicht verfügbar",
+    locationUnavailable: "Standort nicht verfügbar",
   },
   gsw: {
     eyebrow: "Zäme wandere",
@@ -205,6 +221,14 @@ const STRINGS: StringsDict<MeetupStrings> = {
     audiencePublic: "Öffentlich i SagaTrail",
     audienceCommunity: "I ere Community",
     communityRequired: "Wähl e Community uus.",
+    plannedHikes: "Planti Wanderige",
+    sortBy: "Sortiere nach",
+    sortDate: "Datum",
+    sortDistance: "Entfernung",
+    meetingDistance: (distanceKm) => `${distanceKm.toFixed(1)} km bis zum Treffpunkt`,
+    routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
+    routeMetaUnavailable: "Routedate nöd verfügbar",
+    locationUnavailable: "Standort nöd verfügbar",
   },
   fr: {
     eyebrow: "Randonnée ensemble", title: "Rendez-vous", intro: "Trouvez des personnes qui souhaitent parcourir le même itinéraire le même jour.",
@@ -242,6 +266,14 @@ const STRINGS: StringsDict<MeetupStrings> = {
     audiencePublic: "Publiquement dans SagaTrail",
     audienceCommunity: "Dans une communauté",
     communityRequired: "Sélectionnez une communauté.",
+    plannedHikes: "Randonnées prévues",
+    sortBy: "Trier par",
+    sortDate: "Date",
+    sortDistance: "Distance",
+    meetingDistance: (distanceKm) => `${distanceKm.toFixed(1)} km jusqu'au rendez-vous`,
+    routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
+    routeMetaUnavailable: "Données de l'itinéraire indisponibles",
+    locationUnavailable: "Position indisponible",
   },
   it: {
     eyebrow: "Camminare insieme", title: "Ritrovo", intro: "Trova persone che vogliono percorrere lo stesso itinerario nello stesso giorno.",
@@ -277,6 +309,14 @@ const STRINGS: StringsDict<MeetupStrings> = {
     audiencePublic: "Pubblico in SagaTrail",
     audienceCommunity: "In una community",
     communityRequired: "Seleziona una community.",
+    plannedHikes: "Escursioni programmate",
+    sortBy: "Ordina per",
+    sortDate: "Data",
+    sortDistance: "Distanza",
+    meetingDistance: (distanceKm) => `${distanceKm.toFixed(1)} km fino al ritrovo`,
+    routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
+    routeMetaUnavailable: "Dati del percorso non disponibili",
+    locationUnavailable: "Posizione non disponibile",
   },
   en: {
     eyebrow: "Hike together", title: "Meetup", intro: "Find people who want to hike the same route on the same day.",
@@ -312,6 +352,14 @@ const STRINGS: StringsDict<MeetupStrings> = {
     audiencePublic: "Public in SagaTrail",
     audienceCommunity: "In a community",
     communityRequired: "Select a community.",
+    plannedHikes: "Planned hikes",
+    sortBy: "Sort by",
+    sortDate: "Date",
+    sortDistance: "Distance",
+    meetingDistance: (distanceKm) => `${distanceKm.toFixed(1)} km to meeting point`,
+    routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
+    routeMetaUnavailable: "Route details unavailable",
+    locationUnavailable: "Location unavailable",
   },
   zh: {
     eyebrow: "一起徒步", title: "徒步集合", intro: "找到想在同一天走同一条路线的人。",
@@ -347,6 +395,14 @@ const STRINGS: StringsDict<MeetupStrings> = {
     audiencePublic: "在 SagaTrail 公开",
     audienceCommunity: "在社区中",
     communityRequired: "请选择一个社区。",
+    plannedHikes: "计划中的徒步",
+    sortBy: "排序方式",
+    sortDate: "日期",
+    sortDistance: "距离",
+    meetingDistance: (distanceKm) => `距离集合点 ${distanceKm.toFixed(1)} 公里`,
+    routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} 公里`,
+    routeMetaUnavailable: "路线数据不可用",
+    locationUnavailable: "位置不可用",
   },
   es: {
     eyebrow: "Caminar juntos", title: "Encuentro", intro: "Encuentra personas que quieran hacer la misma ruta el mismo día.",
@@ -382,6 +438,14 @@ const STRINGS: StringsDict<MeetupStrings> = {
     audiencePublic: "Público en SagaTrail",
     audienceCommunity: "En una comunidad",
     communityRequired: "Selecciona una comunidad.",
+    plannedHikes: "Caminatas previstas",
+    sortBy: "Ordenar por",
+    sortDate: "Fecha",
+    sortDistance: "Distancia",
+    meetingDistance: (distanceKm) => `${distanceKm.toFixed(1)} km hasta el punto de encuentro`,
+    routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
+    routeMetaUnavailable: "Datos de la ruta no disponibles",
+    locationUnavailable: "Ubicación no disponible",
   },
   pt: {
     eyebrow: "Caminhar juntos", title: "Encontro", intro: "Encontre pessoas que querem fazer a mesma rota no mesmo dia.",
@@ -417,6 +481,14 @@ const STRINGS: StringsDict<MeetupStrings> = {
     audiencePublic: "Público no SagaTrail",
     audienceCommunity: "Numa comunidade",
     communityRequired: "Selecione uma comunidade.",
+    plannedHikes: "Caminhadas planeadas",
+    sortBy: "Ordenar por",
+    sortDate: "Data",
+    sortDistance: "Distância",
+    meetingDistance: (distanceKm) => `${distanceKm.toFixed(1)} km até ao ponto de encontro`,
+    routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
+    routeMetaUnavailable: "Dados do percurso indisponíveis",
+    locationUnavailable: "Localização indisponível",
   },
   ru: {
     eyebrow: "Вместе в поход", title: "Встреча", intro: "Найдите людей, которые хотят пройти тот же маршрут в тот же день.",
@@ -452,6 +524,14 @@ const STRINGS: StringsDict<MeetupStrings> = {
     audiencePublic: "Публично в SagaTrail",
     audienceCommunity: "В сообществе",
     communityRequired: "Выберите сообщество.",
+    plannedHikes: "Запланированные походы",
+    sortBy: "Сортировать по",
+    sortDate: "Дате",
+    sortDistance: "Расстоянию",
+    meetingDistance: (distanceKm) => `${distanceKm.toFixed(1)} км до места встречи`,
+    routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} км`,
+    routeMetaUnavailable: "Данные маршрута недоступны",
+    locationUnavailable: "Местоположение недоступно",
   },
 };
 

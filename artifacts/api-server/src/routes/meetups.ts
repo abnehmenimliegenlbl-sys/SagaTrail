@@ -13,6 +13,7 @@ import {
   meetupParticipantsTable,
   meetupReportsTable,
   meetupsTable,
+  externalRoutesTable,
   profilesTable,
 } from "@workspace/db";
 
@@ -124,6 +125,12 @@ function shapeMeetup(
   joined: boolean,
   isOrganizer = false,
   includePrivateStatus = false,
+  routeDetails?: {
+    distanceKm: number | null;
+    sac: string | null;
+    lat: number | null;
+    lng: number | null;
+  },
 ) {
   return {
     id: row.id,
@@ -138,6 +145,10 @@ function shapeMeetup(
     organizerName,
     joined,
     status: row.status,
+    routeDistanceKm: routeDetails?.distanceKm ?? null,
+    routeDifficulty: routeDetails?.sac ?? null,
+    routeStartLat: routeDetails?.lat ?? null,
+    routeStartLng: routeDetails?.lng ?? null,
     ...(includePrivateStatus
       ? {
           cancellationReason: row.cancellationReason,
@@ -372,6 +383,21 @@ router.get("/meetups", async (req, res): Promise<void> => {
     joinedIds = new Set(joinedRows.map((row) => row.meetupId));
   }
 
+  const routeIds = [...new Set(rows.map(({ meetup }) => meetup.routeId))];
+  const routeDetailRows = routeIds.length
+    ? await db
+        .select({
+          id: externalRoutesTable.id,
+          distanceKm: externalRoutesTable.distanceKm,
+          sac: externalRoutesTable.sac,
+          lat: externalRoutesTable.lat,
+          lng: externalRoutesTable.lng,
+        })
+        .from(externalRoutesTable)
+        .where(inArray(externalRoutesTable.id, routeIds))
+    : [];
+  const routeDetails = new Map(routeDetailRows.map((route) => [route.id, route]));
+
   res.json({
     meetups: rows.map(({ meetup, participantCount }) =>
       shapeMeetup(
@@ -380,6 +406,8 @@ router.get("/meetups", async (req, res): Promise<void> => {
         organizerNames.get(meetup.organizerId) ?? "SagaTrail-Wanderer",
         joinedIds.has(meetup.id),
         currentUserId === meetup.organizerId,
+        false,
+        routeDetails.get(meetup.routeId),
       ),
     ),
   });

@@ -1627,6 +1627,10 @@ export const GetMeetupsResponse = zod.object({
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
+  "routeDistanceKm": zod.number().nullable(),
+  "routeDifficulty": zod.string().nullable(),
+  "routeStartLat": zod.number().nullable(),
+  "routeStartLng": zod.number().nullable(),
   "cancellationReason": zod.string().nullish(),
   "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
@@ -1671,6 +1675,10 @@ export const CreateMeetupResponse = zod.object({
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
+  "routeDistanceKm": zod.number().nullable(),
+  "routeDifficulty": zod.string().nullable(),
+  "routeStartLat": zod.number().nullable(),
+  "routeStartLng": zod.number().nullable(),
   "cancellationReason": zod.string().nullish(),
   "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
@@ -1710,6 +1718,10 @@ export const GetMeetupResponse = zod.object({
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
+  "routeDistanceKm": zod.number().nullable(),
+  "routeDifficulty": zod.string().nullable(),
+  "routeStartLat": zod.number().nullable(),
+  "routeStartLng": zod.number().nullable(),
   "cancellationReason": zod.string().nullish(),
   "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()

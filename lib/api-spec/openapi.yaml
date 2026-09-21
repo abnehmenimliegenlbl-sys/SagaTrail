@@ -2845,7 +2845,7 @@ components:
           format: date-time
     Meetup:
       type: object
-      required: [id, routeId, routeName, canton, startsAt, maxParticipants, participantCount, pace, organizerName, joined, status, isOrganizer]
+      required: [id, routeId, routeName, canton, startsAt, maxParticipants, participantCount, pace, organizerName, joined, status, routeDistanceKm, routeDifficulty, routeStartLat, routeStartLng, isOrganizer]
       properties:
         id:
           type: string
@@ -2879,6 +2879,14 @@ components:
         status:
           type: string
           enum: [scheduled, in_progress, completed, cancelled]
+        routeDistanceKm:
+          type: ["number", "null"]
+        routeDifficulty:
+          type: ["string", "null"]
+        routeStartLat:
+          type: ["number", "null"]
+        routeStartLng:
+          type: ["number", "null"]
         cancellationReason:
           type: string
           nullable: true

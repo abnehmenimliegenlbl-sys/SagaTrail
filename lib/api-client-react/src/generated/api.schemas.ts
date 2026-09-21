@@ -211,6 +211,14 @@ export interface Meetup {
   organizerName: string;
   joined: boolean;
   status: MeetupStatus;
+  /** @nullable */
+  routeDistanceKm: number | null;
+  /** @nullable */
+  routeDifficulty: string | null;
+  /** @nullable */
+  routeStartLat: number | null;
+  /** @nullable */
+  routeStartLng: number | null;
   cancellationReason?: string | null;
   cancelledAt?: string | null;
   isOrganizer: boolean;

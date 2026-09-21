@@ -10,8 +10,9 @@ import {
   useLeaveMeetup,
 } from "@workspace/api-client-react";
 import * as ExpoImage from "expo-image";
+import * as Location from "expo-location";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -33,6 +34,9 @@ import { useColors } from "@/hooks/useColors";
 import { useCommunityScreenStrings } from "@/lib/i18n/screens/communities";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 import { alert } from "@/lib/appAlert";
+import { haversineKm } from "@/lib/geo";
+import { MeetupSortControl } from "@/components/MeetupSortControl";
+import { sortMeetups, type MeetupPosition, type MeetupSortMode } from "@/lib/meetupSorting";
 
 const WEB_TOP = 67;
 
@@ -45,6 +49,8 @@ export default function CommunityDetailScreen() {
   const meetupT = useMeetupStrings();
   const params = useLocalSearchParams<{ id?: string }>();
   const communityId = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
+  const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [sortMode, setSortMode] = useState<MeetupSortMode>("date");
   const communities = useGetMyCommunities({
     query: {
       queryKey: getGetMyCommunitiesQueryKey(),
@@ -53,6 +59,34 @@ export default function CommunityDetailScreen() {
     },
   });
   const leaveCommunity = useLeaveCommunity();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCurrentPosition = async () => {
+      try {
+        const permission = await Location.getForegroundPermissionsAsync();
+        if (permission.status !== "granted") return;
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        if (!cancelled) {
+          setCurrentPosition({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        }
+      } catch {
+        // Ohne frischen GPS-Fix wird keine Entfernung angezeigt.
+      }
+    };
+
+    void loadCurrentPosition();
+    return () => {
+      cancelled = true;
+    };
+  }, [communityId]);
+
   const community = communities.data?.find((item) => item.id === communityId);
   const meetups = useGetMeetups(
     { communityId },
@@ -89,6 +123,11 @@ export default function CommunityDetailScreen() {
   }
 
   const plannedHikes = meetups.data?.meetups.length ?? 0;
+  const sortedMeetups = sortMeetups(
+    meetups.data?.meetups ?? [],
+    sortMode,
+    currentPosition,
+  );
 
   const leave = async () => {
     try {
@@ -292,7 +331,7 @@ export default function CommunityDetailScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            {meetupT.audienceCommunity}
+            {meetupT.plannedHikes}
           </Text>
           <Text style={[styles.sectionCount, { color: colors.mutedForeground }]}>
             {plannedHikes}
@@ -321,16 +360,25 @@ export default function CommunityDetailScreen() {
             </Text>
           </View>
         ) : (
-          meetups.data.meetups.map((meetup) => (
-            <CommunityMeetupCard
-              key={meetup.id}
-              meetup={meetup}
-              colors={colors}
-              meetupStrings={meetupT}
-              onOpen={() => router.push(`/treffpunkte/${meetup.id}`)}
-              onRefresh={() => void meetups.refetch()}
+          <>
+            <MeetupSortControl
+              mode={sortMode}
+              onChange={setSortMode}
+              distanceAvailable={Boolean(currentPosition)}
+              strings={meetupT}
             />
-          ))
+            {sortedMeetups.map((meetup) => (
+              <CommunityMeetupCard
+                key={meetup.id}
+                meetup={meetup}
+                colors={colors}
+                meetupStrings={meetupT}
+                currentPosition={currentPosition}
+                onOpen={() => router.push(`/treffpunkte/${meetup.id}`)}
+                onRefresh={() => void meetups.refetch()}
+              />
+            ))}
+          </>
         )}
       </ScrollView>
     </Background>
@@ -389,6 +437,7 @@ function CommunityMeetupCard({
   meetup,
   colors,
   meetupStrings,
+  currentPosition,
   onOpen,
   onRefresh,
 }: {
@@ -399,9 +448,14 @@ function CommunityMeetupCard({
     participantCount: number;
     maxParticipants: number;
     joined: boolean;
+    routeDistanceKm: number | null;
+    routeDifficulty: string | null;
+    routeStartLat: number | null;
+    routeStartLng: number | null;
   };
   colors: ReturnType<typeof useColors>;
   meetupStrings: ReturnType<typeof useMeetupStrings>;
+  currentPosition: { lat: number; lng: number } | null;
   onOpen: () => void;
   onRefresh: () => void;
 }) {
@@ -410,6 +464,15 @@ function CommunityMeetupCard({
   const start = new Date(meetup.startsAt);
   const isFull = meetup.participantCount >= meetup.maxParticipants && !meetup.joined;
   const isBusy = join.isPending || leave.isPending;
+  const distanceToMeetingPoint =
+    currentPosition &&
+    meetup.routeStartLat != null &&
+    meetup.routeStartLng != null
+      ? haversineKm(currentPosition, {
+          lat: meetup.routeStartLat,
+          lng: meetup.routeStartLng,
+        })
+      : null;
 
   const changeParticipation = async () => {
     if (isFull || isBusy) return;
@@ -437,6 +500,22 @@ function CommunityMeetupCard({
         <Text style={[styles.meetupMeta, { color: colors.mutedForeground }]}>
           {meetup.participantCount}/{meetup.maxParticipants} {meetupStrings.participants.toLowerCase()}
         </Text>
+        <View style={styles.meetupMetaRow}>
+          <Feather name="map-pin" size={12} color={colors.mutedForeground} />
+          <Text style={[styles.meetupMeta, { color: colors.mutedForeground }]}>
+            {distanceToMeetingPoint != null
+              ? meetupStrings.meetingDistance(distanceToMeetingPoint)
+              : meetupStrings.locationUnavailable}
+          </Text>
+        </View>
+        <View style={styles.meetupMetaRow}>
+          <Feather name="trending-up" size={12} color={colors.mutedForeground} />
+          <Text style={[styles.meetupMeta, { color: colors.mutedForeground }]}>
+            {meetup.routeDistanceKm != null && meetup.routeDifficulty
+              ? meetupStrings.routeMeta(meetup.routeDifficulty, meetup.routeDistanceKm)
+              : meetupStrings.routeMetaUnavailable}
+          </Text>
+        </View>
       </Pressable>
       <Pressable
         onPress={() => void changeParticipation()}
@@ -504,6 +583,7 @@ const styles = StyleSheet.create({
   meetupContent: { flex: 1 },
   routeName: { fontFamily: fonts.bodyBold, fontSize: 15, lineHeight: 20 },
   meetupMeta: { fontFamily: fonts.mono, fontSize: 10, marginTop: 5 },
+  meetupMetaRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   joinButton: { borderWidth: 1, borderRadius: 9, minHeight: 36, paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
   joinText: { fontFamily: fonts.bodyBold, fontSize: 11 },
 });

@@ -21,6 +21,7 @@ import { Background } from "@/components/brand/Background";
 import { HomeEntryCard } from "@/components/HomeEntryCard";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
+import { SparkMountain } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useCatalog } from "@/contexts/CatalogContext";
@@ -197,12 +198,28 @@ export default function NeuerTreffpunkt() {
                 onPress={() => setCommunityId(null)}
                 style={[
                   styles.choice,
+                  styles.audienceChoice,
                   {
                     borderColor: communityId === null ? colors.accent : colors.glassBorder,
                     backgroundColor: communityId === null ? colors.accent + "20" : colors.glassBg,
                   },
                 ]}
               >
+                <View
+                  style={[
+                    styles.audienceIcon,
+                    {
+                      borderColor: communityId === null ? colors.accent : colors.glassBorder,
+                      backgroundColor: communityId === null ? colors.accent + "18" : colors.glassBgStrong,
+                    },
+                  ]}
+                >
+                  <SparkMountain
+                    size={21}
+                    mountainColor={colors.accent}
+                    sparkColor={colors.altgold}
+                  />
+                </View>
                 <Text style={[styles.choiceText, { color: communityId === null ? colors.accent : colors.foreground }]}>
                   {t.audiencePublic}
                 </Text>
@@ -217,12 +234,28 @@ export default function NeuerTreffpunkt() {
                 }}
                 style={[
                   styles.choice,
+                  styles.audienceChoice,
                   {
                     borderColor: communityId !== null ? colors.accent : colors.glassBorder,
                     backgroundColor: communityId !== null ? colors.accent + "20" : colors.glassBg,
                   },
                 ]}
               >
+                <View
+                  style={[
+                    styles.audienceIcon,
+                    {
+                      borderColor: communityId !== null ? colors.accent : colors.glassBorder,
+                      backgroundColor: communityId !== null ? colors.accent + "18" : colors.glassBgStrong,
+                    },
+                  ]}
+                >
+                  <Feather
+                    name="facebook"
+                    size={16}
+                    color={communityId !== null ? colors.accent : colors.mutedForeground}
+                  />
+                </View>
                 <Text style={[styles.choiceText, { color: communityId !== null ? colors.accent : colors.foreground }]}>
                   {t.audienceCommunity}
                 </Text>
@@ -336,6 +369,8 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 11, minHeight: 46, paddingHorizontal: 13, fontFamily: fonts.body, fontSize: 15 },
   choiceRow: { flexDirection: "row", gap: 8 },
   choice: { flex: 1, minHeight: 42, borderWidth: 1, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 },
+  audienceChoice: { flexDirection: "row", gap: 7, paddingHorizontal: 7 },
+  audienceIcon: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   choiceText: { fontFamily: fonts.bodyBold, fontSize: 12 },
   communityChoices: { gap: 8, marginTop: 8 },
   communityChoice: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 42, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12 },
