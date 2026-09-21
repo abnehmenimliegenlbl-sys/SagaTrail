@@ -125,26 +125,45 @@ export default function Einstellungen() {
     setCodeStatus("loading");
     try {
       const token = await getToken();
-      const baseUrl = getApiBaseUrl() ?? "";
-      const res = await fetch(`${baseUrl}/api/referrals/claim`, {
+      const baseUrl = getApiBaseUrl();
+      if (!baseUrl) throw new Error("Die API-Adresse ist nicht konfiguriert.");
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+      const communityResponse = await fetch(`${baseUrl}/api/communities/invitations/claim`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers,
         body: JSON.stringify({ code }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
+      if (!communityResponse.ok && communityResponse.status !== 400 && communityResponse.status !== 404) {
+        const body = await communityResponse.json().catch(() => ({}));
         const msg = getUserFacingErrorMessage(
           new Error((body as { error?: string }).error ?? ""),
-          getFriendlyHttpErrorMessage(res.status),
+          getFriendlyHttpErrorMessage(communityResponse.status),
         );
-        if (res.status === 404) {
-          setCodeStatus("error");
-          return;
-        }
         throw new Error(msg);
+      }
+
+      // Persönliche Empfehlungs-Codes bleiben abwärtskompatibel.
+      if (!communityResponse.ok) {
+        const referralResponse = await fetch(`${baseUrl}/api/referrals/claim`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ code }),
+        });
+        if (!referralResponse.ok) {
+          const body = await referralResponse.json().catch(() => ({}));
+          const msg = getUserFacingErrorMessage(
+            new Error((body as { error?: string }).error ?? ""),
+            getFriendlyHttpErrorMessage(referralResponse.status),
+          );
+          if (referralResponse.status === 404) {
+            setCodeStatus("error");
+            return;
+          }
+          throw new Error(msg);
+        }
       }
       setCodeStatus("success");
       setTimeout(() => {
@@ -780,7 +799,7 @@ export default function Einstellungen() {
                       onChangeText={setCodeInput}
                       autoCapitalize="characters"
                       autoCorrect={false}
-                      maxLength={8}
+                      maxLength={12}
                       placeholder="z.B. AB3CDE"
                       placeholderTextColor={colors.mutedForeground}
                       style={{
