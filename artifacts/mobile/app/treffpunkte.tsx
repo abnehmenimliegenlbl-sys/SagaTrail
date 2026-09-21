@@ -228,6 +228,12 @@ function MeetupCard({
         ? waitlistLabel
         : t.join;
   const participationIcon = meetup.joined ? "check" : meetup.isWaitlisted ? "clock" : isFull ? "clock" : "user-plus";
+  const quietParticipationStyle = meetup.joined || meetup.isWaitlisted;
+  const capacityColor = meetup.isWaitlisted
+    ? colors.accent
+    : isFull
+      ? colors.destructive
+      : colors.mutedForeground;
 
   return (
     <View style={[styles.card, GLAS_3D, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
@@ -249,7 +255,11 @@ function MeetupCard({
       </Pressable>
 
       <View style={styles.detailsRow}>
-        <Detail icon="users" text={`${meetup.participantCount}/${meetup.maxParticipants}`} />
+        <Detail
+          icon="users"
+          text={`${meetup.participantCount}/${meetup.maxParticipants}`}
+          color={capacityColor}
+        />
         <Detail icon="activity" text={paceLabel(meetup.pace, t)} />
         <Detail icon="user" text={meetup.organizerName} />
       </View>
@@ -262,9 +272,12 @@ function MeetupCard({
         </Text>
       </View>
       {meetup.isWaitlisted ? (
-        <Text style={[styles.waitlistText, { color: colors.accent }]}>
-          {(t.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)}
-        </Text>
+        <View style={[styles.waitlistPill, { backgroundColor: colors.accent + "14", borderColor: colors.accent + "55" }]}>
+          <Feather name="clock" size={12} color={colors.accent} />
+          <Text style={[styles.waitlistText, { color: colors.accent }]}>
+            {(t.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)}
+          </Text>
+        </View>
       ) : null}
       {meetup.note ? (
         <Text style={[styles.note, { color: colors.mutedForeground }]}>{meetup.note}</Text>
@@ -273,21 +286,22 @@ function MeetupCard({
         onPress={onToggle}
          disabled={busy}
         accessibilityRole="button"
+        accessibilityLabel={participationLabel}
         style={[
           styles.joinButton,
           {
-            backgroundColor: meetup.joined ? colors.glassBgStrong : colors.accent,
+            backgroundColor: quietParticipationStyle ? colors.glassBgStrong : colors.accent,
             borderColor: meetup.joined ? colors.accent : colors.accent,
-            opacity: busy || isFull ? 0.55 : 1,
+            opacity: busy ? 0.55 : 1,
           },
         ]}
       >
         <Feather
            name={participationIcon}
           size={16}
-           color={meetup.joined || meetup.isWaitlisted ? colors.accent : "#fff"}
+            color={quietParticipationStyle ? colors.accent : "#fff"}
         />
-        <Text style={[styles.joinText, { color: meetup.joined ? colors.accent : "#fff" }]}>
+        <Text style={[styles.joinText, { color: quietParticipationStyle ? colors.accent : "#fff" }]}>
            {participationLabel}
         </Text>
       </Pressable>
@@ -295,12 +309,20 @@ function MeetupCard({
   );
 }
 
-function Detail({ icon, text }: { icon: React.ComponentProps<typeof Feather>["name"]; text: string }) {
+function Detail({
+  icon,
+  text,
+  color,
+}: {
+  icon: React.ComponentProps<typeof Feather>["name"];
+  text: string;
+  color?: string;
+}) {
   const colors = useColors();
   return (
     <View style={styles.detail}>
-      <Feather name={icon} size={13} color={colors.mutedForeground} />
-      <Text style={[styles.detailText, { color: colors.mutedForeground }]} numberOfLines={1}>
+      <Feather name={icon} size={13} color={color ?? colors.mutedForeground} />
+      <Text style={[styles.detailText, { color: color ?? colors.mutedForeground }]} numberOfLines={1}>
         {text}
       </Text>
     </View>
@@ -329,7 +351,8 @@ const styles = StyleSheet.create({
   detailsRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 },
   distanceRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 9 },
   distanceText: { fontFamily: fonts.mono, fontSize: 11 },
-  waitlistText: { fontFamily: fonts.mono, fontSize: 11, marginTop: 6 },
+  waitlistPill: { alignSelf: "flex-start", borderWidth: 1, borderRadius: 8, flexDirection: "row", alignItems: "center", gap: 5, marginTop: 8, paddingHorizontal: 8, paddingVertical: 5 },
+  waitlistText: { fontFamily: fonts.mono, fontSize: 10 },
   detail: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: "42%" },
   detailText: { fontFamily: fonts.mono, fontSize: 11 },
   note: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, marginTop: 10 },

@@ -310,6 +310,15 @@ export default function MeetupDetail() {
     Date.now() >= startsAtMs - 3 * 60 * 60_000 &&
     Date.now() <= startsAtMs + 12 * 60 * 60_000;
   const attendanceIsFinal = ownParticipant?.attendanceStatus === "arrived";
+  const isFull = meetup.participantCount >= meetup.maxParticipants && !meetup.joined;
+  const participationLabel = meetup.joined
+    ? t.leave
+    : meetup.isWaitlisted
+      ? t.leaveWaitlist ?? t.leave
+      : isFull
+        ? t.joinWaitlist ?? t.join
+        : t.join;
+  const quietParticipationStyle = meetup.joined || meetup.isWaitlisted;
 
   const beginEdit = () => {
     const start = new Date(meetup.startsAt);
@@ -376,6 +385,43 @@ export default function MeetupDetail() {
               : t.routeMetaUnavailable}
           </Text>
         </View>
+        <View
+          style={[
+            styles.availabilityCard,
+            {
+              backgroundColor: meetup.isWaitlisted
+                ? colors.accent + "12"
+                : isFull
+                  ? colors.destructive + "10"
+                  : colors.glassBgStrong,
+              borderColor: meetup.isWaitlisted
+                ? colors.accent + "55"
+                : isFull
+                  ? colors.destructive + "55"
+                  : colors.glassBorder,
+            },
+          ]}
+        >
+          <Feather
+            name={meetup.isWaitlisted ? "clock" : "users"}
+            size={16}
+            color={meetup.isWaitlisted ? colors.accent : isFull ? colors.destructive : colors.accent}
+          />
+          <View style={styles.availabilityCopy}>
+            <Text style={[styles.availabilityTitle, { color: colors.foreground }]}>
+              {meetup.participantCount}/{meetup.maxParticipants} {t.participants}
+            </Text>
+            <Text style={[styles.availabilityBody, { color: meetup.isWaitlisted ? colors.accent : isFull ? colors.destructive : colors.mutedForeground }]}>
+              {meetup.isWaitlisted
+                ? (t.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)
+                : meetup.joined
+                  ? t.joined
+                  : isFull
+                    ? t.full
+                    : t.join}
+            </Text>
+          </View>
+        </View>
 
         {meetup.isOrganizer && isScheduled ? (
           <View style={[styles.editCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
@@ -391,6 +437,7 @@ export default function MeetupDetail() {
                 <Text style={[styles.cardTitle, { color: colors.foreground }]}>
                   {t.edit ?? "Treffpunkt bearbeiten"}
                 </Text>
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{t.date}</Text>
                 <TextInput
                   value={editDate}
                   onChangeText={setEditDate}
@@ -398,6 +445,7 @@ export default function MeetupDetail() {
                   placeholderTextColor={colors.mutedForeground}
                   style={[styles.editInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
                 />
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{t.time}</Text>
                 <TextInput
                   value={editTime}
                   onChangeText={setEditTime}
@@ -405,6 +453,7 @@ export default function MeetupDetail() {
                   placeholderTextColor={colors.mutedForeground}
                   style={[styles.editInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
                 />
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{t.participants}</Text>
                 <TextInput
                   value={editPlaces}
                   onChangeText={setEditPlaces}
@@ -413,6 +462,7 @@ export default function MeetupDetail() {
                   keyboardType="number-pad"
                   style={[styles.editInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
                 />
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{t.pace}</Text>
                 <View style={styles.editPaceRow}>
                   {(["gemuetlich", "normal", "sportlich"] as const).map((pace) => (
                     <Pressable
@@ -432,6 +482,7 @@ export default function MeetupDetail() {
                     </Pressable>
                   ))}
                 </View>
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{t.note}</Text>
                 <TextInput
                   value={editNote}
                   onChangeText={setEditNote}
@@ -613,11 +664,12 @@ export default function MeetupDetail() {
           </>
         ) : null}
 
-        {!meetup.isOrganizer && isScheduled ? (
+         {!meetup.isOrganizer && isScheduled ? (
           <PrimaryButton
-            label={meetup.joined ? t.leave : t.join}
-            variant={meetup.joined ? "secondary" : "primary"}
+             label={participationLabel}
+             variant={quietParticipationStyle ? "secondary" : "primary"}
             loading={join.isPending || leave.isPending}
+             accessibilityLabel={participationLabel}
             onPress={async () => {
               try {
                 if (meetup.joined) {
@@ -940,6 +992,10 @@ const styles = StyleSheet.create({
   icon: { alignItems: "center", borderRadius: 14, height: 48, justifyContent: "center", width: 48 },
   date: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 12, textAlign: "center" },
   meta: { fontFamily: fonts.mono, fontSize: 12, marginTop: 7, textAlign: "center" },
+  availabilityCard: { alignItems: "center", borderWidth: 1, borderRadius: 13, flexDirection: "row", gap: 10, marginTop: 14, paddingHorizontal: 12, paddingVertical: 10, width: "100%" },
+  availabilityCopy: { flex: 1 },
+  availabilityTitle: { fontFamily: fonts.bodyBold, fontSize: 13 },
+  availabilityBody: { fontFamily: fonts.mono, fontSize: 11, marginTop: 3 },
   note: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 16 },
   actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 18 },
   smallAction: { alignItems: "center", borderRadius: 10, borderWidth: 1, flexDirection: "row", gap: 6, paddingHorizontal: 10, paddingVertical: 9 },
@@ -984,6 +1040,7 @@ const styles = StyleSheet.create({
   editButton: { alignItems: "center", borderRadius: 10, borderWidth: 1, flexDirection: "row", gap: 7, justifyContent: "center", paddingHorizontal: 12, paddingVertical: 10 },
   editButtonText: { fontFamily: fonts.bodyBold, fontSize: 12 },
   editInput: { borderRadius: 10, borderWidth: 1, fontFamily: fonts.body, fontSize: 14, marginTop: 9, minHeight: 42, paddingHorizontal: 11 },
+  fieldLabel: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.4, marginTop: 12 },
   editNoteInput: { borderRadius: 10, borderWidth: 1, fontFamily: fonts.body, fontSize: 14, marginTop: 9, minHeight: 70, padding: 11, textAlignVertical: "top" },
   editPaceRow: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 9 },
   editPace: { borderRadius: 9, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 8 },

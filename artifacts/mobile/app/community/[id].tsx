@@ -516,6 +516,12 @@ function CommunityMeetupCard({
       : isFull
         ? meetupStrings.joinWaitlist ?? "Warteliste"
         : meetupStrings.join;
+  const quietParticipationStyle = meetup.joined || isWaitlisted;
+  const capacityColor = isWaitlisted
+    ? colors.accent
+    : isFull
+      ? colors.destructive
+      : colors.mutedForeground;
 
   return (
     <View style={[styles.meetupCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
@@ -526,7 +532,7 @@ function CommunityMeetupCard({
         <Text style={[styles.meetupMeta, { color: colors.mutedForeground }]}>
           {start.toLocaleDateString()} · {start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </Text>
-        <Text style={[styles.meetupMeta, { color: colors.mutedForeground }]}>
+        <Text style={[styles.meetupMeta, { color: capacityColor, fontFamily: fonts.bodyBold }]}>
           {meetup.participantCount}/{meetup.maxParticipants} {meetupStrings.participants.toLowerCase()}
         </Text>
         <View style={styles.meetupMetaRow}>
@@ -538,9 +544,12 @@ function CommunityMeetupCard({
           </Text>
         </View>
         {isWaitlisted ? (
-          <Text style={[styles.meetupMeta, { color: colors.accent }]}>
-            {(meetupStrings.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)}
-          </Text>
+          <View style={[styles.waitlistPill, { backgroundColor: colors.accent + "14", borderColor: colors.accent + "55" }]}>
+            <Feather name="clock" size={12} color={colors.accent} />
+            <Text style={[styles.meetupMeta, { color: colors.accent, marginTop: 0 }]}>
+              {(meetupStrings.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)}
+            </Text>
+          </View>
         ) : null}
         <View style={styles.meetupMetaRow}>
           <Feather name="trending-up" size={12} color={colors.mutedForeground} />
@@ -555,16 +564,22 @@ function CommunityMeetupCard({
         onPress={() => void changeParticipation()}
         disabled={isBusy}
         accessibilityRole="button"
+        accessibilityLabel={participationLabel}
         style={[
           styles.joinButton,
           {
             borderColor: colors.accent,
-            backgroundColor: meetup.joined ? colors.glassBgStrong : colors.accent,
-            opacity: isBusy || isFull ? 0.55 : 1,
+            backgroundColor: quietParticipationStyle ? colors.glassBgStrong : colors.accent,
+            opacity: isBusy ? 0.55 : 1,
           },
         ]}
       >
-          <Text style={[styles.joinText, { color: meetup.joined || isWaitlisted ? colors.accent : colors.background }]}>
+          <Feather
+            name={meetup.joined ? "check" : isWaitlisted ? "clock" : isFull ? "clock" : "user-plus"}
+            size={14}
+            color={quietParticipationStyle ? colors.accent : colors.background}
+          />
+          <Text style={[styles.joinText, { color: quietParticipationStyle ? colors.accent : colors.background }]}>
           {participationLabel}
         </Text>
       </Pressable>
@@ -618,6 +633,7 @@ const styles = StyleSheet.create({
   routeName: { fontFamily: fonts.bodyBold, fontSize: 15, lineHeight: 20 },
   meetupMeta: { fontFamily: fonts.mono, fontSize: 10, marginTop: 5 },
   meetupMetaRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  joinButton: { borderWidth: 1, borderRadius: 9, minHeight: 36, paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
+  joinButton: { borderWidth: 1, borderRadius: 9, minHeight: 36, paddingHorizontal: 11, flexDirection: "row", gap: 5, alignItems: "center", justifyContent: "center" },
   joinText: { fontFamily: fonts.bodyBold, fontSize: 11 },
+  waitlistPill: { alignSelf: "flex-start", borderWidth: 1, borderRadius: 8, flexDirection: "row", alignItems: "center", gap: 5, marginTop: 7, paddingHorizontal: 8, paddingVertical: 5 },
 });

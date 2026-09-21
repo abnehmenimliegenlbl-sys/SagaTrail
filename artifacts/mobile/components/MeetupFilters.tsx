@@ -1,4 +1,5 @@
 import React from "react";
+import { Feather } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { fonts } from "@/constants/typography";
@@ -26,21 +27,33 @@ export function MeetupFilters({
   const onlyMineLabel = strings.onlyMine ?? "Nur meine Teilnahmen";
   const difficultyLabel = strings.difficulty ?? "SAC";
   const allLabel = strings.allDifficulties ?? "Alle";
+  const hasActiveFilters = Boolean(value.search.trim() || value.difficulty || value.onlyMine);
+  const resetLabel = strings.close ?? "Filter zurücksetzen";
 
   return (
     <View style={styles.wrapper}>
       <Text style={[styles.label, { color: colors.mutedForeground }]}>{searchLabel}</Text>
-      <TextInput
-        value={value.search}
-        onChangeText={(search) => onChange({ ...value, search })}
-        placeholder={searchPlaceholder}
-        placeholderTextColor={colors.mutedForeground}
-        returnKeyType="search"
-        style={[
-          styles.input,
-          { color: colors.foreground, borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-        ]}
-      />
+      <View style={[styles.inputWrap, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+        <Feather name="search" size={15} color={colors.mutedForeground} />
+        <TextInput
+          value={value.search}
+          onChangeText={(search) => onChange({ ...value, search })}
+          placeholder={searchPlaceholder}
+          placeholderTextColor={colors.mutedForeground}
+          returnKeyType="search"
+          style={[styles.input, { color: colors.foreground }]}
+        />
+        {value.search ? (
+          <Pressable
+            onPress={() => onChange({ ...value, search: "" })}
+            accessibilityRole="button"
+            accessibilityLabel={resetLabel}
+            hitSlop={8}
+          >
+            <Feather name="x-circle" size={16} color={colors.mutedForeground} />
+          </Pressable>
+        ) : null}
+      </View>
       <View style={styles.row}>
         <Text style={[styles.label, { color: colors.mutedForeground }]}>{difficultyLabel}</Text>
         <View style={styles.difficultyOptions}>
@@ -87,6 +100,17 @@ export function MeetupFilters({
         </View>
         <Text style={[styles.mineText, { color: colors.foreground }]}>{onlyMineLabel}</Text>
       </Pressable>
+      {hasActiveFilters ? (
+        <Pressable
+          onPress={() => onChange({ search: "", difficulty: undefined, onlyMine: false })}
+          accessibilityRole="button"
+          accessibilityLabel={resetLabel}
+          style={[styles.resetButton, { borderColor: colors.glassBorder }]}
+        >
+          <Feather name="rotate-ccw" size={13} color={colors.accent} />
+          <Text style={[styles.resetText, { color: colors.accent }]}>{resetLabel}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -94,7 +118,8 @@ export function MeetupFilters({
 const styles = StyleSheet.create({
   wrapper: { marginBottom: 12 },
   label: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.4, marginBottom: 6 },
-  input: { minHeight: 40, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, fontFamily: fonts.body, fontSize: 14 },
+  inputWrap: { minHeight: 42, borderWidth: 1, borderRadius: 10, paddingHorizontal: 11, flexDirection: "row", alignItems: "center", gap: 8 },
+  input: { flex: 1, minHeight: 40, fontFamily: fonts.body, fontSize: 14, paddingVertical: 0 },
   row: { marginTop: 10 },
   difficultyOptions: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   chip: { minWidth: 38, minHeight: 32, paddingHorizontal: 9, borderWidth: 1, borderRadius: 9, alignItems: "center", justifyContent: "center" },
@@ -103,4 +128,6 @@ const styles = StyleSheet.create({
   checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   checkmark: { color: "#fff", fontSize: 14, lineHeight: 17, fontWeight: "700" },
   mineText: { fontFamily: fonts.body, fontSize: 13 },
+  resetButton: { alignSelf: "flex-start", borderWidth: 1, borderRadius: 9, flexDirection: "row", alignItems: "center", gap: 6, marginTop: 12, paddingHorizontal: 10, paddingVertical: 7 },
+  resetText: { fontFamily: fonts.bodyBold, fontSize: 11 },
 });
