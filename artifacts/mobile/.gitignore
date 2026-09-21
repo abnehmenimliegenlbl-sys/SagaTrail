@@ -41,6 +41,24 @@ android/app/src/main/java/com/sagatrail2/*
 !android/app/src/main/java/com/sagatrail2/app/
 !android/app/src/main/java/com/sagatrail2/app/MainApplication.kt
 !android/app/src/main/java/com/sagatrail2/app/SagaTrailCompanionModule.kt
+
+# EAS builds use the checked-in native projects, including the Watch target,
+# Android manifest, and shared Xcode scheme.
+!ios/**
+!android/**
+!ios/SagaTrail.xcodeproj/
+!ios/SagaTrail.xcodeproj/project.xcworkspace/
+!ios/SagaTrail.xcodeproj/project.xcworkspace/**
+!ios/SagaTrail.xcodeproj/xcshareddata/
+!ios/SagaTrail.xcodeproj/xcshareddata/**
+ios/Pods/
+ios/build/
+ios/DerivedData/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/debug.keystore
 *.orig.*
 *.jks
 *.p8
