@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request } from "express";
 import { eq, and, asc } from "drizzle-orm";
 import { getAuth, clerkClient } from "@clerk/express";
+import { z } from "zod/v4";
 import {
   db,
   communitiesTable,
@@ -177,6 +178,64 @@ router.get("/communities/me", async (req, res): Promise<void> => {
       joinedAt: community.joinedAt.toISOString(),
     })),
   );
+});
+
+router.delete("/communities/:id/membership", async (req, res): Promise<void> => {
+  const userId = getAuth(req).userId;
+  if (!userId) {
+    res.status(401).json({ error: "Nicht authentifiziert" });
+    return;
+  }
+
+  const communityId = z.string().uuid().safeParse(req.params.id);
+  if (!communityId.success) {
+    res.status(404).json({ error: "Community-Mitgliedschaft nicht gefunden" });
+    return;
+  }
+
+  const user = await clerkClient.users.getUser(userId);
+  const primaryEmail =
+    user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)
+      ?.emailAddress ??
+    user.emailAddresses[0]?.emailAddress;
+  const normalizedEmail = primaryEmail?.trim().toLowerCase();
+
+  if (normalizedEmail) {
+    const [admin] = await db
+      .select({ id: communityAdminsTable.id })
+      .from(communityAdminsTable)
+      .where(
+        and(
+          eq(communityAdminsTable.communityId, communityId.data),
+          eq(communityAdminsTable.email, normalizedEmail),
+          eq(communityAdminsTable.active, true),
+        ),
+      )
+      .limit(1);
+    if (admin) {
+      res.status(409).json({
+        error: "Community-Admins können ihre eigene Community derzeit nicht verlassen.",
+      });
+      return;
+    }
+  }
+
+  const deleted = await db
+    .delete(communityMembersTable)
+    .where(
+      and(
+        eq(communityMembersTable.communityId, communityId.data),
+        eq(communityMembersTable.userId, userId),
+      ),
+    )
+    .returning({ id: communityMembersTable.id });
+
+  if (deleted.length === 0) {
+    res.status(404).json({ error: "Community-Mitgliedschaft nicht gefunden" });
+    return;
+  }
+
+  res.status(204).end();
 });
 
 router.post("/communities/invitations/claim", async (req, res): Promise<void> => {

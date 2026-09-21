@@ -5435,6 +5435,76 @@ export function useGetMyCommunities<TData = Awaited<ReturnType<typeof getMyCommu
 
 
 
+export const getLeaveCommunityUrl = (id: string,) => {
+
+
+
+
+  return `/api/communities/${id}/membership`
+}
+
+/**
+ * @summary Eigene Community-Mitgliedschaft beenden
+ */
+export const leaveCommunity = async (id: string, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getLeaveCommunityUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getLeaveCommunityMutationOptions = <TError = ErrorType<void | ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof leaveCommunity>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof leaveCommunity>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['leaveCommunity'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof leaveCommunity>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  leaveCommunity(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LeaveCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof leaveCommunity>>>
+
+    export type LeaveCommunityMutationError = ErrorType<void | ErrorResponse>
+
+    /**
+ * @summary Eigene Community-Mitgliedschaft beenden
+ */
+export const useLeaveCommunity = <TError = ErrorType<void | ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof leaveCommunity>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof leaveCommunity>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getLeaveCommunityMutationOptions(options));
+    }
+
 export const getGetCommunityInvitationByCodeUrl = (code: string,) => {
 
 

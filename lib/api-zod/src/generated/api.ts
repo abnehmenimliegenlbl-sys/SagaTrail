@@ -2099,6 +2099,16 @@ export const GetMyCommunitiesResponse = zod.array(GetMyCommunitiesResponseItem)
 
 
 /**
+ * @summary Eigene Community-Mitgliedschaft beenden
+ */
+export const LeaveCommunityParams = zod.object({
+  "id": zod.coerce.string().uuid().describe('ID der Community')
+})
+
+export const LeaveCommunityResponse = zod.void()
+
+
+/**
  * Löst einen kurzen Einladungscode auf. Der Code ist ein Fallback für Facebook-In-App-Browser und Store-Weiterleitungen.
  * @summary Community-Einladung über den Fallback-Code laden
  */

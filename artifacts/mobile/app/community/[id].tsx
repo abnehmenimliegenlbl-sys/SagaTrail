@@ -5,6 +5,7 @@ import {
   getGetMyCommunitiesQueryKey,
   useGetMeetups,
   useGetMyCommunities,
+  useLeaveCommunity,
   useJoinMeetup,
   useLeaveMeetup,
 } from "@workspace/api-client-react";
@@ -51,6 +52,7 @@ export default function CommunityDetailScreen() {
       refetchOnMount: "always",
     },
   });
+  const leaveCommunity = useLeaveCommunity();
   const community = communities.data?.find((item) => item.id === communityId);
   const meetups = useGetMeetups(
     { communityId },
@@ -87,6 +89,28 @@ export default function CommunityDetailScreen() {
   }
 
   const plannedHikes = meetups.data?.meetups.length ?? 0;
+
+  const leave = async () => {
+    try {
+      await leaveCommunity.mutateAsync({ id: community.id });
+      await communities.refetch();
+      router.replace("/communities");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t.error;
+      alert(t.leaveCommunity, message);
+    }
+  };
+
+  const confirmLeave = () => {
+    alert(t.leaveCommunity, t.leaveCommunityConfirm(community.name), [
+      { text: t.cancel, style: "cancel" },
+      {
+        text: t.leaveCommunity,
+        style: "destructive",
+        onPress: () => void leave(),
+      },
+    ]);
+  };
 
   const shareCommunity = async () => {
     try {
@@ -183,6 +207,14 @@ export default function CommunityDetailScreen() {
                 `/treffpunkte/neu?communityId=${encodeURIComponent(community.id)}`,
               )
             }
+          />
+          <ActionButton
+            icon="log-out"
+            label={t.leaveCommunity}
+            colors={colors}
+            disabled={leaveCommunity.isPending}
+            destructive
+            onPress={confirmLeave}
           />
         </View>
 
@@ -310,24 +342,43 @@ function ActionButton({
   label,
   colors,
   onPress,
+  disabled = false,
+  destructive = false,
 }: {
   icon: React.ComponentProps<typeof Feather>["name"];
   label: string;
   colors: ReturnType<typeof useColors>;
   onPress: () => void;
+  disabled?: boolean;
+  destructive?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
       style={[
         styles.actionButton,
-        { backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
+        {
+          backgroundColor: colors.glassBg,
+          borderColor: destructive ? colors.destructive : colors.glassBorder,
+          opacity: disabled ? 0.55 : 1,
+        },
       ]}
     >
-      <Feather name={icon} size={17} color={colors.accent} />
-      <Text style={[styles.actionText, { color: colors.foreground }]} numberOfLines={2}>
+      <Feather
+        name={icon}
+        size={17}
+        color={destructive ? colors.destructive : colors.accent}
+      />
+      <Text
+        style={[
+          styles.actionText,
+          { color: destructive ? colors.destructive : colors.foreground },
+        ]}
+        numberOfLines={2}
+      >
         {label}
       </Text>
     </Pressable>

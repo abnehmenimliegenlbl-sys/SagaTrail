@@ -2381,6 +2381,38 @@ paths:
                   $ref: "#/components/schemas/CommunitySummary"
         "401":
           description: Anmeldung erforderlich
+  /communities/{id}/membership:
+    delete:
+      operationId: leaveCommunity
+      tags: [communities]
+      summary: Eigene Community-Mitgliedschaft beenden
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID der Community
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Mitgliedschaft beendet
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Keine eigene Mitgliedschaft in dieser Community gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Community-Admins können ihre eigene Community nicht verlassen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /communities/invitations/by-code/{code}:
     get:
       operationId: getCommunityInvitationByCode
