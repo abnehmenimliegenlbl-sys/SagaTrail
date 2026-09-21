@@ -69,6 +69,7 @@ import {
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
+import { meetupCreatePath } from "@/lib/meetupNavigation";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import {
@@ -139,7 +140,14 @@ export default function Routenplanung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{
+    id: string;
+    communityId?: string;
+  }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const communityId = Array.isArray(params.communityId)
+    ? params.communityId[0]
+    : params.communityId;
   const { energiesparmodus, setEnergiesparmodus, profile, purchasedPacks, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language, savedSagaIds, toggleBookmark, themeMode } = useApp();
   const availablePurchasedPacks =
     Array.from(new Set([...purchasedPacks, ...(profile?.purchasedPacks ?? [])]));
@@ -1343,7 +1351,12 @@ export default function Routenplanung() {
         <Pressable
           onPress={() =>
             router.push(
-              `/treffpunkte/neu?routeId=${encodeURIComponent(route.id)}&routeName=${encodeURIComponent(route.name)}&canton=${encodeURIComponent(route.canton ?? route.region)}`,
+              meetupCreatePath(
+                route.id,
+                route.name,
+                route.canton ?? route.region,
+                communityId,
+              ),
             )
           }
           accessibilityRole="button"

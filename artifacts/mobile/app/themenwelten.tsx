@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -18,6 +18,7 @@ import {
 } from "@/lib/routeThemes";
 import { useThemeWorldStrings } from "@/lib/i18n/screens/themeWorld";
 import { THEME_WORLD_IMAGES } from "@/lib/themeWorldVisuals";
+import { withCommunityId } from "@/lib/meetupNavigation";
 
 const WEB_TOP = 67;
 
@@ -25,6 +26,10 @@ export default function Themenwelten() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ communityId?: string }>();
+  const communityId = Array.isArray(params.communityId)
+    ? params.communityId[0]
+    : params.communityId;
   const { language } = useApp();
   const strings = useThemeWorldStrings();
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
@@ -49,7 +54,11 @@ export default function Themenwelten() {
           {ROUTE_THEME_KEYS.map((theme, index) => (
             <Animated.View key={theme} entering={FadeInDown.delay(index * 45).duration(360)}>
               <Pressable
-                onPress={() => router.push(`/themenwelt/${theme}`)}
+                onPress={() =>
+                  router.push(
+                    withCommunityId(`/themenwelt/${theme}`, communityId),
+                  )
+                }
                 accessibilityRole="button"
                 accessibilityLabel={routeThemeLabel(theme, language)}
                 style={[

@@ -10,7 +10,7 @@ import type { GeocodePlace } from "@workspace/api-client-react";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Location from "expo-location";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -40,6 +40,7 @@ import { fonts } from "@/constants/typography";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useCustomRouteStrings } from "@/lib/i18n/screens/customRoute";
+import { routePathWithCommunity } from "@/lib/meetupNavigation";
 
 const WEB_TOP = 67;
 const DEBOUNCE_MS = 350;
@@ -101,6 +102,10 @@ export default function EigeneRoute() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ communityId?: string }>();
+  const communityId = Array.isArray(params.communityId)
+    ? params.communityId[0]
+    : params.communityId;
   const { addCustomRoute } = useCatalog();
 
   const [start, setStart] = useState<Point | null>(null);
@@ -141,7 +146,7 @@ export default function EigeneRoute() {
         endLabel: end.label,
       })) as HikingRoute;
       addCustomRoute(route);
-      router.push(`/route/${route.id}`);
+      router.push(routePathWithCommunity(route.id, communityId));
     } catch (err) {
       const message =
         err instanceof Error ? err.message : t.errorGeneric("");
@@ -149,7 +154,7 @@ export default function EigeneRoute() {
     } finally {
       setSubmitting(false);
     }
-  }, [start, end, addCustomRoute, router, t]);
+  }, [start, end, addCustomRoute, communityId, router, t]);
 
   const onSubmitWaypoints = useCallback(async () => {
     if (waypoints.length < 2) {
@@ -164,14 +169,14 @@ export default function EigeneRoute() {
       addCustomRoute(route);
       setPickerTarget(null);
       setWaypoints([]);
-      router.push(`/route/${route.id}`);
+      router.push(routePathWithCommunity(route.id, communityId));
     } catch (err) {
       const message = err instanceof Error ? err.message : t.errorGeneric("");
       alert(t.title, t.errorGeneric(message));
     } finally {
       setSubmitting(false);
     }
-  }, [waypoints, addCustomRoute, router, t]);
+  }, [waypoints, addCustomRoute, communityId, router, t]);
 
   const onSubmitDrawn = useCallback(async () => {
     if (drawnPoints.length < 2) {
@@ -186,7 +191,7 @@ export default function EigeneRoute() {
       addCustomRoute(route);
       setPickerTarget(null);
       setDrawnPoints([]);
-      router.push(`/route/${route.id}`);
+      router.push(routePathWithCommunity(route.id, communityId));
     } catch (err) {
       const message = err instanceof Error ? err.message : t.errorGeneric("");
       // Die Rohzeichnung wird im Preview als Liniengeometrie angezeigt. Nach
@@ -198,7 +203,7 @@ export default function EigeneRoute() {
     } finally {
       setSubmitting(false);
     }
-  }, [drawnPoints, addCustomRoute, router, t]);
+  }, [drawnPoints, addCustomRoute, communityId, router, t]);
 
   const onImportGpx = useCallback(async () => {
     setImporting(true);
@@ -245,7 +250,7 @@ export default function EigeneRoute() {
       const route = (await importGpxRoute({ gpx: gpxToSend, name: pendingGpx.name })) as HikingRoute;
       addCustomRoute(route);
       setPendingGpx(null);
-      router.push(`/route/${route.id}`);
+      router.push(routePathWithCommunity(route.id, communityId));
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       const lower = message.toLowerCase();
@@ -264,7 +269,7 @@ export default function EigeneRoute() {
     } finally {
       setImporting(false);
     }
-  }, [pendingGpx, addCustomRoute, router, t]);
+  }, [pendingGpx, addCustomRoute, communityId, router, t]);
 
   const useLocation = useCallback(async () => {
     setLocating(true);

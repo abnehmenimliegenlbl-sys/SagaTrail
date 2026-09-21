@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import {
   Platform,
@@ -22,6 +22,7 @@ import { useCatalog } from "@/contexts/CatalogContext";
 import { useHomeStrings } from "@/lib/i18n/screens/home";
 import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
+import { withCommunityId } from "@/lib/meetupNavigation";
 
 const WEB_TOP = 67;
 
@@ -29,6 +30,10 @@ export default function KantoneScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ communityId?: string }>();
+  const communityId = Array.isArray(params.communityId)
+    ? params.communityId[0]
+    : params.communityId;
   const { language } = useApp();
   const t = useHomeStrings();
   const { cantons, ready } = useCatalog();
@@ -109,7 +114,12 @@ export default function KantoneScreen() {
                   entry={entry}
                   index={index}
                   onPress={() =>
-                    router.push(`/kanton/${encodeURIComponent(entry.canton)}`)
+                    router.push(
+                      withCommunityId(
+                        `/kanton/${encodeURIComponent(entry.canton)}`,
+                        communityId,
+                      ),
+                    )
                   }
                 />
               ))}

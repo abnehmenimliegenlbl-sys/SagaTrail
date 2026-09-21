@@ -54,6 +54,7 @@ import {
 } from "@/lib/routeThemes";
 import { getRouteThemes, routeThemeCache } from "@/lib/routeThemeIndex";
 import { filterRoutesByThemes } from "@/lib/routeThemeFilter";
+import { routePathWithCommunity, withCommunityId } from "@/lib/meetupNavigation";
 
 const DIST_MIN = 0;
 const DIST_MAX = 50;
@@ -114,7 +115,14 @@ export default function KantonRouten() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { canton } = useLocalSearchParams<{ canton: string }>();
+  const params = useLocalSearchParams<{
+    canton: string;
+    communityId?: string;
+  }>();
+  const canton = Array.isArray(params.canton) ? params.canton[0] : params.canton;
+  const communityId = Array.isArray(params.communityId)
+    ? params.communityId[0]
+    : params.communityId;
   const { profile, purchasedPacks, premium, language, freeHikeUsed } = useApp();
   const { loadCantonRoutes, sagas, addCustomRoute } = useCatalog();
   const {
@@ -153,14 +161,14 @@ export default function KantonRouten() {
       const name = asset.name?.replace(/\.gpx$/i, "").trim() || undefined;
       const imported = (await importGpxRoute({ gpx, name })) as import("@/constants/routes").HikingRoute;
       addCustomRoute(imported);
-      router.push(`/route/${imported.id}`);
+      router.push(routePathWithCommunity(imported.id, communityId));
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       alert(t.importGpxTitle, message || t.importGpxText);
     } finally {
       setImporting(false);
     }
-  }, [addCustomRoute, router, t]);
+  }, [addCustomRoute, communityId, router, t]);
 
   const cantonName = decodeURIComponent(canton ?? "");
   const displayCantonName = translateCanton(cantonName, language as LanguageCode);
@@ -902,7 +910,9 @@ export default function KantonRouten() {
                     index={i}
                     locked={locked}
                     nearbyPos={nearbyPos}
-                    onPress={() => router.push(`/route/${route.id}`)}
+                    onPress={() =>
+                      router.push(routePathWithCommunity(route.id, communityId))
+                    }
                     kanton={cantonName}
                   />
                 );
@@ -922,7 +932,7 @@ export default function KantonRouten() {
           <PrimaryButton
             label={t.eigeneRouteButton}
             variant="secondary"
-            onPress={() => router.push("/eigene-route")}
+            onPress={() => router.push(withCommunityId("/eigene-route", communityId))}
             style={{ marginBottom: 10 }}
           />
           <PrimaryButton
