@@ -46,6 +46,7 @@ import objectRecognitionRouter from "./objectRecognition";
 import safetySharesRouter from "./safetyShares";
 import safetyPoisRouter from "./safetyPois";
 import meetupsRouter from "./meetups";
+import communitiesRouter from "./communities";
 
 const router: IRouter = Router();
 
@@ -96,5 +97,6 @@ router.use(objectRecognitionRouter);
 router.use(safetySharesRouter);
 router.use(safetyPoisRouter);
 router.use(meetupsRouter);
+router.use(communitiesRouter);
 
 export default router;

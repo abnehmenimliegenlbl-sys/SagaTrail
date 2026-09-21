@@ -15,6 +15,8 @@ import {
 } from "@/lib/communityInviteFlow";
 
 type ClaimState = "loading" | "success" | "error";
+const CLAIM_TIMEOUT_MS = 12_000;
+const TOKEN_TIMEOUT_MS = 8_000;
 
 export default function CommunityInviteScreen() {
   const colors = useColors();
@@ -63,16 +65,30 @@ export default function CommunityInviteScreen() {
     if (!shouldStartCommunityInviteClaim(claimKey, normalizedInvite)) return;
     setClaimKey(inviteKey);
     let cancelled = false;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CLAIM_TIMEOUT_MS);
+    let tokenTimeoutId: ReturnType<typeof setTimeout> | undefined;
     void (async () => {
       try {
-        const token = await getToken();
-        const response = await fetch(`${getApiBaseUrl() ?? ""}/api/communities/invitations/claim`, {
+        const apiBaseUrl = getApiBaseUrl();
+        if (!apiBaseUrl) {
+          throw new Error("Die API-Adresse ist nicht konfiguriert.");
+        }
+        const tokenTimeout = new Promise<never>((_, reject) => {
+          tokenTimeoutId = setTimeout(
+            () => reject(new Error("Die Anmeldung konnte nicht geladen werden.")),
+            TOKEN_TIMEOUT_MS,
+          );
+        });
+        const token = await Promise.race([getToken(), tokenTimeout]);
+        const response = await fetch(`${apiBaseUrl}/api/communities/invitations/claim`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({ code: normalizedInvite.code.toUpperCase() }),
+          signal: controller.signal,
         });
         const payload = (await response.json().catch(() => ({}))) as {
           community?: { name?: string };
@@ -86,10 +102,16 @@ export default function CommunityInviteScreen() {
         }
       } catch {
         if (!cancelled) setState("error");
+      } finally {
+        if (tokenTimeoutId) clearTimeout(tokenTimeoutId);
+        clearTimeout(timeoutId);
       }
     })();
     return () => {
       cancelled = true;
+      if (tokenTimeoutId) clearTimeout(tokenTimeoutId);
+      clearTimeout(timeoutId);
+      controller.abort();
     };
   }, [
     claimKey,
@@ -120,9 +142,9 @@ export default function CommunityInviteScreen() {
           </>
         ) : (
           <>
-            <Text style={[styles.title, { color: colors.foreground }]}>Einladung nicht gefunden</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>Einladung konnte nicht bestätigt werden</Text>
             <Text style={[styles.body, { color: colors.mutedForeground }]}>
-              Der Code ist abgelaufen oder nicht korrekt. Öffne die Einladung erneut oder nutze den Code auf der Landingpage.
+              Prüfe deine Internetverbindung und ob SagaTrail installiert ist. Öffne den Einladungslink danach erneut oder nutze den Code auf der Landingpage.
             </Text>
             <PrimaryButton label="Zur App" onPress={() => router.replace("/")} />
           </>
