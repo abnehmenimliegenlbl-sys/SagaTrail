@@ -16,6 +16,10 @@ import {
 
 const router: IRouter = Router();
 
+function normalizeCommunityInviteCode(value: unknown): unknown {
+  return typeof value === "string" ? value.trim().toUpperCase() : value;
+}
+
 async function ensureCommunityAdminMembership(
   userId: string,
   req: Request,
@@ -108,7 +112,7 @@ router.get(
   "/communities/invitations/by-code/:code",
   async (req, res): Promise<void> => {
     const parsed = GetCommunityInvitationByCodeParams.safeParse({
-      code: String(req.params.code ?? "").toUpperCase(),
+      code: String(req.params.code ?? "").trim().toUpperCase(),
     });
     if (!parsed.success) {
       res.status(400).json({ error: "Ungültiger Einladungscode" });
@@ -184,7 +188,7 @@ router.post("/communities/invitations/claim", async (req, res): Promise<void> =>
 
   const parsed = ClaimCommunityInvitationBody.safeParse({
     ...req.body,
-    code: typeof req.body?.code === "string" ? req.body.code.toUpperCase() : req.body?.code,
+    code: normalizeCommunityInviteCode(req.body?.code),
   });
   if (!parsed.success) {
     res.status(400).json({ error: "Ungültiger Einladungscode" });
