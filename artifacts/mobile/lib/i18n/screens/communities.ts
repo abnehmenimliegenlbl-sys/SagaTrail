@@ -36,7 +36,7 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     announcement: "Aktuelles",
     shareCommunity: "Community einladen",
     shareInviteMessage: (name, link, code) =>
-      `Komm zur Community «${name}» auf SagaTrail.\n\nEinladung: ${link}\nCode: ${code}`,
+      `Komm zur Community «${name}» auf SagaTrail. SagaTrail muss bereits installiert sein, bevor du den Einladungslink öffnest.\n\nEinladung: ${link}\nCode: ${code}`,
     openFacebookGroup: "Facebook-Gruppe öffnen",
     planCommunityHike: "Wanderung für die Community planen",
     inviteCode: "Einladungscode",
@@ -56,7 +56,7 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     announcement: "Aktuell",
     shareCommunity: "Community iilade",
     shareInviteMessage: (name, link, code) =>
-      `Chum i d Community «${name}» uf SagaTrail.\n\nIiladig: ${link}\nCode: ${code}`,
+      `Chum i d Community «${name}» uf SagaTrail. SagaTrail muess scho installiert sii, bevor du dä Iiladigslink öffnisch.\n\nIiladig: ${link}\nCode: ${code}`,
     openFacebookGroup: "Facebook-Gruppe öffne",
     planCommunityHike: "Wanderig für d Community plane",
     inviteCode: "Iiladigs-Code",
@@ -76,7 +76,7 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     announcement: "Latest update",
     shareCommunity: "Invite to community",
     shareInviteMessage: (name, link, code) =>
-      `Join the “${name}” community on SagaTrail.\n\nInvite: ${link}\nCode: ${code}`,
+      `Join the “${name}” community on SagaTrail. SagaTrail must already be installed before you open the invite link.\n\nInvite: ${link}\nCode: ${code}`,
     openFacebookGroup: "Open Facebook group",
     planCommunityHike: "Plan a hike for the community",
     inviteCode: "Invitation code",
@@ -96,7 +96,7 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     announcement: "Actualité",
     shareCommunity: "Inviter dans la communauté",
     shareInviteMessage: (name, link, code) =>
-      `Rejoins la communauté « ${name} » sur SagaTrail.\n\nInvitation : ${link}\nCode : ${code}`,
+      `Rejoins la communauté « ${name} » sur SagaTrail. SagaTrail doit déjà être installé avant d’ouvrir le lien d’invitation.\n\nInvitation : ${link}\nCode : ${code}`,
     openFacebookGroup: "Ouvrir le groupe Facebook",
     planCommunityHike: "Planifier une randonnée pour la communauté",
     inviteCode: "Code d'invitation",
@@ -116,7 +116,7 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     announcement: "Aggiornamento",
     shareCommunity: "Invita nella community",
     shareInviteMessage: (name, link, code) =>
-      `Unisciti alla community «${name}» su SagaTrail.\n\nInvito: ${link}\nCodice: ${code}`,
+      `Unisciti alla community «${name}» su SagaTrail. SagaTrail deve essere già installato prima di aprire il link d’invito.\n\nInvito: ${link}\nCodice: ${code}`,
     openFacebookGroup: "Apri il gruppo Facebook",
     planCommunityHike: "Organizza un'escursione per la community",
     inviteCode: "Codice d'invito",
@@ -136,7 +136,7 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     announcement: "Actualidad",
     shareCommunity: "Invitar a la comunidad",
     shareInviteMessage: (name, link, code) =>
-      `Únete a la comunidad «${name}» en SagaTrail.\n\nInvitación: ${link}\nCódigo: ${code}`,
+      `Únete a la comunidad «${name}» en SagaTrail. SagaTrail debe estar instalado antes de abrir el enlace de invitación.\n\nInvitación: ${link}\nCódigo: ${code}`,
     openFacebookGroup: "Abrir grupo de Facebook",
     planCommunityHike: "Planificar una caminata para la comunidad",
     inviteCode: "Código de invitación",
@@ -156,7 +156,7 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     announcement: "Atualidade",
     shareCommunity: "Convidar para a comunidade",
     shareInviteMessage: (name, link, code) =>
-      `Junte-se à comunidade «${name}» no SagaTrail.\n\nConvite: ${link}\nCódigo: ${code}`,
+      `Junte-se à comunidade «${name}» no SagaTrail. O SagaTrail já deve estar instalado antes de abrir o link do convite.\n\nConvite: ${link}\nCódigo: ${code}`,
     openFacebookGroup: "Abrir grupo do Facebook",
     planCommunityHike: "Planear caminhada para a comunidade",
     inviteCode: "Código de convite",
@@ -176,7 +176,7 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     announcement: "最新消息",
     shareCommunity: "邀请加入社区",
     shareInviteMessage: (name, link, code) =>
-      `加入 SagaTrail 上的“${name}”社区。\n\n邀请：${link}\n代码：${code}`,
+      `加入 SagaTrail 上的“${name}”社区。打开邀请链接前，请先安装 SagaTrail 应用。\n\n邀请：${link}\n代码：${code}`,
     openFacebookGroup: "打开 Facebook 群组",
     planCommunityHike: "为社区计划徒步",
     inviteCode: "邀请码",
@@ -196,7 +196,7 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     announcement: "Новости",
     shareCommunity: "Пригласить в сообщество",
     shareInviteMessage: (name, link, code) =>
-      `Присоединяйся к сообществу «${name}» в SagaTrail.\n\nПриглашение: ${link}\nКод: ${code}`,
+      `Присоединяйся к сообществу «${name}» в SagaTrail. Перед открытием ссылки установи приложение SagaTrail.\n\nПриглашение: ${link}\nКод: ${code}`,
     openFacebookGroup: "Открыть группу Facebook",
     planCommunityHike: "Запланировать поход для сообщества",
     inviteCode: "Код приглашения",
