@@ -970,6 +970,40 @@ export function routeGeometryAheadOfPosition(
 }
 
 /**
+ * Returns the distance still left along the route from the closest point to
+ * the current GPS fix. This is deliberately route distance, not the straight
+ * line to the final coordinate, so a destination marker cannot appear early
+ * on a long or winding route.
+ */
+export function routeRemainingDistanceM(
+  routeGeometry: readonly number[][] | null | undefined,
+  routeOrigin: LatLng | null | undefined,
+  currentPosition: LatLng | null | undefined,
+  maxSnapDistanceM = 120,
+): number | null {
+  const ahead = routeGeometryAheadOfPosition(
+    routeGeometry,
+    routeOrigin,
+    currentPosition,
+    maxSnapDistanceM,
+  );
+  if (!ahead || ahead.length < 2) return null;
+
+  let totalM = 0;
+  for (let index = 1; index < ahead.length; index += 1) {
+    const previous = ahead[index - 1];
+    const current = ahead[index];
+    if (!previous || !current) continue;
+    const segmentM = geographicDistanceM(current, {
+      lat: previous[0],
+      lng: previous[1],
+    });
+    if (segmentM != null) totalM += segmentM;
+  }
+  return totalM;
+}
+
+/**
  * Returns the projected final route point used by the small destination flag.
  * It uses the same compression and terrain rules as the route polylines.
  */
