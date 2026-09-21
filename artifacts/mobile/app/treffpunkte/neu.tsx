@@ -1,5 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import { useCreateMeetup } from "@workspace/api-client-react";
+import {
+  getGetMyCommunitiesQueryKey,
+  useCreateMeetup,
+  useGetMyCommunities,
+} from "@workspace/api-client-react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
@@ -34,10 +38,14 @@ export default function NeuerTreffpunkt() {
     routeId?: string;
     routeName?: string;
     canton?: string;
+    communityId?: string;
   }>();
   const routeId = Array.isArray(params.routeId) ? params.routeId[0] : params.routeId;
   const routeName = Array.isArray(params.routeName) ? params.routeName[0] : params.routeName;
   const canton = Array.isArray(params.canton) ? params.canton[0] : params.canton;
+  const initialCommunityId = Array.isArray(params.communityId)
+    ? params.communityId[0]
+    : params.communityId;
   const [date, setDate] = useState(() => {
     const next = new Date(Date.now() + 86_400_000);
     return next.toISOString().slice(0, 10);
@@ -46,7 +54,16 @@ export default function NeuerTreffpunkt() {
   const [places, setPlaces] = useState("8");
   const [pace, setPace] = useState<"gemuetlich" | "normal" | "sportlich">("gemuetlich");
   const [note, setNote] = useState("");
+  const [communityId, setCommunityId] = useState<string | null>(
+    initialCommunityId ?? null,
+  );
   const create = useCreateMeetup();
+  const communities = useGetMyCommunities({
+    query: {
+      queryKey: getGetMyCommunitiesQueryKey(),
+      refetchOnMount: "always",
+    },
+  });
 
   const parsedStart = useMemo(() => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return null;
@@ -60,6 +77,10 @@ export default function NeuerTreffpunkt() {
       alert(t.createTitle, t.invalid);
       return;
     }
+    if (communityId && !communities.data?.some((community) => community.id === communityId)) {
+      alert(t.createTitle, t.communityRequired);
+      return;
+    }
     try {
       await create.mutateAsync({
         data: {
@@ -70,6 +91,7 @@ export default function NeuerTreffpunkt() {
           maxParticipants,
           pace,
           note: note.trim() || null,
+          communityId,
         },
       });
       alert(t.createTitle, t.published, [
@@ -112,6 +134,66 @@ export default function NeuerTreffpunkt() {
                 <Text style={[styles.routeName, { color: colors.foreground }]}>{routeName}</Text>
               </View>
             </View>
+
+            <Text style={[styles.label, { color: colors.mutedForeground }]}>{t.audience}</Text>
+            <View style={styles.choiceRow}>
+              <Pressable
+                onPress={() => setCommunityId(null)}
+                style={[
+                  styles.choice,
+                  {
+                    borderColor: communityId === null ? colors.accent : colors.glassBorder,
+                    backgroundColor: communityId === null ? colors.accent + "20" : colors.glassBg,
+                  },
+                ]}
+              >
+                <Text style={[styles.choiceText, { color: communityId === null ? colors.accent : colors.foreground }]}>
+                  {t.audiencePublic}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (!communities.data?.length) {
+                    alert(t.createTitle, t.communityRequired);
+                    return;
+                  }
+                  setCommunityId(communityId ?? communities.data[0].id);
+                }}
+                style={[
+                  styles.choice,
+                  {
+                    borderColor: communityId !== null ? colors.accent : colors.glassBorder,
+                    backgroundColor: communityId !== null ? colors.accent + "20" : colors.glassBg,
+                  },
+                ]}
+              >
+                <Text style={[styles.choiceText, { color: communityId !== null ? colors.accent : colors.foreground }]}>
+                  {t.audienceCommunity}
+                </Text>
+              </Pressable>
+            </View>
+            {communityId !== null && communities.data?.length ? (
+              <View style={styles.communityChoices}>
+                {communities.data.map((community) => (
+                  <Pressable
+                    key={community.id}
+                    onPress={() => setCommunityId(community.id)}
+                    style={[
+                      styles.communityChoice,
+                      {
+                        borderColor: communityId === community.id ? colors.accent : colors.glassBorder,
+                        backgroundColor: communityId === community.id ? colors.accent + "20" : colors.glassBg,
+                      },
+                    ]}
+                  >
+                    <Feather name="users" size={16} color={communityId === community.id ? colors.accent : colors.mutedForeground} />
+                    <Text style={[styles.communityChoiceText, { color: communityId === community.id ? colors.accent : colors.foreground }]}>
+                      {community.name}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
 
             <Field label={t.date} value={date} placeholder={t.datePlaceholder} onChange={setDate} colors={colors} />
             <Field label={t.time} value={time} placeholder={t.timePlaceholder} onChange={setTime} colors={colors} keyboardType="numbers-and-punctuation" />
@@ -199,6 +281,9 @@ const styles = StyleSheet.create({
   choiceRow: { flexDirection: "row", gap: 8 },
   choice: { flex: 1, minHeight: 42, borderWidth: 1, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 },
   choiceText: { fontFamily: fonts.bodyBold, fontSize: 12 },
+  communityChoices: { gap: 8, marginTop: 8 },
+  communityChoice: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 42, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12 },
+  communityChoiceText: { fontFamily: fonts.bodyBold, fontSize: 13 },
   noteInput: { borderWidth: 1, borderRadius: 11, minHeight: 90, padding: 13, fontFamily: fonts.body, fontSize: 15, textAlignVertical: "top" },
   empty: { alignItems: "center", borderWidth: 1, borderRadius: 16, padding: 24, marginTop: 24 },
   emptyText: { textAlign: "center", fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 10 },

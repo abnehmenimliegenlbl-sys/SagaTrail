@@ -75,6 +75,10 @@ export interface MeetupStrings {
   sharedExpired: string;
   openMeetups: string;
   sharedPrivacy: string;
+  audience: string;
+  audiencePublic: string;
+  audienceCommunity: string;
+  communityRequired: string;
 }
 
 const STRINGS: StringsDict<MeetupStrings> = {
@@ -153,6 +157,10 @@ const STRINGS: StringsDict<MeetupStrings> = {
     sharedExpired: "Dieser Link ist abgelaufen oder wurde widerrufen.",
     openMeetups: "Treffpunkte öffnen",
     sharedPrivacy: "Dieser Link zeigt nur Route, Zeit und Gruppengrösse. Teilnehmernamen und private Daten bleiben geschützt.",
+    audience: "Sichtbarkeit",
+    audiencePublic: "Öffentlich in SagaTrail",
+    audienceCommunity: "In einer Community",
+    communityRequired: "Wähle eine Community aus.",
   },
   gsw: {
     eyebrow: "Zäme wandere",
@@ -193,6 +201,10 @@ const STRINGS: StringsDict<MeetupStrings> = {
     ageLabel: (age) => `${age} ${age === 1 ? "Jahr" : "Jahr"}`, sharedTitle: "Geteilter Treffpunkt",
     sharedExpired: "De Link isch abglaufe oder widerruefe worde.", openMeetups: "Treffpünkt öffne",
     sharedPrivacy: "Dä Link zeigt nur Route, Ziit und Gruppengrössi. Teilnehmername und privati Date blibe gschützt.",
+    audience: "Sichtbarkeit",
+    audiencePublic: "Öffentlich i SagaTrail",
+    audienceCommunity: "I ere Community",
+    communityRequired: "Wähl e Community uus.",
   },
   fr: {
     eyebrow: "Randonnée ensemble", title: "Rendez-vous", intro: "Trouvez des personnes qui souhaitent parcourir le même itinéraire le même jour.",
@@ -226,6 +238,10 @@ const STRINGS: StringsDict<MeetupStrings> = {
     ageLabel: (age) => `${age} ${age === 1 ? "an" : "ans"}`, sharedTitle: "Rendez-vous partagé",
     sharedExpired: "Ce lien a expiré ou a été révoqué.", openMeetups: "Ouvrir les rendez-vous",
     sharedPrivacy: "Ce lien affiche uniquement l’itinéraire, l’heure et la taille du groupe. Les noms et données privées restent protégés.",
+    audience: "Visibilité",
+    audiencePublic: "Publiquement dans SagaTrail",
+    audienceCommunity: "Dans une communauté",
+    communityRequired: "Sélectionnez une communauté.",
   },
   it: {
     eyebrow: "Camminare insieme", title: "Ritrovo", intro: "Trova persone che vogliono percorrere lo stesso itinerario nello stesso giorno.",
@@ -257,6 +273,10 @@ const STRINGS: StringsDict<MeetupStrings> = {
     ageLabel: (age) => `${age} ${age === 1 ? "anno" : "anni"}`, sharedTitle: "Ritrovo condiviso",
     sharedExpired: "Questo link è scaduto o è stato revocato.", openMeetups: "Apri i ritrovi",
     sharedPrivacy: "Questo link mostra solo itinerario, ora e dimensione del gruppo. Nomi e dati privati restano protetti.",
+    audience: "Visibilità",
+    audiencePublic: "Pubblico in SagaTrail",
+    audienceCommunity: "In una community",
+    communityRequired: "Seleziona una community.",
   },
   en: {
     eyebrow: "Hike together", title: "Meetup", intro: "Find people who want to hike the same route on the same day.",
@@ -288,6 +308,10 @@ const STRINGS: StringsDict<MeetupStrings> = {
     ageLabel: (age) => `${age} ${age === 1 ? "year" : "years"}`, sharedTitle: "Shared meetup",
     sharedExpired: "This link has expired or been revoked.", openMeetups: "Open meetups",
     sharedPrivacy: "This link shows only the route, time and group size. Participant names and private data remain protected.",
+    audience: "Visibility",
+    audiencePublic: "Public in SagaTrail",
+    audienceCommunity: "In a community",
+    communityRequired: "Select a community.",
   },
   zh: {
     eyebrow: "一起徒步", title: "徒步集合", intro: "找到想在同一天走同一条路线的人。",
@@ -319,6 +343,10 @@ const STRINGS: StringsDict<MeetupStrings> = {
     ageLabel: (age) => `${age}岁`, sharedTitle: "共享集合",
     sharedExpired: "链接已过期或已撤销。", openMeetups: "打开集合",
     sharedPrivacy: "此链接仅显示路线、时间和团队人数。参与者姓名和私人数据受到保护。",
+    audience: "可见范围",
+    audiencePublic: "在 SagaTrail 公开",
+    audienceCommunity: "在社区中",
+    communityRequired: "请选择一个社区。",
   },
   es: {
     eyebrow: "Caminar juntos", title: "Encuentro", intro: "Encuentra personas que quieran hacer la misma ruta el mismo día.",
@@ -350,6 +378,10 @@ const STRINGS: StringsDict<MeetupStrings> = {
     ageLabel: (age) => `${age} ${age === 1 ? "año" : "años"}`, sharedTitle: "Encuentro compartido",
     sharedExpired: "Este enlace ha caducado o se ha revocado.", openMeetups: "Abrir encuentros",
     sharedPrivacy: "Este enlace solo muestra la ruta, la hora y el tamaño del grupo. Los nombres y datos privados permanecen protegidos.",
+    audience: "Visibilidad",
+    audiencePublic: "Público en SagaTrail",
+    audienceCommunity: "En una comunidad",
+    communityRequired: "Selecciona una comunidad.",
   },
   pt: {
     eyebrow: "Caminhar juntos", title: "Encontro", intro: "Encontre pessoas que querem fazer a mesma rota no mesmo dia.",
@@ -381,6 +413,10 @@ const STRINGS: StringsDict<MeetupStrings> = {
     ageLabel: (age) => `${age} ${age === 1 ? "ano" : "anos"}`, sharedTitle: "Encontro partilhado",
     sharedExpired: "Este link expirou ou foi revogado.", openMeetups: "Abrir encontros",
     sharedPrivacy: "Este link mostra apenas a rota, a hora e o tamanho do grupo. Os nomes e dados privados permanecem protegidos.",
+    audience: "Visibilidade",
+    audiencePublic: "Público no SagaTrail",
+    audienceCommunity: "Numa comunidade",
+    communityRequired: "Selecione uma comunidade.",
   },
   ru: {
     eyebrow: "Вместе в поход", title: "Встреча", intro: "Найдите людей, которые хотят пройти тот же маршрут в тот же день.",
@@ -412,6 +448,10 @@ const STRINGS: StringsDict<MeetupStrings> = {
     ageLabel: (age) => `${age} ${age === 1 ? "год" : "лет"}`, sharedTitle: "Общая встреча",
     sharedExpired: "Ссылка истекла или была отозвана.", openMeetups: "Открыть встречи",
     sharedPrivacy: "По этой ссылке видны только маршрут, время и размер группы. Имена участников и личные данные защищены.",
+    audience: "Видимость",
+    audiencePublic: "Публично в SagaTrail",
+    audienceCommunity: "В сообществе",
+    communityRequired: "Выберите сообщество.",
   },
 };
 

@@ -331,7 +331,11 @@ async function requestWalkingRoute(
       }),
       signal: primary.signal,
     });
-    if (!res.ok) throw new Error(`Valhalla HTTP ${res.status}`);
+    if (!res.ok) {
+      throw new Error(
+        "Der Fussweg-Router konnte die Strecke gerade nicht berechnen.",
+      );
+    }
     const data = (await res.json()) as {
       trip?: { legs?: { shape?: string }[] };
     };
@@ -353,7 +357,11 @@ async function requestWalkingRoute(
       `${OSM_FOOT_ROUTER_URL}/${coordinates}` +
       "?overview=full&geometries=geojson&steps=false";
     const res = await fetch(url, { signal: fallback.signal });
-    if (!res.ok) throw new Error(`OSM-Fussweg-Router HTTP ${res.status}`);
+    if (!res.ok) {
+      throw new Error(
+        "Der alternative Fussweg-Router konnte die Strecke gerade nicht berechnen.",
+      );
+    }
     const data = (await res.json()) as {
       routes?: { geometry?: { coordinates?: unknown } }[];
     };
@@ -376,7 +384,7 @@ async function requestWalkingRoute(
     if ((error as Error).name === "AbortError" && parentSignal.aborted)
       throw error;
     throw new Error(
-      `Keine Fusswegroute verfuegbar (primaer: ${String(primaryError)}, fallback: ${String(error)})`,
+      "Keine passende Fusswegroute verfügbar. Bitte versuche es mit einem anderen Start- oder Zielpunkt.",
     );
   } finally {
     fallback.cleanup();

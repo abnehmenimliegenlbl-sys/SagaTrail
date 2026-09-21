@@ -4,7 +4,7 @@ import { useSignIn } from "@clerk/expo/legacy";
 import { clearAllClerkTokens, healStaleClerkSession } from "@/lib/clerkAuth";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useState } from "react";
 import { GoogleIcon } from "@/components/brand/GoogleIcon";
@@ -24,6 +24,7 @@ import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
+import { getCommunityInviteRouteParams } from "@/lib/communityInviteFlow";
 import { useAuthStrings } from "@/lib/i18n/screens/auth";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -34,6 +35,16 @@ export default function SignInScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { slug: rawInviteSlug, code: rawInviteCode } = useLocalSearchParams<{
+    slug?: string | string[];
+    code?: string | string[];
+  }>();
+  const invite = getCommunityInviteRouteParams({
+    slug: rawInviteSlug,
+    code: rawInviteCode,
+  });
+  const inviteSlug = invite?.slug;
+  const inviteCode = invite?.code;
   const { signIn, setActive, isLoaded } = useSignIn();
   const { startSSOFlow } = useSSO();
   const { startAppleAuthenticationFlow } = useSignInWithApple();
@@ -47,6 +58,17 @@ export default function SignInScreen() {
   const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resetDone, setResetDone] = useState(false);
+
+  const resumeAfterAuth = useCallback(() => {
+    if (inviteSlug && inviteCode) {
+      router.replace({
+        pathname: "/community/invite/[slug]",
+        params: { slug: inviteSlug, code: inviteCode },
+      });
+      return;
+    }
+    router.replace("/onboarding");
+  }, [inviteCode, inviteSlug, router]);
 
   const onResetSession = async () => {
     await clearAllClerkTokens();
@@ -86,7 +108,7 @@ export default function SignInScreen() {
       });
       if (attempt.status === "complete") {
         await setActive({ session: attempt.createdSessionId });
-        router.replace("/onboarding");
+        resumeAfterAuth();
       } else if (attempt.status === "needs_first_factor") {
         const result = await signIn.attemptFirstFactor({
           strategy: "password",
@@ -94,7 +116,7 @@ export default function SignInScreen() {
         });
         if (result.status === "complete") {
           await setActive({ session: result.createdSessionId });
-          router.replace("/onboarding");
+          resumeAfterAuth();
         } else {
           setError(t.errorSignInIncomplete);
         }
@@ -123,14 +145,14 @@ export default function SignInScreen() {
       );
       if (createdSessionId && setActiveSSO) {
         await setActiveSSO({ session: createdSessionId });
-        router.replace("/onboarding");
+        resumeAfterAuth();
       }
     } catch (err: any) {
       setError(err?.errors?.[0]?.message ?? t.errorGoogleFailed);
     } finally {
       setGoogleLoading(false);
     }
-  }, [startSSOFlow, router, redirectUrl]);
+  }, [resumeAfterAuth, startSSOFlow, redirectUrl]);
 
   const onApplePress = useCallback(async () => {
     setError(null);
@@ -140,7 +162,7 @@ export default function SignInScreen() {
         await startAppleAuthenticationFlow();
       if (createdSessionId && setActiveApple) {
         await setActiveApple({ session: createdSessionId });
-        router.replace("/onboarding");
+        resumeAfterAuth();
       }
     } catch (err: any) {
       if (err?.code === "ERR_REQUEST_CANCELED") return;
@@ -148,7 +170,15 @@ export default function SignInScreen() {
     } finally {
       setAppleLoading(false);
     }
-  }, [startAppleAuthenticationFlow, router, t]);
+  }, [resumeAfterAuth, startAppleAuthenticationFlow, t]);
+
+  const signUpHref =
+    inviteSlug && inviteCode
+      ? {
+          pathname: "/(auth)/sign-up",
+          params: { slug: inviteSlug, code: inviteCode },
+        }
+      : "/(auth)/sign-up";
 
   return (
     <Background deep>
@@ -276,7 +306,7 @@ export default function SignInScreen() {
           <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
             {t.noAccountYet}
           </Text>
-          <Link href="/(auth)/sign-up" replace>
+          <Link href={signUpHref as any} replace>
             <Text style={[styles.footerLink, { color: colors.accent }]}>
               {t.registerLink}
             </Text>

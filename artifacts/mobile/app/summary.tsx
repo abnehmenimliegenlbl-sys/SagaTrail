@@ -33,6 +33,7 @@ import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
 import { useSummaryStrings } from "@/lib/i18n/screens/summary";
+import { alert } from "@/lib/appAlert";
 import {
   getTransportStationboard,
 } from "@workspace/api-client-react";
@@ -192,19 +193,47 @@ export default function Summary() {
   const FB_GROUP_URL = "https://www.facebook.com/groups/1405863634716590";
   const FB_GROUP_DEEPLINK = "fb://group/1405863634716590";
 
+  const openFacebookGroup = async () => {
+    try {
+      const canOpen = await Linking.canOpenURL(FB_GROUP_DEEPLINK);
+      await Linking.openURL(canOpen ? FB_GROUP_DEEPLINK : FB_GROUP_URL);
+    } catch {
+      await Linking.openURL(FB_GROUP_URL).catch(() => {});
+    }
+  };
+
   const shareToFacebook = async () => {
-    // Bild zuerst via nativem Share-Sheet teilen (Nutzer kann Facebook wählen)
-    await share();
-    // Danach Gruppe öffnen — kleines Timeout damit der Share-Dialog nicht
-    // sofort von der Gruppe überdeckt wird.
-    setTimeout(async () => {
+    const text = t.shareTextTemplate(lastHike.routeName, lastHike.distanceKm);
+    try {
+      const uri = await captureRef(shareCardRef, {
+        format: "png",
+        quality: 1,
+        result: "tmpfile",
+      });
+      const result = await Share.share(
+        { message: text, url: uri },
+        { dialogTitle: t.facebookGruppe },
+      );
+      if (result.action === Share.dismissedAction) return;
+
+      alert(t.facebookPrepareTitle, t.facebookPrepareMessage, [
+        { text: t.facebookOpenGroup, onPress: () => void openFacebookGroup() },
+      ]);
+    } catch {
       try {
-        const canOpen = await Linking.canOpenURL(FB_GROUP_DEEPLINK);
-        await Linking.openURL(canOpen ? FB_GROUP_DEEPLINK : FB_GROUP_URL);
+        const result = await Share.share(
+          { message: text },
+          { dialogTitle: t.facebookGruppe },
+        );
+        if (result.action !== Share.dismissedAction) {
+          alert(t.facebookPrepareTitle, t.facebookPrepareMessage, [
+            { text: t.facebookOpenGroup, onPress: () => void openFacebookGroup() },
+          ]);
+        }
       } catch {
-        Linking.openURL(FB_GROUP_URL).catch(() => {});
+        // Teilen abgebrochen oder nicht verfügbar.
       }
-    }, 800);
+    }
   };
 
   const share = async () => {

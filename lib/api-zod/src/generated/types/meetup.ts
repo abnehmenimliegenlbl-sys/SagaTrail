@@ -17,6 +17,7 @@ export interface Meetup {
   participantCount: number;
   pace: string;
   note?: string | null;
+  communityId?: string | null;
   organizerName: string;
   joined: boolean;
   status: MeetupStatus;

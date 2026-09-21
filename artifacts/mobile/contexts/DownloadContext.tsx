@@ -447,7 +447,11 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         const last = geometry[geometry.length - 1] ?? first;
         const readArray = async <T,>(url: string): Promise<T[]> => {
           const response = await fetch(url);
-          if (!response.ok) throw new Error(`Offline-Sicherheitsdaten: ${response.status}`);
+          if (!response.ok) {
+            throw new Error(
+              "Die Offline-Sicherheitsdaten konnten nicht geladen werden. Bitte versuche es erneut.",
+            );
+          }
           const value: unknown = await response.json();
           if (!Array.isArray(value)) throw new Error("Ungültige Offline-Sicherheitsdaten");
           return value as T[];

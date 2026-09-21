@@ -1608,7 +1608,8 @@ export const CreateTerrainAreaResponse = zod.object({
  */
 export const GetMeetupsQueryParams = zod.object({
   "from": zod.date().optional(),
-  "routeId": zod.coerce.string().optional()
+  "routeId": zod.coerce.string().optional(),
+  "communityId": zod.coerce.string().uuid().optional()
 })
 
 export const GetMeetupsResponse = zod.object({
@@ -1622,6 +1623,7 @@ export const GetMeetupsResponse = zod.object({
   "participantCount": zod.number(),
   "pace": zod.string(),
   "note": zod.string().nullish(),
+  "communityId": zod.string().uuid().nullish(),
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
@@ -1651,7 +1653,8 @@ export const CreateMeetupBody = zod.object({
   "startsAt": zod.coerce.date(),
   "maxParticipants": zod.number().min(createMeetupBodyMaxParticipantsMin).max(createMeetupBodyMaxParticipantsMax).default(createMeetupBodyMaxParticipantsDefault),
   "pace": zod.enum(['gemuetlich', 'normal', 'sportlich']).default(createMeetupBodyPaceDefault),
-  "note": zod.string().max(createMeetupBodyNoteMax).nullish()
+  "note": zod.string().max(createMeetupBodyNoteMax).nullish(),
+  "communityId": zod.string().uuid().nullish()
 })
 
 export const CreateMeetupResponse = zod.object({
@@ -1664,6 +1667,7 @@ export const CreateMeetupResponse = zod.object({
   "participantCount": zod.number(),
   "pace": zod.string(),
   "note": zod.string().nullish(),
+  "communityId": zod.string().uuid().nullish(),
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
@@ -1702,6 +1706,7 @@ export const GetMeetupResponse = zod.object({
   "participantCount": zod.number(),
   "pace": zod.string(),
   "note": zod.string().nullish(),
+  "communityId": zod.string().uuid().nullish(),
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
@@ -1744,6 +1749,79 @@ export const DeleteMeetupParams = zod.object({
 })
 
 export const DeleteMeetupResponse = zod.void()
+
+
+/**
+ * @summary Private Fotos eines abgeschlossenen Treffpunkts laden
+ */
+export const GetMeetupPhotosParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetMeetupPhotosResponse = zod.record(zod.string(), zod.unknown())
+
+
+/**
+ * @summary Freigabe für eine Namensnennung aktualisieren
+ */
+export const UpdateMeetupPhotoConsentParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const UpdateMeetupPhotoConsentBody = zod.object({
+  "allowNameMention": zod.boolean(),
+  "consentVersion": zod.string()
+})
+
+export const UpdateMeetupPhotoConsentResponse = zod.record(zod.string(), zod.unknown())
+
+
+/**
+ * @summary Privates Foto nach zwei getrennten Einwilligungen hochladen
+ */
+export const UploadMeetupPhotoParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const UploadMeetupPhotoQueryParams = zod.object({
+  "consentVersion": zod.coerce.string(),
+  "rightsConsent": zod.enum(['1']),
+  "depictedPeopleConsent": zod.enum(['1'])
+})
+
+export const UploadMeetupPhotoResponse = zod.record(zod.string(), zod.unknown())
+
+
+/**
+ * @summary Eigenes Meetup-Foto löschen
+ */
+export const DeleteMeetupPhotoParams = zod.object({
+  "id": zod.coerce.string().uuid(),
+  "photoId": zod.coerce.string().uuid()
+})
+
+export const DeleteMeetupPhotoResponse = zod.record(zod.string(), zod.unknown())
+
+
+/**
+ * @summary Organizer-Beitrag mit Auswahl und Namensfreigaben vorbereiten
+ */
+export const PrepareMeetupPhotoShareParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const prepareMeetupPhotoShareBodySelectedPhotoIdsMax = 20;
+
+export const prepareMeetupPhotoShareBodyCaptionMax = 1200;
+
+
+
+export const PrepareMeetupPhotoShareBody = zod.object({
+  "selectedPhotoIds": zod.array(zod.string().uuid()).max(prepareMeetupPhotoShareBodySelectedPhotoIdsMax),
+  "caption": zod.string().max(prepareMeetupPhotoShareBodyCaptionMax).optional()
+})
+
+export const PrepareMeetupPhotoShareResponse = zod.record(zod.string(), zod.unknown())
 
 
 /**
@@ -1956,5 +2034,264 @@ export const RemoveMeetupParticipantParams = zod.object({
 })
 
 export const RemoveMeetupParticipantResponse = zod.void()
+
+
+/**
+ * Liefert die freigegebenen Informationen einer SagaTrail-Community für eine Landingpage. Die Antwort enthält keinen privaten Kontostand und keine Mitgliederliste.
+ * @summary Öffentliche Community-Einladung laden
+ */
+export const getCommunityInvitationPathSlugMin = 2;
+export const getCommunityInvitationPathSlugMax = 80;
+
+
+export const getCommunityInvitationPathSlugRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+
+
+export const GetCommunityInvitationParams = zod.object({
+  "slug": zod.coerce.string().min(getCommunityInvitationPathSlugMin).max(getCommunityInvitationPathSlugMax).regex(getCommunityInvitationPathSlugRegExp)
+})
+
+export const GetCommunityInvitationResponse = zod.object({
+  "id": zod.string().uuid(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "administratorName": zod.string(),
+  "language": zod.string(),
+  "coverImageUrl": zod.string().url().nullish(),
+  "facebookGroupUrl": zod.string().url().nullish(),
+  "announcement": zod.string().nullish(),
+  "inviteCode": zod.string(),
+  "appStoreUrl": zod.string().url().optional(),
+  "playStoreUrl": zod.string().url().optional(),
+  "deepLink": zod.string().optional(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * Liefert die aktiven Communities, denen der eingeloggte Nutzer angehört. Die Reihenfolge ist alphabetisch nach dem Community-Namen.
+ * @summary Eigene aktive Communities laden
+ */
+export const getMyCommunitiesResponseMemberCountMin = 0;
+
+
+
+export const GetMyCommunitiesResponseItem = zod.object({
+  "id": zod.string().uuid(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "administratorName": zod.string(),
+  "language": zod.string(),
+  "coverImageUrl": zod.string().url().nullish(),
+  "facebookGroupUrl": zod.string().url().nullish(),
+  "announcement": zod.string().nullish(),
+  "memberCount": zod.number().min(getMyCommunitiesResponseMemberCountMin),
+  "inviteCode": zod.string(),
+  "deepLink": zod.string(),
+  "active": zod.boolean(),
+  "joinedAt": zod.coerce.date()
+})
+export const GetMyCommunitiesResponse = zod.array(GetMyCommunitiesResponseItem)
+
+
+/**
+ * Löst einen kurzen Einladungscode auf. Der Code ist ein Fallback für Facebook-In-App-Browser und Store-Weiterleitungen.
+ * @summary Community-Einladung über den Fallback-Code laden
+ */
+export const getCommunityInvitationByCodePathCodeRegExp = new RegExp('^[A-HJ-NP-Z2-9]{6,12}$');
+
+
+export const GetCommunityInvitationByCodeParams = zod.object({
+  "code": zod.coerce.string().regex(getCommunityInvitationByCodePathCodeRegExp)
+})
+
+export const GetCommunityInvitationByCodeResponse = zod.object({
+  "id": zod.string().uuid(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "administratorName": zod.string(),
+  "language": zod.string(),
+  "coverImageUrl": zod.string().url().nullish(),
+  "facebookGroupUrl": zod.string().url().nullish(),
+  "announcement": zod.string().nullish(),
+  "inviteCode": zod.string(),
+  "appStoreUrl": zod.string().url().optional(),
+  "playStoreUrl": zod.string().url().optional(),
+  "deepLink": zod.string().optional(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Einer Community mit einem Einladungscode beitreten
+ */
+export const claimCommunityInvitationBodyCodeRegExp = new RegExp('^[A-HJ-NP-Z2-9]{6,12}$');
+
+
+export const ClaimCommunityInvitationBody = zod.object({
+  "code": zod.string().regex(claimCommunityInvitationBodyCodeRegExp)
+})
+
+export const ClaimCommunityInvitationResponse = zod.object({
+  "joined": zod.boolean(),
+  "alreadyMember": zod.boolean(),
+  "community": zod.object({
+  "id": zod.string().uuid(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "administratorName": zod.string(),
+  "language": zod.string(),
+  "coverImageUrl": zod.string().url().nullish(),
+  "facebookGroupUrl": zod.string().url().nullish(),
+  "announcement": zod.string().nullish(),
+  "inviteCode": zod.string(),
+  "appStoreUrl": zod.string().url().optional(),
+  "playStoreUrl": zod.string().url().optional(),
+  "deepLink": zod.string().optional(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary SagaTrail-Communities verwalten
+ */
+export const ListCommunitiesResponseItem = zod.object({
+  "id": zod.string().uuid(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "administratorName": zod.string(),
+  "language": zod.string(),
+  "coverImageUrl": zod.string().url().nullish(),
+  "facebookGroupUrl": zod.string().url().nullish(),
+  "announcement": zod.string().nullish(),
+  "inviteCode": zod.string(),
+  "appStoreUrl": zod.string().url().optional(),
+  "playStoreUrl": zod.string().url().optional(),
+  "deepLink": zod.string().optional(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListCommunitiesResponse = zod.array(ListCommunitiesResponseItem)
+
+
+/**
+ * @summary Neue SagaTrail-Community mit Einladung anlegen
+ */
+export const createCommunityBodySlugMin = 2;
+export const createCommunityBodySlugMax = 80;
+
+
+export const createCommunityBodySlugRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+export const createCommunityBodyNameMax = 120;
+
+export const createCommunityBodyDescriptionMax = 1000;
+
+export const createCommunityBodyAdministratorNameMax = 120;
+
+export const createCommunityBodyInviteCodeRegExp = new RegExp('^[A-HJ-NP-Z2-9]{6,12}$');
+export const createCommunityBodyAppStoreUrlDefault = `https://apps.apple.com/app/id6788260668`;
+export const createCommunityBodyPlayStoreUrlDefault = `https://play.google.com/store/apps/details?id=com.sagatrail2.app`;
+export const createCommunityBodyActiveDefault = true;
+
+export const CreateCommunityBody = zod.object({
+  "slug": zod.string().min(createCommunityBodySlugMin).max(createCommunityBodySlugMax).regex(createCommunityBodySlugRegExp),
+  "name": zod.string().min(1).max(createCommunityBodyNameMax),
+  "description": zod.string().min(1).max(createCommunityBodyDescriptionMax),
+  "administratorName": zod.string().min(1).max(createCommunityBodyAdministratorNameMax),
+  "coverImageUrl": zod.string().url().nullish(),
+  "facebookGroupUrl": zod.string().url().nullish(),
+  "announcement": zod.string().nullish(),
+  "inviteCode": zod.string().regex(createCommunityBodyInviteCodeRegExp).optional(),
+  "appStoreUrl": zod.string().url().default(createCommunityBodyAppStoreUrlDefault),
+  "playStoreUrl": zod.string().url().default(createCommunityBodyPlayStoreUrlDefault),
+  "active": zod.boolean().default(createCommunityBodyActiveDefault)
+})
+
+export const CreateCommunityResponse = zod.object({
+  "id": zod.string().uuid(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "administratorName": zod.string(),
+  "language": zod.string(),
+  "coverImageUrl": zod.string().url().nullish(),
+  "facebookGroupUrl": zod.string().url().nullish(),
+  "announcement": zod.string().nullish(),
+  "inviteCode": zod.string(),
+  "appStoreUrl": zod.string().url().optional(),
+  "playStoreUrl": zod.string().url().optional(),
+  "deepLink": zod.string().optional(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Community-Einladung aktualisieren oder deaktivieren
+ */
+export const UpdateCommunityParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateCommunityBodySlugMin = 2;
+export const updateCommunityBodySlugMax = 80;
+
+
+export const updateCommunityBodySlugRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+)*$');
+export const updateCommunityBodyNameMax = 120;
+
+export const updateCommunityBodyDescriptionMax = 1000;
+
+export const updateCommunityBodyAdministratorNameMax = 120;
+
+export const updateCommunityBodyInviteCodeRegExp = new RegExp('^[A-HJ-NP-Z2-9]{6,12}$');
+
+
+export const UpdateCommunityBody = zod.object({
+  "slug": zod.string().min(updateCommunityBodySlugMin).max(updateCommunityBodySlugMax).regex(updateCommunityBodySlugRegExp).optional(),
+  "name": zod.string().min(1).max(updateCommunityBodyNameMax).optional(),
+  "description": zod.string().min(1).max(updateCommunityBodyDescriptionMax).optional(),
+  "administratorName": zod.string().min(1).max(updateCommunityBodyAdministratorNameMax).optional(),
+  "coverImageUrl": zod.string().url().nullish(),
+  "facebookGroupUrl": zod.string().url().nullish(),
+  "announcement": zod.string().nullish(),
+  "inviteCode": zod.string().regex(updateCommunityBodyInviteCodeRegExp).optional(),
+  "appStoreUrl": zod.string().url().optional(),
+  "playStoreUrl": zod.string().url().optional(),
+  "active": zod.boolean().optional()
+})
+
+export const UpdateCommunityResponse = zod.object({
+  "id": zod.string().uuid(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "administratorName": zod.string(),
+  "language": zod.string(),
+  "coverImageUrl": zod.string().url().nullish(),
+  "facebookGroupUrl": zod.string().url().nullish(),
+  "announcement": zod.string().nullish(),
+  "inviteCode": zod.string(),
+  "appStoreUrl": zod.string().url().optional(),
+  "playStoreUrl": zod.string().url().optional(),
+  "deepLink": zod.string().optional(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
 
 

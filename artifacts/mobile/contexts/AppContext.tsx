@@ -940,7 +940,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch {
         detail = result.body?.slice(0, 120) ?? "";
       }
-      throw new Error(detail || `Profilbild-Upload fehlgeschlagen: ${result.status}`);
+      throw new Error(detail || "Das Profilbild konnte nicht hochgeladen werden. Bitte versuche es erneut.");
     }
     await applyServerProfile(JSON.parse(result.body));
   }, [applyServerProfile]);

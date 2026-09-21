@@ -1,5 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "@clerk/expo";
+import {
+  getFriendlyHttpErrorMessage,
+  getUserFacingErrorMessage,
+} from "@workspace/api-client-react";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -72,12 +76,17 @@ export default function WelcomeSagenpaket() {
       });
       if (!res.ok) {
         const body = await res.text().catch(() => "");
-        let msg = body;
-        try { msg = JSON.parse(body)?.error ?? body; } catch {}
+        let serverMessage = body;
+        try { serverMessage = JSON.parse(body)?.error ?? body; } catch {}
         if (res.status === 403) {
           throw new Error(t.notPremiumError);
         }
-        throw new Error(msg || `Fehler ${res.status}`);
+        throw new Error(
+          getUserFacingErrorMessage(
+            new Error(serverMessage),
+            getFriendlyHttpErrorMessage(res.status),
+          ),
+        );
       }
       await queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
       setDone(true);

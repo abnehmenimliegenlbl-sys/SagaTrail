@@ -33,16 +33,24 @@ import type {
   ClaimPackRewardBody,
   ClaimReferralCode200,
   ClaimReferralCodeBody,
+  CommunityClaimInput,
+  CommunityInput,
+  CommunityInvitation,
+  CommunityMembership,
+  CommunitySummary,
+  CommunityUpdate,
   CreateMeetupRequest,
   CreateSafetyShareRequest,
   CustomDrawnRouteBody,
   CustomWaypointsBody,
+  DeleteMeetupPhoto200,
   ErrorResponse,
   GeocodePlace,
   GetAerialwaysParams,
   GetAvalancheBulletinParams,
   GetCantonRoutesParams,
   GetCustomRouteParams,
+  GetMeetupPhotos200,
   GetMeetupsParams,
   GetMyReferralCode200,
   GetPartnersParams,
@@ -77,6 +85,8 @@ import type {
   PoiDetailResponse,
   PoiStory,
   PremiumUpdate,
+  PrepareMeetupPhotoShare200,
+  PrepareMeetupPhotoShareBody,
   Profile,
   ProfileInput,
   ProgressSyncInput,
@@ -98,6 +108,10 @@ import type {
   TrailConditionReport,
   TransportNearbyResponse,
   TransportStationboard,
+  UpdateMeetupPhotoConsent200,
+  UpdateMeetupPhotoConsentBody,
+  UploadMeetupPhoto201,
+  UploadMeetupPhotoParams,
   WeatherReport
 } from './api.schemas';
 
@@ -3901,6 +3915,377 @@ export const useDeleteMeetup = <TError = ErrorType<void>,
       return useMutation(getDeleteMeetupMutationOptions(options));
     }
 
+export const getGetMeetupPhotosUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/photos`
+}
+
+/**
+ * @summary Private Fotos eines abgeschlossenen Treffpunkts laden
+ */
+export const getMeetupPhotos = async (id: string, options?: RequestInit): Promise<GetMeetupPhotos200> => {
+
+  return customFetch<GetMeetupPhotos200>(getGetMeetupPhotosUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMeetupPhotosQueryKey = (id: string,) => {
+    return [
+    `/api/meetups/${id}/photos`
+    ] as const;
+    }
+
+
+export const getGetMeetupPhotosQueryOptions = <TData = Awaited<ReturnType<typeof getMeetupPhotos>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMeetupPhotos>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMeetupPhotosQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMeetupPhotos>>> = ({ signal }) => getMeetupPhotos(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMeetupPhotos>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMeetupPhotosQueryResult = NonNullable<Awaited<ReturnType<typeof getMeetupPhotos>>>
+export type GetMeetupPhotosQueryError = ErrorType<void>
+
+
+/**
+ * @summary Private Fotos eines abgeschlossenen Treffpunkts laden
+ */
+
+export function useGetMeetupPhotos<TData = Awaited<ReturnType<typeof getMeetupPhotos>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMeetupPhotos>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMeetupPhotosQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateMeetupPhotoConsentUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/photo-consent`
+}
+
+/**
+ * @summary Freigabe für eine Namensnennung aktualisieren
+ */
+export const updateMeetupPhotoConsent = async (id: string,
+    updateMeetupPhotoConsentBody: UpdateMeetupPhotoConsentBody, options?: RequestInit): Promise<UpdateMeetupPhotoConsent200> => {
+
+  return customFetch<UpdateMeetupPhotoConsent200>(getUpdateMeetupPhotoConsentUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateMeetupPhotoConsentBody)
+  }
+);}
+
+
+
+
+export const getUpdateMeetupPhotoConsentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMeetupPhotoConsent>>, TError,{id: string;data: BodyType<UpdateMeetupPhotoConsentBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMeetupPhotoConsent>>, TError,{id: string;data: BodyType<UpdateMeetupPhotoConsentBody>}, TContext> => {
+
+const mutationKey = ['updateMeetupPhotoConsent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMeetupPhotoConsent>>, {id: string;data: BodyType<UpdateMeetupPhotoConsentBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateMeetupPhotoConsent(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMeetupPhotoConsentMutationResult = NonNullable<Awaited<ReturnType<typeof updateMeetupPhotoConsent>>>
+    export type UpdateMeetupPhotoConsentMutationBody = BodyType<UpdateMeetupPhotoConsentBody>
+    export type UpdateMeetupPhotoConsentMutationError = ErrorType<void>
+
+    /**
+ * @summary Freigabe für eine Namensnennung aktualisieren
+ */
+export const useUpdateMeetupPhotoConsent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMeetupPhotoConsent>>, TError,{id: string;data: BodyType<UpdateMeetupPhotoConsentBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateMeetupPhotoConsent>>,
+        TError,
+        {id: string;data: BodyType<UpdateMeetupPhotoConsentBody>},
+        TContext
+      > => {
+      return useMutation(getUpdateMeetupPhotoConsentMutationOptions(options));
+    }
+
+export const getUploadMeetupPhotoUrl = (id: string,
+    params: UploadMeetupPhotoParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/meetups/${id}/photos/upload?${stringifiedParams}` : `/api/meetups/${id}/photos/upload`
+}
+
+/**
+ * @summary Privates Foto nach zwei getrennten Einwilligungen hochladen
+ */
+export const uploadMeetupPhoto = async (id: string,
+    uploadMeetupPhotoBody: Blob,
+    params: UploadMeetupPhotoParams, options?: RequestInit): Promise<UploadMeetupPhoto201> => {
+
+  return customFetch<UploadMeetupPhoto201>(getUploadMeetupPhotoUrl(id,params),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'image/jpeg', ...options?.headers },
+    body: uploadMeetupPhotoBody
+  }
+);}
+
+
+
+
+export const getUploadMeetupPhotoMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadMeetupPhoto>>, TError,{id: string;data: BodyType<Blob>;params: UploadMeetupPhotoParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadMeetupPhoto>>, TError,{id: string;data: BodyType<Blob>;params: UploadMeetupPhotoParams}, TContext> => {
+
+const mutationKey = ['uploadMeetupPhoto'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadMeetupPhoto>>, {id: string;data: BodyType<Blob>;params: UploadMeetupPhotoParams}> = (props) => {
+          const {id,data,params} = props ?? {};
+
+          return  uploadMeetupPhoto(id,data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadMeetupPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof uploadMeetupPhoto>>>
+    export type UploadMeetupPhotoMutationBody = BodyType<Blob>
+    export type UploadMeetupPhotoMutationError = ErrorType<void>
+
+    /**
+ * @summary Privates Foto nach zwei getrennten Einwilligungen hochladen
+ */
+export const useUploadMeetupPhoto = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadMeetupPhoto>>, TError,{id: string;data: BodyType<Blob>;params: UploadMeetupPhotoParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadMeetupPhoto>>,
+        TError,
+        {id: string;data: BodyType<Blob>;params: UploadMeetupPhotoParams},
+        TContext
+      > => {
+      return useMutation(getUploadMeetupPhotoMutationOptions(options));
+    }
+
+export const getDeleteMeetupPhotoUrl = (id: string,
+    photoId: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/photos/${photoId}`
+}
+
+/**
+ * @summary Eigenes Meetup-Foto löschen
+ */
+export const deleteMeetupPhoto = async (id: string,
+    photoId: string, options?: RequestInit): Promise<DeleteMeetupPhoto200> => {
+
+  return customFetch<DeleteMeetupPhoto200>(getDeleteMeetupPhotoUrl(id,photoId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteMeetupPhotoMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMeetupPhoto>>, TError,{id: string;photoId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMeetupPhoto>>, TError,{id: string;photoId: string}, TContext> => {
+
+const mutationKey = ['deleteMeetupPhoto'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMeetupPhoto>>, {id: string;photoId: string}> = (props) => {
+          const {id,photoId} = props ?? {};
+
+          return  deleteMeetupPhoto(id,photoId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMeetupPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMeetupPhoto>>>
+
+    export type DeleteMeetupPhotoMutationError = ErrorType<void>
+
+    /**
+ * @summary Eigenes Meetup-Foto löschen
+ */
+export const useDeleteMeetupPhoto = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMeetupPhoto>>, TError,{id: string;photoId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMeetupPhoto>>,
+        TError,
+        {id: string;photoId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteMeetupPhotoMutationOptions(options));
+    }
+
+export const getPrepareMeetupPhotoShareUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}/photos/share`
+}
+
+/**
+ * @summary Organizer-Beitrag mit Auswahl und Namensfreigaben vorbereiten
+ */
+export const prepareMeetupPhotoShare = async (id: string,
+    prepareMeetupPhotoShareBody: PrepareMeetupPhotoShareBody, options?: RequestInit): Promise<PrepareMeetupPhotoShare200> => {
+
+  return customFetch<PrepareMeetupPhotoShare200>(getPrepareMeetupPhotoShareUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(prepareMeetupPhotoShareBody)
+  }
+);}
+
+
+
+
+export const getPrepareMeetupPhotoShareMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof prepareMeetupPhotoShare>>, TError,{id: string;data: BodyType<PrepareMeetupPhotoShareBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof prepareMeetupPhotoShare>>, TError,{id: string;data: BodyType<PrepareMeetupPhotoShareBody>}, TContext> => {
+
+const mutationKey = ['prepareMeetupPhotoShare'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof prepareMeetupPhotoShare>>, {id: string;data: BodyType<PrepareMeetupPhotoShareBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  prepareMeetupPhotoShare(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PrepareMeetupPhotoShareMutationResult = NonNullable<Awaited<ReturnType<typeof prepareMeetupPhotoShare>>>
+    export type PrepareMeetupPhotoShareMutationBody = BodyType<PrepareMeetupPhotoShareBody>
+    export type PrepareMeetupPhotoShareMutationError = ErrorType<void>
+
+    /**
+ * @summary Organizer-Beitrag mit Auswahl und Namensfreigaben vorbereiten
+ */
+export const usePrepareMeetupPhotoShare = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof prepareMeetupPhotoShare>>, TError,{id: string;data: BodyType<PrepareMeetupPhotoShareBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof prepareMeetupPhotoShare>>,
+        TError,
+        {id: string;data: BodyType<PrepareMeetupPhotoShareBody>},
+        TContext
+      > => {
+      return useMutation(getPrepareMeetupPhotoShareMutationOptions(options));
+    }
+
 export const getCancelMeetupUrl = (id: string,) => {
 
 
@@ -4892,5 +5277,527 @@ export const useRemoveMeetupParticipant = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getRemoveMeetupParticipantMutationOptions(options));
+    }
+
+export const getGetCommunityInvitationUrl = (slug: string,) => {
+
+
+
+
+  return `/api/communities/invitations/${slug}`
+}
+
+/**
+ * Liefert die freigegebenen Informationen einer SagaTrail-Community für eine Landingpage. Die Antwort enthält keinen privaten Kontostand und keine Mitgliederliste.
+ * @summary Öffentliche Community-Einladung laden
+ */
+export const getCommunityInvitation = async (slug: string, options?: RequestInit): Promise<CommunityInvitation> => {
+
+  return customFetch<CommunityInvitation>(getGetCommunityInvitationUrl(slug),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCommunityInvitationQueryKey = (slug: string,) => {
+    return [
+    `/api/communities/invitations/${slug}`
+    ] as const;
+    }
+
+
+export const getGetCommunityInvitationQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityInvitation>>, TError = ErrorType<ErrorResponse>>(slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCommunityInvitation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCommunityInvitationQueryKey(slug);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommunityInvitation>>> = ({ signal }) => getCommunityInvitation(slug, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommunityInvitation>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCommunityInvitationQueryResult = NonNullable<Awaited<ReturnType<typeof getCommunityInvitation>>>
+export type GetCommunityInvitationQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Öffentliche Community-Einladung laden
+ */
+
+export function useGetCommunityInvitation<TData = Awaited<ReturnType<typeof getCommunityInvitation>>, TError = ErrorType<ErrorResponse>>(
+ slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCommunityInvitation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCommunityInvitationQueryOptions(slug,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetMyCommunitiesUrl = () => {
+
+
+
+
+  return `/api/communities/me`
+}
+
+/**
+ * Liefert die aktiven Communities, denen der eingeloggte Nutzer angehört. Die Reihenfolge ist alphabetisch nach dem Community-Namen.
+ * @summary Eigene aktive Communities laden
+ */
+export const getMyCommunities = async ( options?: RequestInit): Promise<CommunitySummary[]> => {
+
+  return customFetch<CommunitySummary[]>(getGetMyCommunitiesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMyCommunitiesQueryKey = () => {
+    return [
+    `/api/communities/me`
+    ] as const;
+    }
+
+
+export const getGetMyCommunitiesQueryOptions = <TData = Awaited<ReturnType<typeof getMyCommunities>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyCommunities>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyCommunitiesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyCommunities>>> = ({ signal }) => getMyCommunities({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyCommunities>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyCommunitiesQueryResult = NonNullable<Awaited<ReturnType<typeof getMyCommunities>>>
+export type GetMyCommunitiesQueryError = ErrorType<void>
+
+
+/**
+ * @summary Eigene aktive Communities laden
+ */
+
+export function useGetMyCommunities<TData = Awaited<ReturnType<typeof getMyCommunities>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyCommunities>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyCommunitiesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetCommunityInvitationByCodeUrl = (code: string,) => {
+
+
+
+
+  return `/api/communities/invitations/by-code/${code}`
+}
+
+/**
+ * Löst einen kurzen Einladungscode auf. Der Code ist ein Fallback für Facebook-In-App-Browser und Store-Weiterleitungen.
+ * @summary Community-Einladung über den Fallback-Code laden
+ */
+export const getCommunityInvitationByCode = async (code: string, options?: RequestInit): Promise<CommunityInvitation> => {
+
+  return customFetch<CommunityInvitation>(getGetCommunityInvitationByCodeUrl(code),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCommunityInvitationByCodeQueryKey = (code: string,) => {
+    return [
+    `/api/communities/invitations/by-code/${code}`
+    ] as const;
+    }
+
+
+export const getGetCommunityInvitationByCodeQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityInvitationByCode>>, TError = ErrorType<ErrorResponse>>(code: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCommunityInvitationByCode>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCommunityInvitationByCodeQueryKey(code);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommunityInvitationByCode>>> = ({ signal }) => getCommunityInvitationByCode(code, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: code !== null && code !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommunityInvitationByCode>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCommunityInvitationByCodeQueryResult = NonNullable<Awaited<ReturnType<typeof getCommunityInvitationByCode>>>
+export type GetCommunityInvitationByCodeQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Community-Einladung über den Fallback-Code laden
+ */
+
+export function useGetCommunityInvitationByCode<TData = Awaited<ReturnType<typeof getCommunityInvitationByCode>>, TError = ErrorType<ErrorResponse>>(
+ code: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCommunityInvitationByCode>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCommunityInvitationByCodeQueryOptions(code,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getClaimCommunityInvitationUrl = () => {
+
+
+
+
+  return `/api/communities/invitations/claim`
+}
+
+/**
+ * @summary Einer Community mit einem Einladungscode beitreten
+ */
+export const claimCommunityInvitation = async (communityClaimInput: CommunityClaimInput, options?: RequestInit): Promise<CommunityMembership> => {
+
+  return customFetch<CommunityMembership>(getClaimCommunityInvitationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(communityClaimInput)
+  }
+);}
+
+
+
+
+export const getClaimCommunityInvitationMutationOptions = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimCommunityInvitation>>, TError,{data: BodyType<CommunityClaimInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof claimCommunityInvitation>>, TError,{data: BodyType<CommunityClaimInput>}, TContext> => {
+
+const mutationKey = ['claimCommunityInvitation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof claimCommunityInvitation>>, {data: BodyType<CommunityClaimInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  claimCommunityInvitation(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClaimCommunityInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof claimCommunityInvitation>>>
+    export type ClaimCommunityInvitationMutationBody = BodyType<CommunityClaimInput>
+    export type ClaimCommunityInvitationMutationError = ErrorType<ErrorResponse | void>
+
+    /**
+ * @summary Einer Community mit einem Einladungscode beitreten
+ */
+export const useClaimCommunityInvitation = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimCommunityInvitation>>, TError,{data: BodyType<CommunityClaimInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof claimCommunityInvitation>>,
+        TError,
+        {data: BodyType<CommunityClaimInput>},
+        TContext
+      > => {
+      return useMutation(getClaimCommunityInvitationMutationOptions(options));
+    }
+
+export const getListCommunitiesUrl = () => {
+
+
+
+
+  return `/api/admin/communities`
+}
+
+/**
+ * @summary SagaTrail-Communities verwalten
+ */
+export const listCommunities = async ( options?: RequestInit): Promise<CommunityInvitation[]> => {
+
+  return customFetch<CommunityInvitation[]>(getListCommunitiesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCommunitiesQueryKey = () => {
+    return [
+    `/api/admin/communities`
+    ] as const;
+    }
+
+
+export const getListCommunitiesQueryOptions = <TData = Awaited<ReturnType<typeof listCommunities>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCommunities>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCommunitiesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCommunities>>> = ({ signal }) => listCommunities({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCommunities>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCommunitiesQueryResult = NonNullable<Awaited<ReturnType<typeof listCommunities>>>
+export type ListCommunitiesQueryError = ErrorType<void>
+
+
+/**
+ * @summary SagaTrail-Communities verwalten
+ */
+
+export function useListCommunities<TData = Awaited<ReturnType<typeof listCommunities>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCommunities>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCommunitiesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateCommunityUrl = () => {
+
+
+
+
+  return `/api/admin/communities`
+}
+
+/**
+ * @summary Neue SagaTrail-Community mit Einladung anlegen
+ */
+export const createCommunity = async (communityInput: CommunityInput, options?: RequestInit): Promise<CommunityInvitation> => {
+
+  return customFetch<CommunityInvitation>(getCreateCommunityUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(communityInput)
+  }
+);}
+
+
+
+
+export const getCreateCommunityMutationOptions = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: BodyType<CommunityInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: BodyType<CommunityInput>}, TContext> => {
+
+const mutationKey = ['createCommunity'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCommunity>>, {data: BodyType<CommunityInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCommunity(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof createCommunity>>>
+    export type CreateCommunityMutationBody = BodyType<CommunityInput>
+    export type CreateCommunityMutationError = ErrorType<ErrorResponse | void>
+
+    /**
+ * @summary Neue SagaTrail-Community mit Einladung anlegen
+ */
+export const useCreateCommunity = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommunity>>, TError,{data: BodyType<CommunityInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCommunity>>,
+        TError,
+        {data: BodyType<CommunityInput>},
+        TContext
+      > => {
+      return useMutation(getCreateCommunityMutationOptions(options));
+    }
+
+export const getUpdateCommunityUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/communities/${id}`
+}
+
+/**
+ * @summary Community-Einladung aktualisieren oder deaktivieren
+ */
+export const updateCommunity = async (id: string,
+    communityUpdate: CommunityUpdate, options?: RequestInit): Promise<CommunityInvitation> => {
+
+  return customFetch<CommunityInvitation>(getUpdateCommunityUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(communityUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateCommunityMutationOptions = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCommunity>>, TError,{id: string;data: BodyType<CommunityUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCommunity>>, TError,{id: string;data: BodyType<CommunityUpdate>}, TContext> => {
+
+const mutationKey = ['updateCommunity'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCommunity>>, {id: string;data: BodyType<CommunityUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateCommunity(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCommunityMutationResult = NonNullable<Awaited<ReturnType<typeof updateCommunity>>>
+    export type UpdateCommunityMutationBody = BodyType<CommunityUpdate>
+    export type UpdateCommunityMutationError = ErrorType<ErrorResponse | void>
+
+    /**
+ * @summary Community-Einladung aktualisieren oder deaktivieren
+ */
+export const useUpdateCommunity = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCommunity>>, TError,{id: string;data: BodyType<CommunityUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCommunity>>,
+        TError,
+        {id: string;data: BodyType<CommunityUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateCommunityMutationOptions(options));
     }
 

@@ -9,4 +9,5 @@
 export type GetMeetupsParams = {
 from?: Date;
 routeId?: string;
+communityId?: string;
 };

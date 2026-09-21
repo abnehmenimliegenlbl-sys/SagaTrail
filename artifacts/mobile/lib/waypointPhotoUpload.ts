@@ -55,7 +55,7 @@ export async function uploadWaypointPhoto(
   });
 
   if (result.status < 200 || result.status >= 300) {
-    throw new Error(`Upload fehlgeschlagen: ${result.status} — ${result.body}`);
+    throw new Error("Das Foto konnte nicht hochgeladen werden. Bitte versuche es erneut.");
   }
   // Der Server hat den Upload akzeptiert (2xx). Auf manchen Geraeten/Proxys
   // liefert FileSystem.uploadAsync einen leeren oder unvollstaendigen Response-

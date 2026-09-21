@@ -354,6 +354,14 @@ export default function MeetupDetail() {
         <View style={styles.actionRow}>
            <SmallAction icon="calendar" label={t.calendar} onPress={() => void exportCalendar()} colors={colors} />
            <SmallAction icon="share-2" label={t.share} onPress={() => void shareMeetup()} colors={colors} />
+            {isCompleted && (meetup.joined || meetup.isOrganizer) ? (
+              <SmallAction
+                icon="image"
+                label="Fotos"
+                onPress={() => router.push(`/treffpunkt-fotos/${meetup.id}`)}
+                colors={colors}
+              />
+            ) : null}
            <SmallAction icon="flag" label={t.report} onPress={reportMeetup} colors={colors} />
            <SmallAction icon="slash" label={t.block} onPress={blockMeetupOrganizer} colors={colors} />
         </View>

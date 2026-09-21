@@ -5,6 +5,130 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface CommunityInvitation {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  administratorName: string;
+  language: string;
+  /** @nullable */
+  coverImageUrl?: string | null;
+  /** @nullable */
+  facebookGroupUrl?: string | null;
+  /** @nullable */
+  announcement?: string | null;
+  inviteCode: string;
+  appStoreUrl?: string;
+  playStoreUrl?: string;
+  deepLink?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommunitySummary {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  administratorName: string;
+  language: string;
+  /** @nullable */
+  coverImageUrl?: string | null;
+  /** @nullable */
+  facebookGroupUrl?: string | null;
+  /** @nullable */
+  announcement?: string | null;
+  /** @minimum 0 */
+  memberCount: number;
+  inviteCode: string;
+  deepLink: string;
+  active: boolean;
+  joinedAt: string;
+}
+
+export interface CommunityInput {
+  /**
+     * @minLength 2
+     * @maxLength 80
+     * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+     */
+  slug: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+  /**
+     * @minLength 1
+     * @maxLength 1000
+     */
+  description: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  administratorName: string;
+  /** @nullable */
+  coverImageUrl?: string | null;
+  /** @nullable */
+  facebookGroupUrl?: string | null;
+  /** @nullable */
+  announcement?: string | null;
+  /** @pattern ^[A-HJ-NP-Z2-9]{6,12}$ */
+  inviteCode?: string;
+  appStoreUrl?: string;
+  playStoreUrl?: string;
+  active?: boolean;
+}
+
+export interface CommunityUpdate {
+  /**
+     * @minLength 2
+     * @maxLength 80
+     * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+     */
+  slug?: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name?: string;
+  /**
+     * @minLength 1
+     * @maxLength 1000
+     */
+  description?: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  administratorName?: string;
+  /** @nullable */
+  coverImageUrl?: string | null;
+  /** @nullable */
+  facebookGroupUrl?: string | null;
+  /** @nullable */
+  announcement?: string | null;
+  /** @pattern ^[A-HJ-NP-Z2-9]{6,12}$ */
+  inviteCode?: string;
+  appStoreUrl?: string;
+  playStoreUrl?: string;
+  active?: boolean;
+}
+
+export interface CommunityClaimInput {
+  /** @pattern ^[A-HJ-NP-Z2-9]{6,12}$ */
+  code: string;
+}
+
+export interface CommunityMembership {
+  joined: boolean;
+  alreadyMember: boolean;
+  community: CommunityInvitation;
+}
+
 export type CreateMeetupRequestPace = typeof CreateMeetupRequestPace[keyof typeof CreateMeetupRequestPace];
 
 
@@ -27,6 +151,7 @@ export interface CreateMeetupRequest {
   pace?: CreateMeetupRequestPace;
   /** @maxLength 500 */
   note?: string | null;
+  communityId?: string | null;
 }
 
 export type MeetupLifecycleResponseStatus = typeof MeetupLifecycleResponseStatus[keyof typeof MeetupLifecycleResponseStatus];
@@ -82,6 +207,7 @@ export interface Meetup {
   participantCount: number;
   pace: string;
   note?: string | null;
+  communityId?: string | null;
   organizerName: string;
   joined: boolean;
   status: MeetupStatus;
@@ -1340,5 +1466,48 @@ export type ClaimPackRewardBody = {
 export type GetMeetupsParams = {
 from?: string;
 routeId?: string;
+communityId?: string;
 };
+
+export type GetMeetupPhotos200 = { [key: string]: unknown };
+
+export type UpdateMeetupPhotoConsentBody = {
+  allowNameMention: boolean;
+  consentVersion: string;
+};
+
+export type UpdateMeetupPhotoConsent200 = { [key: string]: unknown };
+
+export type UploadMeetupPhotoParams = {
+consentVersion: string;
+rightsConsent: UploadMeetupPhotoRightsConsent;
+depictedPeopleConsent: UploadMeetupPhotoDepictedPeopleConsent;
+};
+
+export type UploadMeetupPhotoRightsConsent = typeof UploadMeetupPhotoRightsConsent[keyof typeof UploadMeetupPhotoRightsConsent];
+
+
+export const UploadMeetupPhotoRightsConsent = {
+  NUMBER_1: '1',
+} as const;
+
+export type UploadMeetupPhotoDepictedPeopleConsent = typeof UploadMeetupPhotoDepictedPeopleConsent[keyof typeof UploadMeetupPhotoDepictedPeopleConsent];
+
+
+export const UploadMeetupPhotoDepictedPeopleConsent = {
+  NUMBER_1: '1',
+} as const;
+
+export type UploadMeetupPhoto201 = { [key: string]: unknown };
+
+export type DeleteMeetupPhoto200 = { [key: string]: unknown };
+
+export type PrepareMeetupPhotoShareBody = {
+  /** @maxItems 20 */
+  selectedPhotoIds: string[];
+  /** @maxLength 1200 */
+  caption?: string;
+};
+
+export type PrepareMeetupPhotoShare200 = { [key: string]: unknown };
 

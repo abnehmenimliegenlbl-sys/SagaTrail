@@ -243,7 +243,7 @@ async function loadRouteMapTexture(
         }),
       ]);
       if (result.status < 200 || result.status >= 300) {
-        throw new Error(`Textur-Download fehlgeschlagen (${result.status}).`);
+        throw new Error("Das Geländebild konnte nicht geladen werden. Bitte versuche es erneut.");
       }
       await FileSystem.moveAsync({ from: temporaryUri, to: localUri });
     } catch (error) {

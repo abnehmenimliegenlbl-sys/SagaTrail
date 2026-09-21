@@ -20,4 +20,5 @@ export interface CreateMeetupRequest {
   pace?: CreateMeetupRequestPace;
   /** @maxLength 500 */
   note?: string | null;
+  communityId?: string | null;
 }

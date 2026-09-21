@@ -189,6 +189,11 @@ export default function EigeneRoute() {
       router.push(`/route/${route.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : t.errorGeneric("");
+      // Die Rohzeichnung wird im Preview als Liniengeometrie angezeigt. Nach
+      // einem fehlgeschlagenen Routing darf sie nicht wie eine fertige,
+      // querfeldein verlaufende Route im Hintergrund stehen bleiben. Die
+      // Punkte bleiben fuer einen erneuten Versuch erhalten.
+      setPickerTarget("freehand");
       alert(t.title, t.errorGeneric(message));
     } finally {
       setSubmitting(false);

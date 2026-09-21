@@ -148,12 +148,61 @@ function truncate(text: string, maxLength = 300): string {
   return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
 }
 
+const FRIENDLY_STATUS_MESSAGES: Record<number, string> = {
+  400: "Die Anfrage konnte nicht verarbeitet werden. Bitte prüfe deine Eingaben.",
+  401: "Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an.",
+  403: "Du hast keine Berechtigung für diese Aktion.",
+  404: "Die angeforderten Daten wurden nicht gefunden.",
+  408: "Die Anfrage hat zu lange gedauert. Bitte versuche es erneut.",
+  409: "Diese Änderung ist aktuell nicht möglich. Bitte versuche es erneut.",
+  413: "Die übermittelten Daten sind zu gross.",
+  422: "Die Eingaben konnten nicht verarbeitet werden. Bitte prüfe sie.",
+  429: "Zu viele Anfragen in kurzer Zeit. Bitte warte einen Moment.",
+  500: "Auf dem Server ist ein Fehler aufgetreten. Bitte versuche es später erneut.",
+  502: "Ein benötigter Dienst ist momentan nicht erreichbar. Bitte versuche es später erneut.",
+  503: "Der Dienst ist momentan nicht verfügbar. Bitte versuche es später erneut.",
+  504: "Der Dienst hat zu lange gebraucht. Bitte versuche es erneut.",
+};
+
+const DEFAULT_STATUS_MESSAGE =
+  "Die Anfrage konnte gerade nicht verarbeitet werden. Bitte versuche es erneut.";
+
+export function getFriendlyHttpErrorMessage(status: number): string {
+  return FRIENDLY_STATUS_MESSAGES[status] ?? DEFAULT_STATUS_MESSAGE;
+}
+
+function isUnhelpfulStatusText(text: string, response: Response): boolean {
+  const normalized = text.trim().toLowerCase();
+  if (!normalized) return true;
+  if (normalized.startsWith("<!doctype") || normalized.startsWith("<html")) return true;
+  if (normalized === response.statusText.trim().toLowerCase()) return true;
+  if (/^(?:http[- ]?)?\d{3}\b/.test(normalized)) return true;
+  return /^(?:bad request|unauthorized|forbidden|not found|request timeout|internal server error|bad gateway|service unavailable|gateway timeout|failed to fetch|network request failed)$/.test(normalized);
+}
+
+export function getUserFacingErrorMessage(
+  error: unknown,
+  fallback = DEFAULT_STATUS_MESSAGE,
+): string {
+  if (!(error instanceof Error)) return fallback;
+  const message = error.message.trim();
+  if (!message) return fallback;
+  if (
+    /^(?:http[- ]?)?\d{3}\b/i.test(message) ||
+    /^(?:bad request|unauthorized|forbidden|not found|request timeout|internal server error|bad gateway|service unavailable|gateway timeout|failed to fetch|network request failed)$/i.test(message) ||
+    /^<!doctype|^<html/i.test(message)
+  ) {
+    return fallback;
+  }
+  return truncate(message);
+}
+
 function buildErrorMessage(response: Response, data: unknown): string {
-  const prefix = `HTTP ${response.status} ${response.statusText}`;
+  const fallback = getFriendlyHttpErrorMessage(response.status);
 
   if (typeof data === "string") {
     const text = data.trim();
-    return text ? `${prefix}: ${truncate(text)}` : prefix;
+    return !isUnhelpfulStatusText(text, response) ? truncate(text) : fallback;
   }
 
   const title = getStringField(data, "title");
@@ -163,12 +212,12 @@ function buildErrorMessage(response: Response, data: unknown): string {
     getStringField(data, "error_description") ??
     getStringField(data, "error");
 
-  if (title && detail) return `${prefix}: ${title} — ${detail}`;
-  if (detail) return `${prefix}: ${detail}`;
-  if (message) return `${prefix}: ${message}`;
-  if (title) return `${prefix}: ${title}`;
+  if (title && detail) return `${title} — ${detail}`;
+  if (detail && !isUnhelpfulStatusText(detail, response)) return truncate(detail);
+  if (message && !isUnhelpfulStatusText(message, response)) return truncate(message);
+  if (title && !isUnhelpfulStatusText(title, response)) return truncate(title);
 
-  return prefix;
+  return fallback;
 }
 
 export class ApiError<T = unknown> extends Error {
@@ -216,10 +265,7 @@ export class ResponseParseError extends Error {
     cause: unknown,
     requestInfo: { method: string; url: string },
   ) {
-    super(
-      `Failed to parse response from ${requestInfo.method} ${response.url || requestInfo.url} ` +
-        `(${response.status} ${response.statusText}) as JSON`,
-    );
+    super("Die Antwort des Servers konnte nicht gelesen werden. Bitte versuche es erneut.");
     Object.setPrototypeOf(this, new.target.prototype);
 
     this.status = response.status;
@@ -360,7 +406,15 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  let response: Response;
+  try {
+    response = await fetch(input, { ...init, method, headers });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw error;
+    throw new Error(
+      "Der Server ist momentan nicht erreichbar. Bitte prüfe deine Internetverbindung und versuche es erneut.",
+    );
+  }
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);

@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: communities
+    description: Öffentliche SagaTrail-Community-Einladungen
   - name: catalog
     description: SagaTrail Online-Katalog (Kantone, Routen, Sagen)
   - name: stories
@@ -1720,6 +1722,12 @@ paths:
           required: false
           schema:
             type: string
+        - name: communityId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Kommende Treffpunkte
@@ -1791,6 +1799,174 @@ paths:
           description: Anmeldung erforderlich
         "404":
           description: Treffpunkt nicht gefunden oder nicht berechtigt
+  /meetups/{id}/photos:
+    get:
+      operationId: getMeetupPhotos
+      tags: [meetups]
+      summary: Private Fotos eines abgeschlossenen Treffpunkts laden
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Fotos mit kurzlebigen privaten Bild-URLs
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Keine Teilnahme an diesem Treffpunkt }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Fotos erst nach dem Abschluss verfügbar }
+  /meetups/{id}/photo-consent:
+    patch:
+      operationId: updateMeetupPhotoConsent
+      tags: [meetups]
+      summary: Freigabe für eine Namensnennung aktualisieren
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [allowNameMention, consentVersion]
+              properties:
+                allowNameMention: { type: boolean }
+                consentVersion: { type: string }
+      responses:
+        "200":
+          description: Freigabe gespeichert
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400": { description: Ungültige Einwilligungsversion }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Keine Teilnahme an diesem Treffpunkt }
+        "404": { description: Treffpunkt nicht gefunden }
+  /meetups/{id}/photos/upload:
+    post:
+      operationId: uploadMeetupPhoto
+      tags: [meetups]
+      summary: Privates Foto nach zwei getrennten Einwilligungen hochladen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: consentVersion
+          in: query
+          required: true
+          schema: { type: string }
+        - name: rightsConsent
+          in: query
+          required: true
+          schema: { type: string, enum: ["1"] }
+        - name: depictedPeopleConsent
+          in: query
+          required: true
+          schema: { type: string, enum: ["1"] }
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema: { type: string, format: binary }
+          image/png:
+            schema: { type: string, format: binary }
+          image/webp:
+            schema: { type: string, format: binary }
+      responses:
+        "201":
+          description: Foto gespeichert
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400": { description: Fehlende Einwilligungen oder ungültige Bildgröße }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Keine Teilnahme an diesem Treffpunkt }
+        "409": { description: Foto-Uploads erst nach dem Abschluss verfügbar }
+        "415": { description: Nicht unterstütztes Bildformat }
+  /meetups/{id}/photos/{photoId}:
+    delete:
+      operationId: deleteMeetupPhoto
+      tags: [meetups]
+      summary: Eigenes Meetup-Foto löschen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: photoId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Foto gelöscht
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Foto gehört einer anderen Person }
+        "404": { description: Foto nicht gefunden }
+  /meetups/{id}/photos/share:
+    post:
+      operationId: prepareMeetupPhotoShare
+      tags: [meetups]
+      summary: Organizer-Beitrag mit Auswahl und Namensfreigaben vorbereiten
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [selectedPhotoIds]
+              properties:
+                selectedPhotoIds:
+                  type: array
+                  maxItems: 20
+                  items: { type: string, format: uuid }
+                caption: { type: string, maxLength: 1200 }
+      responses:
+        "200":
+          description: Beitragstext und ausgewählte private URLs
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Nur der Organisator darf den Beitrag vorbereiten }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Beitrag erst nach dem Abschluss verfügbar }
   /meetups/{id}/cancel:
     post:
       operationId: cancelMeetup
@@ -2153,12 +2329,420 @@ paths:
           description: Nur der Organisator darf Teilnehmer entfernen
         "404":
           description: Treffpunkt oder Teilnehmer nicht gefunden
+  /communities/invitations/{slug}:
+    get:
+      operationId: getCommunityInvitation
+      tags: [communities]
+      summary: Öffentliche Community-Einladung laden
+      description: >
+        Liefert die freigegebenen Informationen einer SagaTrail-Community für
+        eine Landingpage. Die Antwort enthält keinen privaten Kontostand und
+        keine Mitgliederliste.
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            minLength: 2
+            maxLength: 80
+      responses:
+        "200":
+          description: Community-Einladung
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityInvitation"
+        "404":
+          description: Einladung nicht gefunden oder nicht mehr aktiv
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /communities/me:
+    get:
+      operationId: getMyCommunities
+      tags: [communities]
+      summary: Eigene aktive Communities laden
+      description: >
+        Liefert die aktiven Communities, denen der eingeloggte Nutzer
+        angehört. Die Reihenfolge ist alphabetisch nach dem Community-Namen.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Eigene Communities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommunitySummary"
+        "401":
+          description: Anmeldung erforderlich
+  /communities/invitations/by-code/{code}:
+    get:
+      operationId: getCommunityInvitationByCode
+      tags: [communities]
+      summary: Community-Einladung über den Fallback-Code laden
+      description: >
+        Löst einen kurzen Einladungscode auf. Der Code ist ein Fallback für
+        Facebook-In-App-Browser und Store-Weiterleitungen.
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-HJ-NP-Z2-9]{6,12}$"
+      responses:
+        "200":
+          description: Community-Einladung
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityInvitation"
+        "404":
+          description: Einladung nicht gefunden oder nicht mehr aktiv
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /communities/invitations/claim:
+    post:
+      operationId: claimCommunityInvitation
+      tags: [communities]
+      summary: Einer Community mit einem Einladungscode beitreten
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommunityClaimInput"
+      responses:
+        "200":
+          description: Community-Beitritt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityMembership"
+        "400":
+          description: Ungültiger Einladungscode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Einladung nicht gefunden oder nicht mehr aktiv
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/communities:
+    get:
+      operationId: listCommunities
+      tags: [communities]
+      summary: SagaTrail-Communities verwalten
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Communities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommunityInvitation"
+        "401":
+          description: Ungültiges Admin-Token
+    post:
+      operationId: createCommunity
+      tags: [communities]
+      summary: Neue SagaTrail-Community mit Einladung anlegen
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommunityInput"
+      responses:
+        "201":
+          description: Community angelegt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityInvitation"
+        "400":
+          description: Ungültige Community-Daten
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Ungültiges Admin-Token
+        "409":
+          description: Slug oder Einladungscode bereits vergeben
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/communities/{id}:
+    patch:
+      operationId: updateCommunity
+      tags: [communities]
+      summary: Community-Einladung aktualisieren oder deaktivieren
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommunityUpdate"
+      responses:
+        "200":
+          description: Aktualisierte Community
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityInvitation"
+        "400":
+          description: Ungültige Community-Daten
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Ungültiges Admin-Token
+        "404":
+          description: Community nicht gefunden
+        "409":
+          description: Slug oder Einladungscode bereits vergeben
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
   schemas:
+    CommunityInvitation:
+      type: object
+      required:
+        - id
+        - slug
+        - name
+        - description
+        - administratorName
+        - language
+        - inviteCode
+        - active
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        administratorName:
+          type: string
+        language:
+          type: string
+        coverImageUrl:
+          type: ["string", "null"]
+          format: uri
+        facebookGroupUrl:
+          type: ["string", "null"]
+          format: uri
+        announcement:
+          type: ["string", "null"]
+        inviteCode:
+          type: string
+        appStoreUrl:
+          type: string
+          format: uri
+        playStoreUrl:
+          type: string
+          format: uri
+        deepLink:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CommunitySummary:
+      type: object
+      required:
+        - id
+        - slug
+        - name
+        - description
+        - language
+        - administratorName
+        - memberCount
+        - inviteCode
+        - deepLink
+        - active
+        - joinedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        administratorName:
+          type: string
+        language:
+          type: string
+        coverImageUrl:
+          type: ["string", "null"]
+          format: uri
+        facebookGroupUrl:
+          type: ["string", "null"]
+          format: uri
+        announcement:
+          type: ["string", "null"]
+        memberCount:
+          type: integer
+          minimum: 0
+        inviteCode:
+          type: string
+        deepLink:
+          type: string
+        active:
+          type: boolean
+        joinedAt:
+          type: string
+          format: date-time
+    CommunityInput:
+      type: object
+      required: [slug, name, description, administratorName]
+      properties:
+        slug:
+          type: string
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          minLength: 2
+          maxLength: 80
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        administratorName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        coverImageUrl:
+          type: ["string", "null"]
+          format: uri
+        facebookGroupUrl:
+          type: ["string", "null"]
+          format: uri
+        announcement:
+          type: ["string", "null"]
+        inviteCode:
+          type: string
+          pattern: "^[A-HJ-NP-Z2-9]{6,12}$"
+        appStoreUrl:
+          type: string
+          format: uri
+          default: https://apps.apple.com/app/id6788260668
+        playStoreUrl:
+          type: string
+          format: uri
+          default: https://play.google.com/store/apps/details?id=com.sagatrail2.app
+        active:
+          type: boolean
+          default: true
+    CommunityUpdate:
+      type: object
+      properties:
+        slug:
+          type: string
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          minLength: 2
+          maxLength: 80
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        administratorName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        coverImageUrl:
+          type: ["string", "null"]
+          format: uri
+        facebookGroupUrl:
+          type: ["string", "null"]
+          format: uri
+        announcement:
+          type: ["string", "null"]
+        inviteCode:
+          type: string
+          pattern: "^[A-HJ-NP-Z2-9]{6,12}$"
+        appStoreUrl:
+          type: string
+          format: uri
+        playStoreUrl:
+          type: string
+          format: uri
+        active:
+          type: boolean
+    CommunityClaimInput:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          pattern: "^[A-HJ-NP-Z2-9]{6,12}$"
+    CommunityMembership:
+      type: object
+      required: [joined, alreadyMember, community]
+      properties:
+        joined:
+          type: boolean
+        alreadyMember:
+          type: boolean
+        community:
+          $ref: "#/components/schemas/CommunityInvitation"
     CreateMeetupRequest:
       type: object
       required: [routeId, routeName, canton, startsAt]
@@ -2185,6 +2769,10 @@ components:
           type: string
           nullable: true
           maxLength: 500
+        communityId:
+          type: string
+          format: uuid
+          nullable: true
     MeetupLifecycleResponse:
       type: object
       required: [status]
@@ -2247,6 +2835,10 @@ components:
           type: string
         note:
           type: string
+          nullable: true
+        communityId:
+          type: string
+          format: uuid
           nullable: true
         organizerName:
           type: string

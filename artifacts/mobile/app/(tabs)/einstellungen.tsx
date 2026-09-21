@@ -1,6 +1,10 @@
 import { useAuth } from "@clerk/expo";
 import { Feather } from "@expo/vector-icons";
-import { createNarration } from "@workspace/api-client-react";
+import {
+  createNarration,
+  getFriendlyHttpErrorMessage,
+  getUserFacingErrorMessage,
+} from "@workspace/api-client-react";
 import Constants from "expo-constants";
 import * as Application from "expo-application";
 import * as StoreReview from "expo-store-review";
@@ -132,7 +136,10 @@ export default function Einstellungen() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        const msg = (body as { error?: string }).error ?? `Fehler ${res.status}`;
+        const msg = getUserFacingErrorMessage(
+          new Error((body as { error?: string }).error ?? ""),
+          getFriendlyHttpErrorMessage(res.status),
+        );
         if (res.status === 404) {
           setCodeStatus("error");
           return;

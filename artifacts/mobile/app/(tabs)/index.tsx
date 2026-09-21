@@ -2,6 +2,11 @@ import { Feather } from "@expo/vector-icons";
 import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useAuth } from "@clerk/expo";
+import {
+  getGetMyCommunitiesQueryKey,
+  useGetMyCommunities,
+} from "@workspace/api-client-react";
 import React from "react";
 import {
   Platform,
@@ -9,7 +14,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -17,29 +21,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
-import { CantonWappen } from "@/components/brand/CantonWappen";
 import { PremiumUpsellBanner } from "@/components/brand/PremiumUpsellBanner";
 import { ProfileAvatar } from "@/components/brand/ProfileAvatar";
-import { Skeleton } from "@/components/brand/Skeleton";
-import { SparkDivider } from "@/components/brand/SparkMountain";
-import { CantonWithRoutes } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useHomeStrings } from "@/lib/i18n/screens/home";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
-import { translateCanton } from "@/lib/i18n/cantonNames";
-import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 import { useSubscription } from "@/lib/revenuecat";
-import {
-  hasPurchasedPack,
-  kantonSlug,
-  packEntitlementFuerKanton,
-} from "@/lib/kantonSlug";
 import { hapticSelection } from "@/lib/haptics";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 import {
+  CANTONS_HOME_BANNER,
+  COMMUNITIES_HOME_BANNER,
+  CUSTOM_ROUTE_HOME_BANNER,
   MEETUP_HOME_BANNER,
   THEME_WORLD_HOME_BANNER,
 } from "@/lib/themeWorldVisuals";
@@ -59,6 +55,7 @@ export default function Entdecken() {
     freeHikeUsed,
     pendingPackRewards,
   } = useApp();
+  const { isSignedIn } = useAuth();
   const { isElite } = useSubscription();
   const t = useHomeStrings();
   const meetupT = useMeetupStrings();
@@ -79,19 +76,15 @@ export default function Entdecken() {
     ? onboardingStrings.archetypes[profile.archetype].title
     : "";
 
-  const { cantons, ready, sagas } = useCatalog();
-  const [cantonQuery, setCantonQuery] = React.useState("");
-  const visibleCantons = React.useMemo(() => {
-    const query = cantonQuery.trim().toLocaleLowerCase();
-    const filtered = query
-      ? cantons.filter((entry) =>
-          translateCanton(entry.canton, language as LanguageCode)
-            .toLocaleLowerCase()
-            .includes(query),
-        )
-      : cantons;
-    return [...filtered].sort((a, b) => a.canton.localeCompare(b.canton, "de"));
-  }, [cantonQuery, cantons, language]);
+  const { cantons } = useCatalog();
+  const { data: communities } = useGetMyCommunities({
+    query: {
+      queryKey: getGetMyCommunitiesQueryKey(),
+      enabled: Boolean(isSignedIn),
+      refetchOnMount: "always",
+    },
+  });
+  const hasCommunities = (communities?.length ?? 0) > 0;
 
   return (
     <Background>
@@ -214,392 +207,149 @@ export default function Entdecken() {
           </Animated.View>
         )}
 
-        <Animated.View
-          entering={FadeInDown.duration(400)}
-          style={{ paddingHorizontal: 20, marginTop: 20 }}
-        >
-          <Pressable
-            onPress={() => router.push("/treffpunkte")}
-            style={[
-              styles.meetupCard,
-              {
-                borderColor: colors.glassBorder,
-                borderRadius: colors.radius,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={meetupT.title}
-          >
-            <ExpoImage
-              source={MEETUP_HOME_BANNER}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-            />
-            <LinearGradient
-              colors={["rgba(7,16,20,0.08)", "rgba(7,16,20,0.84)"]}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.themeWorldCardContent}>
-              <View
-                style={[
-                  styles.themeWorldIcon,
-                  { backgroundColor: colors.accent + "D9" },
-                ]}
-              >
-                <Feather name="users" size={19} color={colors.backgroundDeep} />
-              </View>
-              <View style={styles.themeWorldCardText}>
-                <Text style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}>
-                  {meetupT.title}
-                </Text>
-                <Text
-                  style={[
-                    styles.themeWorldHint,
-                    { color: "rgba(255,255,255,0.78)" },
-                  ]}
-                  numberOfLines={2}
-                >
-                  {meetupT.intro}
-                </Text>
-              </View>
-              <Feather name="chevron-right" size={21} color="#FFFFFF" />
-            </View>
-          </Pressable>
-        </Animated.View>
-
-        <Animated.View
-          entering={FadeInDown.duration(400)}
-          style={styles.themeWorldsSection}
-        >
-          <Pressable
-            onPress={() => router.push("/themenwelten")}
-            accessibilityRole="button"
-            accessibilityLabel={t.themeWorldsTitle}
-            style={[
-              styles.themeWorldCard,
-              {
-                borderColor: colors.glassBorder,
-                borderRadius: colors.radius,
-              },
-            ]}
-          >
-            <ExpoImage
-              source={THEME_WORLD_HOME_BANNER}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-            />
-            <LinearGradient
-              colors={["rgba(7,16,20,0.08)", "rgba(7,16,20,0.82)"]}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.themeWorldCardContent}>
-              <View
-                style={[
-                  styles.themeWorldIcon,
-                  { backgroundColor: colors.accent + "D9" },
-                ]}
-              >
-                <Feather
-                  name="compass"
-                  size={19}
-                  color={colors.backgroundDeep}
-                />
-              </View>
-              <View style={styles.themeWorldCardText}>
-                <Text style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}>
-                  {t.themeWorldsTitle}
-                </Text>
-                <Text
-                  style={[
-                    styles.themeWorldHint,
-                    { color: "rgba(255,255,255,0.78)" },
-                  ]}
-                >
-                  {t.themeWorldsHint}
-                </Text>
-              </View>
-              <Feather name="chevron-right" size={21} color="#FFFFFF" />
-            </View>
-          </Pressable>
-        </Animated.View>
-
-        <Animated.View
-          entering={FadeInDown.duration(400)}
-          style={styles.themeWorldsSection}
-        >
-          <Pressable
-            onPress={() => router.push("/empfehlung")}
-            accessibilityRole="button"
-            accessibilityLabel={recommendationCopy.title}
-            style={[
-              styles.recommendationBanner,
-              {
-                borderColor: colors.accent,
-                borderRadius: colors.radius,
-              },
-            ]}
-          >
-            <ExpoImage
-              source={require("../../assets/images/banner-wanderroute-heute.jpg")}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-            />
-            <LinearGradient
-              colors={[
-                "rgba(7,16,20,0.06)",
-                "rgba(7,16,20,0.82)",
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.themeWorldCardContent}>
-              <View
-                style={[
-                  styles.themeWorldIcon,
-                  {
-                    backgroundColor: colors.accent + "D9",
-                  },
-                ]}
-              >
-                <Feather
-                  name="sunrise"
-                  size={19}
-                  color={colors.photoScrimText}
-                />
-              </View>
-              <View style={styles.themeWorldCardText}>
-                <Text
-                  style={[styles.themeWorldLabel, { color: "#FFFFFF" }]}
-                  numberOfLines={1}
-                >
-                  {recommendationCopy.title}
-                </Text>
-                <Text
-                  style={[
-                    styles.themeWorldHint,
-                    { color: "rgba(255,255,255,0.78)" },
-                  ]}
-                  numberOfLines={2}
-                >
-                  {recommendationCopy.hint}
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-        </Animated.View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            {t.cantonsTitle}
-          </Text>
-          <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
-            {t.allCantonsHint(cantons.length)}
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.searchBox,
-            {
-              backgroundColor: colors.glassBg,
-              borderColor: colors.glassBorder,
-              borderRadius: colors.radius,
-            },
-          ]}
-        >
-          <Feather name="search" size={17} color={colors.mutedForeground} />
-          <TextInput
-            value={cantonQuery}
-            onChangeText={setCantonQuery}
-            placeholder={t.searchCanton}
-            placeholderTextColor={colors.mutedForeground}
-            style={[styles.searchInput, { color: colors.foreground }]}
-            accessibilityLabel={t.searchCanton}
-            returnKeyType="search"
+        {hasCommunities && (
+          <HomeEntryCard
+            order={0}
+            icon="users"
+            image={COMMUNITIES_HOME_BANNER}
+            title={t.communityTitle}
+            hint={t.communityHint}
+            onPress={() => router.push("/communities")}
           />
-          {cantonQuery.length > 0 && (
-            <Pressable
-              onPress={() => setCantonQuery("")}
-              hitSlop={10}
-              accessibilityLabel={t.clearSearch}
-            >
-              <Feather
-                name="x-circle"
-                size={17}
-                color={colors.mutedForeground}
-              />
-            </Pressable>
-          )}
-        </View>
-
-        <View style={{ paddingHorizontal: 20 }}>
-          {!ready
-            ? [0, 1, 2, 3, 4].map((i) => (
-                <Skeleton
-                  key={i}
-                  height={76}
-                  radius={colors.radius}
-                  style={{ marginBottom: 12 }}
-                />
-              ))
-            : visibleCantons.map((entry, i) => (
-                <CantonCard
-                  key={entry.canton}
-                  entry={entry}
-                  index={i}
-                  onPress={() =>
-                    router.push(`/kanton/${encodeURIComponent(entry.canton)}`)
-                  }
-                />
-              ))}
-        </View>
-
-        <SparkDivider style={{ marginHorizontal: 20, marginVertical: 24 }} />
-
-        <View style={{ paddingHorizontal: 20 }}>
-          <Animated.View
-            entering={FadeInDown.delay(visibleCantons.length * 60)}
-          >
-            <Pressable
-              onPress={() => {
-                hapticSelection();
-                router.push("/eigene-route");
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t.customRouteTitle}
-              style={[
-                styles.cantonCard,
-                {
-                  backgroundColor: colors.glassBg,
-                  borderColor: colors.glassBorder,
-                  borderRadius: colors.radius,
-                },
-              ]}
-            >
-              <View style={styles.cantonIcon}>
-                <Feather name="navigation" size={18} color={colors.accent} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.cantonName, { color: colors.foreground }]}>
-                  {t.customRouteTitle}
-                </Text>
-                <Text
-                  style={[styles.cantonMeta, { color: colors.mutedForeground }]}
-                >
-                  {t.customRouteHint}
-                </Text>
-              </View>
-              <Feather
-                name="chevron-right"
-                size={20}
-                color={colors.mutedForeground}
-              />
-            </Pressable>
-          </Animated.View>
-        </View>
+        )}
+        <HomeEntryCard
+          order={1}
+          icon="compass"
+          image={THEME_WORLD_HOME_BANNER}
+          title={t.themeWorldsTitle}
+          hint={t.themeWorldsHint}
+          onPress={() => router.push("/themenwelten")}
+        />
+        <HomeEntryCard
+          order={2}
+          icon="map"
+          image={CANTONS_HOME_BANNER}
+          title={t.cantonsTitle}
+          hint={t.allCantonsHint(cantons.length)}
+          onPress={() => router.push("/kantone")}
+        />
+        <HomeEntryCard
+          order={3}
+          icon="map-pin"
+          image={MEETUP_HOME_BANNER}
+          title={meetupT.title}
+          hint={meetupT.intro}
+          onPress={() => router.push("/treffpunkte")}
+        />
+        <HomeEntryCard
+          order={4}
+          icon="sunrise"
+          image={require("../../assets/images/banner-wanderroute-heute.jpg")}
+          title={recommendationCopy.title}
+          hint={recommendationCopy.hint}
+          onPress={() => router.push("/empfehlung")}
+        />
+        <HomeEntryCard
+          order={5}
+          icon="navigation"
+          image={CUSTOM_ROUTE_HOME_BANNER}
+          title={t.customRouteTitle}
+          hint={t.customRouteHint}
+          onPress={() => router.push("/eigene-route")}
+        />
       </ScrollView>
     </Background>
   );
 }
 
-function CantonCard({
-  entry,
-  index,
-  highlight,
+function HomeEntryCard({
+  order,
+  icon,
+  image,
+  title,
+  hint,
   onPress,
 }: {
-  entry: CantonWithRoutes;
-  index: number;
-  highlight?: boolean;
+  order: number;
+  icon: React.ComponentProps<typeof Feather>["name"];
+  image?: number;
+  title: string;
+  hint: string;
   onPress: () => void;
 }) {
   const colors = useColors();
-  const t = useHomeStrings();
-  const { achievements, language, profile, purchasedPacks } = useApp();
-  const subscription = useSubscription();
-  const { isElite } = subscription;
-  const { sagas } = useCatalog();
+  const isImageCard = image != null;
+  const titleColor = isImageCard ? colors.photoScrimText : colors.foreground;
+  const hintColor = isImageCard
+    ? "rgba(255,255,255,0.78)"
+    : colors.mutedForeground;
 
-  // Sagen-Fortschritt des Kantons — nur wenn der Kanton kuratierte Sagen hat.
-  const cantonSagas = sagas.filter((s) => s.canton === entry.canton);
-  const discovered = cantonSagas.filter((s) =>
-    achievements.some((a) => a.id === s.id),
-  ).length;
-  const availablePurchasedPacks = Array.from(
-    new Set([...purchasedPacks, ...(profile?.purchasedPacks ?? [])]),
-  );
-  const packSlug = kantonSlug(entry.canton);
-  const packUnlocked =
-    isElite ||
-    hasPurchasedPack(availablePurchasedPacks, packSlug) ||
-    (subscription.hatEntitlement?.(packEntitlementFuerKanton(packSlug)) ??
-      false);
-  const accessibleTotal = packUnlocked
-    ? cantonSagas.length
-    : Math.min(1, cantonSagas.length);
-  const progressDiscovered = Math.min(discovered, accessibleTotal);
-
-  const cantonLabel = translateCanton(entry.canton, language as LanguageCode);
   return (
-    <Animated.View entering={FadeInDown.delay(index * 60)}>
+    <Animated.View
+      entering={FadeInDown.delay(order * 70)}
+      style={styles.entrySection}
+    >
       <Pressable
         onPress={() => {
           hapticSelection();
           onPress();
         }}
         accessibilityRole="button"
-        accessibilityLabel={`${cantonLabel} — ${entry.routeCount > 0 ? t.routeCount(entry.routeCount) : t.liveFromSwisstopo}`}
+        accessibilityLabel={title}
         style={[
-          styles.cantonCard,
+          styles.entryCard,
           {
-            backgroundColor: colors.glassBg,
-            borderColor: highlight ? colors.accent : colors.glassBorder,
+            backgroundColor: isImageCard
+              ? colors.glassBg
+              : colors.glassBgStrong,
+            borderColor: colors.glassBorder,
             borderRadius: colors.radius,
           },
         ]}
       >
-        <View
-          style={[
-            styles.cantonIcon,
-            {
-              borderColor: colors.glassBorder,
-              backgroundColor: "transparent",
-            },
-          ]}
-        >
-          <CantonWappen canton={entry.canton} size={38} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.cantonName, { color: colors.foreground }]}>
-            {translateCanton(entry.canton, language as LanguageCode)}
-          </Text>
-          <Text style={[styles.cantonMeta, { color: colors.mutedForeground }]}>
-            {entry.routeCount > 0
-              ? t.routeCount(entry.routeCount)
-              : t.liveFromSwisstopo}
-          </Text>
-          {cantonSagas.length > 0 && (
+        {isImageCard ? (
+          <>
+            <ExpoImage
+              source={image}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
+            <LinearGradient
+              colors={["rgba(7,16,20,0.02)", "rgba(7,16,20,0.42)"]}
+              style={StyleSheet.absoluteFill}
+            />
+          </>
+        ) : (
+          <LinearGradient
+            colors={[colors.glassHighlight, colors.glassBgStrong]}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        <View style={styles.entryContent}>
+          <View
+            style={[
+              styles.entryIcon,
+              { backgroundColor: colors.accent },
+            ]}
+          >
+            <Feather name={icon} size={19} color={colors.accentForeground} />
+          </View>
+          <View style={styles.entryCopy}>
             <Text
-              style={[
-                styles.cantonMeta,
-                {
-                  color:
-                    progressDiscovered > 0
-                      ? colors.accent
-                      : colors.mutedForeground,
-                },
-              ]}
+              style={[styles.entryTitle, { color: titleColor }]}
+              numberOfLines={1}
             >
-              {t.sagaProgress(progressDiscovered, accessibleTotal)}
+              {title}
             </Text>
-          )}
+            <Text
+              style={[styles.entryHint, { color: hintColor }]}
+              numberOfLines={2}
+            >
+              {hint}
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={21} color={titleColor} />
         </View>
-        <Feather
-          name="chevron-right"
-          size={20}
-          color={colors.mutedForeground}
-        />
       </Pressable>
     </Animated.View>
   );
@@ -634,22 +384,6 @@ const styles = StyleSheet.create({
   },
   resumeCta: { fontFamily: fonts.bodyBold, fontSize: 14 },
   resumeClose: { padding: 2 },
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    marginHorizontal: 20,
-    marginBottom: 14,
-    paddingHorizontal: 14,
-    minHeight: 48,
-    borderWidth: 1,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: fonts.body,
-    fontSize: 15,
-    paddingVertical: 10,
-  },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -660,79 +394,40 @@ const styles = StyleSheet.create({
   greeting: { fontFamily: fonts.body, fontSize: 14 },
   name: { fontFamily: fonts.titleBold, fontSize: 30, marginTop: 2 },
   archetype: { fontFamily: fonts.story, fontSize: 14, marginTop: 2 },
-  meetupCard: {
-    aspectRatio: 3,
-    borderWidth: 1,
-    overflow: "hidden",
-    ...GLAS_3D,
-  },
-  themeWorldsSection: { marginTop: 8 },
-  recommendationBanner: {
-    aspectRatio: 3,
+  entrySection: {
+    marginTop: 8,
     marginHorizontal: 20,
-    borderWidth: 1,
-    overflow: "hidden",
-    ...GLAS_3D,
   },
-  themeWorldCard: {
+  entryCard: {
     aspectRatio: 3,
-    marginHorizontal: 20,
     borderWidth: 1,
     overflow: "hidden",
     ...GLAS_3D,
   },
-  themeWorldCardContent: {
+  entryContent: {
     flex: 1,
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     gap: 12,
     padding: 16,
   },
-  themeWorldCardText: { flex: 1 },
-  themeWorldHint: {
+  entryCopy: { flex: 1 },
+  entryHint: {
     fontFamily: fonts.body,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 2,
   },
-  themeWorldIcon: {
+  entryIcon: {
     width: 36,
     height: 36,
     borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
   },
-  themeWorldLabel: {
+  entryTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    lineHeight: 17,
-    marginTop: 10,
+    fontSize: 17,
+    lineHeight: 21,
   },
-  section: { paddingHorizontal: 20, marginTop: 28, marginBottom: 14 },
-  sectionTitle: { fontFamily: fonts.titleBold, fontSize: 22 },
-  sectionHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 2 },
-  cantonCard: {
-    ...GLAS_3D,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    borderWidth: 1,
-    padding: 16,
-    marginBottom: 12,
-  },
-  cantonIcon: {
-    width: 44,
-    height: 48,
-    borderWidth: 1.5,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    borderBottomLeftRadius: 22,
-    borderBottomRightRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  // Kantonsnamen bewusst in der nativen Systemschrift:
-  // iOS = San Francisco, Android = Roboto, Web = system-ui.
-  cantonName: { fontSize: 19 },
-  cantonMeta: { fontFamily: fonts.mono, fontSize: 12, marginTop: 3 },
 });

@@ -67,6 +67,7 @@ import { hapticMedium, hapticWarning } from "@/lib/haptics";
 import { makeLogger } from "@/lib/debugLog";
 import { getRuntimeDiagnostics } from "@/lib/runtimeDiagnostics";
 import { readRequiredPermissionSnapshot } from "@/lib/requiredPermissions";
+import { isCommunityInviteSegments } from "@/lib/communityInviteFlow";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { StartupState } from "@/components/brand/StartupState";
 
@@ -265,8 +266,12 @@ function RootLayoutNav() {
     });
     // Tap: Nutzer hat auf Notification getippt → Medium-Impuls als
     // Bestaetigung, dass die App daraufhin oeffnet / in den Vordergrund tritt.
-    const responseSub = Notifications.addNotificationResponseReceivedListener(() => {
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
       hapticMedium();
+      const data = response.notification.request.content.data as { type?: string; meetupId?: string } | undefined;
+      if (data?.type === "meetup_photo_upload" && data.meetupId) {
+        router.push(`/treffpunkt-fotos/${data.meetupId}`);
+      }
     });
     return () => {
       receivedSub.remove();
@@ -279,11 +284,13 @@ function RootLayoutNav() {
     const inAuth = segments[0] === "(auth)";
     const inOnboarding = segments[0] === "onboarding";
     const inPermissions = segments[0] === "permissions";
+    const inCommunityInvite = isCommunityInviteSegments(segments);
 
     if (!isSignedIn) {
-      if (!inAuth) router.replace("/(auth)/sign-in");
+      if (!inAuth && !inCommunityInvite) router.replace("/(auth)/sign-in");
       return;
     }
+    if (inCommunityInvite) return;
     if (!profile) {
       if (!inOnboarding) router.replace("/onboarding");
       return;
