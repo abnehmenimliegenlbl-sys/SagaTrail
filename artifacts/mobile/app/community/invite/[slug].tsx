@@ -1,6 +1,6 @@
 import { useAuth } from "@clerk/expo";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { Background } from "@/components/brand/Background";
@@ -38,15 +38,16 @@ export default function CommunityInviteScreen() {
   });
   const inviteKey = normalizedInvite ? communityInviteClaimKey(normalizedInvite) : null;
   const inviteActionKind = inviteAction.kind;
-  const [claimKey, setClaimKey] = useState<string | null>(null);
+  const claimKeyRef = useRef<string | null>(null);
+  const redirectKeyRef = useRef<string | null>(null);
   const [state, setState] = useState<ClaimState>("loading");
   const [communityName, setCommunityName] = useState("");
 
   useEffect(() => {
     if (inviteAction.kind === "wait") return;
     if (inviteAction.kind === "redirect-to-sign-in") {
-      if (inviteKey && shouldStartCommunityInviteClaim(claimKey, inviteAction.invite)) {
-        setClaimKey(inviteKey);
+      if (inviteKey && redirectKeyRef.current !== inviteKey) {
+        redirectKeyRef.current = inviteKey;
         router.replace({
           pathname: "/(auth)/sign-in",
           params: {
@@ -62,8 +63,8 @@ export default function CommunityInviteScreen() {
       return;
     }
     if (!normalizedInvite || !inviteKey) return;
-    if (!shouldStartCommunityInviteClaim(claimKey, normalizedInvite)) return;
-    setClaimKey(inviteKey);
+    if (!shouldStartCommunityInviteClaim(claimKeyRef.current, normalizedInvite)) return;
+    claimKeyRef.current = inviteKey;
     let cancelled = false;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CLAIM_TIMEOUT_MS);
@@ -114,7 +115,6 @@ export default function CommunityInviteScreen() {
       controller.abort();
     };
   }, [
-    claimKey,
     getToken,
     inviteActionKind,
     inviteKey,
