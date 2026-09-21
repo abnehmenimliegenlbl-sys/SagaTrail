@@ -12,7 +12,7 @@ import {
 import * as ExpoImage from "expo-image";
 import * as Location from "expo-location";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -36,6 +36,7 @@ import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 import { alert } from "@/lib/appAlert";
 import { haversineKm } from "@/lib/geo";
 import { MeetupSortControl } from "@/components/MeetupSortControl";
+import { MeetupFilters, type MeetupFilterState } from "@/components/MeetupFilters";
 import { sortMeetups, type MeetupPosition, type MeetupSortMode } from "@/lib/meetupSorting";
 
 const WEB_TOP = 67;
@@ -51,6 +52,11 @@ export default function CommunityDetailScreen() {
   const communityId = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
   const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [sortMode, setSortMode] = useState<MeetupSortMode>("date");
+  const [filters, setFilters] = useState<MeetupFilterState>({
+    search: "",
+    difficulty: undefined,
+    onlyMine: false,
+  });
   const communities = useGetMyCommunities({
     query: {
       queryKey: getGetMyCommunitiesQueryKey(),
@@ -88,8 +94,17 @@ export default function CommunityDetailScreen() {
   }, [communityId]);
 
   const community = communities.data?.find((item) => item.id === communityId);
+  const meetupParams = useMemo(
+    () => ({
+      communityId,
+      search: filters.search.trim() || undefined,
+      difficulty: filters.difficulty,
+      mine: filters.onlyMine || undefined,
+    }),
+    [communityId, filters],
+  );
   const meetups = useGetMeetups(
-    { communityId },
+    meetupParams,
     {
       query: {
         queryKey: getGetMeetupsQueryKey({ communityId }),
@@ -352,15 +367,17 @@ export default function CommunityDetailScreen() {
               {meetupT.error}
             </Text>
           </View>
-        ) : !meetups.data?.meetups.length ? (
-          <View style={[styles.statusCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
-            <Feather name="calendar" size={20} color={colors.accent} />
-            <Text style={[styles.statusText, { color: colors.mutedForeground }]}>
-              {meetupT.empty}
-            </Text>
-          </View>
         ) : (
           <>
+            <MeetupFilters value={filters} onChange={setFilters} strings={meetupT} />
+            {!meetups.data?.meetups.length ? (
+              <View style={[styles.statusCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
+                <Feather name="calendar" size={20} color={colors.accent} />
+                <Text style={[styles.statusText, { color: colors.mutedForeground }]}>
+                  {meetupT.empty}
+                </Text>
+              </View>
+            ) : null}
             <MeetupSortControl
               mode={sortMode}
               onChange={setSortMode}
@@ -452,6 +469,9 @@ function CommunityMeetupCard({
     routeDifficulty: string | null;
     routeStartLat: number | null;
     routeStartLng: number | null;
+    isWaitlisted: boolean;
+    waitlistPosition: number | null;
+    waitlistCount: number;
   };
   colors: ReturnType<typeof useColors>;
   meetupStrings: ReturnType<typeof useMeetupStrings>;
@@ -464,6 +484,7 @@ function CommunityMeetupCard({
   const start = new Date(meetup.startsAt);
   const isFull = meetup.participantCount >= meetup.maxParticipants && !meetup.joined;
   const isBusy = join.isPending || leave.isPending;
+  const isWaitlisted = meetup.isWaitlisted;
   const distanceToMeetingPoint =
     currentPosition &&
     meetup.routeStartLat != null &&
@@ -475,7 +496,7 @@ function CommunityMeetupCard({
       : null;
 
   const changeParticipation = async () => {
-    if (isFull || isBusy) return;
+    if (isBusy) return;
     try {
       if (meetup.joined) {
         await leave.mutateAsync({ id: meetup.id });
@@ -487,6 +508,14 @@ function CommunityMeetupCard({
       // The meetup detail screen exposes the full error state.
     }
   };
+
+  const participationLabel = meetup.joined
+    ? meetupStrings.leave
+    : isWaitlisted
+      ? meetupStrings.leaveWaitlist ?? meetupStrings.leave
+      : isFull
+        ? meetupStrings.joinWaitlist ?? "Warteliste"
+        : meetupStrings.join;
 
   return (
     <View style={[styles.meetupCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
@@ -508,6 +537,11 @@ function CommunityMeetupCard({
               : meetupStrings.locationUnavailable}
           </Text>
         </View>
+        {isWaitlisted ? (
+          <Text style={[styles.meetupMeta, { color: colors.accent }]}>
+            {(meetupStrings.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)}
+          </Text>
+        ) : null}
         <View style={styles.meetupMetaRow}>
           <Feather name="trending-up" size={12} color={colors.mutedForeground} />
           <Text style={[styles.meetupMeta, { color: colors.mutedForeground }]}>
@@ -519,7 +553,7 @@ function CommunityMeetupCard({
       </Pressable>
       <Pressable
         onPress={() => void changeParticipation()}
-        disabled={isBusy || isFull}
+        disabled={isBusy}
         accessibilityRole="button"
         style={[
           styles.joinButton,
@@ -530,8 +564,8 @@ function CommunityMeetupCard({
           },
         ]}
       >
-        <Text style={[styles.joinText, { color: meetup.joined ? colors.accent : colors.background }]}>
-          {meetup.joined ? meetupStrings.leave : isFull ? meetupStrings.full : meetupStrings.join}
+          <Text style={[styles.joinText, { color: meetup.joined || isWaitlisted ? colors.accent : colors.background }]}>
+          {participationLabel}
         </Text>
       </Pressable>
     </View>

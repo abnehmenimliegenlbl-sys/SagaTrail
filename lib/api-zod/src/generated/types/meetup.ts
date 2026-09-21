@@ -17,7 +17,7 @@ export interface Meetup {
   participantCount: number;
   pace: string;
   note?: string | null;
-  communityId?: string | null;
+  communityId: string | null;
   organizerName: string;
   joined: boolean;
   status: MeetupStatus;
@@ -29,6 +29,9 @@ export interface Meetup {
   routeStartLat: number | null;
   /** @nullable */
   routeStartLng: number | null;
+  isWaitlisted: boolean;
+  waitlistPosition: number | null;
+  waitlistCount: number;
   cancellationReason?: string | null;
   cancelledAt?: Date | null;
   isOrganizer: boolean;

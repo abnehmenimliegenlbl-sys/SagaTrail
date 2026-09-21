@@ -1606,10 +1606,18 @@ export const CreateTerrainAreaResponse = zod.object({
 /**
  * @summary Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
  */
+export const getMeetupsQuerySearchMax = 120;
+
+
+
 export const GetMeetupsQueryParams = zod.object({
   "from": zod.date().optional(),
   "routeId": zod.coerce.string().optional(),
-  "communityId": zod.coerce.string().uuid().optional()
+  "communityId": zod.coerce.string().uuid().optional(),
+  "search": zod.coerce.string().max(getMeetupsQuerySearchMax).optional(),
+  "canton": zod.coerce.string().optional(),
+  "difficulty": zod.coerce.string().optional(),
+  "mine": zod.coerce.boolean().optional()
 })
 
 export const GetMeetupsResponse = zod.object({
@@ -1623,7 +1631,7 @@ export const GetMeetupsResponse = zod.object({
   "participantCount": zod.number(),
   "pace": zod.string(),
   "note": zod.string().nullish(),
-  "communityId": zod.string().uuid().nullish(),
+  "communityId": zod.string().uuid().nullable(),
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
@@ -1631,6 +1639,9 @@ export const GetMeetupsResponse = zod.object({
   "routeDifficulty": zod.string().nullable(),
   "routeStartLat": zod.number().nullable(),
   "routeStartLng": zod.number().nullable(),
+  "isWaitlisted": zod.boolean(),
+  "waitlistPosition": zod.number().nullable(),
+  "waitlistCount": zod.number(),
   "cancellationReason": zod.string().nullish(),
   "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
@@ -1671,7 +1682,7 @@ export const CreateMeetupResponse = zod.object({
   "participantCount": zod.number(),
   "pace": zod.string(),
   "note": zod.string().nullish(),
-  "communityId": zod.string().uuid().nullish(),
+  "communityId": zod.string().uuid().nullable(),
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
@@ -1679,6 +1690,9 @@ export const CreateMeetupResponse = zod.object({
   "routeDifficulty": zod.string().nullable(),
   "routeStartLat": zod.number().nullable(),
   "routeStartLng": zod.number().nullable(),
+  "isWaitlisted": zod.boolean(),
+  "waitlistPosition": zod.number().nullable(),
+  "waitlistCount": zod.number(),
   "cancellationReason": zod.string().nullish(),
   "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
@@ -1714,7 +1728,7 @@ export const GetMeetupResponse = zod.object({
   "participantCount": zod.number(),
   "pace": zod.string(),
   "note": zod.string().nullish(),
-  "communityId": zod.string().uuid().nullish(),
+  "communityId": zod.string().uuid().nullable(),
   "organizerName": zod.string(),
   "joined": zod.boolean(),
   "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
@@ -1722,6 +1736,9 @@ export const GetMeetupResponse = zod.object({
   "routeDifficulty": zod.string().nullable(),
   "routeStartLat": zod.number().nullable(),
   "routeStartLng": zod.number().nullable(),
+  "isWaitlisted": zod.boolean(),
+  "waitlistPosition": zod.number().nullable(),
+  "waitlistCount": zod.number(),
   "cancellationReason": zod.string().nullish(),
   "cancelledAt": zod.coerce.date().nullish(),
   "isOrganizer": zod.boolean()
@@ -1761,6 +1778,54 @@ export const DeleteMeetupParams = zod.object({
 })
 
 export const DeleteMeetupResponse = zod.void()
+
+
+/**
+ * @summary Eigenen geplanten Treffpunkt bearbeiten
+ */
+export const UpdateMeetupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateMeetupBodyMaxParticipantsMin = 2;
+export const updateMeetupBodyMaxParticipantsMax = 30;
+
+export const updateMeetupBodyNoteMax = 500;
+
+
+
+export const UpdateMeetupBody = zod.object({
+  "startsAt": zod.coerce.date(),
+  "maxParticipants": zod.number().min(updateMeetupBodyMaxParticipantsMin).max(updateMeetupBodyMaxParticipantsMax),
+  "pace": zod.enum(['gemuetlich', 'normal', 'sportlich']),
+  "note": zod.string().max(updateMeetupBodyNoteMax).nullable()
+})
+
+export const UpdateMeetupResponse = zod.object({
+  "id": zod.string().uuid(),
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "canton": zod.string(),
+  "startsAt": zod.coerce.date(),
+  "maxParticipants": zod.number(),
+  "participantCount": zod.number(),
+  "pace": zod.string(),
+  "note": zod.string().nullish(),
+  "communityId": zod.string().uuid().nullable(),
+  "organizerName": zod.string(),
+  "joined": zod.boolean(),
+  "status": zod.enum(['scheduled', 'in_progress', 'completed', 'cancelled']),
+  "routeDistanceKm": zod.number().nullable(),
+  "routeDifficulty": zod.string().nullable(),
+  "routeStartLat": zod.number().nullable(),
+  "routeStartLng": zod.number().nullable(),
+  "isWaitlisted": zod.boolean(),
+  "waitlistPosition": zod.number().nullable(),
+  "waitlistCount": zod.number(),
+  "cancellationReason": zod.string().nullish(),
+  "cancelledAt": zod.coerce.date().nullish(),
+  "isOrganizer": zod.boolean()
+})
 
 
 /**
@@ -1907,7 +1972,9 @@ export const JoinMeetupParams = zod.object({
 })
 
 export const JoinMeetupResponse = zod.object({
-  "joined": zod.boolean()
+  "joined": zod.boolean(),
+  "waitlisted": zod.boolean(),
+  "waitlistPosition": zod.number().nullable()
 })
 
 
@@ -1919,7 +1986,9 @@ export const LeaveMeetupParams = zod.object({
 })
 
 export const LeaveMeetupResponse = zod.object({
-  "joined": zod.boolean()
+  "joined": zod.boolean(),
+  "waitlisted": zod.boolean(),
+  "waitlistPosition": zod.number().nullable()
 })
 
 

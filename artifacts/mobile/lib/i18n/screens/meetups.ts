@@ -87,6 +87,19 @@ export interface MeetupStrings {
   routeMeta: (difficulty: string, distanceKm: number) => string;
   routeMetaUnavailable: string;
   locationUnavailable: string;
+  search?: string;
+  searchPlaceholder?: string;
+  difficulty?: string;
+  allDifficulties?: string;
+  onlyMine?: string;
+  edit?: string;
+  save?: string;
+  close?: string;
+  updateSuccess?: string;
+  updateFailure?: string;
+  joinWaitlist?: string;
+  leaveWaitlist?: string;
+  waitlistPosition?: (position: number) => string;
 }
 
 const STRINGS: StringsDict<MeetupStrings> = {

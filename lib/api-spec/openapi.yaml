@@ -1728,6 +1728,27 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 120
+        - name: canton
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: difficulty
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: mine
+          in: query
+          required: false
+          schema:
+            type: boolean
       responses:
         "200":
           description: Kommende Treffpunkte
@@ -1799,6 +1820,38 @@ paths:
           description: Anmeldung erforderlich
         "404":
           description: Treffpunkt nicht gefunden oder nicht berechtigt
+    patch:
+      operationId: updateMeetup
+      tags: [meetups]
+      summary: Eigenen geplanten Treffpunkt bearbeiten
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeetupRequest"
+      responses:
+        "200":
+          description: Treffpunkt aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meetup"
+        "400":
+          description: Ungueltige Treffpunkt-Daten
+        "403":
+          description: Nicht berechtigt
+        "409":
+          description: Treffpunkt kann nicht mehr bearbeitet werden
   /meetups/{id}/photos:
     get:
       operationId: getMeetupPhotos
@@ -2805,6 +2858,24 @@ components:
           type: string
           format: uuid
           nullable: true
+    UpdateMeetupRequest:
+      type: object
+      required: [startsAt, maxParticipants, pace, note]
+      properties:
+        startsAt:
+          type: string
+          format: date-time
+        maxParticipants:
+          type: integer
+          minimum: 2
+          maximum: 30
+        pace:
+          type: string
+          enum: [gemuetlich, normal, sportlich]
+        note:
+          type: string
+          nullable: true
+          maxLength: 500
     MeetupLifecycleResponse:
       type: object
       required: [status]
@@ -2845,7 +2916,7 @@ components:
           format: date-time
     Meetup:
       type: object
-      required: [id, routeId, routeName, canton, startsAt, maxParticipants, participantCount, pace, organizerName, joined, status, routeDistanceKm, routeDifficulty, routeStartLat, routeStartLng, isOrganizer]
+      required: [id, routeId, routeName, canton, startsAt, maxParticipants, participantCount, pace, organizerName, joined, status, routeDistanceKm, routeDifficulty, routeStartLat, routeStartLng, isOrganizer, communityId, isWaitlisted, waitlistPosition, waitlistCount]
       properties:
         id:
           type: string
@@ -2887,6 +2958,13 @@ components:
           type: ["number", "null"]
         routeStartLng:
           type: ["number", "null"]
+        isWaitlisted:
+          type: boolean
+        waitlistPosition:
+          type: integer
+          nullable: true
+        waitlistCount:
+          type: integer
         cancellationReason:
           type: string
           nullable: true
@@ -3005,10 +3083,15 @@ components:
             $ref: "#/components/schemas/Meetup"
     MeetupJoinResponse:
       type: object
-      required: [joined]
+      required: [joined, waitlisted, waitlistPosition]
       properties:
         joined:
           type: boolean
+        waitlisted:
+          type: boolean
+        waitlistPosition:
+          type: integer
+          nullable: true
     MeetupShareResponse:
       type: object
       required: [token, path, expiresAt]

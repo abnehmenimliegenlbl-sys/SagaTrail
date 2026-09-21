@@ -1,11 +1,14 @@
 import { check, index, integer, pgTable, primaryKey, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
+import { communitiesTable } from "./communities";
+
 export const meetupsTable = pgTable("meetups", {
   id: uuid("id").defaultRandom().primaryKey(),
   routeId: text("route_id").notNull(),
   routeName: text("route_name").notNull(),
   canton: text("canton").notNull(),
+  communityId: uuid("community_id").references(() => communitiesTable.id, { onDelete: "set null" }),
   startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
   maxParticipants: integer("max_participants").notNull().default(8),
   pace: text("pace").notNull().default("gemuetlich"),
@@ -19,6 +22,7 @@ export const meetupsTable = pgTable("meetups", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
+  index("meetups_community_starts_idx").on(table.communityId, table.startsAt),
   check("meetups_status_check", sql`${table.status} in ('scheduled', 'in_progress', 'completed', 'cancelled')`),
 ]);
 
@@ -33,6 +37,19 @@ export const meetupParticipantsTable = pgTable(
     statusUpdatedAt: timestamp("status_updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.meetupId, table.userId] })],
+);
+
+export const meetupWaitlistTable = pgTable(
+  "meetup_waitlist",
+  {
+    meetupId: uuid("meetup_id").notNull().references(() => meetupsTable.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.meetupId, table.userId] }),
+    index("meetup_waitlist_meetup_joined_idx").on(table.meetupId, table.joinedAt),
+  ],
 );
 
 export const meetupMessagesTable = pgTable(
@@ -53,6 +70,7 @@ export const meetupMessagesTable = pgTable(
 
 export type MeetupRow = typeof meetupsTable.$inferSelect;
 export type MeetupParticipantRow = typeof meetupParticipantsTable.$inferSelect;
+export type MeetupWaitlistRow = typeof meetupWaitlistTable.$inferSelect;
 export type MeetupMessageRow = typeof meetupMessagesTable.$inferSelect;
 
 export const meetupRemindersTable = pgTable(
@@ -90,7 +108,7 @@ export const meetupNotificationOutboxTable = pgTable(
     index("meetup_notification_outbox_meetup_actor_created_idx").on(table.meetupId, table.actorUserId, table.createdAt),
     check(
       "meetup_notification_outbox_type_check",
-      sql`${table.type} in ('meetup_cancelled', 'meetup_delayed', 'meetup_started', 'meetup_completed', 'meetup_message')`,
+      sql`${table.type} in ('meetup_cancelled', 'meetup_delayed', 'meetup_started', 'meetup_completed', 'meetup_message', 'meetup_updated', 'meetup_promoted')`,
     ),
   ],
 );

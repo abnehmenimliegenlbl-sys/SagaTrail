@@ -8,7 +8,7 @@ import {
 } from "@workspace/api-client-react";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -31,6 +31,7 @@ import type { LanguageCode } from "@/lib/i18n/languageCode";
 import { translateCanton } from "@/lib/i18n/cantonNames";
 import { alert } from "@/lib/appAlert";
 import { MeetupSortControl } from "@/components/MeetupSortControl";
+import { MeetupFilters, type MeetupFilterState } from "@/components/MeetupFilters";
 import {
   getMeetupDistanceKm,
   sortMeetups,
@@ -46,7 +47,20 @@ export default function Treffpunkte() {
   const router = useRouter();
   const t = useMeetupStrings();
   const { language } = useApp();
-  const meetups = useGetMeetups();
+  const [filters, setFilters] = useState<MeetupFilterState>({
+    search: "",
+    difficulty: undefined,
+    onlyMine: false,
+  });
+  const meetupParams = useMemo(
+    () => ({
+      search: filters.search.trim() || undefined,
+      difficulty: filters.difficulty,
+      mine: filters.onlyMine || undefined,
+    }),
+    [filters],
+  );
+  const meetups = useGetMeetups(meetupParams);
   const join = useJoinMeetup();
   const leave = useLeaveMeetup();
   const [sortMode, setSortMode] = useState<MeetupSortMode>("date");
@@ -144,31 +158,35 @@ export default function Treffpunkte() {
               <Text style={[styles.retryText, { color: colors.accent }]}>{t.retry}</Text>
             </Pressable>
           </View>
-        ) : !meetups.data?.meetups.length ? (
-          <View style={[styles.empty, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
-            <Feather name="map-pin" size={22} color={colors.accent} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.empty}</Text>
-          </View>
         ) : (
           <View style={{ marginTop: 22 }}>
+            <MeetupFilters value={filters} onChange={setFilters} strings={t} />
+            {!meetups.data?.meetups.length ? (
+              <View style={[styles.empty, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+                <Feather name="map-pin" size={22} color={colors.accent} />
+                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.empty}</Text>
+              </View>
+            ) : null}
             <MeetupSortControl
               mode={sortMode}
               onChange={setSortMode}
               distanceAvailable={Boolean(currentPosition)}
               strings={t}
             />
-            {sortedMeetups.map((meetup) => (
-              <MeetupCard
-                key={meetup.id}
-                meetup={meetup}
-                language={language as LanguageCode}
-                currentPosition={currentPosition}
-                onDetail={() => router.push(`/treffpunkte/${meetup.id}`)}
-                onToggle={() => void toggleParticipation(meetup)}
-                busy={join.isPending || leave.isPending}
-                t={t}
-              />
-            ))}
+            {meetups.data?.meetups.length
+              ? sortedMeetups.map((meetup) => (
+                  <MeetupCard
+                    key={meetup.id}
+                    meetup={meetup}
+                    language={language as LanguageCode}
+                    currentPosition={currentPosition}
+                    onDetail={() => router.push(`/treffpunkte/${meetup.id}`)}
+                    onToggle={() => void toggleParticipation(meetup)}
+                    busy={join.isPending || leave.isPending}
+                    t={t}
+                  />
+                ))
+              : null}
           </View>
         )}
       </ScrollView>
@@ -200,6 +218,16 @@ function MeetupCard({
   const time = start.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   const isFull = meetup.participantCount >= meetup.maxParticipants && !meetup.joined;
   const distanceToMeetingPoint = getMeetupDistanceKm(meetup, currentPosition);
+  const waitlistLabel = t.joinWaitlist ?? "Warteliste";
+  const leaveWaitlistLabel = t.leaveWaitlist ?? t.leave;
+  const participationLabel = meetup.joined
+    ? t.leave
+    : meetup.isWaitlisted
+      ? leaveWaitlistLabel
+      : isFull
+        ? waitlistLabel
+        : t.join;
+  const participationIcon = meetup.joined ? "check" : meetup.isWaitlisted ? "clock" : isFull ? "clock" : "user-plus";
 
   return (
     <View style={[styles.card, GLAS_3D, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
@@ -233,12 +261,17 @@ function MeetupCard({
             : t.locationUnavailable}
         </Text>
       </View>
+      {meetup.isWaitlisted ? (
+        <Text style={[styles.waitlistText, { color: colors.accent }]}>
+          {(t.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)}
+        </Text>
+      ) : null}
       {meetup.note ? (
         <Text style={[styles.note, { color: colors.mutedForeground }]}>{meetup.note}</Text>
       ) : null}
       <Pressable
         onPress={onToggle}
-        disabled={busy || isFull}
+         disabled={busy}
         accessibilityRole="button"
         style={[
           styles.joinButton,
@@ -250,12 +283,12 @@ function MeetupCard({
         ]}
       >
         <Feather
-          name={meetup.joined ? "check" : isFull ? "lock" : "user-plus"}
+           name={participationIcon}
           size={16}
-          color={meetup.joined ? colors.accent : meetup.joined ? colors.accent : "#fff"}
+           color={meetup.joined || meetup.isWaitlisted ? colors.accent : "#fff"}
         />
         <Text style={[styles.joinText, { color: meetup.joined ? colors.accent : "#fff" }]}>
-          {meetup.joined ? t.leave : isFull ? t.full : t.join}
+           {participationLabel}
         </Text>
       </Pressable>
     </View>
@@ -296,6 +329,7 @@ const styles = StyleSheet.create({
   detailsRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 },
   distanceRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 9 },
   distanceText: { fontFamily: fonts.mono, fontSize: 11 },
+  waitlistText: { fontFamily: fonts.mono, fontSize: 11, marginTop: 6 },
   detail: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: "42%" },
   detailText: { fontFamily: fonts.mono, fontSize: 11 },
   note: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, marginTop: 10 },

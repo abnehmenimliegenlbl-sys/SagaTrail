@@ -151,6 +151,8 @@ export * from './transportStationboard';
 export * from './transportStationboardStation';
 export * from './updateMeetupPhotoConsent200';
 export * from './updateMeetupPhotoConsentBody';
+export * from './updateMeetupRequest';
+export * from './updateMeetupRequestPace';
 export * from './uploadMeetupPhoto201';
 export * from './uploadMeetupPhotoDepictedPeopleConsent';
 export * from './uploadMeetupPhotoParams';

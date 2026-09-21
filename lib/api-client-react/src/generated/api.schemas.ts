@@ -154,6 +154,27 @@ export interface CreateMeetupRequest {
   communityId?: string | null;
 }
 
+export type UpdateMeetupRequestPace = typeof UpdateMeetupRequestPace[keyof typeof UpdateMeetupRequestPace];
+
+
+export const UpdateMeetupRequestPace = {
+  gemuetlich: 'gemuetlich',
+  normal: 'normal',
+  sportlich: 'sportlich',
+} as const;
+
+export interface UpdateMeetupRequest {
+  startsAt: string;
+  /**
+     * @minimum 2
+     * @maximum 30
+     */
+  maxParticipants: number;
+  pace: UpdateMeetupRequestPace;
+  /** @maxLength 500 */
+  note: string | null;
+}
+
 export type MeetupLifecycleResponseStatus = typeof MeetupLifecycleResponseStatus[keyof typeof MeetupLifecycleResponseStatus];
 
 
@@ -207,7 +228,7 @@ export interface Meetup {
   participantCount: number;
   pace: string;
   note?: string | null;
-  communityId?: string | null;
+  communityId: string | null;
   organizerName: string;
   joined: boolean;
   status: MeetupStatus;
@@ -219,6 +240,9 @@ export interface Meetup {
   routeStartLat: number | null;
   /** @nullable */
   routeStartLng: number | null;
+  isWaitlisted: boolean;
+  waitlistPosition: number | null;
+  waitlistCount: number;
   cancellationReason?: string | null;
   cancelledAt?: string | null;
   isOrganizer: boolean;
@@ -318,6 +342,8 @@ export interface MeetupListResponse {
 
 export interface MeetupJoinResponse {
   joined: boolean;
+  waitlisted: boolean;
+  waitlistPosition: number | null;
 }
 
 export interface MeetupShareResponse {
@@ -1475,6 +1501,13 @@ export type GetMeetupsParams = {
 from?: string;
 routeId?: string;
 communityId?: string;
+/**
+ * @maxLength 120
+ */
+search?: string;
+canton?: string;
+difficulty?: string;
+mine?: boolean;
 };
 
 export type GetMeetupPhotos200 = { [key: string]: unknown };

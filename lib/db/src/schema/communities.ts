@@ -10,6 +10,8 @@ export const communitiesTable = pgTable(
     administratorName: text("administrator_name").notNull(),
     language: text("language").notNull().default("de"),
     coverImageUrl: text("cover_image_url"),
+    facebookGroupUrl: text("facebook_group_url"),
+    announcement: text("announcement"),
     inviteCode: text("invite_code").notNull(),
     appStoreUrl: text("app_store_url").notNull(),
     playStoreUrl: text("play_store_url").notNull(),

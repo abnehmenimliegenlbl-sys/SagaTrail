@@ -110,6 +110,7 @@ import type {
   TransportStationboard,
   UpdateMeetupPhotoConsent200,
   UpdateMeetupPhotoConsentBody,
+  UpdateMeetupRequest,
   UploadMeetupPhoto201,
   UploadMeetupPhotoParams,
   WeatherReport
@@ -3913,6 +3914,77 @@ export const useDeleteMeetup = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteMeetupMutationOptions(options));
+    }
+
+export const getUpdateMeetupUrl = (id: string,) => {
+
+
+
+
+  return `/api/meetups/${id}`
+}
+
+/**
+ * @summary Eigenen geplanten Treffpunkt bearbeiten
+ */
+export const updateMeetup = async (id: string,
+    updateMeetupRequest: UpdateMeetupRequest, options?: RequestInit): Promise<Meetup> => {
+
+  return customFetch<Meetup>(getUpdateMeetupUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateMeetupRequest)
+  }
+);}
+
+
+
+
+export const getUpdateMeetupMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMeetup>>, TError,{id: string;data: BodyType<UpdateMeetupRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMeetup>>, TError,{id: string;data: BodyType<UpdateMeetupRequest>}, TContext> => {
+
+const mutationKey = ['updateMeetup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMeetup>>, {id: string;data: BodyType<UpdateMeetupRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateMeetup(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMeetupMutationResult = NonNullable<Awaited<ReturnType<typeof updateMeetup>>>
+    export type UpdateMeetupMutationBody = BodyType<UpdateMeetupRequest>
+    export type UpdateMeetupMutationError = ErrorType<void>
+
+    /**
+ * @summary Eigenen geplanten Treffpunkt bearbeiten
+ */
+export const useUpdateMeetup = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMeetup>>, TError,{id: string;data: BodyType<UpdateMeetupRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateMeetup>>,
+        TError,
+        {id: string;data: BodyType<UpdateMeetupRequest>},
+        TContext
+      > => {
+      return useMutation(getUpdateMeetupMutationOptions(options));
     }
 
 export const getGetMeetupPhotosUrl = (id: string,) => {
