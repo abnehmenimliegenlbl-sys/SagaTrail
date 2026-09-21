@@ -21,6 +21,7 @@ import {
   routeThemeLabel,
   type RouteThemeKey,
 } from "@/lib/routeThemes";
+import { routePathWithCommunity } from "@/lib/meetupNavigation";
 
 const WEB_TOP = 67;
 
@@ -40,7 +41,14 @@ export default function ThemenweltRoute() {
   const { language } = useApp();
   const { ready, addCustomRoute } = useCatalog();
   const strings = useThemeWorldStrings();
-  const { theme: rawTheme } = useLocalSearchParams<{ theme?: string }>();
+  const params = useLocalSearchParams<{
+    theme?: string;
+    communityId?: string;
+  }>();
+  const rawTheme = params.theme;
+  const communityId = Array.isArray(params.communityId)
+    ? params.communityId[0]
+    : params.communityId;
   const theme = decodeURIComponent(Array.isArray(rawTheme) ? rawTheme[0] ?? "" : rawTheme ?? "") as RouteThemeKey;
   const validTheme = ROUTE_THEME_KEYS.includes(theme);
   const themeLabel = validTheme ? routeThemeLabel(theme, language) : "";
@@ -151,7 +159,7 @@ export default function ThemenweltRoute() {
               locked={false}
               onPress={() => {
                 addCustomRoute(item.route);
-                router.push(`/route/${item.route.id}`);
+                router.push(routePathWithCommunity(item.route.id, communityId));
               }}
               kanton={item.canton}
             />

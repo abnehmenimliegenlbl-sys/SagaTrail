@@ -15,9 +15,10 @@ export interface RouteStrings {
   loadingSaga: string;
   loadingAudio: (done: number, total: number) => string;
   loadingPois: string;
+  loadingSafety: string;
   downloadInfoItems: string[];
   downloadInfoTime: string;
-  downloadPhaseLabels: [string, string, string, string];
+  downloadPhaseLabels: [string, string, string, string, string];
   removeDownload: string;
   download: string;
   downloadFailed: string;
@@ -172,15 +173,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     loadingSaga: "Sage wird geladen …",
     loadingAudio: (done, total) => `Audio wird gespeichert … ${done}/${total}`,
     loadingPois: "Orte werden gesichert …",
+    loadingSafety: "Sicherheitsdaten werden gesichert …",
     downloadInfoItems: [
       "Sagentext & Geschichte",
       "Sprach-Erzählung (Audio)",
       "Karte & Wanderwege",
       "Sehenswürdigkeiten & Orte",
+      "Sicherheitsinfos & Notrufnummern",
     ],
     downloadInfoTime:
       "Je nach Route kann der Download einige Minuten dauern.",
-    downloadPhaseLabels: ["Sage", "Audio", "Orte", "Karte"],
+    downloadPhaseLabels: ["Sage", "Audio", "Orte", "Sicherheit", "Karte"],
     removeDownload: "Download entfernen",
     download: "Herunterladen",
     downloadFailed: "Download fehlgeschlagen",
@@ -334,15 +337,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     loadingSaga: "Sag wird glade …",
     loadingAudio: (done, total) => `Audio wird gspeicheret … ${done}/${total}`,
     loadingPois: "Ort werde gsicheret …",
+    loadingSafety: "Sicherheitsdate werde gsicheret …",
     downloadInfoItems: [
       "Sagetexcht & G'schicht",
       "Sprach-Verzählig (Audio)",
       "Karte & Wanderwäg",
       "Sehenswürdigkeite & Ort",
+      "Sicherheitsinfo & Notrufnummern",
     ],
     downloadInfoTime:
       "Je nach Wäg cha s Abelade einigi Minute brüche.",
-    downloadPhaseLabels: ["Sag", "Audio", "Ort", "Charte"],
+    downloadPhaseLabels: ["Sag", "Audio", "Ort", "Sicherheit", "Charte"],
     removeDownload: "Download entferne",
     download: "Abelade",
     downloadFailed: "Download fählgschlage",
@@ -496,15 +501,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     loadingSaga: "Loading legend …",
     loadingAudio: (done, total) => `Saving audio … ${done}/${total}`,
     loadingPois: "Saving points of interest …",
+    loadingSafety: "Saving safety data …",
     downloadInfoItems: [
       "Legend text & story",
       "Voice narration (audio)",
       "Map & hiking trails",
       "Points of interest & places",
+      "Safety information & emergency numbers",
     ],
     downloadInfoTime:
       "The download may take a few minutes depending on the route.",
-    downloadPhaseLabels: ["Legend", "Audio", "Places", "Map"],
+    downloadPhaseLabels: ["Legend", "Audio", "Places", "Safety", "Map"],
     removeDownload: "Remove download",
     download: "Download",
     downloadFailed: "Download failed",
@@ -658,15 +665,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     loadingSaga: "Chargement de la légende …",
     loadingAudio: (done, total) => `Enregistrement audio … ${done}/${total}`,
     loadingPois: "Enregistrement des lieux …",
+    loadingSafety: "Enregistrement des données de sécurité …",
     downloadInfoItems: [
       "Texte de légende & histoire",
       "Narration vocale (audio)",
       "Carte & sentiers de randonnée",
       "Sites & lieux d'intérêt",
+      "Informations de sécurité & numéros d'urgence",
     ],
     downloadInfoTime:
       "Le téléchargement peut prendre quelques minutes selon le parcours.",
-    downloadPhaseLabels: ["Légende", "Audio", "Lieux", "Carte"],
+    downloadPhaseLabels: ["Légende", "Audio", "Lieux", "Sécurité", "Carte"],
     removeDownload: "Supprimer le téléchargement",
     download: "Télécharger",
     downloadFailed: "Échec du téléchargement",
@@ -820,15 +829,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     loadingSaga: "Caricamento leggenda …",
     loadingAudio: (done, total) => `Salvataggio audio … ${done}/${total}`,
     loadingPois: "Salvataggio luoghi …",
+    loadingSafety: "Salvataggio dati di sicurezza …",
     downloadInfoItems: [
       "Testo della leggenda & storia",
       "Narrazione vocale (audio)",
       "Mappa & sentieri escursionistici",
       "Punti di interesse & luoghi",
+      "Informazioni di sicurezza & numeri di emergenza",
     ],
     downloadInfoTime:
       "Il download può richiedere alcuni minuti a seconda del percorso.",
-    downloadPhaseLabels: ["Leggenda", "Audio", "Luoghi", "Mappa"],
+    downloadPhaseLabels: ["Leggenda", "Audio", "Luoghi", "Sicurezza", "Mappa"],
     removeDownload: "Rimuovi download",
     download: "Scarica",
     downloadFailed: "Download fallito",
@@ -982,15 +993,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     loadingSaga: "Cargando leyenda …",
     loadingAudio: (done, total) => `Guardando audio … ${done}/${total}`,
     loadingPois: "Guardando lugares …",
+    loadingSafety: "Guardando datos de seguridad …",
     downloadInfoItems: [
       "Texto de la leyenda & historia",
       "Narración de voz (audio)",
       "Mapa & senderos de montaña",
       "Puntos de interés & lugares",
+      "Información de seguridad & números de emergencia",
     ],
     downloadInfoTime:
       "La descarga puede tardar algunos minutos según la ruta.",
-    downloadPhaseLabels: ["Leyenda", "Audio", "Lugares", "Mapa"],
+    downloadPhaseLabels: ["Leyenda", "Audio", "Lugares", "Seguridad", "Mapa"],
     removeDownload: "Eliminar descarga",
     download: "Descargar",
     downloadFailed: "Descarga fallida",
@@ -1144,15 +1157,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     loadingSaga: "Carregando lenda …",
     loadingAudio: (done, total) => `Salvando áudio … ${done}/${total}`,
     loadingPois: "Salvando locais …",
+    loadingSafety: "Salvando dados de segurança …",
     downloadInfoItems: [
       "Texto da lenda & história",
       "Narração de voz (áudio)",
       "Mapa & trilhas de caminhada",
       "Pontos de interesse & locais",
+      "Informações de segurança & números de emergência",
     ],
     downloadInfoTime:
       "O download pode levar alguns minutos dependendo da rota.",
-    downloadPhaseLabels: ["Lenda", "Áudio", "Locais", "Mapa"],
+    downloadPhaseLabels: ["Lenda", "Áudio", "Locais", "Segurança", "Mapa"],
     removeDownload: "Remover download",
     download: "Baixar",
     downloadFailed: "Download falhou",
@@ -1305,14 +1320,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     loadingSaga: "正在加载传说 …",
     loadingAudio: (done, total) => `正在保存音频 … ${done}/${total}`,
     loadingPois: "正在保存景点 …",
+    loadingSafety: "正在保存安全数据 …",
     downloadInfoItems: [
       "传说文本与故事",
       "语音朗读（音频）",
       "地图与徒步路线",
       "景点与地点",
+      "安全信息与紧急号码",
     ],
     downloadInfoTime: "根据路线不同，下载可能需要几分钟。",
-    downloadPhaseLabels: ["传说", "音频", "地点", "地图"],
+    downloadPhaseLabels: ["传说", "音频", "地点", "安全", "地图"],
     removeDownload: "移除下载",
     download: "下载",
     downloadFailed: "下载失败",
@@ -1460,15 +1477,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     loadingSaga: "Загрузка легенды …",
     loadingAudio: (done, total) => `Сохранение аудио … ${done}/${total}`,
     loadingPois: "Сохранение мест …",
+    loadingSafety: "Сохранение данных о безопасности …",
     downloadInfoItems: [
       "Текст легенды и история",
       "Голосовое повествование (аудио)",
       "Карта и туристические маршруты",
       "Достопримечательности и места",
+      "Информация о безопасности и экстренные номера",
     ],
     downloadInfoTime:
       "Загрузка может занять несколько минут в зависимости от маршрута.",
-    downloadPhaseLabels: ["Легенда", "Аудио", "Места", "Карта"],
+    downloadPhaseLabels: ["Легенда", "Аудио", "Места", "Безопасность", "Карта"],
     removeDownload: "Удалить загрузку",
     download: "Скачать",
     downloadFailed: "Загрузка не удалась",

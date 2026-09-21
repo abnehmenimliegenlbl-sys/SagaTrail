@@ -25,6 +25,7 @@ type Variant = "primary" | "ghost" | "gold" | "secondary";
 interface PrimaryButtonProps {
   label: string;
   onPress: () => void;
+  accessibilityLabel?: string;
   variant?: Variant;
   disabled?: boolean;
   loading?: boolean;
@@ -42,6 +43,7 @@ interface PrimaryButtonProps {
 export function PrimaryButton({
   label,
   onPress,
+  accessibilityLabel,
   variant = "primary",
   disabled = false,
   loading = false,
@@ -72,6 +74,7 @@ export function PrimaryButton({
     <Animated.View style={[animStyle, style]}>
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? label}
         disabled={disabled || loading}
         onPressIn={() => {
           scale.value = withTiming(0.96, { duration: 90 });

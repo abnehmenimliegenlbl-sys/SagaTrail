@@ -25,6 +25,7 @@ export * from "./groupSessions";
 export * from "./groupHikes";
 export * from "./groupHikeCompletions";
 export * from "./meetups";
+export * from "./meetupPhotos";
 export * from "./safetyShares";
 export * from "./mediaContacts";
 export * from "./communities";

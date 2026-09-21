@@ -18,13 +18,23 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
+import { HomeEntryCard } from "@/components/HomeEntryCard";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
+import { SparkMountain } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
+import { useCatalog } from "@/contexts/CatalogContext";
+import { useHomeStrings } from "@/lib/i18n/screens/home";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 import { useApp } from "@/contexts/AppContext";
 import { alert } from "@/lib/appAlert";
+import {
+  CANTONS_HOME_BANNER,
+  CUSTOM_ROUTE_HOME_BANNER,
+  THEME_WORLD_HOME_BANNER,
+} from "@/lib/themeWorldVisuals";
+import { withCommunityId } from "@/lib/meetupNavigation";
 
 const WEB_TOP = 67;
 
@@ -33,7 +43,9 @@ export default function NeuerTreffpunkt() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const t = useMeetupStrings();
+  const homeT = useHomeStrings();
   const { language } = useApp();
+  const { cantons } = useCatalog();
   const params = useLocalSearchParams<{
     routeId?: string;
     routeName?: string;
@@ -46,6 +58,18 @@ export default function NeuerTreffpunkt() {
   const initialCommunityId = Array.isArray(params.communityId)
     ? params.communityId[0]
     : params.communityId;
+  const communityPath = (path: string) =>
+    withCommunityId(path, initialCommunityId);
+  const recommendationCopy =
+    language === "de" || language === "gsw"
+      ? {
+          title: "Beste Route für heute",
+          hint: "Zeit, Begleitung, Wetter und ÖV zusammen entscheiden lassen",
+        }
+      : {
+          title: "Best route for today",
+          hint: "Choose with time, group, weather and transport together",
+        };
   const [date, setDate] = useState(() => {
     const next = new Date(Date.now() + 86_400_000);
     return next.toISOString().slice(0, 10);
@@ -121,9 +145,42 @@ export default function NeuerTreffpunkt() {
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>{t.createIntro}</Text>
 
         {!routeId || !routeName || !canton ? (
-          <View style={[styles.empty, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
-            <Feather name="map" size={22} color={colors.accent} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.noRoute}</Text>
+          <View style={styles.routeChoices}>
+            <Text style={[styles.chooseRouteTitle, { color: colors.foreground }]}>
+              {t.noRoute}
+            </Text>
+            <HomeEntryCard
+              order={0}
+              icon="map"
+              image={CANTONS_HOME_BANNER}
+              title={homeT.cantonsTitle}
+              hint={homeT.allCantonsHint(cantons.length)}
+              onPress={() => router.push(communityPath("/kantone"))}
+            />
+            <HomeEntryCard
+              order={1}
+              icon="compass"
+              image={THEME_WORLD_HOME_BANNER}
+              title={homeT.themeWorldsTitle}
+              hint={homeT.themeWorldsHint}
+              onPress={() => router.push(communityPath("/themenwelten"))}
+            />
+            <HomeEntryCard
+              order={2}
+              icon="sunrise"
+              image={require("../../assets/images/banner-wanderroute-heute.jpg")}
+              title={recommendationCopy.title}
+              hint={recommendationCopy.hint}
+              onPress={() => router.push(communityPath("/empfehlung"))}
+            />
+            <HomeEntryCard
+              order={3}
+              icon="navigation"
+              image={CUSTOM_ROUTE_HOME_BANNER}
+              title={homeT.customRouteTitle}
+              hint={homeT.customRouteHint}
+              onPress={() => router.push(communityPath("/eigene-route"))}
+            />
           </View>
         ) : (
           <>
@@ -141,12 +198,28 @@ export default function NeuerTreffpunkt() {
                 onPress={() => setCommunityId(null)}
                 style={[
                   styles.choice,
+                  styles.audienceChoice,
                   {
                     borderColor: communityId === null ? colors.accent : colors.glassBorder,
                     backgroundColor: communityId === null ? colors.accent + "20" : colors.glassBg,
                   },
                 ]}
               >
+                <View
+                  style={[
+                    styles.audienceIcon,
+                    {
+                      borderColor: communityId === null ? colors.accent : colors.glassBorder,
+                      backgroundColor: communityId === null ? colors.accent + "18" : colors.glassBgStrong,
+                    },
+                  ]}
+                >
+                  <SparkMountain
+                    size={21}
+                    mountainColor={colors.accent}
+                    sparkColor={colors.altgold}
+                  />
+                </View>
                 <Text style={[styles.choiceText, { color: communityId === null ? colors.accent : colors.foreground }]}>
                   {t.audiencePublic}
                 </Text>
@@ -161,12 +234,28 @@ export default function NeuerTreffpunkt() {
                 }}
                 style={[
                   styles.choice,
+                  styles.audienceChoice,
                   {
                     borderColor: communityId !== null ? colors.accent : colors.glassBorder,
                     backgroundColor: communityId !== null ? colors.accent + "20" : colors.glassBg,
                   },
                 ]}
               >
+                <View
+                  style={[
+                    styles.audienceIcon,
+                    {
+                      borderColor: communityId !== null ? colors.accent : colors.glassBorder,
+                      backgroundColor: communityId !== null ? colors.accent + "18" : colors.glassBgStrong,
+                    },
+                  ]}
+                >
+                  <Feather
+                    name="facebook"
+                    size={16}
+                    color={communityId !== null ? colors.accent : colors.mutedForeground}
+                  />
+                </View>
                 <Text style={[styles.choiceText, { color: communityId !== null ? colors.accent : colors.foreground }]}>
                   {t.audienceCommunity}
                 </Text>
@@ -280,11 +369,18 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 11, minHeight: 46, paddingHorizontal: 13, fontFamily: fonts.body, fontSize: 15 },
   choiceRow: { flexDirection: "row", gap: 8 },
   choice: { flex: 1, minHeight: 42, borderWidth: 1, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 },
+  audienceChoice: { flexDirection: "row", gap: 7, paddingHorizontal: 7 },
+  audienceIcon: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   choiceText: { fontFamily: fonts.bodyBold, fontSize: 12 },
   communityChoices: { gap: 8, marginTop: 8 },
   communityChoice: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 42, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12 },
   communityChoiceText: { fontFamily: fonts.bodyBold, fontSize: 13 },
   noteInput: { borderWidth: 1, borderRadius: 11, minHeight: 90, padding: 13, fontFamily: fonts.body, fontSize: 15, textAlignVertical: "top" },
-  empty: { alignItems: "center", borderWidth: 1, borderRadius: 16, padding: 24, marginTop: 24 },
-  emptyText: { textAlign: "center", fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 10 },
+  routeChoices: { marginTop: 10, marginHorizontal: -20 },
+  chooseRouteTitle: {
+    fontFamily: fonts.titleBold,
+    fontSize: 20,
+    marginBottom: 4,
+    paddingHorizontal: 20,
+  },
 });

@@ -35,6 +35,7 @@ import {
   AR_WORLD_SCALE,
   routeGeometryMaxDistanceM,
   routeGeometryAheadOfPosition,
+  routeRemainingDistanceM,
   routeOriginForAR,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
@@ -113,13 +114,16 @@ const TERRAIN_ROUTE_MATERIALS: Record<RouteGradeBand, string> = {
 const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
 const PEAK_RED = "#CC0000";
 const PEAK_WHITE = "#FFFFFF";
-// The DTM remains observer-centred at 500 m. The route is true 1:1 only in
-// the reliable near field; after 50 m the route line is intentionally omitted.
-// The separate destination flag remains visible as a bounded directional
-// marker, rather than pretending that a 5 km route can be camera-depth exact.
+// The DTM remains observer-centred at 500 m. The route trace is true 1:1 only
+// in the reliable near field; after 50 m it is intentionally omitted. The
+// finish flag is only shown close to the actual route end, never as a
+// compressed substitute for a multi-kilometre destination.
 const AR_ROUTE_TERRAIN_RADIUS_M = 500;
 const AR_ROUTE_REAL_SCALE_RADIUS_M = 50;
 const AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M = 300;
+// A destination flag is a finish cue, not a distant compass marker. Before
+// this threshold the route arrows remain visible, but the flag stays hidden.
+const AR_ROUTE_DESTINATION_SHOW_WITHIN_M = 500;
 // Viro's AR origin is near the camera, while the visible landscape starts at
 // the user's feet. Keep the geographic route on that ground plane and let the
 // local DTM elevation differences lift it above/below the plane.
@@ -127,14 +131,18 @@ const AR_ROUTE_GROUND_OFFSET = -1.25;
 const MAX_AR_PEAK_SLOTS = 40;
 const MAX_VISIBLE_AR_PEAKS = 6;
 const MAX_AR_ROUTE_SEGMENT_SLOTS = 96;
-const MAX_AR_ROUTE_DIRECTION_ARROWS = 24;
+// AR should answer one question at a time: which way do I walk now? Upcoming
+// turns are communicated by the separate turn cue, not by several competing
+// floor arrows.
+const MAX_AR_ROUTE_DIRECTION_ARROWS = 1;
 const AR_ROUTE_TURN_THRESHOLD_DEGREES = 25;
 const AR_ROUTE_ARROW_MIN_SPACING = 0.45;
-const AR_ROUTE_ARROW_ELEVATION = 0.45;
+const AR_ROUTE_ARROW_ELEVATION = 0.5;
 const AR_ROUTE_ARROW_START_OFFSET = 0.35;
-const AR_ROUTE_ARROW_LENGTH = 0.28;
-const AR_ROUTE_ARROW_HALF_WIDTH = 0.14;
-const AR_ROUTE_ARROW_THICKNESS = 0.065;
+const AR_ROUTE_ARROW_INTERVAL_M = 4;
+const AR_ROUTE_ARROW_LENGTH = 0.42;
+const AR_ROUTE_ARROW_HALF_WIDTH = 0.2;
+const AR_ROUTE_ARROW_THICKNESS = 0.075;
 const HIDDEN_AR_ROUTE_POINTS: TerrainRouteLine = [
   [0, -1000, 0],
   [0, -1000, 0.01],
@@ -488,6 +496,27 @@ function buildRouteDirectionArrows(
       ) {
         addArrow(from, heading, segment.band);
       }
+
+      // A sparse polyline otherwise leaves a long straight route looking like
+      // an unexplained green stroke. Repeat the directional cue at a fixed
+      // near-field interval so the user can follow the route visually.
+      for (
+        let offsetM = AR_ROUTE_ARROW_INTERVAL_M;
+        offsetM < length;
+        offsetM += AR_ROUTE_ARROW_INTERVAL_M
+      ) {
+        const fraction = offsetM / length;
+        addArrow(
+          [
+            from[0] + (to[0] - from[0]) * fraction,
+            from[1] + (to[1] - from[1]) * fraction,
+            from[2] + (to[2] - from[2]) * fraction,
+          ],
+          heading,
+          segment.band,
+        );
+        if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS) break;
+      }
       previousHeading = heading;
 
       if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS) break;
@@ -590,9 +619,31 @@ function TerrainHologram({
       routeProjectionReady,
     ],
   );
+  const remainingRouteDistanceM = useMemo(
+    () =>
+      routeProjectionReady
+        ? routeRemainingDistanceM(
+            routeGeometry,
+            routeOriginPosition,
+            observerPosition,
+          )
+        : null,
+    [
+      routeGeometry,
+      routeOriginPosition,
+      observerPosition,
+      routeProjectionReady,
+    ],
+  );
   const destinationPosition = useMemo(
     () => {
       if (!routeProjectionReady) return null;
+      if (
+        remainingRouteDistanceM == null ||
+        remainingRouteDistanceM > AR_ROUTE_DESTINATION_SHOW_WITHIN_M
+      ) {
+        return null;
+      }
       return buildGeographicTerrainRouteDestination(
         model,
         routeGeometry,
@@ -611,6 +662,7 @@ function TerrainHologram({
       routeGeometry,
       routeCenter,
       maxRouteDistanceM,
+      remainingRouteDistanceM,
       worldOffset,
       routeProjectionReady,
     ],
@@ -632,6 +684,12 @@ function TerrainHologram({
       terrainRadiusM: AR_ROUTE_TERRAIN_RADIUS_M,
       nearRouteRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
       destinationVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
+      destinationShowWithinM: AR_ROUTE_DESTINATION_SHOW_WITHIN_M,
+      remainingRouteDistanceM:
+        remainingRouteDistanceM == null
+          ? null
+          : Number(remainingRouteDistanceM.toFixed(1)),
+      destinationRendered: destinationPosition != null,
       routeProjectionReady,
       trackingReady,
       hasDestination: destinationPosition != null,
@@ -646,6 +704,7 @@ function TerrainHologram({
     routeSegments.length,
     routeDirectionArrows.length,
     destinationPosition,
+    remainingRouteDistanceM,
     routeOriginPosition,
     observerPosition,
     worldOffset,
@@ -692,7 +751,9 @@ function TerrainHologram({
                 ? TERRAIN_ROUTE_MATERIALS[segment.band]
                 : TERRAIN_ROUTE_MATERIALS.green
             }
-            opacity={segment && canRenderRoute ? 0.62 : 0}
+            // The route trace is only context. The larger chevrons below are
+            // the actual wayfinding cue and stay readable over the camera.
+            opacity={segment && canRenderRoute ? 0.28 : 0}
             renderingOrder={24}
             viroTag={`terrain-route-line-slot-${index}`}
           />

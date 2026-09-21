@@ -10,7 +10,7 @@ import {
   type TransportStationboard,
   type WeatherReport,
 } from "@workspace/api-client-react";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, {
   useCallback,
   useEffect,
@@ -63,6 +63,7 @@ import {
   loadThemePoisForRoutes,
   routeThemeCache,
 } from "@/lib/routeThemeIndex";
+import { routePathWithCommunity } from "@/lib/meetupNavigation";
 
 const WEB_TOP = 67;
 const INTERESTS: RouteThemeKey[] = [
@@ -331,6 +332,10 @@ export default function Empfehlung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ communityId?: string }>();
+  const communityId = Array.isArray(params.communityId)
+    ? params.communityId[0]
+    : params.communityId;
   const { language } = useApp();
   const { loadCantonRoutes } = useCatalog();
   const copy = language === "de" || language === "gsw" ? COPY_DE : COPY_EN;
@@ -1125,7 +1130,11 @@ export default function Empfehlung() {
               ))}
               <PrimaryButton
                 label={copy.open}
-                onPress={() => router.push(`/route/${selected.route.id}`)}
+                onPress={() =>
+                  router.push(
+                    routePathWithCommunity(selected.route.id, communityId),
+                  )
+                }
                 style={{ marginTop: 16 }}
               />
             </View>
@@ -1138,7 +1147,11 @@ export default function Empfehlung() {
                 {recommendations.slice(1, 4).map((item) => (
                   <Pressable
                     key={item.route.id}
-                    onPress={() => router.push(`/route/${item.route.id}`)}
+                    onPress={() =>
+                      router.push(
+                        routePathWithCommunity(item.route.id, communityId),
+                      )
+                    }
                     style={[
                       styles.alternativeRow,
                       {

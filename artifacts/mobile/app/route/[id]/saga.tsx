@@ -99,7 +99,20 @@ export default function RouteSagaSelection() {
   const downloaded = selectedSaga ? isDownloaded(selectedSaga.id) : false;
   const record = selectedSaga ? getRecord(selectedSaga.id) : undefined;
   const downloading = Boolean(selectedSaga && progress?.sagaId === selectedSaga.id);
-  const partialDownload = record?.status === "partial" || record?.status === "failed";
+  const offlinePhaseKeys = ["story", "audio", "pois", "safety", "tiles"] as const;
+  const legacyOfflinePackage = Boolean(record && record.offlinePackageVersion !== 7);
+  const partialDownload =
+    legacyOfflinePackage ||
+    record?.status === "partial" ||
+    record?.status === "failed";
+  const missingOfflinePhases = record
+    ? offlinePhaseKeys.filter((phase, index) => {
+        // Audio is intentionally absent from free packages.
+        if (phase === "audio" && record.phaseStatus?.audio === undefined) return false;
+        if (legacyOfflinePackage && phase === "tiles") return true;
+        return record.phaseStatus?.[phase] !== "complete";
+      })
+    : [];
   const downloadProgress = downloading && progress
     ? progress.total > 0
       ? Math.min(progress.done / progress.total, 1)
@@ -112,9 +125,11 @@ export default function RouteSagaSelection() {
         ? t.loadingAudio(progress.done, progress.total)
         : progress?.phase === "pois"
           ? t.loadingPois
+            : progress?.phase === "safety"
+              ? t.loadingSafety
           : t.loadingSaga
     : "";
-  const downloadPhaseIndex = ["story", "audio", "pois", "tiles"].indexOf(progress?.phase ?? "story");
+  const downloadPhaseIndex = ["story", "audio", "pois", "safety", "tiles"].indexOf(progress?.phase ?? "story");
 
   const selectSaga = (saga: Saga) => {
     if (isLocked(saga)) {
@@ -273,14 +288,18 @@ export default function RouteSagaSelection() {
           ) : (
             <>
               <View style={styles.downloadInfoBox}>
-                {t.downloadInfoItems.map((item, index) => (
-                  <View key={index} style={styles.downloadInfoRow}>
-                    <Feather name="check" size={12} color={colors.accent} />
-                    <Text style={[styles.downloadInfoItem, { color: colors.mutedForeground }]}>
-                      {item}
-                    </Text>
-                  </View>
-                ))}
+                {t.downloadInfoItems.map((item, index) => {
+                  // Audio wird nur für Premium-Pakete vorgeladen.
+                  if (index === 1 && !hasPremiumAccess) return null;
+                  return (
+                    <View key={index} style={styles.downloadInfoRow}>
+                      <Feather name="check" size={12} color={colors.accent} />
+                      <Text style={[styles.downloadInfoItem, { color: colors.mutedForeground }]}>
+                        {item}
+                      </Text>
+                    </View>
+                  );
+                })}
                 <View style={styles.downloadInfoTimeRow}>
                   <Feather name="clock" size={11} color={colors.mutedForeground} />
                   <Text style={[styles.downloadInfoTime, { color: colors.mutedForeground }]}>
@@ -290,11 +309,40 @@ export default function RouteSagaSelection() {
               </View>
               <Text style={[styles.offlineHint, { color: colors.mutedForeground }]}>
                 {partialDownload
-                  ? t.downloadFailedText
+                  ? `${t.downloadFailedText}${missingOfflinePhases.length > 0 ? ` ${missingOfflinePhases
+                      .map((phase) => t.downloadPhaseLabels[offlinePhaseKeys.indexOf(phase)])
+                      .join(", ")}` : ""}`
                   : downloaded
                     ? t.offlineStatusActive(record?.sizeBytes ? `${Math.round(record.sizeBytes / 1024)} KB` : "")
                     : t.downloadInfoTime}
               </Text>
+              {downloaded && record && !downloading && (
+                <View style={styles.downloadStatusGrid}>
+                  {offlinePhaseKeys.map((phase, index) => {
+                    if (phase === "audio" && record.phaseStatus?.audio === undefined) return null;
+                    const complete =
+                      !legacyOfflinePackage &&
+                      record.phaseStatus?.[phase] === "complete";
+                    return (
+                      <View key={phase} style={styles.downloadStatusRow}>
+                        <Feather
+                          name={complete ? "check-circle" : "alert-circle"}
+                          size={13}
+                          color={complete ? colors.accent : colors.destructive}
+                        />
+                        <Text
+                          style={[
+                            styles.downloadStatusText,
+                            { color: complete ? colors.mutedForeground : colors.destructive },
+                          ]}
+                        >
+                          {t.downloadPhaseLabels[index]}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
               {downloading ? (
                 <View style={styles.downloadProgress}>
                   <View style={styles.downloadProgressHeader}>
@@ -394,6 +442,9 @@ const styles = StyleSheet.create({
   downloadInfoItem: { flex: 1, fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
   downloadInfoTimeRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 },
   downloadInfoTime: { flex: 1, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, fontStyle: "italic" },
+  downloadStatusGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
+  downloadStatusRow: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: "45%" },
+  downloadStatusText: { fontFamily: fonts.body, fontSize: 11 },
   downloadProgress: { marginTop: 14 },
   downloadProgressHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
   downloadPercent: { fontFamily: fonts.mono, fontSize: 13 },

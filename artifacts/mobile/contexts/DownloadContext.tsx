@@ -433,6 +433,10 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           poisFailed = true;
         }
         phaseStatus.pois = poisFailed || panoramaFailed ? "failed" : "complete";
+      } else {
+        // Ohne Route/Mittelpunkt können keine POIs oder Panorama-Daten
+        // belastbar offline bereitgestellt werden.
+        phaseStatus.pois = "failed";
       }
 
       // 4. Sicherheitsinformationen: Trinkwasser, sicherheitsrelevante POIs

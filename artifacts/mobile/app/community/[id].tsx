@@ -5,12 +5,14 @@ import {
   getGetMyCommunitiesQueryKey,
   useGetMeetups,
   useGetMyCommunities,
+  useLeaveCommunity,
   useJoinMeetup,
   useLeaveMeetup,
 } from "@workspace/api-client-react";
 import * as ExpoImage from "expo-image";
+import * as Location from "expo-location";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -32,6 +34,10 @@ import { useColors } from "@/hooks/useColors";
 import { useCommunityScreenStrings } from "@/lib/i18n/screens/communities";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
 import { alert } from "@/lib/appAlert";
+import { haversineKm } from "@/lib/geo";
+import { MeetupSortControl } from "@/components/MeetupSortControl";
+import { MeetupFilters, type MeetupFilterState } from "@/components/MeetupFilters";
+import { sortMeetups, type MeetupPosition, type MeetupSortMode } from "@/lib/meetupSorting";
 
 const WEB_TOP = 67;
 
@@ -44,6 +50,13 @@ export default function CommunityDetailScreen() {
   const meetupT = useMeetupStrings();
   const params = useLocalSearchParams<{ id?: string }>();
   const communityId = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
+  const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [sortMode, setSortMode] = useState<MeetupSortMode>("date");
+  const [filters, setFilters] = useState<MeetupFilterState>({
+    search: "",
+    difficulty: undefined,
+    onlyMine: false,
+  });
   const communities = useGetMyCommunities({
     query: {
       queryKey: getGetMyCommunitiesQueryKey(),
@@ -51,9 +64,47 @@ export default function CommunityDetailScreen() {
       refetchOnMount: "always",
     },
   });
+  const leaveCommunity = useLeaveCommunity();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCurrentPosition = async () => {
+      try {
+        const permission = await Location.getForegroundPermissionsAsync();
+        if (permission.status !== "granted") return;
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        if (!cancelled) {
+          setCurrentPosition({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        }
+      } catch {
+        // Ohne frischen GPS-Fix wird keine Entfernung angezeigt.
+      }
+    };
+
+    void loadCurrentPosition();
+    return () => {
+      cancelled = true;
+    };
+  }, [communityId]);
+
   const community = communities.data?.find((item) => item.id === communityId);
+  const meetupParams = useMemo(
+    () => ({
+      communityId,
+      search: filters.search.trim() || undefined,
+      difficulty: filters.difficulty,
+      mine: filters.onlyMine || undefined,
+    }),
+    [communityId, filters],
+  );
   const meetups = useGetMeetups(
-    { communityId },
+    meetupParams,
     {
       query: {
         queryKey: getGetMeetupsQueryKey({ communityId }),
@@ -87,6 +138,33 @@ export default function CommunityDetailScreen() {
   }
 
   const plannedHikes = meetups.data?.meetups.length ?? 0;
+  const sortedMeetups = sortMeetups(
+    meetups.data?.meetups ?? [],
+    sortMode,
+    currentPosition,
+  );
+
+  const leave = async () => {
+    try {
+      await leaveCommunity.mutateAsync({ id: community.id });
+      await communities.refetch();
+      router.replace("/communities");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t.error;
+      alert(t.leaveCommunity, message);
+    }
+  };
+
+  const confirmLeave = () => {
+    alert(t.leaveCommunity, t.leaveCommunityConfirm(community.name), [
+      { text: t.cancel, style: "cancel" },
+      {
+        text: t.leaveCommunity,
+        style: "destructive",
+        onPress: () => void leave(),
+      },
+    ]);
+  };
 
   const shareCommunity = async () => {
     try {
@@ -184,6 +262,14 @@ export default function CommunityDetailScreen() {
               )
             }
           />
+          <ActionButton
+            icon="log-out"
+            label={t.leaveCommunity}
+            colors={colors}
+            disabled={leaveCommunity.isPending}
+            destructive
+            onPress={confirmLeave}
+          />
         </View>
 
         <View
@@ -260,7 +346,7 @@ export default function CommunityDetailScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            {meetupT.audienceCommunity}
+            {meetupT.plannedHikes}
           </Text>
           <Text style={[styles.sectionCount, { color: colors.mutedForeground }]}>
             {plannedHikes}
@@ -281,24 +367,35 @@ export default function CommunityDetailScreen() {
               {meetupT.error}
             </Text>
           </View>
-        ) : !meetups.data?.meetups.length ? (
-          <View style={[styles.statusCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
-            <Feather name="calendar" size={20} color={colors.accent} />
-            <Text style={[styles.statusText, { color: colors.mutedForeground }]}>
-              {meetupT.empty}
-            </Text>
-          </View>
         ) : (
-          meetups.data.meetups.map((meetup) => (
-            <CommunityMeetupCard
-              key={meetup.id}
-              meetup={meetup}
-              colors={colors}
-              meetupStrings={meetupT}
-              onOpen={() => router.push(`/treffpunkte/${meetup.id}`)}
-              onRefresh={() => void meetups.refetch()}
+          <>
+            <MeetupFilters value={filters} onChange={setFilters} strings={meetupT} />
+            {!meetups.data?.meetups.length ? (
+              <View style={[styles.statusCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
+                <Feather name="calendar" size={20} color={colors.accent} />
+                <Text style={[styles.statusText, { color: colors.mutedForeground }]}>
+                  {meetupT.empty}
+                </Text>
+              </View>
+            ) : null}
+            <MeetupSortControl
+              mode={sortMode}
+              onChange={setSortMode}
+              distanceAvailable={Boolean(currentPosition)}
+              strings={meetupT}
             />
-          ))
+            {sortedMeetups.map((meetup) => (
+              <CommunityMeetupCard
+                key={meetup.id}
+                meetup={meetup}
+                colors={colors}
+                meetupStrings={meetupT}
+                currentPosition={currentPosition}
+                onOpen={() => router.push(`/treffpunkte/${meetup.id}`)}
+                onRefresh={() => void meetups.refetch()}
+              />
+            ))}
+          </>
         )}
       </ScrollView>
     </Background>
@@ -310,24 +407,43 @@ function ActionButton({
   label,
   colors,
   onPress,
+  disabled = false,
+  destructive = false,
 }: {
   icon: React.ComponentProps<typeof Feather>["name"];
   label: string;
   colors: ReturnType<typeof useColors>;
   onPress: () => void;
+  disabled?: boolean;
+  destructive?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
       style={[
         styles.actionButton,
-        { backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
+        {
+          backgroundColor: colors.glassBg,
+          borderColor: destructive ? colors.destructive : colors.glassBorder,
+          opacity: disabled ? 0.55 : 1,
+        },
       ]}
     >
-      <Feather name={icon} size={17} color={colors.accent} />
-      <Text style={[styles.actionText, { color: colors.foreground }]} numberOfLines={2}>
+      <Feather
+        name={icon}
+        size={17}
+        color={destructive ? colors.destructive : colors.accent}
+      />
+      <Text
+        style={[
+          styles.actionText,
+          { color: destructive ? colors.destructive : colors.foreground },
+        ]}
+        numberOfLines={2}
+      >
         {label}
       </Text>
     </Pressable>
@@ -338,6 +454,7 @@ function CommunityMeetupCard({
   meetup,
   colors,
   meetupStrings,
+  currentPosition,
   onOpen,
   onRefresh,
 }: {
@@ -348,9 +465,17 @@ function CommunityMeetupCard({
     participantCount: number;
     maxParticipants: number;
     joined: boolean;
+    routeDistanceKm: number | null;
+    routeDifficulty: string | null;
+    routeStartLat: number | null;
+    routeStartLng: number | null;
+    isWaitlisted: boolean;
+    waitlistPosition: number | null;
+    waitlistCount: number;
   };
   colors: ReturnType<typeof useColors>;
   meetupStrings: ReturnType<typeof useMeetupStrings>;
+  currentPosition: { lat: number; lng: number } | null;
   onOpen: () => void;
   onRefresh: () => void;
 }) {
@@ -359,9 +484,19 @@ function CommunityMeetupCard({
   const start = new Date(meetup.startsAt);
   const isFull = meetup.participantCount >= meetup.maxParticipants && !meetup.joined;
   const isBusy = join.isPending || leave.isPending;
+  const isWaitlisted = meetup.isWaitlisted;
+  const distanceToMeetingPoint =
+    currentPosition &&
+    meetup.routeStartLat != null &&
+    meetup.routeStartLng != null
+      ? haversineKm(currentPosition, {
+          lat: meetup.routeStartLat,
+          lng: meetup.routeStartLng,
+        })
+      : null;
 
   const changeParticipation = async () => {
-    if (isFull || isBusy) return;
+    if (isBusy) return;
     try {
       if (meetup.joined) {
         await leave.mutateAsync({ id: meetup.id });
@@ -374,6 +509,20 @@ function CommunityMeetupCard({
     }
   };
 
+  const participationLabel = meetup.joined
+    ? meetupStrings.leave
+    : isWaitlisted
+      ? meetupStrings.leaveWaitlist ?? meetupStrings.leave
+      : isFull
+        ? meetupStrings.joinWaitlist ?? "Warteliste"
+        : meetupStrings.join;
+  const quietParticipationStyle = meetup.joined || isWaitlisted;
+  const capacityColor = isWaitlisted
+    ? colors.accent
+    : isFull
+      ? colors.destructive
+      : colors.mutedForeground;
+
   return (
     <View style={[styles.meetupCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
       <Pressable onPress={onOpen} style={styles.meetupContent}>
@@ -383,25 +532,55 @@ function CommunityMeetupCard({
         <Text style={[styles.meetupMeta, { color: colors.mutedForeground }]}>
           {start.toLocaleDateString()} · {start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </Text>
-        <Text style={[styles.meetupMeta, { color: colors.mutedForeground }]}>
+        <Text style={[styles.meetupMeta, { color: capacityColor, fontFamily: fonts.bodyBold }]}>
           {meetup.participantCount}/{meetup.maxParticipants} {meetupStrings.participants.toLowerCase()}
         </Text>
+        <View style={styles.meetupMetaRow}>
+          <Feather name="map-pin" size={12} color={colors.mutedForeground} />
+          <Text style={[styles.meetupMeta, { color: colors.mutedForeground }]}>
+            {distanceToMeetingPoint != null
+              ? meetupStrings.meetingDistance(distanceToMeetingPoint)
+              : meetupStrings.locationUnavailable}
+          </Text>
+        </View>
+        {isWaitlisted ? (
+          <View style={[styles.waitlistPill, { backgroundColor: colors.accent + "14", borderColor: colors.accent + "55" }]}>
+            <Feather name="clock" size={12} color={colors.accent} />
+            <Text style={[styles.meetupMeta, { color: colors.accent, marginTop: 0 }]}>
+              {(meetupStrings.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)}
+            </Text>
+          </View>
+        ) : null}
+        <View style={styles.meetupMetaRow}>
+          <Feather name="trending-up" size={12} color={colors.mutedForeground} />
+          <Text style={[styles.meetupMeta, { color: colors.mutedForeground }]}>
+            {meetup.routeDistanceKm != null && meetup.routeDifficulty
+              ? meetupStrings.routeMeta(meetup.routeDifficulty, meetup.routeDistanceKm)
+              : meetupStrings.routeMetaUnavailable}
+          </Text>
+        </View>
       </Pressable>
       <Pressable
         onPress={() => void changeParticipation()}
-        disabled={isBusy || isFull}
+        disabled={isBusy}
         accessibilityRole="button"
+        accessibilityLabel={participationLabel}
         style={[
           styles.joinButton,
           {
             borderColor: colors.accent,
-            backgroundColor: meetup.joined ? colors.glassBgStrong : colors.accent,
-            opacity: isBusy || isFull ? 0.55 : 1,
+            backgroundColor: quietParticipationStyle ? colors.glassBgStrong : colors.accent,
+            opacity: isBusy ? 0.55 : 1,
           },
         ]}
       >
-        <Text style={[styles.joinText, { color: meetup.joined ? colors.accent : colors.background }]}>
-          {meetup.joined ? meetupStrings.leave : isFull ? meetupStrings.full : meetupStrings.join}
+          <Feather
+            name={meetup.joined ? "check" : isWaitlisted ? "clock" : isFull ? "clock" : "user-plus"}
+            size={14}
+            color={quietParticipationStyle ? colors.accent : colors.background}
+          />
+          <Text style={[styles.joinText, { color: quietParticipationStyle ? colors.accent : colors.background }]}>
+          {participationLabel}
         </Text>
       </Pressable>
     </View>
@@ -453,6 +632,8 @@ const styles = StyleSheet.create({
   meetupContent: { flex: 1 },
   routeName: { fontFamily: fonts.bodyBold, fontSize: 15, lineHeight: 20 },
   meetupMeta: { fontFamily: fonts.mono, fontSize: 10, marginTop: 5 },
-  joinButton: { borderWidth: 1, borderRadius: 9, minHeight: 36, paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
+  meetupMetaRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  joinButton: { borderWidth: 1, borderRadius: 9, minHeight: 36, paddingHorizontal: 11, flexDirection: "row", gap: 5, alignItems: "center", justifyContent: "center" },
   joinText: { fontFamily: fonts.bodyBold, fontSize: 11 },
+  waitlistPill: { alignSelf: "flex-start", borderWidth: 1, borderRadius: 8, flexDirection: "row", alignItems: "center", gap: 5, marginTop: 7, paddingHorizontal: 8, paddingVertical: 5 },
 });

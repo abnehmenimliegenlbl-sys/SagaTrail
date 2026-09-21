@@ -10,4 +10,11 @@ export type GetMeetupsParams = {
 from?: Date;
 routeId?: string;
 communityId?: string;
+/**
+ * @maxLength 120
+ */
+search?: string;
+canton?: string;
+difficulty?: string;
+mine?: boolean;
 };

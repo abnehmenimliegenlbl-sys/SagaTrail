@@ -1,18 +1,22 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { getAuth } from "@clerk/express";
 import { createHash, randomBytes } from "node:crypto";
-import { and, asc, eq, gt, gte, inArray, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, gt, gte, ilike, inArray, notInArray, or, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
 import {
   db,
   groupHikeCompletionsTable,
+  communityMembersTable,
+  communitiesTable,
   meetupBlocksTable,
   meetupMessagesTable,
   meetupNotificationOutboxTable,
   meetupParticipantsTable,
   meetupReportsTable,
+  meetupWaitlistTable,
   meetupsTable,
+  externalRoutesTable,
   profilesTable,
 } from "@workspace/db";
 
@@ -58,6 +62,13 @@ const CreateMeetupSchema = z.object({
   maxParticipants: z.number().int().min(2).max(30).default(8),
   pace: z.enum(["gemuetlich", "normal", "sportlich"]).default("gemuetlich"),
   note: z.string().trim().max(500).nullable().optional(),
+  communityId: z.string().uuid().nullable().optional(),
+});
+const UpdateMeetupSchema = z.object({
+  startsAt: z.string().datetime({ offset: true }),
+  maxParticipants: z.number().int().min(2).max(30),
+  pace: z.enum(["gemuetlich", "normal", "sportlich"]),
+  note: z.string().trim().max(500).nullable(),
 });
 const ReportMeetupSchema = z.object({
   reason: z.enum(["safety", "harassment", "spam", "other"]),
@@ -97,6 +108,12 @@ function parseFrom(value: unknown): Date {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
+function parseOptionalText(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 function calculateAge(dateOfBirth: string | null | undefined): number | null {
   if (!dateOfBirth) return null;
   const birth = new Date(`${dateOfBirth}T00:00:00Z`);
@@ -124,12 +141,23 @@ function shapeMeetup(
   joined: boolean,
   isOrganizer = false,
   includePrivateStatus = false,
+  routeDetails?: {
+    distanceKm: number | null;
+    sac: string | null;
+    lat: number | null;
+    lng: number | null;
+  },
+  waitlist?: {
+    count: number;
+    position: number | null;
+  },
 ) {
   return {
     id: row.id,
     routeId: row.routeId,
     routeName: row.routeName,
     canton: row.canton,
+    communityId: row.communityId,
     startsAt: row.startsAt.toISOString(),
     maxParticipants: row.maxParticipants,
     participantCount,
@@ -138,6 +166,13 @@ function shapeMeetup(
     organizerName,
     joined,
     status: row.status,
+    routeDistanceKm: routeDetails?.distanceKm ?? null,
+    routeDifficulty: routeDetails?.sac ?? null,
+    routeStartLat: routeDetails?.lat ?? null,
+    routeStartLng: routeDetails?.lng ?? null,
+    isWaitlisted: waitlist?.position != null,
+    waitlistPosition: waitlist?.position ?? null,
+    waitlistCount: waitlist?.count ?? 0,
     ...(includePrivateStatus
       ? {
           cancellationReason: row.cancellationReason,
@@ -321,6 +356,46 @@ router.get("/meetups", async (req, res): Promise<void> => {
   const currentUserId = getAuth(req)?.userId ?? null;
   const from = parseFrom(req.query.from);
   const routeId = typeof req.query.routeId === "string" ? req.query.routeId.trim() : "";
+  const communityId = parseOptionalText(req.query.communityId);
+  const search = parseOptionalText(req.query.search);
+  const canton = parseOptionalText(req.query.canton);
+  const difficulty = parseOptionalText(req.query.difficulty);
+  const onlyMine = req.query.mine === "true";
+
+  if ((communityId || onlyMine) && !currentUserId) {
+    res.status(401).json({ error: "Anmeldung erforderlich" });
+    return;
+  }
+  if (communityId) {
+    const [membership] = await db
+      .select({ id: communityMembersTable.id })
+      .from(communityMembersTable)
+      .where(
+        and(
+          eq(communityMembersTable.communityId, communityId),
+          eq(communityMembersTable.userId, currentUserId!),
+        ),
+      )
+      .limit(1);
+    if (!membership) {
+      res.status(403).json({ error: "Community-Mitgliedschaft erforderlich" });
+      return;
+    }
+  }
+
+  let mineIds: string[] | null = null;
+  if (onlyMine) {
+    const mineRows = await db
+      .select({ meetupId: meetupParticipantsTable.meetupId })
+      .from(meetupParticipantsTable)
+      .where(eq(meetupParticipantsTable.userId, currentUserId!));
+    mineIds = mineRows.map((row) => row.meetupId);
+    if (!mineIds.length) {
+      res.json({ meetups: [] });
+      return;
+    }
+  }
+
   const blockedRows = currentUserId
     ? await db
         .select({ userId: meetupBlocksTable.blockedUserId })
@@ -350,6 +425,16 @@ router.get("/meetups", async (req, res): Promise<void> => {
         gte(meetupsTable.startsAt, from),
         eq(meetupsTable.status, "scheduled"),
         routeId ? eq(meetupsTable.routeId, routeId) : undefined,
+        communityId ? eq(meetupsTable.communityId, communityId) : undefined,
+        canton ? ilike(meetupsTable.canton, canton) : undefined,
+        search
+          ? or(
+              ilike(meetupsTable.routeName, `%${search}%`),
+              ilike(meetupsTable.canton, `%${search}%`),
+              ilike(meetupsTable.note, `%${search}%`),
+            )
+          : undefined,
+        mineIds ? inArray(meetupsTable.id, mineIds) : undefined,
         blockedIds.length ? notInArray(meetupsTable.organizerId, blockedIds) : undefined,
       ),
     )
@@ -357,29 +442,73 @@ router.get("/meetups", async (req, res): Promise<void> => {
     .orderBy(asc(meetupsTable.startsAt))
     .limit(100);
 
-  const organizerNames = await profileNames(rows.map(({ meetup }) => meetup.organizerId));
+  const routeIds = [...new Set(rows.map(({ meetup }) => meetup.routeId))];
+  const routeDetailRows = routeIds.length
+    ? await db
+        .select({
+          id: externalRoutesTable.id,
+          distanceKm: externalRoutesTable.distanceKm,
+          sac: externalRoutesTable.sac,
+          lat: externalRoutesTable.lat,
+          lng: externalRoutesTable.lng,
+        })
+        .from(externalRoutesTable)
+        .where(inArray(externalRoutesTable.id, routeIds))
+    : [];
+  const routeDetails = new Map(routeDetailRows.map((route) => [route.id, route]));
+  const filteredRows = difficulty
+    ? rows.filter(({ meetup }) => routeDetails.get(meetup.routeId)?.sac?.toLowerCase() === difficulty.toLowerCase())
+    : rows;
+
+  const organizerNames = await profileNames(filteredRows.map(({ meetup }) => meetup.organizerId));
   let joinedIds = new Set<string>();
-  if (currentUserId && rows.length) {
+  if (currentUserId && filteredRows.length) {
     const joinedRows = await db
       .select({ meetupId: meetupParticipantsTable.meetupId })
       .from(meetupParticipantsTable)
       .where(
         and(
           eq(meetupParticipantsTable.userId, currentUserId),
-          inArray(meetupParticipantsTable.meetupId, rows.map(({ meetup }) => meetup.id)),
+          inArray(meetupParticipantsTable.meetupId, filteredRows.map(({ meetup }) => meetup.id)),
         ),
       );
     joinedIds = new Set(joinedRows.map((row) => row.meetupId));
   }
 
+  const waitlistRows = filteredRows.length
+    ? await db
+        .select({
+          meetupId: meetupWaitlistTable.meetupId,
+          userId: meetupWaitlistTable.userId,
+          joinedAt: meetupWaitlistTable.joinedAt,
+        })
+        .from(meetupWaitlistTable)
+        .where(inArray(meetupWaitlistTable.meetupId, filteredRows.map(({ meetup }) => meetup.id)))
+        .orderBy(asc(meetupWaitlistTable.joinedAt))
+    : [];
+  const waitlistByMeetup = new Map<string, typeof waitlistRows>();
+  for (const row of waitlistRows) {
+    const current = waitlistByMeetup.get(row.meetupId) ?? [];
+    current.push(row);
+    waitlistByMeetup.set(row.meetupId, current);
+  }
+
   res.json({
-    meetups: rows.map(({ meetup, participantCount }) =>
+    meetups: filteredRows.map(({ meetup, participantCount }) =>
       shapeMeetup(
         meetup,
         Number(participantCount),
         organizerNames.get(meetup.organizerId) ?? "SagaTrail-Wanderer",
         joinedIds.has(meetup.id),
         currentUserId === meetup.organizerId,
+        false,
+        routeDetails.get(meetup.routeId),
+        {
+          count: waitlistByMeetup.get(meetup.id)?.length ?? 0,
+          position: currentUserId
+            ? (waitlistByMeetup.get(meetup.id)?.findIndex((row) => row.userId === currentUserId) ?? -1) + 1 || null
+            : null,
+        },
       ),
     ),
   });
@@ -437,6 +566,28 @@ router.get("/meetups/:id", async (req, res): Promise<void> => {
   }
 
   const joined = Boolean(currentUserId && participants.some((participant) => participant.userId === currentUserId));
+  const waitlistRows = await db
+    .select({
+      userId: meetupWaitlistTable.userId,
+      joinedAt: meetupWaitlistTable.joinedAt,
+    })
+    .from(meetupWaitlistTable)
+    .where(eq(meetupWaitlistTable.meetupId, row.id))
+    .orderBy(asc(meetupWaitlistTable.joinedAt));
+  const routeDetails = await db
+    .select({
+      distanceKm: externalRoutesTable.distanceKm,
+      sac: externalRoutesTable.sac,
+      lat: externalRoutesTable.lat,
+      lng: externalRoutesTable.lng,
+    })
+    .from(externalRoutesTable)
+    .where(eq(externalRoutesTable.id, row.routeId))
+    .limit(1);
+  const routeDetail = routeDetails[0];
+  const waitlistPosition = currentUserId
+    ? (waitlistRows.findIndex((entry) => entry.userId === currentUserId) + 1 || null)
+    : null;
   const canViewRank = joined || currentUserId === row.organizerId;
   const canViewParticipantBio = joined || currentUserId === row.organizerId;
   const canViewMessages = canViewParticipantBio;
@@ -479,6 +630,11 @@ router.get("/meetups/:id", async (req, res): Promise<void> => {
        joined,
       currentUserId === row.organizerId,
       joined,
+      routeDetail,
+      {
+        count: waitlistRows.length,
+        position: waitlistPosition,
+      },
     ),
     participants: participants.map((participant) => ({
       ...(joined ? { userId: participant.userId } : {}),
@@ -525,12 +681,32 @@ router.post("/meetups", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Der Start muss mindestens 15 Minuten in der Zukunft liegen" });
     return;
   }
+  const communityId = parsed.data.communityId ?? null;
+  if (communityId) {
+    const [membership] = await db
+      .select({ id: communityMembersTable.id })
+      .from(communityMembersTable)
+      .innerJoin(communitiesTable, eq(communitiesTable.id, communityMembersTable.communityId))
+      .where(
+        and(
+          eq(communityMembersTable.communityId, communityId),
+          eq(communityMembersTable.userId, userId),
+          eq(communitiesTable.active, true),
+        ),
+      )
+      .limit(1);
+    if (!membership) {
+      res.status(403).json({ error: "Du bist kein Mitglied dieser Community" });
+      return;
+    }
+  }
   const [row] = await db
     .insert(meetupsTable)
     .values({
       routeId: parsed.data.routeId,
       routeName: parsed.data.routeName,
       canton: parsed.data.canton,
+      communityId,
       startsAt,
       maxParticipants: parsed.data.maxParticipants,
       pace: parsed.data.pace,
@@ -545,8 +721,18 @@ router.post("/meetups", async (req, res): Promise<void> => {
     .execute();
 
   const organizer = await profileNames([userId]);
+  const [routeDetail] = await db
+    .select({
+      distanceKm: externalRoutesTable.distanceKm,
+      sac: externalRoutesTable.sac,
+      lat: externalRoutesTable.lat,
+      lng: externalRoutesTable.lng,
+    })
+    .from(externalRoutesTable)
+    .where(eq(externalRoutesTable.id, row.routeId))
+    .limit(1);
   res.status(201).json({
-    ...shapeMeetup(row, 1, organizer.get(userId) ?? "SagaTrail-Wanderer", true, true),
+    ...shapeMeetup(row, 1, organizer.get(userId) ?? "SagaTrail-Wanderer", true, true, false, routeDetail),
     participants: [{
       userId,
       name: organizer.get(userId) ?? "SagaTrail-Wanderer",
@@ -604,12 +790,49 @@ router.post("/meetups/:id/join", async (req, res): Promise<void> => {
       .limit(1);
     if (existing) return { error: "already_joined" as const };
 
+    const [alreadyWaiting] = await tx
+      .select({ userId: meetupWaitlistTable.userId })
+      .from(meetupWaitlistTable)
+      .where(
+        and(
+          eq(meetupWaitlistTable.meetupId, meetupId),
+          eq(meetupWaitlistTable.userId, userId),
+        ),
+      )
+      .limit(1);
+
     const [{ count }] = await tx
       .select({ count: sql<number>`count(*)::int` })
       .from(meetupParticipantsTable)
       .where(eq(meetupParticipantsTable.meetupId, meetupId));
-    if (Number(count) >= meetup.maxParticipants) return { error: "full" as const };
+    if (Number(count) >= meetup.maxParticipants) {
+      if (!alreadyWaiting) {
+        await tx
+          .insert(meetupWaitlistTable)
+          .values({ meetupId, userId })
+          .onConflictDoNothing()
+          .execute();
+      }
+      const positionRows = await tx
+        .select({ userId: meetupWaitlistTable.userId })
+        .from(meetupWaitlistTable)
+        .where(eq(meetupWaitlistTable.meetupId, meetupId))
+        .orderBy(asc(meetupWaitlistTable.joinedAt));
+      return {
+        error: "waitlisted" as const,
+        position: positionRows.findIndex((row) => row.userId === userId) + 1,
+      };
+    }
 
+    await tx
+      .delete(meetupWaitlistTable)
+      .where(
+        and(
+          eq(meetupWaitlistTable.meetupId, meetupId),
+          eq(meetupWaitlistTable.userId, userId),
+        ),
+      )
+      .execute();
     await tx.insert(meetupParticipantsTable).values({ meetupId, userId }).execute();
     return { error: null };
   });
@@ -625,38 +848,90 @@ router.post("/meetups/:id/join", async (req, res): Promise<void> => {
     res.status(409).json({ error: "Dieser Treffpunkt hat bereits begonnen" });
     return;
   }
-  if (result.error === "full") {
-    res.status(409).json({ error: "Dieser Treffpunkt ist bereits voll" });
+  if (result.error === "waitlisted") {
+    res.json({ joined: false, waitlisted: true, waitlistPosition: result.position });
     return;
   }
-  res.json({ joined: true });
+  res.json({ joined: true, waitlisted: false, waitlistPosition: null });
 });
 
 router.delete("/meetups/:id/join", async (req, res): Promise<void> => {
   const userId = requireUserId(req, res);
   if (!userId) return;
-  const [meetup] = await db
-    .select({ organizerId: meetupsTable.organizerId })
-    .from(meetupsTable)
-    .where(eq(meetupsTable.id, String(req.params.id)))
-    .limit(1);
-  if (!meetup) {
+  const result = await db.transaction(async (tx) => {
+    const [meetup] = await tx
+      .select()
+      .from(meetupsTable)
+      .where(eq(meetupsTable.id, String(req.params.id)))
+      .for("update")
+      .limit(1);
+    if (!meetup) return { error: "not_found" as const };
+    if (meetup.organizerId === userId) return { error: "organizer" as const };
+
+    const deletedParticipant = await tx
+      .delete(meetupParticipantsTable)
+      .where(
+        and(
+          eq(meetupParticipantsTable.meetupId, meetup.id),
+          eq(meetupParticipantsTable.userId, userId),
+        ),
+      )
+      .returning({ userId: meetupParticipantsTable.userId });
+    const deletedWaitlist = await tx
+      .delete(meetupWaitlistTable)
+      .where(
+        and(
+          eq(meetupWaitlistTable.meetupId, meetup.id),
+          eq(meetupWaitlistTable.userId, userId),
+        ),
+      )
+      .returning({ userId: meetupWaitlistTable.userId });
+    if (!deletedParticipant.length && !deletedWaitlist.length) return { error: "not_joined" as const };
+
+    if (deletedParticipant.length && meetup.status === "scheduled") {
+      const [next] = await tx
+        .select()
+        .from(meetupWaitlistTable)
+        .where(eq(meetupWaitlistTable.meetupId, meetup.id))
+        .orderBy(asc(meetupWaitlistTable.joinedAt))
+        .limit(1);
+      if (next) {
+        await tx.insert(meetupParticipantsTable).values({ meetupId: meetup.id, userId: next.userId }).execute();
+        await tx
+          .delete(meetupWaitlistTable)
+          .where(
+            and(
+              eq(meetupWaitlistTable.meetupId, meetup.id),
+              eq(meetupWaitlistTable.userId, next.userId),
+            ),
+          )
+          .execute();
+        await tx
+          .insert(meetupNotificationOutboxTable)
+          .values({
+            meetupId: meetup.id,
+            recipientUserId: next.userId,
+            type: "meetup_promoted",
+            dedupeKey: `${meetup.id}:${next.userId}:meetup_promoted:${Date.now()}`,
+          })
+          .onConflictDoNothing()
+          .execute();
+      }
+    }
+    return { error: null };
+  });
+  if (result.error === "not_found") {
     res.status(404).json({ error: "Treffpunkt nicht gefunden" });
     return;
   }
-  if (meetup.organizerId === userId) {
+  if (result.error === "organizer") {
     res.status(400).json({ error: "Der Organisator kann den Treffpunkt nicht verlassen" });
     return;
   }
-  await db
-    .delete(meetupParticipantsTable)
-    .where(
-      and(
-        eq(meetupParticipantsTable.meetupId, String(req.params.id)),
-        eq(meetupParticipantsTable.userId, userId),
-      ),
-    )
-    .execute();
+  if (result.error === "not_joined") {
+    res.status(404).json({ error: "Keine Teilnahme oder Wartelistenposition gefunden" });
+    return;
+  }
   res.json({ joined: false });
 });
 
@@ -845,6 +1120,120 @@ router.post("/meetups/:id/cancel", async (req, res): Promise<void> => {
     return;
   }
   res.status(204).send();
+});
+
+router.patch("/meetups/:id", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const parsed = UpdateMeetupSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Ungültige Treffpunkt-Daten" });
+    return;
+  }
+
+  const startsAt = new Date(parsed.data.startsAt);
+  if (startsAt.getTime() < Date.now() + 15 * 60_000) {
+    res.status(400).json({ error: "Der Start muss mindestens 15 Minuten in der Zukunft liegen" });
+    return;
+  }
+
+  const result = await db.transaction(async (tx) => {
+    const [meetup] = await tx
+      .select()
+      .from(meetupsTable)
+      .where(eq(meetupsTable.id, String(req.params.id)))
+      .for("update")
+      .limit(1);
+    if (!meetup) return { error: "not_found" as const };
+    if (meetup.organizerId !== userId) return { error: "forbidden" as const };
+    if (meetup.status !== "scheduled") return { error: "not_scheduled" as const };
+
+    const [{ count }] = await tx
+      .select({ count: sql<number>`count(*)::int` })
+      .from(meetupParticipantsTable)
+      .where(eq(meetupParticipantsTable.meetupId, meetup.id));
+    if (parsed.data.maxParticipants < Number(count)) return { error: "too_small" as const };
+
+    const now = new Date();
+    const [updated] = await tx
+      .update(meetupsTable)
+      .set({
+        startsAt,
+        maxParticipants: parsed.data.maxParticipants,
+        pace: parsed.data.pace,
+        note: parsed.data.note,
+        updatedAt: now,
+      })
+      .where(eq(meetupsTable.id, meetup.id))
+      .returning();
+
+    const participants = await tx
+      .select({ userId: meetupParticipantsTable.userId })
+      .from(meetupParticipantsTable)
+      .where(eq(meetupParticipantsTable.meetupId, meetup.id));
+    const recipients = participants.map(({ userId: recipientUserId }) => recipientUserId).filter((id) => id !== userId);
+    if (recipients.length) {
+      const [actor] = await tx
+        .select({ name: profilesTable.name })
+        .from(profilesTable)
+        .where(eq(profilesTable.id, userId))
+        .limit(1);
+      await tx
+        .insert(meetupNotificationOutboxTable)
+        .values(
+          recipients.map((recipientUserId) => ({
+            meetupId: meetup.id,
+            recipientUserId,
+            type: "meetup_updated",
+            dedupeKey: `${meetup.id}:${recipientUserId}:meetup_updated:${now.getTime()}`,
+            actorName: actor?.name ?? null,
+          })),
+        )
+        .onConflictDoNothing()
+        .execute();
+    }
+    return { error: null, meetup: updated, participantCount: Number(count) };
+  });
+
+  if (result.error === "not_found" || result.error === "forbidden") {
+    res.status(result.error === "forbidden" ? 403 : 404).json({ error: "Treffpunkt nicht gefunden oder nicht berechtigt" });
+    return;
+  }
+  if (result.error === "not_scheduled") {
+    res.status(409).json({ error: "Dieser Treffpunkt kann nicht mehr bearbeitet werden" });
+    return;
+  }
+  if (result.error === "too_small") {
+    res.status(400).json({ error: "Das Teilnehmerlimit darf nicht unter der aktuellen Teilnehmerzahl liegen" });
+    return;
+  }
+
+  const [organizer] = await db
+    .select({ name: profilesTable.name })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId))
+    .limit(1);
+  const [routeDetail] = await db
+    .select({
+      distanceKm: externalRoutesTable.distanceKm,
+      sac: externalRoutesTable.sac,
+      lat: externalRoutesTable.lat,
+      lng: externalRoutesTable.lng,
+    })
+    .from(externalRoutesTable)
+    .where(eq(externalRoutesTable.id, result.meetup.routeId))
+    .limit(1);
+  res.json(
+    shapeMeetup(
+      result.meetup,
+       result.participantCount,
+      organizer?.name ?? "SagaTrail-Wanderer",
+      true,
+      true,
+      false,
+      routeDetail,
+    ),
+  );
 });
 
 router.delete("/meetups/:id", async (req, res): Promise<void> => {
@@ -1045,6 +1434,38 @@ router.delete("/meetups/:id/participants/:userId", async (req, res): Promise<voi
       ),
     )
     .returning({ userId: meetupParticipantsTable.userId });
+  if (removed.length) {
+    const [next] = await db
+      .select()
+      .from(meetupWaitlistTable)
+      .where(eq(meetupWaitlistTable.meetupId, meetupId))
+      .orderBy(asc(meetupWaitlistTable.joinedAt))
+      .limit(1);
+    if (next) {
+      await db.transaction(async (tx) => {
+        await tx.insert(meetupParticipantsTable).values({ meetupId, userId: next.userId }).execute();
+        await tx
+          .delete(meetupWaitlistTable)
+          .where(
+            and(
+              eq(meetupWaitlistTable.meetupId, meetupId),
+              eq(meetupWaitlistTable.userId, next.userId),
+            ),
+          )
+          .execute();
+        await tx
+          .insert(meetupNotificationOutboxTable)
+          .values({
+            meetupId,
+            recipientUserId: next.userId,
+            type: "meetup_promoted",
+            dedupeKey: `${meetupId}:${next.userId}:meetup_promoted:${Date.now()}`,
+          })
+          .onConflictDoNothing()
+          .execute();
+      });
+    }
+  }
   if (!removed.length) {
     res.status(404).json({ error: "Teilnehmer nicht gefunden" });
     return;

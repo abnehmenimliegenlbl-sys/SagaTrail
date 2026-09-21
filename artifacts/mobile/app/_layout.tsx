@@ -125,17 +125,17 @@ function AuthTokenBridge({ children }: { children: React.ReactNode }) {
 function ClerkGuard({ children }: { children: React.ReactNode }) {
   const { isLoaded } = useAuth();
   if (!isLoaded) {
-    return (
+    return Platform.OS === "web" ? (
       <StartupState
         title="Anmeldung wird geprüft"
         detail="SagaTrail stellt deine Sitzung wieder her."
       />
-    );
+    ) : null;
   }
   return <>{children}</>;
 }
 
-function RootLayoutNav() {
+function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   const { hydrated, profile } = useApp();
   const { isLoaded, isSignedIn } = useAuth();
   const updatesState = Updates.useUpdates();
@@ -148,6 +148,11 @@ function RootLayoutNav() {
   const permissionCheckGenerationRef = useRef(0);
   const updateReloadStartedRef = useRef(false);
   const shouldCheckPermissions = hydrated && isLoaded && isSignedIn && Boolean(profile);
+
+  useEffect(() => {
+    if (!fontsReady || !isLoaded || !hydrated) return;
+    void SplashScreen.hideAsync();
+  }, [fontsReady, hydrated, isLoaded]);
 
   const refreshRequiredPermissions = useCallback(async (reason = "app-start") => {
     const generation = ++permissionCheckGenerationRef.current;
@@ -319,21 +324,21 @@ function RootLayoutNav() {
   ]);
 
   if (!isLoaded) {
-    return (
+    return Platform.OS === "web" ? (
       <StartupState
         title="SagaTrail wird vorbereitet"
         detail="Katalog, Profil und Wanderungen werden geladen."
       />
-    );
+    ) : null;
   }
 
   if (!hydrated) {
-    return (
+    return Platform.OS === "web" ? (
       <StartupState
         title="Dein Profil wird geladen"
         detail="Deine gespeicherten Wanderungen bleiben erhalten."
       />
-    );
+    ) : null;
   }
 
   return (
@@ -430,48 +435,8 @@ export default function RootLayout() {
     checkPreviousCrash();
   }, []);
 
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
-
   if (!fontsLoaded && !fontError) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: colors.hell.nachthimmel,
-          paddingHorizontal: 32,
-        }}
-      >
-        <Text
-          style={{
-            color: colors.hell.foreground,
-            fontFamily: "System",
-            fontSize: 22,
-            fontWeight: "700",
-            textAlign: "center",
-          }}
-        >
-          SagaTrail wird vorbereitet
-        </Text>
-        <Text
-          style={{
-            color: colors.hell.mutedForeground,
-            fontFamily: "System",
-            fontSize: 15,
-            marginTop: 8,
-            textAlign: "center",
-          }}
-        >
-          Deine Wanderungen und dein Profil werden geladen.
-        </Text>
-        <ActivityIndicator color={colors.hell.accent} size="small" style={{ marginTop: 20 }} />
-      </View>
-    );
+    return Platform.OS === "web" ? <StartupState /> : null;
   }
 
   return (
@@ -493,7 +458,7 @@ export default function RootLayout() {
                           <AppProvider>
                             <CatalogProvider>
                               <DownloadProvider>
-                                <RootLayoutNav />
+                                <RootLayoutNav fontsReady={fontsLoaded || Boolean(fontError)} />
                               </DownloadProvider>
                             </CatalogProvider>
                           </AppProvider>

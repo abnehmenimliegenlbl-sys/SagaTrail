@@ -18,6 +18,9 @@ export interface CommunityScreenStrings {
   openFacebookGroup: string;
   planCommunityHike: string;
   inviteCode: string;
+  leaveCommunity: string;
+  leaveCommunityConfirm: (name: string) => string;
+  cancel: string;
 }
 
 const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
@@ -40,6 +43,9 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     openFacebookGroup: "Facebook-Gruppe öffnen",
     planCommunityHike: "Wanderung für die Community planen",
     inviteCode: "Einladungscode",
+    leaveCommunity: "Community verlassen",
+    leaveCommunityConfirm: (name) => `Möchtest du «${name}» wirklich verlassen?`,
+    cancel: "Abbrechen",
   },
   gsw: {
     eyebrow: "Dini Gruppe",
@@ -60,6 +66,9 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     openFacebookGroup: "Facebook-Gruppe öffne",
     planCommunityHike: "Wanderig für d Community plane",
     inviteCode: "Iiladigs-Code",
+    leaveCommunity: "Community verlasse",
+    leaveCommunityConfirm: (name) => `Wotsch «${name}» würkli verlasse?`,
+    cancel: "Abbreche",
   },
   en: {
     eyebrow: "Your groups",
@@ -80,6 +89,9 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     openFacebookGroup: "Open Facebook group",
     planCommunityHike: "Plan a hike for the community",
     inviteCode: "Invitation code",
+    leaveCommunity: "Leave community",
+    leaveCommunityConfirm: (name) => `Do you really want to leave “${name}”?`,
+    cancel: "Cancel",
   },
   fr: {
     eyebrow: "Tes groupes",
@@ -100,6 +112,9 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     openFacebookGroup: "Ouvrir le groupe Facebook",
     planCommunityHike: "Planifier une randonnée pour la communauté",
     inviteCode: "Code d'invitation",
+    leaveCommunity: "Quitter la communauté",
+    leaveCommunityConfirm: (name) => `Veux-tu vraiment quitter «${name}» ?`,
+    cancel: "Annuler",
   },
   it: {
     eyebrow: "I tuoi gruppi",
@@ -120,6 +135,9 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     openFacebookGroup: "Apri il gruppo Facebook",
     planCommunityHike: "Organizza un'escursione per la community",
     inviteCode: "Codice d'invito",
+    leaveCommunity: "Abbandona la community",
+    leaveCommunityConfirm: (name) => `Vuoi davvero abbandonare «${name}»?`,
+    cancel: "Annulla",
   },
   es: {
     eyebrow: "Tus grupos",
@@ -140,6 +158,9 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     openFacebookGroup: "Abrir grupo de Facebook",
     planCommunityHike: "Planificar una caminata para la comunidad",
     inviteCode: "Código de invitación",
+    leaveCommunity: "Salir de la comunidad",
+    leaveCommunityConfirm: (name) => `¿Quieres salir de «${name}»?`,
+    cancel: "Cancelar",
   },
   pt: {
     eyebrow: "Os seus grupos",
@@ -160,6 +181,9 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     openFacebookGroup: "Abrir grupo do Facebook",
     planCommunityHike: "Planear caminhada para a comunidade",
     inviteCode: "Código de convite",
+    leaveCommunity: "Sair da comunidade",
+    leaveCommunityConfirm: (name) => `Quer sair de «${name}»?`,
+    cancel: "Cancelar",
   },
   zh: {
     eyebrow: "你的群组",
@@ -180,6 +204,9 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     openFacebookGroup: "打开 Facebook 群组",
     planCommunityHike: "为社区计划徒步",
     inviteCode: "邀请码",
+    leaveCommunity: "退出社区",
+    leaveCommunityConfirm: (name) => `确定要退出“${name}”吗？`,
+    cancel: "取消",
   },
   ru: {
     eyebrow: "Твои группы",
@@ -200,6 +227,9 @@ const COMMUNITY_STRINGS: StringsDict<CommunityScreenStrings> = {
     openFacebookGroup: "Открыть группу Facebook",
     planCommunityHike: "Запланировать поход для сообщества",
     inviteCode: "Код приглашения",
+    leaveCommunity: "Покинуть сообщество",
+    leaveCommunityConfirm: (name) => `Точно покинуть сообщество «${name}»?`,
+    cancel: "Отмена",
   },
 };
 

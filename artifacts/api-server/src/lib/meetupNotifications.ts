@@ -12,7 +12,7 @@ import { logger } from "./logger";
 
 type ReminderKind = "day_before" | "soon";
 type MeetupPushData = {
-  type: "meetup_reminder" | "meetup_cancelled" | "meetup_delayed" | "meetup_started" | "meetup_completed" | "meetup_message";
+  type: "meetup_reminder" | "meetup_cancelled" | "meetup_delayed" | "meetup_started" | "meetup_completed" | "meetup_message" | "meetup_updated" | "meetup_promoted";
   meetupId: string;
 };
 
@@ -147,6 +147,20 @@ function lifecycleText(language: string, routeName: string, type: "meetup_starte
   return texts[language] ?? texts.de;
 }
 
+function updatedText(language: string, routeName: string) {
+  if (language === "fr") return { title: "Rendez-vous modifié", body: routeName };
+  if (language === "it") return { title: "Ritrovo modificato", body: routeName };
+  if (language === "en") return { title: "Meetup updated", body: routeName };
+  return { title: "Treffpunkt aktualisiert", body: routeName };
+}
+
+function promotedText(language: string, routeName: string) {
+  if (language === "fr") return { title: "Place confirmée", body: routeName };
+  if (language === "it") return { title: "Posto confermato", body: routeName };
+  if (language === "en") return { title: "A place opened up", body: routeName };
+  return { title: "Du bist nachgerückt", body: routeName };
+}
+
 function messageText(language: string, routeName: string, text: string, actorName: string | null) {
   const sender = actorName ? ` (${actorName})` : "";
   const titles: Record<string, string> = {
@@ -227,7 +241,7 @@ async function deliverOutboxRow(row: OutboxRow): Promise<void> {
     await markOutboxSent(row.id);
     return;
   }
-  if (!["meetup_cancelled", "meetup_delayed", "meetup_started", "meetup_completed", "meetup_message"].includes(row.type)) {
+  if (!["meetup_cancelled", "meetup_delayed", "meetup_started", "meetup_completed", "meetup_message", "meetup_updated", "meetup_promoted"].includes(row.type)) {
     await markOutboxSent(row.id);
     logger.warn({ meetupId: row.meetupId, outboxId: row.id, type: row.type }, "Unbekannter Treffpunkt-Outbox-Typ verworfen");
     return;
@@ -238,9 +252,13 @@ async function deliverOutboxRow(row: OutboxRow): Promise<void> {
     ? cancelledText(language, context.routeName, row.cancellationReason ?? "Treffpunkt abgesagt", row.actorName)
     : row.type === "meetup_delayed"
       ? delayedText(language, context.routeName, row.delayMinutes ?? 5, row.actorName)
-      : row.type === "meetup_message"
+        : row.type === "meetup_message"
         ? messageText(language, context.routeName, row.messageText ?? "", row.actorName)
-        : lifecycleText(language, context.routeName, row.type as "meetup_started" | "meetup_completed");
+        : row.type === "meetup_updated"
+          ? updatedText(language, context.routeName)
+          : row.type === "meetup_promoted"
+            ? promotedText(language, context.routeName)
+            : lifecycleText(language, context.routeName, row.type as "meetup_started" | "meetup_completed");
   try {
     await sendPush(context.pushToken, message.title, message.body, data);
     await markOutboxSent(row.id);

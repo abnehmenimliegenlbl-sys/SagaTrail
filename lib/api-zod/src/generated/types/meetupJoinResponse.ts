@@ -8,4 +8,6 @@
 
 export interface MeetupJoinResponse {
   joined: boolean;
+  waitlisted: boolean;
+  waitlistPosition: number | null;
 }

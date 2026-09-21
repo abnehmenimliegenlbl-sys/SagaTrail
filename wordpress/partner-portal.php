@@ -26,6 +26,8 @@ $spp_i18n = [
     'logout_btn'      => 'Abmelden',
     'stat_views'      => '👁 Profil-Aufrufe',
     'stat_taps'       => '🛍 Angebot-Tipps',
+    'stat_members'    => '👥 Community-Mitglieder',
+    'stat_completed'  => '🥾 Abgeschlossene Wanderungen',
     'billing_btn'     => '💳 Abo &amp; Rechnungen verwalten',
     /* Foto */
     'foto_h2'         => 'Titelfoto',
@@ -141,6 +143,8 @@ $spp_i18n = [
     'logout_btn'      => 'Se déconnecter',
     'stat_views'      => '👁 Vues du profil',
     'stat_taps'       => '🛍 Clics sur l\'offre',
+    'stat_members'    => '👥 Membres de la communauté',
+    'stat_completed'  => '🥾 Randonnées terminées',
     'billing_btn'     => '💳 Gérer l\'abonnement &amp; factures',
     'foto_h2'         => 'Photo principale',
     'foto_desc'       => 'La photo apparaît en haut de votre fiche partenaire dans l\'app. Format paysage, min. 800 × 450 px, max. 8 Mo (JPEG, PNG, WebP).',
@@ -249,6 +253,8 @@ $spp_i18n = [
     'logout_btn'      => 'Sign out',
     'stat_views'      => '👁 Profile views',
     'stat_taps'       => '🛍 Offer taps',
+    'stat_members'    => '👥 Community members',
+    'stat_completed'  => '🥾 Completed hikes',
     'billing_btn'     => '💳 Manage subscription &amp; invoices',
     'foto_h2'         => 'Cover photo',
     'foto_desc'       => 'The photo appears at the top of your partner tile in the app. Landscape format, min. 800 × 450 px, max. 8 MB (JPEG, PNG, WebP).',
@@ -357,6 +363,8 @@ $spp_i18n = [
     'logout_btn'      => 'Disconnettersi',
     'stat_views'      => '👁 Visualizzazioni profilo',
     'stat_taps'       => '🛍 Clic sull\'offerta',
+    'stat_members'    => '👥 Membri della community',
+    'stat_completed'  => '🥾 Escursioni completate',
     'billing_btn'     => '💳 Gestisci abbonamento &amp; fatture',
     'foto_h2'         => 'Foto principale',
     'foto_desc'       => 'La foto appare in cima alla tua scheda partner nell\'app. Formato orizzontale, min. 800 × 450 px, max. 8 MB (JPEG, PNG, WebP).',
@@ -583,8 +591,8 @@ $spp_l10n_js = wp_json_encode( $spp_l10n, JSON_UNESCAPED_UNICODE );
         </div>
       </div>
       <div class="spp-stat-row">
-        <div class="spp-stat"><div class="num" id="spp-views">–</div><div class="lbl"><?php echo esc_html( $t['stat_views'] ); ?></div></div>
-        <div class="spp-stat"><div class="num" id="spp-taps">–</div><div class="lbl"><?php echo esc_html( $t['stat_taps'] ); ?></div></div>
+        <div class="spp-stat"><div class="num" id="spp-views">–</div><div class="lbl" id="spp-views-label"><?php echo esc_html( $t['stat_views'] ); ?></div></div>
+        <div class="spp-stat"><div class="num" id="spp-taps">–</div><div class="lbl" id="spp-taps-label"><?php echo esc_html( $t['stat_taps'] ); ?></div></div>
       </div>
       <div id="spp-paket-info" class="spp-paket-info" style="display:none"></div>
 
@@ -1029,8 +1037,15 @@ var SPP_FT     = <?php echo $spp_ft_js; ?>;
           '<span style="font-size:13px;color:#777">' + katLabel(p.kategorie) +
           ' · ' + (p.canton || '') +
           (p.paket ? ' · Paket <strong>' + p.paket.charAt(0).toUpperCase() + p.paket.slice(1) + '</strong>' : '') + '</span>';
-        document.getElementById('spp-views').textContent = fmt(p.views);
-        document.getElementById('spp-taps').textContent  = fmt(p.offersTapped);
+        if (p.portalKind === 'community') {
+          document.getElementById('spp-views-label').textContent = SPP_L10N.stat_members;
+          document.getElementById('spp-taps-label').textContent  = SPP_L10N.stat_completed;
+          document.getElementById('spp-views').textContent = fmt(p.communityMemberCount);
+          document.getElementById('spp-taps').textContent  = fmt(p.completedMeetupCount);
+        } else {
+          document.getElementById('spp-views').textContent = fmt(p.views);
+          document.getElementById('spp-taps').textContent  = fmt(p.offersTapped);
+        }
         document.getElementById('spp-status-badge').innerHTML =
           p.isActive
             ? '<span class="spp-badge spp-badge-green">' + SPP_L10N.js_active_app + '</span>'

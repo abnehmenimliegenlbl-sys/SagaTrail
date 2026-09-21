@@ -3,8 +3,6 @@ import { createUseStrings, StringsDict } from "../createStrings";
 export interface HomeStrings {
   welcomeBack: string;
   defaultName: string;
-  homeCantonTitle: string;
-  homeCantonHint: string;
   otherCantonsTitle: string;
   cantonsTitle: string;
   routeCount: (count: number) => string;
@@ -34,8 +32,6 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
   de: {
     welcomeBack: "Willkommen zurück",
     defaultName: "Wanderer",
-    homeCantonTitle: "Dein Heimatkanton",
-    homeCantonHint: "Ohne Premium hier frei begehbar",
     otherCantonsTitle: "Weitere Kantone",
     cantonsTitle: "Kantone",
     routeCount: (n) => `${n} ${n === 1 ? "Wanderroute" : "Wanderrouten"}`,
@@ -63,8 +59,6 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
   gsw: {
     welcomeBack: "Willkomme zrugg",
     defaultName: "Wanderer",
-    homeCantonTitle: "Din Heimatkanton",
-    homeCantonHint: "Ohni Premium da frei begehbar",
     otherCantonsTitle: "Wiiteri Kantön",
     cantonsTitle: "Kantön",
     routeCount: (n) => `${n} ${n === 1 ? "Wanderroute" : "Wanderroute"}`,
@@ -92,8 +86,6 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
   en: {
     welcomeBack: "Welcome back",
     defaultName: "Hiker",
-    homeCantonTitle: "Your home canton",
-    homeCantonHint: "Accessible here without premium",
     otherCantonsTitle: "Other cantons",
     cantonsTitle: "Cantons",
     routeCount: (n) => `${n} ${n === 1 ? "hiking route" : "hiking routes"}`,
@@ -121,8 +113,6 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
   fr: {
     welcomeBack: "Bon retour parmi nous",
     defaultName: "Randonneur·euse",
-    homeCantonTitle: "Ton canton d'origine",
-    homeCantonHint: "Accès libre ici sans premium",
     otherCantonsTitle: "Autres cantons",
     cantonsTitle: "Cantons",
     routeCount: (n) => `${n} ${n <= 1 ? "itinéraire" : "itinéraires"}`,
@@ -150,8 +140,6 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
   it: {
     welcomeBack: "Bentornato/a",
     defaultName: "Escursionista",
-    homeCantonTitle: "Il tuo cantone d'origine",
-    homeCantonHint: "Accesso libero qui senza premium",
     otherCantonsTitle: "Altri cantoni",
     cantonsTitle: "Cantoni",
     routeCount: (n) => `${n} ${n === 1 ? "sentiero" : "sentieri"}`,
@@ -179,8 +167,6 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
   es: {
     welcomeBack: "Bienvenido/a de nuevo",
     defaultName: "Senderista",
-    homeCantonTitle: "Tu cantón de origen",
-    homeCantonHint: "Acceso libre aquí sin premium",
     otherCantonsTitle: "Otros cantones",
     cantonsTitle: "Cantones",
     routeCount: (n) => `${n} ${n === 1 ? "ruta de senderismo" : "rutas de senderismo"}`,
@@ -208,8 +194,6 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
   pt: {
     welcomeBack: "Bem-vindo/a de volta",
     defaultName: "Caminhante",
-    homeCantonTitle: "Seu cantão de origem",
-    homeCantonHint: "Acesso livre aqui sem premium",
     otherCantonsTitle: "Outros cantões",
     cantonsTitle: "Cantões",
     routeCount: (n) => `${n} ${n === 1 ? "rota de caminhada" : "rotas de caminhada"}`,
@@ -237,8 +221,6 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
   zh: {
     welcomeBack: "欢迎回来",
     defaultName: "徒步者",
-    homeCantonTitle: "你的家乡州",
-    homeCantonHint: "无需高级版即可在此免费游览",
     otherCantonsTitle: "其他联邦州",
     cantonsTitle: "联邦州",
     routeCount: (n) => `${n} 条徒步路线`,
@@ -266,8 +248,6 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
   ru: {
     welcomeBack: "С возвращением",
     defaultName: "Путник",
-    homeCantonTitle: "Твой родной кантон",
-    homeCantonHint: "Доступен здесь бесплатно, без Premium",
     otherCantonsTitle: "Другие кантоны",
     cantonsTitle: "Кантоны",
     routeCount: (n) => `${n} ${n === 1 ? "маршрут" : "маршрутов"}`,

@@ -4,7 +4,6 @@ export interface EinstellungenStrings {
   eyebrow: string;
   title: string;
   editNameTitle: string;
-  editCantonTitle: string;
   saveLabel: string;
   sectionProfil: string;
   sectionWanderung: string;
@@ -20,7 +19,6 @@ export interface EinstellungenStrings {
   avatarSelect: string;
   avatarUploading: string;
   avatarHint: string;
-  homeCantonLabel: string;
   archetypeLabel: string;
   ageTierLabel: string;
   languageLabel: string;
@@ -84,7 +82,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     eyebrow: "Dein Profil",
     title: "Einstellungen",
     editNameTitle: "Name bearbeiten",
-    editCantonTitle: "Heimatkanton wählen",
     saveLabel: "Speichern",
     sectionProfil: "Profil",
     sectionWanderung: "Wanderung",
@@ -100,7 +97,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     avatarSelect: "Auswählen",
     avatarUploading: "Wird hochgeladen …",
     avatarHint: "Profilbild für dein SagaTrail-Profil",
-    homeCantonLabel: "Heimatkanton",
     archetypeLabel: "Archetyp",
     ageTierLabel: "Alterstufe",
     languageLabel: "Sprache",
@@ -162,7 +158,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     eyebrow: "Dis Profil",
     title: "Iistellige",
     editNameTitle: "Name bearbeite",
-    editCantonTitle: "Heimetkanton wähle",
     saveLabel: "Spichere",
     sectionProfil: "Profil",
     sectionWanderung: "Wandere",
@@ -178,7 +173,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     avatarSelect: "Uswähle",
     avatarUploading: "Wird ueglade …",
     avatarHint: "Profilbild für dis SagaTrail-Profil",
-    homeCantonLabel: "Heimetkanton",
     archetypeLabel: "Archetyp",
     ageTierLabel: "Alterstuefe",
     languageLabel: "Sprach",
@@ -240,7 +234,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     eyebrow: "Ton profil",
     title: "Paramètres",
     editNameTitle: "Modifier le nom",
-    editCantonTitle: "Choisir le canton d'origine",
     saveLabel: "Enregistrer",
     sectionProfil: "Profil",
     sectionWanderung: "Randonnée",
@@ -256,7 +249,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     avatarSelect: "Choisir",
     avatarUploading: "Téléchargement …",
     avatarHint: "Photo de profil pour ton profil SagaTrail",
-    homeCantonLabel: "Canton d'origine",
     archetypeLabel: "Archétype",
     ageTierLabel: "Tranche d'âge",
     languageLabel: "Langue",
@@ -318,7 +310,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     eyebrow: "Il tuo profilo",
     title: "Impostazioni",
     editNameTitle: "Modifica nome",
-    editCantonTitle: "Scegli il cantone d'origine",
     saveLabel: "Salva",
     sectionProfil: "Profilo",
     sectionWanderung: "Escursione",
@@ -334,7 +325,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     avatarSelect: "Scegli",
     avatarUploading: "Caricamento …",
     avatarHint: "Foto del profilo SagaTrail",
-    homeCantonLabel: "Cantone d'origine",
     archetypeLabel: "Archetipo",
     ageTierLabel: "Fascia d'età",
     languageLabel: "Lingua",
@@ -396,7 +386,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     eyebrow: "Your Profile",
     title: "Settings",
     editNameTitle: "Edit Name",
-    editCantonTitle: "Choose Home Canton",
     saveLabel: "Save",
     sectionProfil: "Profile",
     sectionWanderung: "Hike",
@@ -412,7 +401,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     avatarSelect: "Choose",
     avatarUploading: "Uploading …",
     avatarHint: "Profile picture for your SagaTrail profile",
-    homeCantonLabel: "Home Canton",
     archetypeLabel: "Archetype",
     ageTierLabel: "Age Tier",
     languageLabel: "Language",
@@ -474,7 +462,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     eyebrow: "个人资料",
     title: "设置",
     editNameTitle: "编辑姓名",
-    editCantonTitle: "选择家乡州",
     saveLabel: "保存",
     sectionProfil: "个人资料",
     sectionWanderung: "徒步",
@@ -490,7 +477,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     avatarSelect: "选择",
     avatarUploading: "上传中……",
     avatarHint: "你的 SagaTrail 个人资料头像",
-    homeCantonLabel: "家乡州",
     archetypeLabel: "原型",
     ageTierLabel: "年龄段",
     languageLabel: "语言",
@@ -552,7 +538,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     eyebrow: "Tu perfil",
     title: "Ajustes",
     editNameTitle: "Editar nombre",
-    editCantonTitle: "Elegir cantón de origen",
     saveLabel: "Guardar",
     sectionProfil: "Perfil",
     sectionWanderung: "Senderismo",
@@ -568,7 +553,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     avatarSelect: "Elegir",
     avatarUploading: "Subiendo …",
     avatarHint: "Foto de perfil para tu perfil de SagaTrail",
-    homeCantonLabel: "Cantón de origen",
     archetypeLabel: "Arquetipo",
     ageTierLabel: "Grupo de edad",
     languageLabel: "Idioma",
@@ -630,7 +614,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     eyebrow: "Seu Perfil",
     title: "Configurações",
     editNameTitle: "Editar nome",
-    editCantonTitle: "Escolher cantão de origem",
     saveLabel: "Salvar",
     sectionProfil: "Perfil",
     sectionWanderung: "Caminhada",
@@ -646,7 +629,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     avatarSelect: "Escolher",
     avatarUploading: "A carregar …",
     avatarHint: "Foto de perfil para o seu perfil SagaTrail",
-    homeCantonLabel: "Cantão de origem",
     archetypeLabel: "Arquétipo",
     ageTierLabel: "Faixa etária",
     languageLabel: "Idioma",
@@ -708,7 +690,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     eyebrow: "Твой профиль",
     title: "Настройки",
     editNameTitle: "Изменить имя",
-    editCantonTitle: "Выбрать родной кантон",
     saveLabel: "Сохранить",
     sectionProfil: "Профиль",
     sectionWanderung: "Поход",
@@ -724,7 +705,6 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     avatarSelect: "Выбрать",
     avatarUploading: "Загрузка …",
     avatarHint: "Фото профиля для вашего профиля SagaTrail",
-    homeCantonLabel: "Родной кантон",
     archetypeLabel: "Архетип",
     ageTierLabel: "Возрастная группа",
     languageLabel: "Язык",

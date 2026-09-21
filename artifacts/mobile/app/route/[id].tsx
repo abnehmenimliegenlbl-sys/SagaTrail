@@ -69,6 +69,7 @@ import {
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
+import { meetupCreatePath } from "@/lib/meetupNavigation";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import {
@@ -139,7 +140,14 @@ export default function Routenplanung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{
+    id: string;
+    communityId?: string;
+  }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const communityId = Array.isArray(params.communityId)
+    ? params.communityId[0]
+    : params.communityId;
   const { energiesparmodus, setEnergiesparmodus, profile, purchasedPacks, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language, savedSagaIds, toggleBookmark, themeMode } = useApp();
   const availablePurchasedPacks =
     Array.from(new Set([...purchasedPacks, ...(profile?.purchasedPacks ?? [])]));
@@ -991,7 +999,19 @@ export default function Routenplanung() {
     (sagaId ? sagas.find((s) => s.id === sagaId)?.canton ?? null : null);
   const downloaded = isDownloaded(sagaId);
   const record = getRecord(sagaId);
-  const partialDownload = record?.status === "partial" || record?.status === "failed";
+  const offlinePhaseKeys = ["story", "audio", "pois", "safety", "tiles"] as const;
+  const legacyOfflinePackage = Boolean(record && record.offlinePackageVersion !== 7);
+  const partialDownload =
+    legacyOfflinePackage ||
+    record?.status === "partial" ||
+    record?.status === "failed";
+  const missingOfflinePhases = record
+    ? offlinePhaseKeys.filter((phase) => {
+        if (phase === "audio" && record.phaseStatus?.audio === undefined) return false;
+        if (legacyOfflinePackage && phase === "tiles") return true;
+        return record.phaseStatus?.[phase] !== "complete";
+      })
+    : [];
   const downloading = progress?.sagaId === sagaId;
   const progressText = downloading
     ? progress?.phase === "tiles"
@@ -1000,20 +1020,23 @@ export default function Routenplanung() {
       ? t.loadingAudio(progress.done, progress.total)
       : progress?.phase === "pois"
       ? t.loadingPois
+      : progress?.phase === "safety"
+      ? t.loadingSafety
       : t.loadingSaga
     : "";
 
   // Animierter Gesamtfortschritt 0–1 fuer den Download-Fortschrittsbalken.
-  // Phasengewichte: Sage 3–8 %, Audio 8–50 %, Orte 50–70 %, Karte 70–100 %.
+  // Phasengewichte: Sage, Audio, Orte, Sicherheitsdaten und Karte.
   // Start bei 3 % damit der Balken sofort sichtbar ist, statt bei 0 % zu kleben.
   const overallProgress = useMemo(() => {
     if (!downloading || !progress) return 0.03;
     const frac = progress.total > 0 ? Math.min(progress.done / progress.total, 1) : 0;
     switch (progress.phase) {
       case "story": return 0.03 + frac * 0.05;
-      case "audio": return 0.08 + frac * 0.42;
-      case "pois":  return 0.50 + frac * 0.20;
-      case "tiles": return 0.70 + frac * 0.30;
+      case "audio": return 0.08 + frac * 0.37;
+      case "pois":  return 0.45 + frac * 0.20;
+      case "safety": return 0.65 + frac * 0.07;
+      case "tiles": return 0.72 + frac * 0.28;
       default: return 0.03;
     }
   }, [downloading, progress]);
@@ -1201,7 +1224,7 @@ export default function Routenplanung() {
             },
           ]}
           accessible
-          accessibilityLabel={`${t.checkBeforeTour}. ${downloaded ? t.offlineStatusActive(sizeLabel) : t.offlineStatusInactive}`}
+          accessibilityLabel={`${t.checkBeforeTour}. ${downloaded && !partialDownload ? t.offlineStatusActive(sizeLabel) : partialDownload ? t.downloadFailedText : t.offlineStatusInactive}`}
         >
           <View style={styles.readinessHeader}>
             <View style={[styles.readinessIcon, { backgroundColor: colors.accent + "22" }]}>
@@ -1215,7 +1238,9 @@ export default function Routenplanung() {
                 {downloaded && !partialDownload
                   ? t.offlineStatusActive(sizeLabel)
                   : partialDownload
-                    ? t.downloadFailedText
+                    ? `${t.downloadFailedText}${missingOfflinePhases.length > 0 ? ` ${missingOfflinePhases
+                        .map((phase) => t.downloadPhaseLabels[offlinePhaseKeys.indexOf(phase)])
+                        .join(", ")}` : ""}`
                     : t.offlineStatusInactive}
               </Text>
             </View>
@@ -1343,7 +1368,12 @@ export default function Routenplanung() {
         <Pressable
           onPress={() =>
             router.push(
-              `/treffpunkte/neu?routeId=${encodeURIComponent(route.id)}&routeName=${encodeURIComponent(route.name)}&canton=${encodeURIComponent(route.canton ?? route.region)}`,
+              meetupCreatePath(
+                route.id,
+                route.name,
+                route.canton ?? route.region,
+                communityId,
+              ),
             )
           }
           accessibilityRole="button"
@@ -1846,8 +1876,8 @@ export default function Routenplanung() {
                 </View>
                 {/* Phasen-Schritte */}
                 <View style={styles.dlPhaseRow}>
-                  {(["story", "audio", "pois", "tiles"] as const).map((ph, i) => {
-                    const order = ["story", "audio", "pois", "tiles"];
+                  {(["story", "audio", "pois", "safety", "tiles"] as const).map((ph, i) => {
+                    const order = ["story", "audio", "pois", "safety", "tiles"];
                     const cur = order.indexOf(progress?.phase ?? "story");
                     const isDone = i < cur;
                     const isActive = i === cur;
