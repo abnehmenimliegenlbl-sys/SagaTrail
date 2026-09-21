@@ -5,6 +5,7 @@ export interface SummaryStrings {
   backToOverview: string;
   shareTextTemplate: (routeName: string, distanceKm: number) => string;
   achievementUnlocked: string;
+  completionSaved: string;
   archetypeSub: (archetype: string) => string;
   stats: {
     distance: string;
@@ -47,6 +48,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     shareTextTemplate: (routeName, distanceKm) =>
       `Ich habe auf SagaTrail die Sage "${routeName}" erwandert — ${distanceKm} km durch die Berge, begleitet von einer alten Legende.`,
     achievementUnlocked: "ACHIEVEMENT FREIGESCHALTET",
+    completionSaved: "Dein Fortschritt wurde gespeichert.",
     archetypeSub: (archetype) => `Als ${archetype} durch die Sage gewandert`,
     stats: {
       distance: "Distanz",
@@ -87,6 +89,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     shareTextTemplate: (routeName, distanceKm) =>
       `Ich ha uf SagaTrail d Sag "${routeName}" erwanderet — ${distanceKm} km dur d Bärge, begleitet vonere alte Legände.`,
     achievementUnlocked: "ACHIEVEMENT FREIGSCHALTET",
+    completionSaved: "Dini Wanderig isch gspeicheret.",
     archetypeSub: (archetype) => `Als ${archetype} dur d Sag gwanderet`,
     stats: {
       distance: "Distanz",
@@ -127,6 +130,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     shareTextTemplate: (routeName, distanceKm) =>
       `I hiked the legend "${routeName}" on SagaTrail — ${distanceKm} km through the mountains, accompanied by an ancient legend.`,
     achievementUnlocked: "ACHIEVEMENT UNLOCKED",
+    completionSaved: "Your progress has been saved.",
     archetypeSub: (archetype) => `Hiked through the legend as ${archetype}`,
     stats: {
       distance: "Distance",
@@ -167,6 +171,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     shareTextTemplate: (routeName, distanceKm) =>
       `J'ai parcouru la légende "${routeName}" sur SagaTrail — ${distanceKm} km à travers les montagnes, accompagné d'une légende ancienne.`,
     achievementUnlocked: "SUCCÈS DÉVERROUILLÉ",
+    completionSaved: "Ta progression a été enregistrée.",
     archetypeSub: (archetype) => `A parcouru la légende en tant que ${archetype}`,
     stats: {
       distance: "Distance",
@@ -207,6 +212,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     shareTextTemplate: (routeName, distanceKm) =>
       `Ho percorso la leggenda "${routeName}" su SagaTrail — ${distanceKm} km tra le montagne, accompagnato da un'antica leggenda.`,
     achievementUnlocked: "OBIETTIVO SBLOCCATO",
+    completionSaved: "I tuoi progressi sono stati salvati.",
     archetypeSub: (archetype) => `Attraverso la leggenda come ${archetype}`,
     stats: {
       distance: "Distanza",
@@ -247,6 +253,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     shareTextTemplate: (routeName, distanceKm) =>
       `Recorrí la leyenda "${routeName}" en SagaTrail: ${distanceKm} km por las montañas, acompañado de una antigua leyenda.`,
     achievementUnlocked: "LOGRO DESBLOQUEADO",
+    completionSaved: "Tu progreso se ha guardado.",
     archetypeSub: (archetype) => `Recorrió la leyenda como ${archetype}`,
     stats: {
       distance: "Distancia",
@@ -287,6 +294,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     shareTextTemplate: (routeName, distanceKm) =>
       `Caminhei pela lenda "${routeName}" no SagaTrail — ${distanceKm} km pelas montanhas, acompanhado por uma lenda antiga.`,
     achievementUnlocked: "CONQUISTA DESBLOQUEADA",
+    completionSaved: "O seu progresso foi guardado.",
     archetypeSub: (archetype) => `Caminhou pela lenda como ${archetype}`,
     stats: {
       distance: "Distância",
@@ -327,6 +335,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     shareTextTemplate: (routeName, distanceKm) =>
       `我在 SagaTrail 上体验了 "${routeName}" 传说——在古老传说的陪伴下，徒步穿行山间 ${distanceKm} 公里。`,
     achievementUnlocked: "成就已解锁",
+    completionSaved: "你的进度已保存。",
     archetypeSub: (archetype) => `以${archetype}的身份体验传说`,
     stats: {
       distance: "距离",
@@ -367,6 +376,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     shareTextTemplate: (routeName, distanceKm) =>
       `Я прошёл легенду "${routeName}" в SagaTrail — ${distanceKm} км через горы в сопровождении древней легенды.`,
     achievementUnlocked: "ДОСТИЖЕНИЕ ОТКРЫТО",
+    completionSaved: "Твой прогресс сохранён.",
     archetypeSub: (archetype) => `Прошёл легенду как ${archetype}`,
     stats: {
       distance: "Дистанция",

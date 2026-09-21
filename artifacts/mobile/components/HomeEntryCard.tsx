@@ -105,6 +105,7 @@ const styles = StyleSheet.create({
   },
   entryCard: {
     aspectRatio: 3,
+    minHeight: 122,
     borderWidth: 1,
     overflow: "hidden",
     ...GLAS_3D,
@@ -119,8 +120,8 @@ const styles = StyleSheet.create({
   entryCopy: { flex: 1 },
   entryHint: {
     fontFamily: fonts.body,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
     marginTop: 2,
   },
   entryIcon: {
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
   },
   entryTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 17,
-    lineHeight: 21,
+    fontSize: 21,
+    lineHeight: 25,
   },
 });

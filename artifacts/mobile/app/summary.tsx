@@ -286,6 +286,9 @@ export default function Summary() {
           <Text style={[styles.title, { color: colors.foreground }]}>
             {lastHike.routeName}
           </Text>
+          <Text style={[styles.savedNotice, { color: colors.mutedForeground }]}>
+            {t.completionSaved}
+          </Text>
           <Text style={[styles.sub, { color: colors.mutedForeground }]}>
             {t.archetypeSub(archetype ?? "")}
           </Text>
@@ -298,6 +301,9 @@ export default function Summary() {
           <Stat value={`${lastHike.ascentM}`} unit="hm" label={t.stats.ascent} />
           <Stat value={lastHike.sacScale} unit="" label={t.stats.sac} />
           <Stat value={`${lastHike.chapters.length}`} unit="" label={t.stats.chapters} />
+          {typeof lastHike.durationMin === "number" && (
+            <Stat value={`${lastHike.durationMin}`} unit="min" label={t.stats.time} />
+          )}
           {typeof lastHike.steps === "number" && lastHike.steps > 0 && (
             <Stat value={`${lastHike.steps}`} unit="" label={t.stats.steps} />
           )}
@@ -605,9 +611,10 @@ const styles = StyleSheet.create({
   hero: { alignItems: "center", marginTop: 12 },
   unlocked: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, marginTop: 18 },
   title: { fontFamily: fonts.titleBlack, fontSize: 32, marginTop: 8, textAlign: "center" },
+  savedNotice: { fontFamily: fonts.body, fontSize: 13, marginTop: 10, textAlign: "center" },
   sub: { fontFamily: fonts.story, fontSize: 15, marginTop: 6 },
-  statsRow: { flexDirection: "row", justifyContent: "space-between" },
-  stat: { alignItems: "center", flex: 1 },
+  statsRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 16 },
+  stat: { alignItems: "center", width: "20%" },
   statValRow: { flexDirection: "row", alignItems: "baseline", gap: 3 },
   statVal: { fontFamily: fonts.monoBold, fontSize: 26 },
   statUnit: { fontFamily: fonts.mono, fontSize: 12 },
