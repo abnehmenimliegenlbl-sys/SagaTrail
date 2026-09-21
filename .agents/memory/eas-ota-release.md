@@ -53,3 +53,9 @@ telling the user to restart the app.
 **Why:** A release preflight belongs immediately before EAS Update publishing; a standalone workflow job can validate successfully yet be ignored by the pre-packaged update job.
 
 **How to apply:** Keep the manifest and verifier in the mobile artifact. When a protected source file intentionally changes, regenerate the manifest with the verifier's `--write` option and commit both files.
+
+**Remote release rule:** The EAS workflow runs from the GitHub `main` ref, not the local Replit branch. Before calling an OTA published, verify the workflow commit hash matches the intended source commit; when CLI push authentication fails, use the connected GitHub integration to update the relevant OTA source tree atomically rather than triggering from a stale ref.
+
+**Why:** A manual workflow run initially selected an older remote commit, while the workspace's Git CLI had no usable GitHub credential. A connected GitHub tree/commit update kept the release atomic and let the workflow consume the intended mobile source.
+
+**How to apply:** Scope the remote sync to mobile OTA sources and shared client dependencies; exclude generated `dist-ota`, native build directories, and unrelated server-only files unless the workflow explicitly needs them.

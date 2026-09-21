@@ -131,11 +131,36 @@ router.put("/me", async (req, res): Promise<void> => {
   }
   const { name, bio, archetype, homeCanton, language, ageTier, dateOfBirth, navAnnouncementsEnabled } = parsed.data;
 
+  // Bei der ersten Profilerstellung das von Google/Apple über Clerk gelieferte
+  // Profilbild übernehmen. Der Avatar bleibt eine externe https-URL; die
+  // mobile Darstellung unterstützt neben privaten Objektpfaden auch solche
+  // Provider-URLs. Bei späteren Updates wird avatarUrl absichtlich nicht in
+  // `onConflictDoUpdate` gesetzt, damit eigene Uploads erhalten bleiben.
+  const [existingProfile] = await db
+    .select({ id: profilesTable.id })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+  let initialAvatarUrl: string | null = null;
+  if (!existingProfile) {
+    try {
+      const clerkUser = await clerkClient.users.getUser(userId);
+      const imageUrl = clerkUser.imageUrl;
+      if (clerkUser.hasImage && /^https?:\/\//i.test(imageUrl)) {
+        initialAvatarUrl = imageUrl;
+      }
+    } catch (err) {
+      // Das Profil darf auch angelegt werden, wenn der optionale Clerk-
+      // Profilbildabruf gerade nicht verfügbar ist.
+      req.log.warn({ err }, "Clerk-Profilbild konnte nicht übernommen werden");
+    }
+  }
+
   const [row] = await db
     .insert(profilesTable)
     .values({
       id: userId,
       name,
+      avatarUrl: initialAvatarUrl,
       bio: bio ?? null,
       dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().slice(0, 10) : null,
       archetype,
