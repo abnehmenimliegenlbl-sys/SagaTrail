@@ -14,8 +14,6 @@ export interface OnboardingStrings {
   archetypeTitle: string;
   archetypeHint: string;
   archetypes: Record<Archetype, { title: string; tagline: string; description: string }>;
-  cantonTitle: string;
-  cantonHint: string;
   languageStepTitle: string;
   languageHint: string;
   languageNames: Record<LanguageCode, string>;
@@ -82,9 +80,6 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
           "Du kennst die Alp seit jeher. Ruhig und erfahren liest du die Zeichen des Gebirges.",
       },
     },
-    cantonTitle: "Deine Heimatregion",
-    cantonHint:
-      "Wähle deinen Heimatkanton. Von hier aus beginnt deine Reise durch die Sagenwelt.",
     languageStepTitle: "Deine Sprache",
     languageHint: "In welcher Sprache sollen dir die Sagen erzählt werden?",
     languageNames: {
@@ -196,9 +191,6 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
           "Du kennsch d Alp scho lang. Ruehig und erfahre liesisch du d Zeiche vom Gebirg.",
       },
     },
-    cantonTitle: "Dini Heimatregion",
-    cantonHint:
-      "Wähl din Heimatkanton us. Vo da fangt dini Reis dur d Sagewält aa.",
     languageStepTitle: "Dini Sprach",
     languageHint: "In weler Sprach söll dir d Sage verzelt wärde?",
     languageNames: {
@@ -310,9 +302,6 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
           "Tu connais l'alpage depuis toujours. Calme et expérimenté·e, tu lis les signes de la montagne.",
       },
     },
-    cantonTitle: "Ta région d'origine",
-    cantonHint:
-      "Choisis ton canton d'origine. C'est d'ici que commence ton voyage à travers le monde des légendes.",
     languageStepTitle: "Ta langue",
     languageHint: "Dans quelle langue veux-tu que les légendes te soient racontées ?",
     languageNames: {
@@ -424,9 +413,6 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
           "Conosci l'alpe da sempre. Calmo/a ed esperto/a, leggi i segni della montagna.",
       },
     },
-    cantonTitle: "La tua regione d'origine",
-    cantonHint:
-      "Scegli il tuo cantone d'origine. Da qui inizia il tuo viaggio nel mondo delle leggende.",
     languageStepTitle: "La tua lingua",
     languageHint: "In quale lingua vuoi che ti vengano raccontate le leggende?",
     languageNames: {
@@ -538,9 +524,6 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
           "You have known the alp forever. Calm and experienced, you read the signs of the mountains.",
       },
     },
-    cantonTitle: "Your home region",
-    cantonHint:
-      "Choose your home canton. Your journey through the world of legends begins here.",
     languageStepTitle: "Your language",
     languageHint: "In which language should the legends be told to you?",
     languageNames: {
@@ -646,8 +629,6 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
         description: "你自古便熟知这片高山牧场。沉稳而老练，你能读懂山峦的征兆。",
       },
     },
-    cantonTitle: "你的家乡地区",
-    cantonHint: "选择你的家乡州。你的传说之旅将从这里开始。",
     languageStepTitle: "你的语言",
     languageHint: "你希望用哪种语言聆听这些传说？",
     languageNames: {
@@ -754,9 +735,6 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
           "Conoces el alpe desde siempre. Tranquilo/a y experimentado/a, lees las señales de la montaña.",
       },
     },
-    cantonTitle: "Tu región de origen",
-    cantonHint:
-      "Elige tu cantón de origen. Tu viaje por el mundo de las leyendas comienza aquí.",
     languageStepTitle: "Tu idioma",
     languageHint: "¿En qué idioma quieres que se te cuenten las leyendas?",
     languageNames: {
@@ -867,9 +845,6 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
           "Você conhece o alpe desde sempre. Calmo/a e experiente, você lê os sinais da montanha.",
       },
     },
-    cantonTitle: "Sua região de origem",
-    cantonHint:
-      "Escolha seu cantão de origem. Sua jornada pelo mundo das lendas começa aqui.",
     languageStepTitle: "Seu idioma",
     languageHint: "Em qual idioma as lendas devem ser contadas para você?",
     languageNames: {
@@ -980,9 +955,6 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
           "Ты знаешь альпийские пастбища с давних пор. Спокойный(ая) и опытный(ая), ты читаешь знаки горы.",
       },
     },
-    cantonTitle: "Твой родной регион",
-    cantonHint:
-      "Выбери свой родной кантон. Здесь начинается твоё путешествие по миру легенд.",
     languageStepTitle: "Твой язык",
     languageHint: "На каком языке рассказывать тебе легенды?",
     languageNames: {

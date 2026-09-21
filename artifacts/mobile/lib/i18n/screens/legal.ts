@@ -20,7 +20,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       },
       {
         q: "Welche Daten wir verarbeiten",
-        a: "Standortdaten (nur während aktiver Wanderung), Profildaten (Name, Archetyp, Heimatkanton, Sprache, Alterstufe), Wanderfortschritt & freigeschaltete Inhalte, Gerätekennungen für Push-Benachrichtigungen sowie anonymisierte Zahlungsmetadaten via App Store.",
+        a: "Standortdaten (nur während aktiver Wanderung), Profildaten (Name, Archetyp, Sprache, Alterstufe), Wanderfortschritt & freigeschaltete Inhalte, Gerätekennungen für Push-Benachrichtigungen sowie anonymisierte Zahlungsmetadaten via App Store.",
       },
       {
         q: "Authentifizierung (Clerk)",
@@ -150,7 +150,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       },
       {
         q: "What data we process",
-        a: "Location data (only during active hikes), profile data (name, archetype, home canton, language, age tier), hike progress & unlocked content, device identifiers for push notifications, and anonymised payment metadata via the App Store.",
+        a: "Location data (only during active hikes), profile data (name, archetype, language, age tier), hike progress & unlocked content, device identifiers for push notifications, and anonymised payment metadata via the App Store.",
       },
       {
         q: "Authentication (Clerk)",
