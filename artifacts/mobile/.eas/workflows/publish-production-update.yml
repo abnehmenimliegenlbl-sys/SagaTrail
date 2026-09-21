@@ -4,9 +4,17 @@ on:
   push:
     branches: ['main']
 
+defaults:
+  tools:
+    pnpm: 10.26.1
+
 jobs:
   publish_production_update:
     name: Publish production OTA update
     type: update
+    hooks:
+      before_update:
+        - name: Verify committed mobile source files
+          run: node scripts/verify-ota-source-integrity.mjs
     params:
       branch: production

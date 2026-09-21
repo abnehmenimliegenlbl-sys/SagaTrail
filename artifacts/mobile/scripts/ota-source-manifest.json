@@ -1,14 +1,14 @@
 {
   "app/hike/[id].tsx": {
-    "bytes": 426857,
-    "sha256": "ad49ae9c3c99aead03c41077ac6859bf53f89fa458a2f43f91bf1a4f25248fba"
+    "bytes": 426995,
+    "sha256": "504c7210ba4b125b33edb8068fae8a2a37c8f82910873e5c1ac7a24ab4f5ed6f"
   },
   "assets/images/banner-wanderroute-heute.jpg": {
     "bytes": 399626,
     "sha256": "ba7643128a9bbccac78c8e6cf1cabeccbecfbbf2a65925e4f1608164aceee5f9"
   },
   "components/brand/RouteTerrain3D.native.tsx": {
-    "bytes": 77927,
-    "sha256": "31da924ea4614d42a90486a4c69d4d88a308b2ce02e97b35db912ab9a3ceeee1"
+    "bytes": 77948,
+    "sha256": "3f165b90f5b000bb20701fba43a5abd9785f839506d6077c89ed005029f50ef7"
   }
 }
