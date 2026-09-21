@@ -35,6 +35,8 @@ export const meetupParticipantsTable = pgTable(
     attendanceStatus: text("attendance_status").notNull().default("confirmed"),
     delayMinutes: integer("delay_minutes"),
     statusUpdatedAt: timestamp("status_updated_at", { withTimezone: true }).notNull().defaultNow(),
+    nameMentionConsentAt: timestamp("name_mention_consent_at", { withTimezone: true }),
+    nameMentionConsentVersion: text("name_mention_consent_version"),
   },
   (table) => [primaryKey({ columns: [table.meetupId, table.userId] })],
 );
