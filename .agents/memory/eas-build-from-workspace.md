@@ -15,4 +15,10 @@ Bash tool has a hard 120s limit — long `eas` uploads get killed. The notebook 
 
 **Submission status:** this EAS CLI version has no `submit:view` or `submit:list`; query `submissions.byId(submissionId: ...)` through authenticated GraphQL at `https://api.expo.dev/graphql` and inspect `status`, `error`, and `completedAt`.
 
+Local Gradle validation may stop before the app module when this workspace has no Android SDK/`ANDROID_HOME`; a checked-in native Android change still needs the EAS worker as the authoritative release compile.
+
+**Why:** The Replit workspace did not have a usable Android SDK, while the EAS worker compiled the corrected companion bridge and produced the production AAB successfully.
+
+**How to apply:** Use local `git diff --check` and static inspection first, then validate native Android compilation with one EAS production build; do not infer a Kotlin failure from the local SDK setup error.
+
 Every native-build workflow, including iOS development, must require a one-use `/tmp/*-go` guard before invoking EAS. A production workflow restart can coincide with other configured workflows starting; an unguarded development command consumed the next remote build number and forced cancellation/resynchronization.
