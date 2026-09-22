@@ -1,4 +1,2247 @@
-   required: true
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: communities
+    description: Öffentliche SagaTrail-Community-Einladungen
+  - name: catalog
+    description: SagaTrail Online-Katalog (Kantone, Routen, Sagen)
+  - name: stories
+    description: KI-generierte Sagen-Erzaehlungen (Anthropic, in Postgres gecacht)
+  - name: routes
+    description: Dynamische Routen aus OpenStreetMap/swisstopo und ihre KI-Sagen
+  - name: profile
+    description: Nutzerkonto (Clerk-authentifiziert) - Profil und Premium-Status
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /catalog:
+    get:
+      operationId: getCatalog
+      tags: [catalog]
+      summary: Vollstaendiger Online-Katalog
+      description: Liefert alle Kantone, Wanderrouten und Sagen-Metadaten fuer den Katalog.
+      responses:
+        "200":
+          description: Katalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogResponse"
+  /stories:
+    post:
+      operationId: createStory
+      tags: [stories]
+      summary: Sagen-Erzaehlung erzeugen oder aus dem Cache liefern
+      description: >
+        Liefert die kapitelweise Erzaehlung fuer eine Sage, abgestimmt auf
+        Archetyp, Alterstufe und Sprache. Bereits erzeugte Erzaehlungen kommen
+        aus dem Postgres-Cache, sonst werden sie via Anthropic generiert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoryRequest"
+      responses:
+        "200":
+          description: Erzaehlung
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoryResponse"
+        "400":
+          description: Ungueltige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Sage nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: KI-Erzeugung fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /cantons/{canton}/routes:
+    get:
+      operationId: getCantonRoutes
+      tags: [routes]
+      summary: Reale Wanderrouten eines Kantons
+      description: >
+        Laedt reale Wanderrouten des Kantons aus OpenStreetMap, angereichert mit
+        amtlichen swisstopo-Hoehenmetern. Ergebnisse werden serverseitig gecacht.
+        Optionale Filter (Distanz, Hoehenmeter, SAC-Schwierigkeit) grenzen die
+        Suche direkt an der Datenquelle ein. Werden Schwierigkeitsgrenzen gesetzt,
+        entfallen Routen mit unbekanntem SAC-Grad.
+      parameters:
+        - name: canton
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: distMin
+          in: query
+          required: false
+          description: Minimale Distanz in Kilometern.
+          schema:
+            type: number
+            minimum: 0
+        - name: distMax
+          in: query
+          required: false
+          description: Maximale Distanz in Kilometern (weglassen = keine Obergrenze).
+          schema:
+            type: number
+            minimum: 0
+        - name: ascMin
+          in: query
+          required: false
+          description: Minimale Hoehenmeter im Aufstieg.
+          schema:
+            type: number
+            minimum: 0
+        - name: ascMax
+          in: query
+          required: false
+          description: Maximale Hoehenmeter im Aufstieg (weglassen = keine Obergrenze).
+          schema:
+            type: number
+            minimum: 0
+        - name: diffMin
+          in: query
+          required: false
+          description: Minimaler SAC-Grad (1 = T1). Nur Routen mit bekanntem Grad.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 6
+        - name: diffMax
+          in: query
+          required: false
+          description: Maximaler SAC-Grad (6 = T6). Nur Routen mit bekanntem Grad.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 6
+        - name: ganzjaehrigNur
+          in: query
+          required: false
+          description: >
+            Wenn true, nur Routen mit ganzjaehriger Begehbarkeit (tiefe Lage,
+            einfacher Schwierigkeitsgrad) liefern.
+          schema:
+            type: boolean
+        - name: nearLat
+          in: query
+          required: false
+          description: >
+            Breitengrad des Nutzer-Standorts. Wird zusammen mit nearLng
+            verwendet, um Ergebnisse nach Luftlinien-Entfernung zum
+            Routenstart aufsteigend zu sortieren.
+          schema:
+            type: number
+        - name: nearLng
+          in: query
+          required: false
+          description: >
+            Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat
+            verwendet, um Ergebnisse nach Luftlinien-Entfernung zum
+            Routenstart aufsteigend zu sortieren.
+          schema:
+            type: number
+        - name: familyFriendly
+          in: query
+          required: false
+          description: Nur redaktionell als familienfreundlich bestätigte Routen.
+          schema:
+            type: boolean
+        - name: wheelchairAccessible
+          in: query
+          required: false
+          description: Nur Routen mit explizit bestätigtem barrierearmem Zugang.
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Routen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CatalogRoute"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/aerialways:
+    get:
+      operationId: getAerialways
+      tags: [routes]
+      summary: Seilbahnen und Standseilbahnen in einem Kartenausschnitt
+      description: >
+        Liefert Luftseilbahnen, Gondelbahnen, Sessellifte und Standseilbahnen
+        (typische alpine Wander-Verkehrsmittel) aus OpenStreetMap innerhalb
+        einer Bounding Box, zur Darstellung auf der Wanderkarte.
+      parameters:
+        - name: south
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: west
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: north
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: east
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Seilbahnen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Aerialway"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /themes/{theme}/routes:
+    get:
+      operationId: getThemeRoutes
+      tags: [routes]
+      summary: Serverseitig geprüfte Routen einer Themenwelt
+      description: >
+        Liefert die Routen einer Themenwelt direkt aus den serverseitig
+        geprüften Themenbelegen. Die Abfrage erfolgt kantonsübergreifend in
+        einer Datenbankabfrage.
+      parameters:
+        - name: theme
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - wasserwege
+              - burgen_ruinen_alte_wege
+              - gipfel_panorama
+              - geologie_eiszeit
+              - hoehlen_grotten
+              - wald_wildtiere
+              - alpen_landwirtschaft
+              - pilger_handelswege
+              - industriekultur
+              - familien_entdecker
+              - nacht_sterne
+              - flora_jahreszeiten
+              - bahn_seilbahn
+      responses:
+        "200":
+          description: Themenwelt-Routen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Unbekannte Themenwelt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Themenwelt-Routen konnten nicht geladen werden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/pois:
+    get:
+      operationId: getPois
+      tags: [routes]
+      summary: Points of Interest mit Wikipedia-Anreicherung in einem Kartenausschnitt
+      description: >
+        Liefert historische und touristische Orte (OpenStreetMap
+        historic=*/tourism=attraction|viewpoint) innerhalb einer Bounding Box.
+        Orte mit einer verknuepften Wikipedia-/Wikidata-Referenz werden live
+        mit einer kurzen Zusammenfassung angereichert (CC BY-SA, mit
+        Quellenangabe).
+      parameters:
+        - name: south
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: west
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: north
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: east
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Points of Interest
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Poi"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/peaks:
+    get:
+      operationId: getPeakPois
+      tags: [routes]
+      summary: Benannte Gipfel in einer Bounding Box
+      description: >
+        Liefert ausschliesslich benannte OpenStreetMap-Gipfel
+        (natural=peak) innerhalb einer Bounding Box. Die Abfrage ist fuer
+        das Panorama getrennt vom normalen POI-Download und kann deshalb
+        einen groesseren Radius verwenden.
+      parameters:
+        - name: south
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: west
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: north
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: east
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: centerLat
+          in: query
+          required: false
+          description: Mittelpunkt der Live-Abfrage; zusammen mit centerLng und radiusKm wird eine Kreisabfrage verwendet.
+          schema:
+            type: number
+        - name: centerLng
+          in: query
+          required: false
+          description: Mittelpunkt der Live-Abfrage.
+          schema:
+            type: number
+        - name: radiusKm
+          in: query
+          required: false
+          description: Radius der Live-Abfrage in Kilometern.
+          schema:
+            type: number
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: Benannte Gipfel
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Poi"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/poi-detail:
+    get:
+      operationId: getPoiDetail
+      tags: [routes]
+      summary: Wikipedia/Commons-Anreicherung eines einzelnen POI on demand
+      description: >
+        Laedt Wikipedia-Zusammenfassung und Bild fuer einen einzelnen Point of
+        Interest. Wird erst aufgerufen wenn der Nutzer den POI oeffnet (lazy),
+        nicht beim initialen Karten-Laden. Ergebnis wird 24 h serverseitig
+        gecacht.
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: kind
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: wikipediaTag
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: wikidataTag
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Anreicherungsergebnis (wiki kann fehlen wenn nichts gefunden)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoiDetailResponse"
+        "400":
+          description: Ungueltige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/partners:
+    get:
+      operationId: getPartners
+      tags: [routes]
+      summary: Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) in einem Kartenausschnitt
+      description: >
+        Liefert aktive, ueber die Admin-Oberflaeche gepflegte Partnerbetriebe
+        innerhalb einer Bounding Box.
+      parameters:
+        - name: south
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: west
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: north
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: east
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Partnerbetriebe
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Partner"
+  /routes/poi-story:
+    get:
+      operationId: getPoiStory
+      tags: [routes]
+      summary: Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
+      description: >
+        Formt den rohen Wikipedia-Auszug eines Point of Interest (Name +
+        Extract) per KI in einen kurzen, atmosphaerischen Text im
+        Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein
+        Gendern. Fehlt der Wikipedia-Auszug, entsteht stattdessen ein
+        kurzer, zurueckhaltender Kontext aus Name und OSM-Kategorie
+        (kind), ohne erfundene Fakten. Ergebnisse werden serverseitig
+        nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: extract
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: osmContext
+          in: query
+          required: false
+          description: "Kuratierter OSM-Kontext (note, inscription, alt_name …) — gibt der KI verifizierte Fakten."
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sagen-stilisierter Erzaehltext
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoiStory"
+        "400":
+          description: Ungueltige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: KI-Umschreibung fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /object-recognition/analyze:
+    post:
+      operationId: analyzeObject
+      tags: [recognition]
+      summary: Ein Foto eines beliebigen Objekts analysieren
+      description: >
+        Premium-Funktion fuer eine einmalige Fotoanalyse unterwegs. Das Bild
+        wird nur zur laufenden Analyse verwendet und nicht dauerhaft gespeichert.
+        Die Antwort liefert hoechstens drei unsichere Kandidaten zur Bestaetigung
+        durch die Nutzerin oder den Nutzer. Personen und Gesichter werden nicht
+        erkannt.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeObjectRequest"
+      responses:
+        "200":
+          description: Moegliche Objekte mit optionalem Wikipedia-Abgleich
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyzeObjectResponse"
+        "400":
+          description: Ungueltiges Bild oder ungueltige Kontextdaten
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "403":
+          description: Premium erforderlich
+        "429":
+          description: Tageslimit von fünf Objekterkennungen pro Nutzer und Schweizer Kalendertag erreicht
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectRecognitionLimitError"
+        "502":
+          description: Analyse momentan nicht verfuegbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /avalanche:
+    get:
+      operationId: getAvalancheBulletin
+      tags: [routes]
+      summary: Aktuelles Lawinenbulletin fuer einen Schweizer Kanton
+      description: >
+        Liefert das aktuelle EAWS-Lawinenbulletin (Gefahrenstufe 1–5) fuer den
+        angegebenen Kanton. Nicht-alpine Kantone und Sommerhalbjahr geben
+        available=false zurueck. Daten werden 1 Stunde gecacht.
+      parameters:
+        - name: canton
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Kanton-Slug (z. B. "bern", "graubuenden", "valais")
+        - name: lang
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [de, fr, it, en]
+            default: de
+      responses:
+        "200":
+          description: Lawinenbulletin oder Hinweis dass kein Bulletin verfuegbar ist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvalancheBulletin"
+        "400":
+          description: Fehlender canton-Parameter
+  /transport:
+    get:
+      operationId: getTransportStationboard
+      tags: [routes]
+      summary: Live-SBB-Abfahrten am naechsten Bahnhof zu einem Koordinatenpunkt
+      description: >
+        Findet den naechstgelegenen oeffentlichen Verkehrshalt (transport.opendata.ch)
+        und liefert die naechsten Abfahrten. Wird fuer die SBB-live-Karte am Routenendpunkt
+        verwendet. Daten werden 2 Minuten gecacht.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+          description: Breitengrad (WGS84)
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+          description: Laengengrad (WGS84)
+      responses:
+        "200":
+          description: Naechster Bahnhof und Abfahrten (oder leere Liste wenn keiner gefunden)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransportStationboard"
+        "400":
+          description: Fehlende lat/lng Parameter
+        "502":
+          description: Upstream-Fehler von transport.opendata.ch
+  /transport/nearby:
+    get:
+      operationId: getTransportNearby
+      tags: [routes]
+      summary: Naechsten Verkehrshalt mit Koordinaten finden
+      description: >
+        Liefert den naechsten oeffentlichen Verkehrshalt zu einem GPS-Punkt.
+        Die Koordinaten werden fuer eine anschliessende Fusswegroute verwendet.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Naechster Verkehrshalt oder null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransportNearbyResponse"
+        "400":
+          description: Fehlende lat/lng Parameter
+        "502":
+          description: Upstream-Fehler bei der Haltestellensuche
+  /routes/weather:
+    get:
+      operationId: getWeather
+      tags: [routes]
+      summary: Live-Wetter und daraus abgeleiteter Wegzustand fuer einen Punkt
+      description: >
+        Liefert aktuelle Wetterdaten (Open-Meteo, ohne API-Key) fuer den
+        Ausgangspunkt einer Route sowie einen daraus abgeleiteten
+        Wegzustand-Hinweis (kein offizieller Sperr-/Lawinenstatus, sondern eine
+        Einschaetzung aus Niederschlag, Schneehoehe, Temperatur und Boeen).
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Wetter und Wegzustand
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherReport"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/surfaces:
+    get:
+      operationId: getRouteSurfaces
+      tags: [routes]
+      summary: Wegoberflächen einer Route (OSM surface-Tags)
+      description: >
+        Liefert die Wegoberflächen-Wechselpunkte einer Route aus OpenStreetMap,
+        abgeleitet aus den surface-Tags der Mitglieds-Ways der Relation.
+        Jeder Eintrag markiert den Startpunkt eines Abschnitts mit neuer Oberfläche.
+        Schlägt die Overpass-Abfrage fehl, wird ein leeres Array zurückgeliefert.
+      parameters:
+        - name: osmId
+          in: query
+          required: true
+          schema:
+            type: integer
+            description: OSM-Relation-ID der Route
+      responses:
+        "200":
+          description: Oberflächenwechselpunkte
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteSurfacesResponse"
+        "400":
+          description: Ungueltige osmId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Overpass nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/photo:
+    get:
+      operationId: getRoutePhoto
+      tags: [routes]
+      summary: Repraesentatives Foto fuer eine Route (Wikimedia Commons)
+      description: >
+        Sucht ein echtes Foto in der Naehe des Routenstartpunkts ueber die
+        Wikimedia-Commons-Geosuche. Liefert null, wenn kein passendes Foto
+        gefunden wird — der Client zeigt dann sein eigenes Fallback-Bild.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: sagaId
+          in: query
+          required: false
+          description: >
+            Optionale Sagen-ID. Wenn angegeben und ein Foto gefunden wird,
+            schreibt der Server das Ergebnis dauerhaft in catalog_sagas
+            (als Fallback-Cache fuer Koordinaten-basierte Fotos).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Foto-URL oder null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutePhoto"
+        "400":
+          description: Ungueltige Koordinaten
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /sagas/photo:
+    get:
+      operationId: getSagaPhoto
+      tags: [routes]
+      summary: Thematisch passendes Foto fuer eine Sage (Wikimedia Commons)
+      description: >
+        Sucht ein echtes Foto ueber die Wikimedia-Commons-Volltextsuche nach
+        dem Kernmotiv der Sage (z. B. "Vogel Gryff", "Baer"), statt nach dem
+        Ort der Handlung. Liefert null, wenn kein passendes Foto gefunden
+        wird — der Client zeigt dann sein eigenes Fallback-Bild.
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: sagaId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: >
+            Optionale Sagen-ID. Wenn angegeben und ein Foto gefunden wird,
+            speichert der Server das Ergebnis dauerhaft in catalog_sagas
+            (dauerhafter Cache, analog zur Route-Foto-Logik).
+      responses:
+        "200":
+          description: Foto-URL oder null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutePhoto"
+        "400":
+          description: Ungueltige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/geocode:
+    get:
+      operationId: searchPlaces
+      tags: [routes]
+      summary: Orts-/Adresssuche in der Schweiz fuer die Eigene-Route-Eingabe
+      description: >
+        Liefert bis zu sechs Orts-/Adressvorschlaege in der Schweiz
+        (OpenStreetMap Nominatim, ohne API-Key) fuer eine Sucheingabe. Dient
+        als Vorschlagsliste bei der Eingabe von Start und Ziel einer eigenen
+        Route.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+      responses:
+        "200":
+          description: Ortsvorschlaege
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeocodePlace"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/custom:
+    get:
+      operationId: getCustomRoute
+      tags: [routes]
+      summary: Berechnet eine Wanderroute zwischen zwei selbst gewaehlten Punkten
+      description: >
+        Berechnet eine Fussweg-Route zwischen Start- und Zielpunkt (OSRM,
+        ohne API-Key) und reichert sie mit swisstopo-Hoehenmetern, SAC-Grad
+        und Saison-Heuristik an (dieselbe Anreicherung wie bei Kantonsrouten).
+        Die Route wird nicht persistiert, sondern bei jeder Anfrage neu
+        berechnet.
+      parameters:
+        - name: startLat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: startLng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: endLat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: endLng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: startLabel
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: endLabel
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Berechnete Route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Keine Route zwischen den Punkten gefunden oder Distanz ausserhalb des sinnvollen Bereichs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/custom-waypoints:
+    post:
+      operationId: planCustomRoute
+      tags: [routes]
+      summary: Berechnet eine Wanderroute ueber mehrere selbst gesetzte Wegpunkte
+      description: >
+        Verbindet zwei bis zwoelf geordnete Wegpunkte ueber begehbare Wege
+        (Valhalla pedestrian) und reichert die Route mit swisstopo-Hoehenmetern,
+        SAC-Grad und Saison-Heuristik an. Die Route wird nicht persistiert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomWaypointsBody"
+      responses:
+        "200":
+          description: Berechnete Route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Ungueltige Wegpunkte, keine Route gefunden oder Distanz ausserhalb des sinnvollen Bereichs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/custom-drawn:
+    post:
+      operationId: planDrawnRoute
+      tags: [routes]
+      summary: Mappt eine frei gezeichnete Linie auf begehbare Wege
+      description: >
+        Nimmt eine vereinfachte, geordnete Freihandlinie entgegen und mappt sie
+        mit Valhalla pedestrian auf reale Wanderwege. Die Route wird nicht persistiert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomDrawnRouteBody"
+      responses:
+        "200":
+          description: Gemappte Route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Ungueltige Linie oder kein begehbarer Weg gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/gpx:
+    post:
+      operationId: importGpxRoute
+      tags: [routes]
+      summary: Importiert eine GPX-Datei als Wanderroute
+      description: >
+        Liest den Track aus einer GPX-Datei (trkpt, ersatzweise rtept),
+        prueft, ob er in der Schweiz liegt, und reichert ihn mit denselben
+        Quellen wie eigene Routen an (swisstopo-Hoehenmeter, SAC-Grad,
+        Saison-Heuristik, Ortsnamen). Die Route wird nicht persistiert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GpxImportBody"
+      responses:
+        "200":
+          description: Importierte und angereicherte Route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Ungueltige GPX-Datei, Track ausserhalb der Schweiz oder Distanz ausserhalb des sinnvollen Bereichs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/{routeId}/saga:
+    get:
+      operationId: getRouteSaga
+      tags: [routes]
+      summary: Naechstgelegene kuratierte Sage zu einer Route
+      description: >
+        Liefert die naechstgelegene kuratierte, gemeinfrei belegte Sage zur Route
+        (kantonsweise Naehe). Es wird nichts erzeugt; ausschliesslich kuratierte
+        Katalogdaten werden gelesen.
+      parameters:
+        - name: routeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogSaga"
+        "404":
+          description: Route nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Sage konnte nicht ermittelt werden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me:
+    get:
+      operationId: getMyProfile
+      tags: [profile]
+      summary: Eigenes Profil laden
+      description: >
+        Liefert das Profil des authentifizierten Nutzers. 404, wenn nach dem
+        Onboarding noch kein Profil angelegt wurde.
+      responses:
+        "200":
+          description: Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: saveMyProfile
+      tags: [profile]
+      summary: Eigenes Profil anlegen oder aktualisieren
+      description: Legt das Profil des authentifizierten Nutzers an (Onboarding) oder aktualisiert es.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          description: Gespeichertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Ungueltige Eingabe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/avatar:
+    post:
+      operationId: uploadMyAvatar
+      tags: [profile]
+      summary: Eigenes Profilbild hochladen
+      requestBody:
+        required: true
+        content:
+          image/jpeg: {}
+          image/png: {}
+          image/webp: {}
+      responses:
+        "200":
+          description: Aktualisiertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Ungültiges Bild
+        "401":
+          description: Nicht authentifiziert
+  /me/premium:
+    patch:
+      operationId: updateMyPremium
+      tags: [profile]
+      summary: Premium-Status setzen
+      description: Aktiviert oder deaktiviert Premium fuer den authentifizierten Nutzer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PremiumUpdate"
+      responses:
+        "200":
+          description: Aktualisiertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/premium/sync:
+    post:
+      operationId: syncMyPremium
+      tags: [profile]
+      summary: Premium-Status verifiziert mit RevenueCat abgleichen
+      description: >-
+        Prueft serverseitig bei RevenueCat, ob der authentifizierte Nutzer
+        (Customer-ID = Nutzer-ID) ein aktives "premium"-Entitlement besitzt,
+        und setzt das Premium-Flag entsprechend. Nur Upgrades werden
+        uebernommen; ein fehlendes Entitlement fuehrt NICHT zum Entzug
+        (Downgrade bleibt Self-Service ueber PATCH /me/premium).
+      responses:
+        "200":
+          description: Aktualisiertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: RevenueCat nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/progress/sync:
+    post:
+      operationId: syncMyProgress
+      tags: [profile]
+      summary: Wanderverlauf und Errungenschaften mit dem Server abgleichen
+      description: >-
+        Gleicht den lokal auf dem Geraet gefuehrten Wanderverlauf
+        (hikeHistory) und die Errungenschaften (achievements) mit dem
+        serverseitig gespeicherten Stand des authentifizierten Nutzers ab.
+        Die Vereinigung beider Mengen (per id) wird serverseitig persistiert
+        und zurueckgegeben, sodass ein An-/Abmelden oder ein Geraetewechsel
+        keine bereits abgeschlossenen Wanderungen verliert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgressSyncInput"
+      responses:
+        "200":
+          description: Zusammengefuehrter Fortschritt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSyncResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/packs/claim:
+    post:
+      operationId: claimKantonspack
+      tags: [profile]
+      summary: Kantonspack-Kauf einem Kanton zuordnen
+      description: >-
+        Ordnet einen bezahlten Kantonspack-Kauf (Einzelprodukt
+        "sagatrail_kantonspack") dem gewaehlten Kanton zu. Der Server prueft
+        bei RevenueCat, dass der Customer mehr gueltige Kantonspack-Kaeufe
+        als bereits vergebene pack_<kanton>-Entitlements hat, und vergibt
+        dann das Entitlement des Kantons per Grant. Idempotent, falls der
+        Kanton bereits freigeschaltet ist.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimKantonspackBody"
+      responses:
+        "200":
+          description: Ergebnis der Zuordnung
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimKantonspackResponse"
+        "400":
+          description: Unbekannter Kanton
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Kein offener Kantonspack-Kauf vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: RevenueCat nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/free-hike:
+    patch:
+      operationId: consumeMyFreeHike
+      tags: [profile]
+      summary: Kostenlose Wanderung verbrauchen
+      description: >-
+        Markiert die einmalige kostenlose Wanderung des authentifizierten
+        Nutzers als verbraucht. Wird beim Start der ersten Wanderung
+        aufgerufen (nicht-Premium-Nutzer).
+      responses:
+        "200":
+          description: Aktualisiertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/referral-code:
+    get:
+      operationId: getMyReferralCode
+      tags: [profile]
+      summary: Einladungscode abrufen oder erstellen
+      responses:
+        "200":
+          description: Einladungscode
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                required: [code]
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /referrals/claim:
+    post:
+      operationId: claimReferralCode
+      tags: [profile]
+      summary: Einladungscode einlösen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  minLength: 1
+              required: [code]
+      responses:
+        "200":
+          description: Eingelöst
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  alreadyClaimed:
+                    type: boolean
+                required: [ok, alreadyClaimed]
+        "400":
+          description: Ungültige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Code nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/pack-reward/claim:
+    post:
+      operationId: claimPackReward
+      tags: [profile]
+      summary: Sagenpaket-Belohnung einlösen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                packSlug:
+                  type: string
+                  minLength: 1
+              required: [packSlug]
+      responses:
+        "200":
+          description: Pack eingelöst — gibt aktualisiertes Profil zurück
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Keine Belohnung verfügbar oder ungültiger Pack
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/{routeId}/conditions:
+    get:
+      operationId: getRouteConditions
+      tags: [community]
+      summary: Community-Wegbedingungen abrufen
+      description: >-
+        Gibt die juengsten community-gemeldeten Wegbedingungen fuer eine Route
+        zurueck (max. 10, nur der letzten 7 Tage). Kein Auth erforderlich.
+      parameters:
+        - name: routeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Liste der Berichte
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrailConditionReport"
+    post:
+      operationId: reportRouteCondition
+      tags: [community]
+      summary: Wegbedingung melden
+      description: >-
+        Meldet eine neue Wegbedingung fuer eine Route. Authentifizierung
+        erforderlich. Rate-Limit: max. 1 Bericht pro Nutzer und Route pro
+        2 Stunden.
+      parameters:
+        - name: routeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrailConditionInput"
+      responses:
+        "201":
+          description: Gespeicherter Bericht
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrailConditionReport"
+        "400":
+          description: Ungueltige Eingabe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Zu viele Berichte (Rate-Limit)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /narration:
+    post:
+      operationId: createNarration
+      tags: [narration]
+      summary: Kapitel-Erzaehlung als KI-Audio synthetisieren
+      description: >-
+        Synthetisiert den uebergebenen Erzaehltext als natuerlich klingende
+        Audio-Erzaehlung via ElevenLabs (Premium-Feature, online-only, kein
+        Offline-Fallback). Fuer Schweizerdeutsch (gsw) muss bereits der
+        Hochdeutsch-Text uebergeben werden -- die Schweizer Faerbung kommt
+        ausschliesslich ueber die Stimme, nie ueber Dialekt-Text. Ergebnisse
+        werden serverseitig nach Textinhalt gecacht. Nur fuer Premium-Nutzer:
+        die kostenlose erste Wanderung nutzt die on-device Stimme und ruft
+        diesen Endpunkt nie auf.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NarrationInput"
+      responses:
+        "200":
+          description: MP3-Audiodaten der Erzaehlung
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Ungueltige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Premium erforderlich
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Sprachsynthese fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /safety-shares:
+    post:
+      operationId: createSafetyShare
+      tags: [safety]
+      summary: Zeitlich begrenzten Sicherheitslink starten
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSafetyShareRequest"
+      responses:
+        "201":
+          description: Sicherheitslink
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SafetyShare"
+        "400":
+          description: Ungültige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+  /safety-shares/{token}/location:
+    post:
+      operationId: updateSafetyShareLocation
+      tags: [safety]
+      summary: Frischen GPS-Standort eines Sicherheitslinks aktualisieren
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SafetyShareLocation"
+      responses:
+        "200":
+          description: Standort gespeichert
+        "400":
+          description: Ungültige Position
+        "410":
+          description: Link abgelaufen
+  /safety-shares/{token}:
+    get:
+      operationId: getSafetyShareByToken
+      tags: [safety]
+      summary: Öffentlichen Sicherheitsstatus per Token laden
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Öffentlicher Status ohne Kontodaten
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SafetySharePublicStatus"
+        "404":
+          description: Nicht gefunden
+    delete:
+      operationId: endSafetyShare
+      tags: [safety]
+      summary: Eigene Sicherheitsfreigabe beenden
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Freigabe beendet
+        "401":
+          description: Nicht authentifiziert
+        "404":
+          description: Nicht gefunden
+  /terrain-corridor:
+    post:
+      operationId: createTerrainCorridor
+      tags: [routes]
+      summary: Echten SwissTopo-DTM-Korridor entlang einer Route laden
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TerrainCorridorRequest"
+      responses:
+        "200":
+          description: Routenkorridor mit echten DTM-Höhen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerrainCorridorResponse"
+        "400":
+          description: Ungültige Routengeometrie
+        "502":
+          description: Zu wenige verfügbare SwissTopo-Höhenwerte
+  /terrain-area:
+    post:
+      operationId: createTerrainArea
+      tags: [routes]
+      summary: Rechteckiges SwissTopo-DTM-Gelände um eine vollständige Route laden
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TerrainAreaRequest"
+      responses:
+        "200":
+          description: Bildschirmfüllende Route-Terrainfläche mit echten DTM-Höhen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerrainAreaResponse"
+        "400":
+          description: Ungültige Routengeometrie
+        "502":
+          description: Zu wenige verfügbare SwissTopo-Höhenwerte
+  /meetups:
+    get:
+      operationId: getMeetups
+      tags: [meetups]
+      summary: Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: routeId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: communityId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 120
+        - name: canton
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: difficulty
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: mine
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Kommende Treffpunkte
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupListResponse"
+    post:
+      operationId: createMeetup
+      tags: [meetups]
+      summary: Treffpunkt fuer eine Route erstellen
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMeetupRequest"
+      responses:
+        "201":
+          description: Treffpunkt erstellt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meetup"
+        "400":
+          description: Ungueltige Treffpunkt-Daten
+        "401":
+          description: Anmeldung erforderlich
+  /meetups/{id}:
+    get:
+      operationId: getMeetup
+      tags: [meetups]
+      summary: Treffpunkt mit Teilnehmern laden
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Treffpunkt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupDetail"
+        "404":
+          description: Treffpunkt nicht gefunden
+    delete:
+      operationId: deleteMeetup
+      tags: [meetups]
+      summary: Eigenen Treffpunkt loeschen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Treffpunkt geloescht
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt nicht gefunden oder nicht berechtigt
+    patch:
+      operationId: updateMeetup
+      tags: [meetups]
+      summary: Eigenen geplanten Treffpunkt bearbeiten
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeetupRequest"
+      responses:
+        "200":
+          description: Treffpunkt aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meetup"
+        "400":
+          description: Ungueltige Treffpunkt-Daten
+        "403":
+          description: Nicht berechtigt
+        "409":
+          description: Treffpunkt kann nicht mehr bearbeitet werden
+  /meetups/{id}/photos:
+    get:
+      operationId: getMeetupPhotos
+      tags: [meetups]
+      summary: Private Fotos eines abgeschlossenen Treffpunkts laden
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Fotos mit kurzlebigen privaten Bild-URLs
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Keine Teilnahme an diesem Treffpunkt }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Fotos erst nach dem Abschluss verfügbar }
+  /meetups/{id}/photo-consent:
+    patch:
+      operationId: updateMeetupPhotoConsent
+      tags: [meetups]
+      summary: Freigabe für eine Namensnennung aktualisieren
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [allowNameMention, consentVersion]
+              properties:
+                allowNameMention: { type: boolean }
+                consentVersion: { type: string }
+      responses:
+        "200":
+          description: Freigabe gespeichert
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400": { description: Ungültige Einwilligungsversion }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Keine Teilnahme an diesem Treffpunkt }
+        "404": { description: Treffpunkt nicht gefunden }
+  /meetups/{id}/photos/upload:
+    post:
+      operationId: uploadMeetupPhoto
+      tags: [meetups]
+      summary: Privates Foto nach zwei getrennten Einwilligungen hochladen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: consentVersion
+          in: query
+          required: true
+          schema: { type: string }
+        - name: rightsConsent
+          in: query
+          required: true
+          schema: { type: string, enum: ["1"] }
+        - name: depictedPeopleConsent
+          in: query
+          required: true
+          schema: { type: string, enum: ["1"] }
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema: { type: string, format: binary }
+          image/png:
+            schema: { type: string, format: binary }
+          image/webp:
+            schema: { type: string, format: binary }
+      responses:
+        "201":
+          description: Foto gespeichert
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400": { description: Fehlende Einwilligungen oder ungültige Bildgröße }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Keine Teilnahme an diesem Treffpunkt }
+        "409": { description: Foto-Uploads erst nach dem Abschluss verfügbar }
+        "415": { description: Nicht unterstütztes Bildformat }
+  /meetups/{id}/photos/{photoId}:
+    delete:
+      operationId: deleteMeetupPhoto
+      tags: [meetups]
+      summary: Eigenes Meetup-Foto löschen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: photoId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Foto gelöscht
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Foto gehört einer anderen Person }
+        "404": { description: Foto nicht gefunden }
+  /meetups/{id}/photos/share:
+    post:
+      operationId: prepareMeetupPhotoShare
+      tags: [meetups]
+      summary: Organizer-Beitrag mit Auswahl und Namensfreigaben vorbereiten
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [selectedPhotoIds]
+              properties:
+                selectedPhotoIds:
+                  type: array
+                  maxItems: 20
+                  items: { type: string, format: uuid }
+                caption: { type: string, maxLength: 1200 }
+      responses:
+        "200":
+          description: Beitragstext und ausgewählte private URLs
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Nur der Organisator darf den Beitrag vorbereiten }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Beitrag erst nach dem Abschluss verfügbar }
+  /meetups/{id}/cancel:
+    post:
+      operationId: cancelMeetup
+      tags: [meetups]
+      summary: Eigenen Treffpunkt absagen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelMeetupRequest"
+      responses:
+        "204":
+          description: Treffpunkt abgesagt
+        "400":
+          description: Ungültiger Absagegrund
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt nicht gefunden oder nicht berechtigt
+  /meetups/{id}/start:
+    post:
+      operationId: startMeetup
+      tags: [meetups]
+      summary: Treffpunkt starten
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Treffpunkt gestartet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetupLifecycleResponse" }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Nur der Organisator darf starten }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Ungültiger Treffpunktstatus }
+  /meetups/{id}/complete:
+    post:
+      operationId: completeMeetup
+      tags: [meetups]
+      summary: Treffpunkt abschliessen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Treffpunkt abgeschlossen
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetupLifecycleResponse" }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Nur der Organisator darf abschliessen }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Ungültiger Treffpunktstatus }
+  /meetups/{id}/messages:
+    post:
+      operationId: sendMeetupMessage
+      tags: [meetups]
+      summary: Nachricht an Treffpunktteilnehmer senden
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MeetupMessageRequest" }
+      responses:
+        "201":
+          description: Nachricht in die Zustellung eingereiht
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeetupMessageResponse" }
+        "400": { description: Ungültiger Nachrichtentext }
+        "401": { description: Anmeldung erforderlich }
+        "403": { description: Kein Treffpunktmitglied }
+        "404": { description: Treffpunkt nicht gefunden }
+        "409": { description: Treffpunkt beendet oder noch nicht gestartet }
+        "429": { description: Nachrichtenlimit erreicht }
+  /meetups/{id}/join:
+    post:
+      operationId: joinMeetup
+      tags: [meetups]
+      summary: Bei einem Treffpunkt mitwandern
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Teilnahme bestaetigt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupJoinResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "409":
+          description: Treffpunkt voll oder bereits gestartet
+    delete:
+      operationId: leaveMeetup
+      tags: [meetups]
+      summary: Teilnahme an einem Treffpunkt aufheben
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Teilnahme aufgehoben
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupJoinResponse"
+        "401":
+          description: Anmeldung erforderlich
+  /meetups/{id}/attendance:
+    patch:
+      operationId: updateMeetupAttendance
+      tags: [meetups]
+      summary: Eigenen Anwesenheitsstatus aktualisieren
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetupAttendanceRequest"
+      responses:
+        "200":
+          description: Anwesenheitsstatus aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupAttendanceResponse"
+        "400":
+          description: Ungültiger Anwesenheitsstatus
+        "401":
+          description: Anmeldung erforderlich
+        "404":
+          description: Treffpunkt oder Teilnahme nicht gefunden
+        "409":
+          description: Status kann nicht mehr geändert werden
+        "429":
+          description: Status wurde vor weniger als fünf Minuten geändert
+  /meetups/{id}/share:
+    post:
+      operationId: createMeetupShare
+      tags: [meetups]
+      summary: Sicheren Treffpunkt-Link erstellen
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Temporärer Freigabelink
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetupShareResponse"
+        "401":
+          description: Anmeldung erforderlich
+        "403":
+          description: Nur Teilnehmende dürfen teilen
+        "404":
+          description: Treffpunkt nicht gefunden
+  /meetups/shared/{token}:
+    get:
+      operationId: getSharedMeetup
+      tags: [meetups]
+      summary: Öffentlichen Treffpunkt-Link laden
+      parameters:
+        - name: token
+          in: path
+          required: true
           schema:
             type: string
       responses:
