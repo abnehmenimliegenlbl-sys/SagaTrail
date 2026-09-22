@@ -1,0 +1,1 @@
+export const COMMUNITY_COVER_IMAGE = require("../assets/images/communities-banner.png");

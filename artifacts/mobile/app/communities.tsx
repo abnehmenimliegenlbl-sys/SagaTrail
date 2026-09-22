@@ -8,7 +8,7 @@ import {
 } from "@workspace/api-client-react";
 import { Image as ExpoImage } from "expo-image";
 import { Stack } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Background } from "@/components/brand/Background";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { GLAS_3D } from "@/constants/depth";
+import { COMMUNITY_COVER_IMAGE } from "@/constants/community";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useCommunityScreenStrings } from "@/lib/i18n/screens/communities";
@@ -151,6 +152,7 @@ function CommunityCard({
   const colors = useColors();
   const router = useRouter();
   const t = useCommunityScreenStrings();
+  const [coverFailed, setCoverFailed] = useState(false);
   const meetups = useGetMeetups({ communityId: community.id });
   const plannedHikes = meetups.data?.meetups.length ?? 0;
 
@@ -169,22 +171,21 @@ function CommunityCard({
           },
         ]}
       >
-        {community.coverImageUrl ? (
+        {coverFailed || !community.coverImageUrl ? (
           <ExpoImage
-            source={{ uri: community.coverImageUrl }}
+            source={COMMUNITY_COVER_IMAGE}
             style={styles.cover}
             contentFit="cover"
             transition={180}
           />
         ) : (
-          <View
-            style={[
-              styles.coverFallback,
-              { backgroundColor: colors.accent + "1F" },
-            ]}
-          >
-            <Feather name="users" size={28} color={colors.accent} />
-          </View>
+          <ExpoImage
+            source={{ uri: community.coverImageUrl }}
+            style={styles.cover}
+            contentFit="cover"
+            transition={180}
+            onError={() => setCoverFailed(true)}
+          />
         )}
         <View style={styles.communityCopy}>
           <Text

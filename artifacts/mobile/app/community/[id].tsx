@@ -28,6 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
+import { COMMUNITY_COVER_IMAGE } from "@/constants/community";
 import { GLAS_3D } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
@@ -47,6 +48,7 @@ export default function CommunityDetailScreen() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
   const t = useCommunityScreenStrings();
+  const [coverFailed, setCoverFailed] = useState(false);
   const meetupT = useMeetupStrings();
   const params = useLocalSearchParams<{ id?: string }>();
   const communityId = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
@@ -212,17 +214,21 @@ export default function CommunityDetailScreen() {
             },
           ]}
         >
-          {community.coverImageUrl ? (
+          {coverFailed || !community.coverImageUrl ? (
             <ExpoImage.Image
-              source={{ uri: community.coverImageUrl }}
+              source={COMMUNITY_COVER_IMAGE}
               style={styles.cover}
               contentFit="cover"
               transition={180}
             />
           ) : (
-            <View style={[styles.coverFallback, { backgroundColor: colors.accent + "1F" }]}>
-              <Feather name="users" size={30} color={colors.accent} />
-            </View>
+            <ExpoImage.Image
+              source={{ uri: community.coverImageUrl }}
+              style={styles.cover}
+              contentFit="cover"
+              transition={180}
+              onError={() => setCoverFailed(true)}
+            />
           )}
           <View style={styles.communityCopy}>
             <Text style={[styles.description, { color: colors.mutedForeground }]}>
