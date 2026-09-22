@@ -156,6 +156,12 @@ router.get(
 );
 
 router.get("/communities/me", async (req, res): Promise<void> => {
+  // This response is user-specific and contains mutable display metadata.
+  // Never let an intermediary turn it into a bodyless 304: the native client
+  // cannot reconstruct a JSON response from that status and would keep stale
+  // community cards without the administrator name.
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+
   const userId = getAuth(req).userId;
   if (!userId) {
     res.status(401).json({ error: "Nicht authentifiziert" });
