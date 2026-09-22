@@ -145,6 +145,7 @@ function CommunityCard({
     id: string;
     name: string;
     description: string;
+    administratorName?: string | null;
     coverImageUrl?: string | null;
   };
   index: number;
@@ -193,6 +194,9 @@ function CommunityCard({
             numberOfLines={2}
           >
             {community.name}
+          </Text>
+          <Text style={[styles.communityAdministrator, { color: colors.accent }]}>
+            {community.administratorName || "–"}
           </Text>
           <Text
             style={[
@@ -280,6 +284,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.titleBold,
     fontSize: 22,
     lineHeight: 27,
+  },
+  communityAdministrator: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    marginTop: 4,
   },
   communityDescription: {
     fontFamily: fonts.body,
