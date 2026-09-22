@@ -1,7 +1,7 @@
 - [Route grade smoothing](sagatrail-route-grade-smoothing.md) — map slope colors must use smoothed ~50 m windows; point-to-point DTM values can create false red segments.
 - [Terrain grade color perception](sagatrail-grade-color-perception.md) — additive bloom makes yellow-green values look yellow; use an unambiguous neon green for flat route segments.
 - [Terrain speech density](sagatrail-terrain-speech-density.md) — keep detailed map coloring separate from voice density; nearby terrain cues are thinned, with very steep sections prioritized.
-- [AR route visibility across phone tilt](sagatrail-ar-route-visibility.md) — combine a subtle ground trace with a restrained forward cue so the route survives upright and downward phone angles.
+- [AR route visibility across phone tilt](sagatrail-ar-route-visibility.md) — render one clearly visible, connected 50 m ground-route prefix; do not substitute a billboard arrow.
 - [SwissTopo profile request size](sagatrail-swisstopo-profile-chunking.md) — the profile GET URL breaks above roughly 125 LV95 points; preserve geometry with overlapping chunks and rebased distances.
 - [async-IIFE cancelled race](async-iife-cancelled-race.md) — await vor Netzwerk-Call in useEffect IIFE lässt React canceln bevor Call startet; nie `if(cancelled) return` vor dem Call, nur in .then/.finally.
 - [SBB Transport API](sagatrail-sbb-transport.md) — transport.opendata.ch ist vom Replit-Netzwerk geblockt; stattdessen timetable.search.ch (latlon + stationboard by name).

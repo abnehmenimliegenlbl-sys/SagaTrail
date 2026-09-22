@@ -128,15 +128,6 @@ const AR_ROUTE_DESTINATION_SHOW_WITHIN_M = 500;
 // the user's feet. Keep the geographic route on that ground plane and let the
 // local DTM elevation differences lift it above/below the plane.
 const AR_ROUTE_GROUND_OFFSET = -1.25;
-// The direction cue is a heads-up aid, not the route itself. It must be far
-// enough from the camera that its billboard does not fill the screen when the
-// user looks down, while sitting high enough to remain visible when the phone
-// is held upright.
-const AR_ROUTE_GUIDE_DISTANCE = 1.4;
-const AR_ROUTE_GUIDE_ELEVATION = 0.5;
-const AR_ROUTE_GUIDE_LENGTH = 0.32;
-const AR_ROUTE_GUIDE_HALF_WIDTH = 0.13;
-const AR_ROUTE_GUIDE_THICKNESS = 0.045;
 const MAX_AR_PEAK_SLOTS = 40;
 const MAX_VISIBLE_AR_PEAKS = 6;
 const MAX_AR_ROUTE_SEGMENT_SLOTS = 96;
@@ -407,48 +398,6 @@ function TerrainMapHologram({
   );
 }
 
-interface RouteDirectionCue {
-  position: TerrainVertex;
-  rotationY: number;
-  band: RouteGradeBand;
-}
-
-function routeHeading(from: TerrainVertex, to: TerrainVertex): number {
-  return (Math.atan2(-(to[2] - from[2]), to[0] - from[0]) * 180) / Math.PI;
-}
-
-function buildRouteDirectionCue(
-  segments: readonly TerrainRouteSegment[],
-): RouteDirectionCue | null {
-  let distanceToCue = AR_ROUTE_GUIDE_DISTANCE;
-
-  for (const segment of segments) {
-    for (let index = 1; index < segment.points.length; index += 1) {
-      const from = segment.points[index - 1];
-      const to = segment.points[index];
-      const length = Math.hypot(to[0] - from[0], to[2] - from[2]);
-      if (length < 0.02) continue;
-
-      const heading = routeHeading(from, to);
-      if (distanceToCue <= length) {
-        const fraction = distanceToCue / length;
-        return {
-          position: [
-            from[0] + (to[0] - from[0]) * fraction,
-            from[1] + (to[1] - from[1]) * fraction,
-            from[2] + (to[2] - from[2]) * fraction,
-          ],
-          rotationY: heading,
-          band: segment.band,
-        };
-      }
-      distanceToCue -= length;
-    }
-  }
-
-  return null;
-}
-
 function TerrainHologram({
   model,
   routeGeometry,
@@ -571,10 +520,6 @@ function TerrainHologram({
       routeProjectionReady,
     ],
   );
-  const routeDirectionCue = useMemo(
-    () => buildRouteDirectionCue(routeSegments),
-    [routeSegments],
-  );
   const canRenderRoute = routeProjectionReady && trackingReady;
 
   useEffect(() => {
@@ -584,7 +529,6 @@ function TerrainHologram({
       routePointCount: routeGeometry?.length ?? 0,
       visibleRoutePointCount: visibleRouteGeometry?.length ?? 0,
       lineCount: routeSegments.length,
-      directionCueRendered: routeDirectionCue != null,
       terrainRadiusM: AR_ROUTE_TERRAIN_RADIUS_M,
       nearRouteRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
       destinationVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
@@ -606,7 +550,6 @@ function TerrainHologram({
     routeGeometry,
     visibleRouteGeometry,
     routeSegments.length,
-    routeDirectionCue,
     destinationPosition,
     remainingRouteDistanceM,
     routeOriginPosition,
@@ -655,57 +598,16 @@ function TerrainHologram({
                 ? TERRAIN_ROUTE_MATERIALS[segment.band]
                 : TERRAIN_ROUTE_MATERIALS.green
             }
-            // Keep the route itself clearly visible as the real ground-plane
-            // trace. The smaller guide cue below handles the upright-phone
-            // case without turning the whole route into a screen-facing
-            // graphic.
+            // This is the actual next-50-metre route projected onto the
+            // ground. It is intentionally strong enough to stay readable;
+            // camera angle determines visibility only when the ground point
+            // is outside the camera view.
             opacity={segment && canRenderRoute ? 0.82 : 0}
             renderingOrder={24}
             viroTag={`terrain-route-line-slot-${index}`}
           />
         );
       })}
-      <ViroNode
-        position={
-          routeDirectionCue && canRenderRoute
-            ? [
-                routeDirectionCue.position[0],
-                AR_ROUTE_GROUND_OFFSET +
-                  routeDirectionCue.position[1] +
-                  AR_ROUTE_GUIDE_ELEVATION,
-                routeDirectionCue.position[2],
-              ]
-            : [0, -1000, 0]
-        }
-        rotation={[0, routeDirectionCue?.rotationY ?? 0, 0]}
-        opacity={routeDirectionCue && canRenderRoute ? 0.92 : 0}
-        renderingOrder={28}
-        transformBehaviors="billboard"
-        viroTag="terrain-route-direction-cue"
-      >
-        <ViroPolyline
-          points={[
-            [
-              -AR_ROUTE_GUIDE_HALF_WIDTH,
-              -AR_ROUTE_GUIDE_LENGTH * 0.42,
-              0,
-            ],
-            [0, AR_ROUTE_GUIDE_LENGTH * 0.58, 0],
-            [
-              AR_ROUTE_GUIDE_HALF_WIDTH,
-              -AR_ROUTE_GUIDE_LENGTH * 0.42,
-              0,
-            ],
-          ]}
-          thickness={AR_ROUTE_GUIDE_THICKNESS}
-          materials={
-            routeDirectionCue
-              ? TERRAIN_ROUTE_MATERIALS[routeDirectionCue.band]
-              : TERRAIN_ROUTE_MATERIALS.green
-          }
-          transformBehaviors="billboard"
-        />
-      </ViroNode>
       <ViroNode
         position={
           destinationPosition
