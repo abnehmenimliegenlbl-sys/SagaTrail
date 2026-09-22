@@ -22,13 +22,13 @@ export function MeetupFilters({
   strings: MeetupStrings;
 }) {
   const colors = useColors();
-  const searchLabel = strings.search ?? "Suche";
-  const searchPlaceholder = strings.searchPlaceholder ?? "Route, Kanton oder Notiz";
-  const onlyMineLabel = strings.onlyMine ?? "Nur meine Teilnahmen";
-  const difficultyLabel = strings.difficulty ?? "SAC";
-  const allLabel = strings.allDifficulties ?? "Alle";
+  const searchLabel = strings.search;
+  const searchPlaceholder = strings.searchPlaceholder;
+  const onlyMineLabel = strings.onlyMine;
+  const difficultyLabel = strings.difficulty;
+  const allLabel = strings.allDifficulties;
   const hasActiveFilters = Boolean(value.search.trim() || value.difficulty || value.onlyMine);
-  const resetLabel = strings.close ?? "Filter zurücksetzen";
+  const resetLabel = strings.resetFilters;
 
   return (
     <View style={styles.wrapper}>

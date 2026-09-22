@@ -1,0 +1,167 @@
+import { createUseStrings, StringsDict } from "../createStrings";
+
+export interface CommunityInviteStrings {
+  pageTitle: string;
+  kicker: string;
+  loadingTitle: string;
+  loadingBody: string;
+  successTitle: string;
+  successBody: (communityName: string) => string;
+  continueButton: string;
+  errorTitle: string;
+  errorBody: string;
+  appButton: string;
+  apiError: string;
+  authError: string;
+  claimError: string;
+  defaultCommunity: string;
+}
+
+const STRINGS: StringsDict<CommunityInviteStrings> = {
+  de: {
+    pageTitle: "Community-Einladung",
+    kicker: "SAGATRAIL COMMUNITY",
+    loadingTitle: "Einladung wird geöffnet",
+    loadingBody: "Dein Platz in der Community wird bestätigt.",
+    successTitle: "Du bist dabei.",
+    successBody: (name) => `Die Einladung zu ${name} wurde deinem SagaTrail-Konto hinzugefügt.`,
+    continueButton: "Weiter zur App",
+    errorTitle: "Einladung konnte nicht bestätigt werden",
+    errorBody: "Prüfe deine Internetverbindung und ob SagaTrail installiert ist. Öffne den Einladungslink danach erneut oder nutze den Code auf der Landingpage.",
+    appButton: "Zur App",
+    apiError: "Die API-Adresse ist nicht konfiguriert.",
+    authError: "Die Anmeldung konnte nicht geladen werden.",
+    claimError: "Die Einladung konnte nicht angenommen werden. Bitte versuche es erneut.",
+    defaultCommunity: "deine Community",
+  },
+  gsw: {
+    pageTitle: "Community-Iiladig",
+    kicker: "SAGATRAIL COMMUNITY",
+    loadingTitle: "Iiladig wird ufemacht",
+    loadingBody: "Di Platz i de Community wird bestätigt.",
+    successTitle: "Du bisch debii.",
+    successBody: (name) => `D Iiladig i «${name}» isch dim SagaTrail-Konto hinzuegfüegt worde.`,
+    continueButton: "Wiiter zur App",
+    errorTitle: "Iiladig het nöd chönne bestätigt werde",
+    errorBody: "Prüef dini Internetverbindig und ob SagaTrail installiert isch. Öffne de Iiladigslink nomal oder bruch de Code uf de Landingpage.",
+    appButton: "Zur App",
+    apiError: "D API-Adresse isch nöd konfiguriert.",
+    authError: "D Aamäldig het nöd chönne glade werde.",
+    claimError: "D Iiladig het nöd chönne aagno werde. Bitte versuechs nomal.",
+    defaultCommunity: "dini Community",
+  },
+  fr: {
+    pageTitle: "Invitation à la communauté",
+    kicker: "SAGATRAIL COMMUNITY",
+    loadingTitle: "Ouverture de l’invitation",
+    loadingBody: "Votre place dans la communauté est en cours de confirmation.",
+    successTitle: "Vous en êtes.",
+    successBody: (name) => `L’invitation à ${name} a été ajoutée à votre compte SagaTrail.`,
+    continueButton: "Continuer vers l’app",
+    errorTitle: "Impossible de confirmer l’invitation",
+    errorBody: "Vérifiez votre connexion Internet et que SagaTrail est installé. Ouvrez ensuite à nouveau le lien ou utilisez le code sur la page d’accueil.",
+    appButton: "Ouvrir l’app",
+    apiError: "L’adresse de l’API n’est pas configurée.",
+    authError: "Impossible de charger la connexion.",
+    claimError: "Impossible d’accepter l’invitation. Réessayez.",
+    defaultCommunity: "votre communauté",
+  },
+  it: {
+    pageTitle: "Invito alla community",
+    kicker: "SAGATRAIL COMMUNITY",
+    loadingTitle: "Apertura dell’invito",
+    loadingBody: "Stiamo confermando il tuo posto nella community.",
+    successTitle: "Ci sei.",
+    successBody: (name) => `L’invito a ${name} è stato aggiunto al tuo account SagaTrail.`,
+    continueButton: "Continua nell’app",
+    errorTitle: "Impossibile confermare l’invito",
+    errorBody: "Controlla la connessione Internet e che SagaTrail sia installato. Poi riapri il link o usa il codice sulla landing page.",
+    appButton: "Vai all’app",
+    apiError: "L’indirizzo API non è configurato.",
+    authError: "Impossibile caricare l’accesso.",
+    claimError: "Impossibile accettare l’invito. Riprova.",
+    defaultCommunity: "la tua community",
+  },
+  en: {
+    pageTitle: "Community invitation",
+    kicker: "SAGATRAIL COMMUNITY",
+    loadingTitle: "Opening invitation",
+    loadingBody: "Your place in the community is being confirmed.",
+    successTitle: "You’re in.",
+    successBody: (name) => `The invitation to ${name} was added to your SagaTrail account.`,
+    continueButton: "Continue to app",
+    errorTitle: "Invitation could not be confirmed",
+    errorBody: "Check your internet connection and that SagaTrail is installed. Then open the invitation link again or use the code on the landing page.",
+    appButton: "Go to app",
+    apiError: "The API address is not configured.",
+    authError: "Sign-in could not be loaded.",
+    claimError: "The invitation could not be accepted. Please try again.",
+    defaultCommunity: "your community",
+  },
+  zh: {
+    pageTitle: "社区邀请",
+    kicker: "SAGATRAIL COMMUNITY",
+    loadingTitle: "正在打开邀请",
+    loadingBody: "正在确认你在社区中的席位。",
+    successTitle: "你已加入。",
+    successBody: (name) => `“${name}”的邀请已添加到你的 SagaTrail 账户。`,
+    continueButton: "继续使用应用",
+    errorTitle: "无法确认邀请",
+    errorBody: "请检查网络连接并确认已安装 SagaTrail。然后重新打开邀请链接，或在落地页使用邀请码。",
+    appButton: "打开应用",
+    apiError: "尚未配置 API 地址。",
+    authError: "无法加载登录状态。",
+    claimError: "无法接受邀请，请重试。",
+    defaultCommunity: "你的社区",
+  },
+  es: {
+    pageTitle: "Invitación a la comunidad",
+    kicker: "SAGATRAIL COMMUNITY",
+    loadingTitle: "Abriendo la invitación",
+    loadingBody: "Estamos confirmando tu plaza en la comunidad.",
+    successTitle: "Ya estás dentro.",
+    successBody: (name) => `La invitación a ${name} se ha añadido a tu cuenta de SagaTrail.`,
+    continueButton: "Continuar a la app",
+    errorTitle: "No se ha podido confirmar la invitación",
+    errorBody: "Comprueba tu conexión a Internet y que SagaTrail esté instalado. Después vuelve a abrir el enlace o usa el código en la página de destino.",
+    appButton: "Ir a la app",
+    apiError: "La dirección de la API no está configurada.",
+    authError: "No se ha podido cargar el inicio de sesión.",
+    claimError: "No se ha podido aceptar la invitación. Inténtalo de nuevo.",
+    defaultCommunity: "tu comunidad",
+  },
+  pt: {
+    pageTitle: "Convite para a comunidade",
+    kicker: "SAGATRAIL COMMUNITY",
+    loadingTitle: "A abrir o convite",
+    loadingBody: "Estamos a confirmar o seu lugar na comunidade.",
+    successTitle: "Já está dentro.",
+    successBody: (name) => `O convite para ${name} foi adicionado à sua conta SagaTrail.`,
+    continueButton: "Continuar para a aplicação",
+    errorTitle: "Não foi possível confirmar o convite",
+    errorBody: "Verifique a ligação à Internet e se o SagaTrail está instalado. Depois abra novamente o link ou use o código na página de destino.",
+    appButton: "Ir para a aplicação",
+    apiError: "O endereço da API não está configurado.",
+    authError: "Não foi possível carregar o início de sessão.",
+    claimError: "Não foi possível aceitar o convite. Tente novamente.",
+    defaultCommunity: "a sua comunidade",
+  },
+  ru: {
+    pageTitle: "Приглашение в сообщество",
+    kicker: "SAGATRAIL COMMUNITY",
+    loadingTitle: "Открываем приглашение",
+    loadingBody: "Подтверждаем ваше место в сообществе.",
+    successTitle: "Вы присоединились.",
+    successBody: (name) => `Приглашение в сообщество «${name}» добавлено в ваш аккаунт SagaTrail.`,
+    continueButton: "Перейти в приложение",
+    errorTitle: "Не удалось подтвердить приглашение",
+    errorBody: "Проверьте подключение к интернету и установку SagaTrail. Затем снова откройте ссылку или используйте код на целевой странице.",
+    appButton: "Открыть приложение",
+    apiError: "Адрес API не настроен.",
+    authError: "Не удалось загрузить вход в аккаунт.",
+    claimError: "Не удалось принять приглашение. Повторите попытку.",
+    defaultCommunity: "ваше сообщество",
+  },
+};
+
+export const useCommunityInviteStrings = createUseStrings(STRINGS);

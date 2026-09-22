@@ -87,19 +87,20 @@ export interface MeetupStrings {
   routeMeta: (difficulty: string, distanceKm: number) => string;
   routeMetaUnavailable: string;
   locationUnavailable: string;
-  search?: string;
-  searchPlaceholder?: string;
-  difficulty?: string;
-  allDifficulties?: string;
-  onlyMine?: string;
-  edit?: string;
-  save?: string;
-  close?: string;
-  updateSuccess?: string;
-  updateFailure?: string;
-  joinWaitlist?: string;
-  leaveWaitlist?: string;
-  waitlistPosition?: (position: number) => string;
+  search: string;
+  searchPlaceholder: string;
+  difficulty: string;
+  allDifficulties: string;
+  onlyMine: string;
+  resetFilters: string;
+  edit: string;
+  save: string;
+  close: string;
+  updateSuccess: string;
+  updateFailure: string;
+  joinWaitlist: string;
+  leaveWaitlist: string;
+  waitlistPosition: (position: number) => string;
 }
 
 const STRINGS: StringsDict<MeetupStrings> = {
@@ -190,6 +191,20 @@ const STRINGS: StringsDict<MeetupStrings> = {
     routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
     routeMetaUnavailable: "Routendaten nicht verfügbar",
     locationUnavailable: "Standort nicht verfügbar",
+    search: "Suche",
+    searchPlaceholder: "Route, Kanton oder Notiz",
+    difficulty: "SAC",
+    allDifficulties: "Alle",
+    onlyMine: "Nur meine Teilnahmen",
+    resetFilters: "Filter zurücksetzen",
+    edit: "Treffpunkt bearbeiten",
+    save: "Speichern",
+    close: "Schließen",
+    updateSuccess: "Treffpunkt aktualisiert.",
+    updateFailure: "Treffpunkt konnte nicht aktualisiert werden.",
+    joinWaitlist: "Auf die Warteliste",
+    leaveWaitlist: "Warteliste verlassen",
+    waitlistPosition: (position) => `Wartelistenplatz ${position}`,
   },
   gsw: {
     eyebrow: "Zäme wandere",
@@ -242,6 +257,20 @@ const STRINGS: StringsDict<MeetupStrings> = {
     routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
     routeMetaUnavailable: "Routedate nöd verfügbar",
     locationUnavailable: "Standort nöd verfügbar",
+    search: "Suechi",
+    searchPlaceholder: "Route, Kanton oder Notiz",
+    difficulty: "SAC",
+    allDifficulties: "Alli",
+    onlyMine: "Nur mini Teilnahmene",
+    resetFilters: "Filter zruggsetze",
+    edit: "Treffpunkt bearbeite",
+    save: "Speichere",
+    close: "Schliesse",
+    updateSuccess: "Treffpunkt aktualisiert.",
+    updateFailure: "Treffpunkt het nöd chönne aktualisiert werde.",
+    joinWaitlist: "Uf d Wartelischte",
+    leaveWaitlist: "Wartelischte verlasse",
+    waitlistPosition: (position) => `Wartelischteplatz ${position}`,
   },
   fr: {
     eyebrow: "Randonnée ensemble", title: "Rendez-vous", intro: "Trouvez des personnes qui souhaitent parcourir le même itinéraire le même jour.",
@@ -287,6 +316,20 @@ const STRINGS: StringsDict<MeetupStrings> = {
     routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
     routeMetaUnavailable: "Données de l'itinéraire indisponibles",
     locationUnavailable: "Position indisponible",
+    search: "Rechercher",
+    searchPlaceholder: "Itinéraire, canton ou note",
+    difficulty: "SAC",
+    allDifficulties: "Tous",
+    onlyMine: "Mes participations uniquement",
+    resetFilters: "Réinitialiser les filtres",
+    edit: "Modifier le rendez-vous",
+    save: "Enregistrer",
+    close: "Fermer",
+    updateSuccess: "Rendez-vous mis à jour.",
+    updateFailure: "Impossible de mettre à jour le rendez-vous.",
+    joinWaitlist: "Rejoindre la liste d’attente",
+    leaveWaitlist: "Quitter la liste d’attente",
+    waitlistPosition: (position) => `Position ${position} sur la liste d’attente`,
   },
   it: {
     eyebrow: "Camminare insieme", title: "Ritrovo", intro: "Trova persone che vogliono percorrere lo stesso itinerario nello stesso giorno.",
@@ -330,6 +373,20 @@ const STRINGS: StringsDict<MeetupStrings> = {
     routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
     routeMetaUnavailable: "Dati del percorso non disponibili",
     locationUnavailable: "Posizione non disponibile",
+    search: "Cerca",
+    searchPlaceholder: "Itinerario, cantone o nota",
+    difficulty: "SAC",
+    allDifficulties: "Tutti",
+    onlyMine: "Solo le mie partecipazioni",
+    resetFilters: "Reimposta filtri",
+    edit: "Modifica il ritrovo",
+    save: "Salva",
+    close: "Chiudi",
+    updateSuccess: "Ritrovo aggiornato.",
+    updateFailure: "Impossibile aggiornare il ritrovo.",
+    joinWaitlist: "Entra nella lista d’attesa",
+    leaveWaitlist: "Lascia la lista d’attesa",
+    waitlistPosition: (position) => `Posizione ${position} nella lista d’attesa`,
   },
   en: {
     eyebrow: "Hike together", title: "Meetup", intro: "Find people who want to hike the same route on the same day.",
@@ -373,6 +430,20 @@ const STRINGS: StringsDict<MeetupStrings> = {
     routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
     routeMetaUnavailable: "Route details unavailable",
     locationUnavailable: "Location unavailable",
+    search: "Search",
+    searchPlaceholder: "Route, canton or note",
+    difficulty: "SAC",
+    allDifficulties: "All",
+    onlyMine: "My participation only",
+    resetFilters: "Reset filters",
+    edit: "Edit meetup",
+    save: "Save",
+    close: "Close",
+    updateSuccess: "Meetup updated.",
+    updateFailure: "The meetup could not be updated.",
+    joinWaitlist: "Join waitlist",
+    leaveWaitlist: "Leave waitlist",
+    waitlistPosition: (position) => `Waitlist position ${position}`,
   },
   zh: {
     eyebrow: "一起徒步", title: "徒步集合", intro: "找到想在同一天走同一条路线的人。",
@@ -416,6 +487,20 @@ const STRINGS: StringsDict<MeetupStrings> = {
     routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} 公里`,
     routeMetaUnavailable: "路线数据不可用",
     locationUnavailable: "位置不可用",
+    search: "搜索",
+    searchPlaceholder: "路线、州或备注",
+    difficulty: "SAC",
+    allDifficulties: "全部",
+    onlyMine: "仅看我的参与",
+    resetFilters: "重置筛选",
+    edit: "编辑集合",
+    save: "保存",
+    close: "关闭",
+    updateSuccess: "集合已更新。",
+    updateFailure: "无法更新集合。",
+    joinWaitlist: "加入候补名单",
+    leaveWaitlist: "退出候补名单",
+    waitlistPosition: (position) => `候补第 ${position} 位`,
   },
   es: {
     eyebrow: "Caminar juntos", title: "Encuentro", intro: "Encuentra personas que quieran hacer la misma ruta el mismo día.",
@@ -459,6 +544,20 @@ const STRINGS: StringsDict<MeetupStrings> = {
     routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
     routeMetaUnavailable: "Datos de la ruta no disponibles",
     locationUnavailable: "Ubicación no disponible",
+    search: "Buscar",
+    searchPlaceholder: "Ruta, cantón o nota",
+    difficulty: "SAC",
+    allDifficulties: "Todas",
+    onlyMine: "Solo mis participaciones",
+    resetFilters: "Restablecer filtros",
+    edit: "Editar encuentro",
+    save: "Guardar",
+    close: "Cerrar",
+    updateSuccess: "Encuentro actualizado.",
+    updateFailure: "No se ha podido actualizar el encuentro.",
+    joinWaitlist: "Entrar en la lista de espera",
+    leaveWaitlist: "Salir de la lista de espera",
+    waitlistPosition: (position) => `Posición ${position} en la lista de espera`,
   },
   pt: {
     eyebrow: "Caminhar juntos", title: "Encontro", intro: "Encontre pessoas que querem fazer a mesma rota no mesmo dia.",
@@ -502,6 +601,20 @@ const STRINGS: StringsDict<MeetupStrings> = {
     routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} km`,
     routeMetaUnavailable: "Dados do percurso indisponíveis",
     locationUnavailable: "Localização indisponível",
+    search: "Pesquisar",
+    searchPlaceholder: "Rota, cantão ou nota",
+    difficulty: "SAC",
+    allDifficulties: "Todos",
+    onlyMine: "Apenas as minhas participações",
+    resetFilters: "Repor filtros",
+    edit: "Editar encontro",
+    save: "Guardar",
+    close: "Fechar",
+    updateSuccess: "Encontro atualizado.",
+    updateFailure: "Não foi possível atualizar o encontro.",
+    joinWaitlist: "Entrar na lista de espera",
+    leaveWaitlist: "Sair da lista de espera",
+    waitlistPosition: (position) => `Posição ${position} na lista de espera`,
   },
   ru: {
     eyebrow: "Вместе в поход", title: "Встреча", intro: "Найдите людей, которые хотят пройти тот же маршрут в тот же день.",
@@ -545,6 +658,20 @@ const STRINGS: StringsDict<MeetupStrings> = {
     routeMeta: (difficulty, distanceKm) => `SAC ${difficulty} · ${distanceKm.toFixed(1)} км`,
     routeMetaUnavailable: "Данные маршрута недоступны",
     locationUnavailable: "Местоположение недоступно",
+    search: "Поиск",
+    searchPlaceholder: "Маршрут, кантон или заметка",
+    difficulty: "SAC",
+    allDifficulties: "Все",
+    onlyMine: "Только мои участия",
+    resetFilters: "Сбросить фильтры",
+    edit: "Изменить встречу",
+    save: "Сохранить",
+    close: "Закрыть",
+    updateSuccess: "Встреча обновлена.",
+    updateFailure: "Не удалось обновить встречу.",
+    joinWaitlist: "В лист ожидания",
+    leaveWaitlist: "Покинуть лист ожидания",
+    waitlistPosition: (position) => `Позиция ${position} в листе ожидания`,
   },
 };
 
