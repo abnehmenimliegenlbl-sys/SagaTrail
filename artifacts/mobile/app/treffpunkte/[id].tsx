@@ -1,40 +1,4 @@
-import { Feather } from "@expo/vector-icons";
-import {
-  useBlockMeetupOrganizer,
-  useCancelMeetup,
-  useCompleteMeetup,
-  useCreateMeetupShare,
-  useGetMeetup,
-  useJoinMeetup,
-  useLeaveMeetup,
-  useRemoveMeetupParticipant,
-  useReportMeetup,
-  useSendMeetupMessage,
-  useStartMeetup,
-  useUpdateMeetup,
-  useUpdateMeetupAttendance,
-  type MeetupParticipant,
-} from "@workspace/api-client-react";
-import * as FileSystem from "expo-file-system/legacy";
-import * as Linking from "expo-linking";
-import * as Sharing from "expo-sharing";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-import { Background } from "@/components/brand/Background";
-import { PrimaryButton } from "@/components/brand/PrimaryButton";
+and/PrimaryButton";
 import { ProfileAvatar } from "@/components/brand/ProfileAvatar";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { fonts } from "@/constants/typography";
@@ -340,7 +304,7 @@ export default function MeetupDetail() {
       maxParticipants < 2 ||
       maxParticipants > 30
     ) {
-      alert(t.edit ?? "Treffpunkt bearbeiten", t.invalid);
+      alert(t.edit, t.invalid);
       return;
     }
     try {
@@ -355,9 +319,9 @@ export default function MeetupDetail() {
       });
       setEditing(false);
       await query.refetch();
-      alert(t.edit ?? "Treffpunkt bearbeiten", t.updateSuccess ?? "Treffpunkt aktualisiert.");
+      alert(t.edit, t.updateSuccess);
     } catch {
-      alert(t.edit ?? "Treffpunkt bearbeiten", t.updateFailure ?? "Treffpunkt konnte nicht aktualisiert werden.");
+      alert(t.edit, t.updateFailure);
     }
   };
 
@@ -413,7 +377,7 @@ export default function MeetupDetail() {
             </Text>
             <Text style={[styles.availabilityBody, { color: meetup.isWaitlisted ? colors.accent : isFull ? colors.destructive : colors.mutedForeground }]}>
               {meetup.isWaitlisted
-                ? (t.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)
+                ? t.waitlistPosition(meetup.waitlistPosition ?? 0)
                 : meetup.joined
                   ? t.joined
                   : isFull
@@ -429,13 +393,13 @@ export default function MeetupDetail() {
               <Pressable onPress={beginEdit} style={[styles.editButton, { borderColor: colors.accent }]}>
                 <Feather name="edit-2" size={15} color={colors.accent} />
                 <Text style={[styles.editButtonText, { color: colors.accent }]}>
-                  {t.edit ?? "Treffpunkt bearbeiten"}
+                  {t.edit}
                 </Text>
               </Pressable>
             ) : (
               <>
                 <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                  {t.edit ?? "Treffpunkt bearbeiten"}
+                  {t.edit}
                 </Text>
                 <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{t.date}</Text>
                 <TextInput
@@ -495,12 +459,12 @@ export default function MeetupDetail() {
                 <View style={styles.editActions}>
                   <Pressable onPress={() => setEditing(false)} style={[styles.editButton, { borderColor: colors.glassBorder }]}>
                     <Text style={[styles.editButtonText, { color: colors.mutedForeground }]}>
-                      {t.close ?? t.cancel}
+                      {t.close}
                     </Text>
                   </Pressable>
                   <Pressable onPress={() => void saveEdit()} disabled={updateMeetupMutation.isPending} style={[styles.editButton, { borderColor: colors.accent, opacity: updateMeetupMutation.isPending ? 0.5 : 1 }]}>
                     <Text style={[styles.editButtonText, { color: colors.accent }]}>
-                      {t.save ?? "Speichern"}
+                      {t.save}
                     </Text>
                   </Pressable>
                 </View>

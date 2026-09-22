@@ -30,6 +30,7 @@ import {
   useGetMyCommunities,
 } from "@workspace/api-client-react";
 import { alert } from "@/lib/appAlert";
+import { useMeetupPhotoStrings } from "@/lib/i18n/screens/meetupPhotos";
 import {
   deleteMeetupPhoto,
   fetchMeetupPhotos,
@@ -41,6 +42,7 @@ import {
 
 export default function MeetupPhotos() {
   const colors = useColors();
+  const t = useMeetupPhotoStrings();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { getToken } = useAuth();
@@ -81,11 +83,11 @@ export default function MeetupPhotos() {
       setAllowNameMention(result.allowNameMention);
       setSelectedIds(result.photos.filter((photo) => photo.selected).map((photo) => photo.id));
     } catch {
-      alert("Wanderungsfotos", "Die Fotos konnten nicht geladen werden.");
+      alert(t.title, t.loadFailure);
     } finally {
       setLoading(false);
     }
-  }, [getToken, meetupId]);
+  }, [getToken, meetupId, t]);
 
   useEffect(() => {
     void refresh();
@@ -94,8 +96,8 @@ export default function MeetupPhotos() {
   const chooseAndUpload = async () => {
     if (!rightsConsent || !depictedPeopleConsent) {
       alert(
-        "Einwilligung erforderlich",
-        "Bestätige bitte beide Einwilligungen: die Rechte am Upload und die Zustimmung abgebildeter Personen.",
+        t.consentRequiredTitle,
+        t.consentRequiredBody,
       );
       return;
     }
@@ -119,7 +121,7 @@ export default function MeetupPhotos() {
       setDepictedPeopleConsent(false);
       await refresh();
     } catch (error) {
-      alert("Foto-Upload", error instanceof Error ? error.message : "Die Fotos konnten nicht hochgeladen werden.");
+      alert(t.uploadTitle, error instanceof Error ? error.message : t.uploadFailure);
     } finally {
       setUploading(false);
     }
@@ -131,7 +133,7 @@ export default function MeetupPhotos() {
       await saveMeetupNameConsent(meetupId, value, getToken);
     } catch {
       setAllowNameMention(!value);
-      alert("Namensnennung", "Die Namensfreigabe konnte nicht gespeichert werden.");
+      alert(t.nameTitle, t.nameFailure);
     }
   };
 
@@ -150,7 +152,7 @@ export default function MeetupPhotos() {
       await deleteMeetupPhoto(meetupId, photo.id, getToken);
       await refresh();
     } catch {
-      alert("Wanderungsfotos", "Das Bild konnte nicht gelöscht werden.");
+      alert(t.title, t.deleteFailure);
     }
   };
 
@@ -177,9 +179,9 @@ export default function MeetupPhotos() {
       setSharing(true);
       const prepared = await prepareMeetupShare(meetupId, selectedIds, caption.trim(), getToken);
       const names = prepared.participantNames.length
-        ? `\n\nDabei: ${prepared.participantNames.join(", ")}`
+        ? `\n\n${t.participantsLabel}: ${prepared.participantNames.join(", ")}`
         : "";
-      const message = `${prepared.routeName}${names}\n\n${prepared.caption || "Eine gemeinsame Wanderung mit SagaTrail."}`;
+      const message = `${prepared.routeName}${names}\n\n${prepared.caption || t.sharedCaption}`;
       let uri: string | undefined;
       try {
         uri = await captureRef(shareRef, { format: "png", quality: 1, result: "tmpfile" });
@@ -192,24 +194,24 @@ export default function MeetupPhotos() {
       try {
         result = await Share.share(
           uri ? { message, url: uri } : { message },
-          { dialogTitle: "Für Facebook-Gruppe vorbereiten" },
+          { dialogTitle: t.shareDialogTitle },
         );
       } catch (shareError) {
         if (!uri) throw shareError;
         result = await Share.share(
           { message },
-          { dialogTitle: "Für Facebook-Gruppe vorbereiten" },
+          { dialogTitle: t.shareDialogTitle },
         );
       }
 
       if (result.action === Share.dismissedAction) return;
       alert(
-        "Beitrag vorbereitet",
-        "Bild und Begleittext sind bereit. Öffne jetzt die Facebook-Gruppe und erstelle dort den Beitrag.",
-        [{ text: "Facebook-Gruppe öffnen", onPress: () => void openFacebookGroup() }],
+        t.shareReadyTitle,
+        t.shareReadyBody,
+        [{ text: t.openFacebook, onPress: () => void openFacebookGroup() }],
       );
     } catch (error) {
-      alert("Beitrag vorbereiten", error instanceof Error ? error.message : "Der Beitrag konnte nicht vorbereitet werden.");
+      alert(t.shareDialogTitle, error instanceof Error ? error.message : t.sharePrepareFailure);
     } finally {
       setSharing(false);
     }
@@ -219,7 +221,7 @@ export default function MeetupPhotos() {
     return <Background><View style={[styles.center, { paddingTop: insets.top }]}><ActivityIndicator color={colors.accent} /></View></Background>;
   }
   if (!meetup || meetupQuery.isError) {
-    return <Background><View style={[styles.center, { paddingTop: insets.top }]}><Text style={{ color: colors.foreground }}>Wanderung nicht gefunden.</Text></View></Background>;
+    return <Background><View style={[styles.center, { paddingTop: insets.top }]}><Text style={{ color: colors.foreground }}>{t.notFound}</Text></View></Background>;
   }
 
   return (
@@ -227,56 +229,56 @@ export default function MeetupPhotos() {
       <ScrollView
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: insets.bottom + 80 }}
       >
-        <ScreenHeader eyebrow="GEMEINSAM ERLEBT" title="Wanderungsfotos" onBack />
+        <ScreenHeader eyebrow={t.eyebrow} title={t.title} onBack />
         <Text style={[styles.routeName, { color: colors.foreground }]}>{meetup.routeName}</Text>
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>
-          Teile Erinnerungen mit der Gruppe. SagaTrail schützt die Bilder und bereitet den Beitrag für Facebook vor.
+          {t.intro}
         </Text>
 
         <View style={[styles.card, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
-            <Text style={[styles.cardTitle, { color: colors.foreground }]}>Bilder hinzufügen</Text>
+            <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.addTitle}</Text>
             <ConsentRow checked={rightsConsent} onPress={() => setRightsConsent((value) => !value)} colors={colors}>
-              Ich habe die Rechte an diesen Bildern oder darf sie hochladen.
+              {t.rightsConsent}
             </ConsentRow>
             <ConsentRow checked={depictedPeopleConsent} onPress={() => setDepictedPeopleConsent((value) => !value)} colors={colors}>
-              Erkennbare Personen haben dem Teilen zugestimmt.
+              {t.peopleConsent}
             </ConsentRow>
             <ConsentRow checked={allowNameMention} onPress={() => void toggleNameConsent(!allowNameMention)} colors={colors}>
-              Ich bin einverstanden, dass mein Name im Beitrag genannt wird.
+              {t.nameConsent}
             </ConsentRow>
-            <PrimaryButton label="Bilder auswählen und hochladen" loading={uploading} onPress={() => void chooseAndUpload()} style={{ marginTop: 12 }} />
+            <PrimaryButton label={t.uploadButton} loading={uploading} onPress={() => void chooseAndUpload()} style={{ marginTop: 12 }} />
         </View>
 
         {isOrganizer ? (
           <View style={[styles.card, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
-            <Text style={[styles.cardTitle, { color: colors.foreground }]}>Beitrag für die Facebook-Gruppe</Text>
+            <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.facebookTitle}</Text>
             <Text style={[styles.cardBody, { color: colors.mutedForeground }]}>
-              Wähle die schönsten Bilder. Die SagaTrail-Abschlusskachel bleibt immer enthalten und wird als Titelbild verwendet.
+              {t.facebookBody}
             </Text>
             <TextInput
               value={caption}
               onChangeText={setCaption}
               maxLength={1200}
               multiline
-              placeholder="Begleittext für den Beitrag"
+              placeholder={t.captionPlaceholder}
               placeholderTextColor={colors.mutedForeground}
               style={[styles.caption, { color: colors.foreground, borderColor: colors.glassBorder }]}
             />
             <PrimaryButton
-              label={`Beitrag mit ${selectedIds.length} Bild${selectedIds.length === 1 ? "" : "ern"} vorbereiten`}
+              label={t.preparePost(selectedIds.length)}
               loading={sharing}
               disabled={sharing}
               onPress={() => void sharePost()}
               style={{ marginTop: 10 }}
             />
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-              Echte Facebook-Tags setzt du nach dem Öffnen der Gruppe direkt in Facebook.
+              {t.facebookHint}
             </Text>
           </View>
         ) : null}
 
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-          {photos.length ? `${photos.length} Bild${photos.length === 1 ? "" : "er"}` : "Noch keine Bilder"}
+          {photos.length ? t.photoCount(photos.length) : t.noPhotos}
         </Text>
         {photos.length ? (
           <View style={styles.grid}>
@@ -307,23 +309,23 @@ export default function MeetupPhotos() {
             ))}
           </View>
         ) : (
-          <Text style={[styles.empty, { color: colors.mutedForeground }]}>Nach dem Upload erscheinen die Bilder hier.</Text>
+          <Text style={[styles.empty, { color: colors.mutedForeground }]}>{t.empty}</Text>
         )}
 
         {isOrganizer ? (
           <View ref={shareRef} collapsable={false} style={styles.shareCanvas}>
             <ShareCard
-              sagaTitle="SagaTrail Wanderabschluss"
+              sagaTitle={t.shareSagaTitle}
               routeName={meetup.routeName}
               canton={meetup.canton}
               distanceKm={0}
               ascentM={0}
-              sacScale="Wanderung"
+              sacScale={t.shareScale}
               visitedPlaceCount={0}
-              distanceLabel="DISTANZ"
-              ascentLabel="AUFSTIEG"
-              timeLabel="ZEIT"
-              stepsLabel="SCHRITTE"
+              distanceLabel={t.distanceLabel}
+              ascentLabel={t.ascentLabel}
+              timeLabel={t.timeLabel}
+              stepsLabel={t.stepsLabel}
             />
             {selectedPhotos.map((photo) => (
               <Image key={photo.id} source={{ uri: photo.url }} style={styles.sharePhoto} />

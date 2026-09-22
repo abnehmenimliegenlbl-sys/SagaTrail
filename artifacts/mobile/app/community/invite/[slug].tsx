@@ -7,6 +7,7 @@ import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { useColors } from "@/hooks/useColors";
 import { getApiBaseUrl } from "@/lib/apiConfig";
+import { useCommunityInviteStrings } from "@/lib/i18n/screens/communityInvite";
 import {
   communityInviteClaimKey,
   getCommunityInviteRouteParams,
@@ -20,6 +21,7 @@ const TOKEN_TIMEOUT_MS = 8_000;
 
 export default function CommunityInviteScreen() {
   const colors = useColors();
+  const t = useCommunityInviteStrings();
   const router = useRouter();
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const { code: rawCode, slug: rawSlug } = useLocalSearchParams<{
@@ -73,11 +75,11 @@ export default function CommunityInviteScreen() {
       try {
         const apiBaseUrl = getApiBaseUrl();
         if (!apiBaseUrl) {
-          throw new Error("Die API-Adresse ist nicht konfiguriert.");
+          throw new Error(t.apiError);
         }
         const tokenTimeout = new Promise<never>((_, reject) => {
           tokenTimeoutId = setTimeout(
-            () => reject(new Error("Die Anmeldung konnte nicht geladen werden.")),
+            () => reject(new Error(t.authError)),
             TOKEN_TIMEOUT_MS,
           );
         });
@@ -95,10 +97,10 @@ export default function CommunityInviteScreen() {
           community?: { name?: string };
         };
         if (!response.ok) {
-          throw new Error("Die Einladung konnte nicht angenommen werden. Bitte versuche es erneut.");
+          throw new Error(t.claimError);
         }
         if (!cancelled) {
-          setCommunityName(payload.community?.name ?? "deine Community");
+          setCommunityName(payload.community?.name ?? t.defaultCommunity);
           setState("success");
         }
       } catch {
@@ -119,34 +121,31 @@ export default function CommunityInviteScreen() {
     inviteActionKind,
     inviteKey,
     router,
+    t,
   ]);
 
   return (
     <Background>
-      <Stack.Screen options={{ title: "Community-Einladung", headerShown: false }} />
+      <Stack.Screen options={{ title: t.pageTitle, headerShown: false }} />
       <View style={styles.container}>
-        <Text style={[styles.kicker, { color: colors.accent }]}>SAGATRAIL COMMUNITY</Text>
+        <Text style={[styles.kicker, { color: colors.accent }]}>{t.kicker}</Text>
         {state === "loading" ? (
           <>
             <ActivityIndicator color={colors.accent} size="large" />
-            <Text style={[styles.title, { color: colors.foreground }]}>Einladung wird geöffnet</Text>
-            <Text style={[styles.body, { color: colors.mutedForeground }]}>Dein Platz in der Community wird bestätigt.</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>{t.loadingTitle}</Text>
+            <Text style={[styles.body, { color: colors.mutedForeground }]}>{t.loadingBody}</Text>
           </>
         ) : state === "success" ? (
           <>
-            <Text style={[styles.title, { color: colors.foreground }]}>Du bist dabei.</Text>
-            <Text style={[styles.body, { color: colors.mutedForeground }]}>
-              Die Einladung zu {communityName} wurde deinem SagaTrail-Konto hinzugefügt.
-            </Text>
-            <PrimaryButton label="Weiter zur App" onPress={() => router.replace("/")} />
+            <Text style={[styles.title, { color: colors.foreground }]}>{t.successTitle}</Text>
+            <Text style={[styles.body, { color: colors.mutedForeground }]}>{t.successBody(communityName)}</Text>
+            <PrimaryButton label={t.continueButton} onPress={() => router.replace("/")} />
           </>
         ) : (
           <>
-            <Text style={[styles.title, { color: colors.foreground }]}>Einladung konnte nicht bestätigt werden</Text>
-            <Text style={[styles.body, { color: colors.mutedForeground }]}>
-              Prüfe deine Internetverbindung und ob SagaTrail installiert ist. Öffne den Einladungslink danach erneut oder nutze den Code auf der Landingpage.
-            </Text>
-            <PrimaryButton label="Zur App" onPress={() => router.replace("/")} />
+            <Text style={[styles.title, { color: colors.foreground }]}>{t.errorTitle}</Text>
+            <Text style={[styles.body, { color: colors.mutedForeground }]}>{t.errorBody}</Text>
+            <PrimaryButton label={t.appButton} onPress={() => router.replace("/")} />
           </>
         )}
       </View>

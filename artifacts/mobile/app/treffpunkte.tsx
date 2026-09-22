@@ -49,13 +49,11 @@ export default function Treffpunkte() {
   const { language } = useApp();
   const [filters, setFilters] = useState<MeetupFilterState>({
     search: "",
-    difficulty: undefined,
     onlyMine: false,
   });
   const meetupParams = useMemo(
     () => ({
       search: filters.search.trim() || undefined,
-      difficulty: filters.difficulty,
       mine: filters.onlyMine || undefined,
     }),
     [filters],

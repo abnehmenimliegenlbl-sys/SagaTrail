@@ -131,18 +131,6 @@ const AR_ROUTE_GROUND_OFFSET = -1.25;
 const MAX_AR_PEAK_SLOTS = 40;
 const MAX_VISIBLE_AR_PEAKS = 6;
 const MAX_AR_ROUTE_SEGMENT_SLOTS = 96;
-// AR should answer one question at a time: which way do I walk now? Upcoming
-// turns are communicated by the separate turn cue, not by several competing
-// floor arrows.
-const MAX_AR_ROUTE_DIRECTION_ARROWS = 1;
-const AR_ROUTE_TURN_THRESHOLD_DEGREES = 25;
-const AR_ROUTE_ARROW_MIN_SPACING = 0.45;
-const AR_ROUTE_ARROW_ELEVATION = 0.5;
-const AR_ROUTE_ARROW_START_OFFSET = 0.35;
-const AR_ROUTE_ARROW_INTERVAL_M = 4;
-const AR_ROUTE_ARROW_LENGTH = 0.42;
-const AR_ROUTE_ARROW_HALF_WIDTH = 0.2;
-const AR_ROUTE_ARROW_THICKNESS = 0.075;
 const HIDDEN_AR_ROUTE_POINTS: TerrainRouteLine = [
   [0, -1000, 0],
   [0, -1000, 0.01],
@@ -410,141 +398,6 @@ function TerrainMapHologram({
   );
 }
 
-function routeHeading(from: TerrainVertex, to: TerrainVertex): number {
-  return (Math.atan2(-(to[2] - from[2]), to[0] - from[0]) * 180) / Math.PI;
-}
-
-function headingChangeDegrees(previous: number, next: number): number {
-  return Math.abs(((next - previous + 540) % 360) - 180);
-}
-
-interface RouteDirectionArrow {
-  position: TerrainVertex;
-  rotationY: number;
-  band: RouteGradeBand;
-}
-
-function distanceBetweenRoutePoints(
-  first: TerrainVertex,
-  second: TerrainVertex,
-): number {
-  return Math.hypot(second[0] - first[0], second[2] - first[2]);
-}
-
-function buildRouteDirectionArrows(
-  segments: readonly TerrainRouteSegment[],
-): RouteDirectionArrow[] {
-  const arrows: RouteDirectionArrow[] = [];
-  let previousHeading: number | null = null;
-  let lastArrowPosition: TerrainVertex | null = null;
-  let hasStartArrow = false;
-  const finalSegment =
-    [...segments].reverse().find((segment) => segment.points.length >= 2) ?? null;
-
-  const addArrow = (
-    position: TerrainVertex,
-    rotationY: number,
-    band: RouteGradeBand,
-  ) => {
-    if (
-      lastArrowPosition != null &&
-      distanceBetweenRoutePoints(lastArrowPosition, position) <
-        AR_ROUTE_ARROW_MIN_SPACING
-    ) {
-      return;
-    }
-    if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS) return;
-    arrows.push({ position, rotationY, band });
-    lastArrowPosition = position;
-  };
-
-  for (const segment of segments) {
-    if (segment.points.length < 2) continue;
-
-    for (let index = 1; index < segment.points.length; index += 1) {
-      const from = segment.points[index - 1];
-      const to = segment.points[index];
-      const length = distanceBetweenRoutePoints(from, to);
-      if (length < 0.02) continue;
-
-      const heading = routeHeading(from, to);
-      if (!hasStartArrow) {
-        const startOffset = Math.min(
-          AR_ROUTE_ARROW_START_OFFSET,
-          length * 0.45,
-        );
-        const headingRad = (heading * Math.PI) / 180;
-        addArrow(
-          [
-            from[0] + Math.cos(headingRad) * startOffset,
-            from[1],
-            from[2] - Math.sin(headingRad) * startOffset,
-          ],
-          heading,
-          segment.band,
-        );
-        hasStartArrow = true;
-      }
-
-      if (
-        previousHeading != null &&
-        headingChangeDegrees(previousHeading, heading) >=
-          AR_ROUTE_TURN_THRESHOLD_DEGREES &&
-        (lastArrowPosition == null ||
-          distanceBetweenRoutePoints(lastArrowPosition, from) >=
-            AR_ROUTE_ARROW_MIN_SPACING)
-      ) {
-        addArrow(from, heading, segment.band);
-      }
-
-      // A sparse polyline otherwise leaves a long straight route looking like
-      // an unexplained green stroke. Repeat the directional cue at a fixed
-      // near-field interval so the user can follow the route visually.
-      for (
-        let offsetM = AR_ROUTE_ARROW_INTERVAL_M;
-        offsetM < length;
-        offsetM += AR_ROUTE_ARROW_INTERVAL_M
-      ) {
-        const fraction = offsetM / length;
-        addArrow(
-          [
-            from[0] + (to[0] - from[0]) * fraction,
-            from[1] + (to[1] - from[1]) * fraction,
-            from[2] + (to[2] - from[2]) * fraction,
-          ],
-          heading,
-          segment.band,
-        );
-        if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS) break;
-      }
-      previousHeading = heading;
-
-      if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS) break;
-    }
-    if (arrows.length >= MAX_AR_ROUTE_DIRECTION_ARROWS) break;
-  }
-
-  if (finalSegment == null || finalSegment.points.length < 2) return arrows;
-  const last = finalSegment.points[finalSegment.points.length - 1];
-  const beforeLast = finalSegment.points[finalSegment.points.length - 2];
-  const finalLength = distanceBetweenRoutePoints(beforeLast, last);
-  if (finalLength < 0.02) return arrows;
-
-  const finalHeading = routeHeading(beforeLast, last);
-  const finalHeadingRad = (finalHeading * Math.PI) / 180;
-  const arrowOffset = 0.12;
-  addArrow(
-    [
-      last[0] - Math.cos(finalHeadingRad) * arrowOffset,
-      last[1],
-      last[2] + Math.sin(finalHeadingRad) * arrowOffset,
-    ],
-    finalHeading,
-    finalSegment.band,
-  );
-  return arrows;
-}
-
 function TerrainHologram({
   model,
   routeGeometry,
@@ -667,10 +520,6 @@ function TerrainHologram({
       routeProjectionReady,
     ],
   );
-  const routeDirectionArrows = useMemo(
-    () => buildRouteDirectionArrows(routeSegments),
-    [routeSegments],
-  );
   const canRenderRoute = routeProjectionReady && trackingReady;
 
   useEffect(() => {
@@ -680,7 +529,6 @@ function TerrainHologram({
       routePointCount: routeGeometry?.length ?? 0,
       visibleRoutePointCount: visibleRouteGeometry?.length ?? 0,
       lineCount: routeSegments.length,
-      directionArrowCount: routeDirectionArrows.length,
       terrainRadiusM: AR_ROUTE_TERRAIN_RADIUS_M,
       nearRouteRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
       destinationVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
@@ -702,7 +550,6 @@ function TerrainHologram({
     routeGeometry,
     visibleRouteGeometry,
     routeSegments.length,
-    routeDirectionArrows.length,
     destinationPosition,
     remainingRouteDistanceM,
     routeOriginPosition,
@@ -751,55 +598,14 @@ function TerrainHologram({
                 ? TERRAIN_ROUTE_MATERIALS[segment.band]
                 : TERRAIN_ROUTE_MATERIALS.green
             }
-            // The route trace is only context. The larger chevrons below are
-            // the actual wayfinding cue and stay readable over the camera.
-            opacity={segment && canRenderRoute ? 0.28 : 0}
+            // This is the actual next-50-metre route projected onto the
+            // ground. It is intentionally strong enough to stay readable;
+            // camera angle determines visibility only when the ground point
+            // is outside the camera view.
+            opacity={segment && canRenderRoute ? 0.82 : 0}
             renderingOrder={24}
             viroTag={`terrain-route-line-slot-${index}`}
           />
-        );
-      })}
-      {Array.from({ length: MAX_AR_ROUTE_DIRECTION_ARROWS }, (_, index) => {
-        const arrow = routeDirectionArrows[index] ?? null;
-        const position = arrow?.position ?? [0, -1000, 0];
-        const band = arrow?.band ?? "green";
-        return (
-          <ViroNode
-            key={`terrain-route-direction-arrow-slot-${index}`}
-            position={[
-              position[0],
-              arrow && canRenderRoute
-                ? AR_ROUTE_GROUND_OFFSET +
-                  position[1] +
-                  AR_ROUTE_ARROW_ELEVATION
-                : -1000,
-              position[2],
-            ]}
-            rotation={[0, arrow?.rotationY ?? 0, 0]}
-            transformBehaviors="billboard"
-            renderingOrder={28}
-            opacity={arrow && canRenderRoute ? 0.94 : 0}
-            viroTag={`terrain-route-direction-arrow-slot-${index}`}
-          >
-            <ViroPolyline
-              points={[
-                [
-                  -AR_ROUTE_ARROW_HALF_WIDTH,
-                  -AR_ROUTE_ARROW_LENGTH * 0.42,
-                  0,
-                ],
-                [0, AR_ROUTE_ARROW_LENGTH * 0.58, 0],
-                [
-                  AR_ROUTE_ARROW_HALF_WIDTH,
-                  -AR_ROUTE_ARROW_LENGTH * 0.42,
-                  0,
-                ],
-              ]}
-              thickness={AR_ROUTE_ARROW_THICKNESS}
-              materials={TERRAIN_ROUTE_MATERIALS[band]}
-              transformBehaviors="billboard"
-            />
-          </ViroNode>
         );
       })}
       <ViroNode

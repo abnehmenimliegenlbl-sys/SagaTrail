@@ -114,12 +114,21 @@ export default function Einstellungen() {
 
   const { isElite, isFamily } = useSubscription();
 
-  // Einladungscode-Modal State
+  // Code-Eingabe für Freundschaftswerbung und Facebook-Community
+  type CodePurpose = "referral" | "community";
   const [codeModalVisible, setCodeModalVisible] = useState(false);
+  const [codePurpose, setCodePurpose] = useState<CodePurpose>("referral");
   const [codeInput, setCodeInput] = useState("");
   const [codeStatus, setCodeStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
-  const claimInviteCode = async () => {
+  const openCodeModal = (purpose: CodePurpose) => {
+    setCodePurpose(purpose);
+    setCodeInput("");
+    setCodeStatus("idle");
+    setCodeModalVisible(true);
+  };
+
+  const claimCode = async () => {
     const code = codeInput.trim().toUpperCase();
     if (!code || codeStatus === "loading") return;
     setCodeStatus("loading");
@@ -131,39 +140,21 @@ export default function Einstellungen() {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
-      const communityResponse = await fetch(`${baseUrl}/api/communities/invitations/claim`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ code }),
-      });
-      if (!communityResponse.ok && communityResponse.status !== 400 && communityResponse.status !== 404) {
-        const body = await communityResponse.json().catch(() => ({}));
-        const msg = getUserFacingErrorMessage(
-          new Error((body as { error?: string }).error ?? ""),
-          getFriendlyHttpErrorMessage(communityResponse.status),
-        );
-        throw new Error(msg);
-      }
-
-      // Persönliche Empfehlungs-Codes bleiben abwärtskompatibel.
-      if (!communityResponse.ok) {
-        const referralResponse = await fetch(`${baseUrl}/api/referrals/claim`, {
+      const response = await fetch(
+        `${baseUrl}${codePurpose === "community" ? "/api/communities/invitations/claim" : "/api/referrals/claim"}`,
+        {
           method: "POST",
           headers,
           body: JSON.stringify({ code }),
-        });
-        if (!referralResponse.ok) {
-          const body = await referralResponse.json().catch(() => ({}));
-          const msg = getUserFacingErrorMessage(
-            new Error((body as { error?: string }).error ?? ""),
-            getFriendlyHttpErrorMessage(referralResponse.status),
-          );
-          if (referralResponse.status === 404) {
-            setCodeStatus("error");
-            return;
-          }
-          throw new Error(msg);
-        }
+        },
+      );
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        const msg = getUserFacingErrorMessage(
+          new Error((body as { error?: string }).error ?? ""),
+          getFriendlyHttpErrorMessage(response.status),
+        );
+        throw new Error(msg);
       }
       setCodeStatus("success");
       setTimeout(() => {
@@ -762,11 +753,23 @@ export default function Einstellungen() {
             </Text>
           </View>
           <RowButton
-            label={t.einladungscodeLabel}
+            label={t.freundschaftscodeLabel}
             value=""
-            icon="tag"
-            onPress={() => { setCodeInput(""); setCodeStatus("idle"); setCodeModalVisible(true); }}
+            icon="user-plus"
+            onPress={() => openCodeModal("referral")}
           />
+          <Text style={[styles.rowHint, { color: colors.mutedForeground, paddingBottom: 10 }]}>
+            {t.freundschaftscodeHint}
+          </Text>
+          <RowButton
+            label={t.communitycodeLabel}
+            value=""
+            icon="users"
+            onPress={() => openCodeModal("community")}
+          />
+          <Text style={[styles.rowHint, { color: colors.mutedForeground, paddingBottom: 10 }]}>
+            {t.communitycodeHint}
+          </Text>
           {/* Einladungscode-Modal */}
           <Modal
             visible={codeModalVisible}
@@ -783,13 +786,17 @@ export default function Einstellungen() {
                 style={[{ backgroundColor: colors.glassBg, borderRadius: colors.radius, padding: 24, width: "100%", gap: 16, borderWidth: 1, borderColor: colors.glassBorder }]}
               >
                 <Text style={[styles.rowLabel, { color: colors.foreground, fontSize: 17 }]}>
-                  {t.einladungscodeLabel}
+                  {codePurpose === "community"
+                    ? t.communitycodeLabel
+                    : t.freundschaftscodeLabel}
                 </Text>
                 {codeStatus === "success" ? (
                   <View style={{ gap: 8, alignItems: "center" }}>
                     <Feather name="check-circle" size={40} color={colors.accent} />
                     <Text style={[styles.rowHint, { color: colors.foreground, textAlign: "center" }]}>
-                      {t.einladungscodeSuccess}
+                      {codePurpose === "community"
+                        ? t.communitycodeSuccess
+                        : t.freundschaftscodeSuccess}
                     </Text>
                   </View>
                 ) : (
@@ -800,7 +807,7 @@ export default function Einstellungen() {
                       autoCapitalize="characters"
                       autoCorrect={false}
                       maxLength={12}
-                      placeholder="z.B. AB3CDE"
+                      placeholder={t.codeInputPlaceholder}
                       placeholderTextColor={colors.mutedForeground}
                       style={{
                         fontFamily: fonts.mono,
@@ -815,12 +822,14 @@ export default function Einstellungen() {
                     />
                     {codeStatus === "error" && (
                       <Text style={[styles.rowHint, { color: colors.destructive ?? colors.mutedForeground }]}>
-                        {t.einladungscodeError}
+                        {codePurpose === "community"
+                          ? t.communitycodeError
+                          : t.freundschaftscodeError}
                       </Text>
                     )}
                     <PrimaryButton
-                      label={codeStatus === "loading" ? "…" : t.einladungscodeButton}
-                      onPress={claimInviteCode}
+                      label={codeStatus === "loading" ? "…" : t.codeRedeemButton}
+                      onPress={claimCode}
                       disabled={!codeInput.trim() || codeStatus === "loading"}
                     />
                   </>

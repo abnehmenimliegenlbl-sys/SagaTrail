@@ -1,163 +1,4 @@
-<?php
-/**
- * SAGATRAIL PARTNER-PORTAL | WPCode PHP Snippet
- * Typ: PHP Snippet
- * Slugs: portal (DE) · portail (FR) · portal-2 (EN) · portale (IT)
- * Benötigt: partner-portal-handler.php als separates PHP-Snippet (Run Everywhere)
- */
-
-if ( ! is_page( [ 'portal', 'portail', 'portal-2', 'portale' ] ) ) return;
-
-/* ── Sprache aus Slug ── */
-$spp_lang = 'de';
-if ( is_page( 'portail' )  ) $spp_lang = 'fr';
-elseif ( is_page( 'portal-2' ) ) $spp_lang = 'en';
-elseif ( is_page( 'portale' )  ) $spp_lang = 'it';
-
-$spp_i18n = [
-  'de' => [
-    /* Login */
-    'login_h2'        => 'Partner-Portal',
-    'login_desc'      => 'Geben Sie Ihre E-Mail-Adresse ein. Wenn Sie als Partner registriert sind, erhalten Sie einen Anmeldelink — gültig für 24 Stunden.',
-    'login_label'     => 'E-Mail-Adresse',
-    'login_ph'        => 'name@betrieb.ch',
-    'login_btn'       => 'Link anfordern',
-    /* Dashboard */
-    'logout_btn'      => 'Abmelden',
-    'stat_views'      => '👁 Profil-Aufrufe',
-    'stat_taps'       => '🛍 Angebot-Tipps',
-    'stat_members'    => '👥 Community-Mitglieder',
-    'stat_completed'  => '🥾 Abgeschlossene Wanderungen',
-    'billing_btn'     => '💳 Abo &amp; Rechnungen verwalten',
-    /* Foto */
-    'foto_h2'         => 'Titelfoto',
-    'foto_desc'       => 'Das Foto erscheint oben auf Ihrer Partnerkachel in der App. Querformat, mind. 800 × 450 px, max. 8 MB (JPEG, PNG, WebP).',
-    'foto_choose'     => 'Datei wählen',
-    'foto_drag'       => 'oder hierher ziehen',
-    'foto_preview'    => 'Vorschau',
-    /* Profil */
-    'profil_h2'       => 'Profil bearbeiten',
-    'beschr_label'    => 'Kurzbeschreibung',
-    'beschr_max'      => '(max. 250 Zeichen)',
-    'beschr_ph'       => 'Was macht Ihren Betrieb besonders? Spezialitäten, Atmosphäre, Lage …',
-    'angebot_label'   => 'SagaTrail-Angebot',
-    'angebot_max'     => '(max. 120 Zeichen)',
-    'angebot_ph'      => 'z.B. Gratis Kaffee auf Vorzeigen der App',
-    'angebot_hint'    => 'wird auch bei der automatischen Wanderer-Ansage verwendet',
-    'tel_label'       => 'Telefon',
-    'web_label'       => 'Website',
-    'reserv_label'    => 'Reservierungs-Link',
-    'reserv_opt'      => '(optional)',
-    'reserv_ph'       => 'https://www.opentable.com/… oder eigene Buchungsseite',
-    'reserv_hint'     => 'Erscheint als prominenter Button auf Ihrer Kachel',
-    'save_btn'        => 'Änderungen speichern',
-    /* Öffnungszeiten */
-    'oz_h2'           => 'Öffnungszeiten',
-    'oz_saison_h3'    => 'Saison',
-    'oz_von_label'    => 'Geöffnet ab',
-    'oz_von_hint'     => 'Leer = ganzjährig',
-    'oz_bis_label'    => 'Geschlossen ab',
-    'oz_ft_h3'        => 'Feiertage',
-    'oz_ft_desc'      => 'Abweichung vom normalen Wochenplan. «Wochenplan» = kein Sonderfall.',
-    'oz_save_btn'     => 'Öffnungszeiten speichern',
-    /* Verband */
-    'vbd_h2'          => 'Verbandsportal',
-    'vbd_desc'        => 'Ihr Verbandsportal ist aktiv. Bei Fragen oder Anpassungen melden Sie sich direkt bei uns.',
-    'vbd_kantone'     => 'Kantone',
-    'vbd_email'       => 'E-Mail',
-    'vbd_seit'        => 'Mitglied seit',
-    /* Karte */
-    'map_h2'          => 'Standort auf der Karte',
-    'map_desc'        => 'Setzen Sie Ihren genauen Standort — wichtig für Bergrestaurants und Betriebe ohne präzise Strassenadresse. Der Marker bestimmt, wo Sie auf der Wanderroute erscheinen.',
-    'map_gps_btn'     => '📍 Meinen Standort verwenden',
-    'map_hint'        => 'Marker verschieben oder oben auf «Meinen Standort verwenden» tippen — dann speichern.',
-    'map_save_btn'    => 'Standort speichern',
-    /* Footer */
-    'footer_q'        => 'Fragen?',
-    /* JS-Strings */
-    'js_days'         => ['Mo','Di','Mi','Do','Fr','Sa','So'],
-    'js_ft_plan'      => 'Wochenplan',
-    'js_ft_open'      => 'Geöffnet',
-    'js_ft_closed'    => 'Geschlossen',
-    'js_gps_na'       => 'GPS nicht verfügbar in diesem Browser.',
-    'js_gps_searching'=> 'Standort wird ermittelt…',
-    'js_gps_err'      => 'Standort konnte nicht ermittelt werden. Bitte Marker manuell setzen.',
-    'js_loc_saved'    => 'Standort gespeichert! Sichtbar in der App nach dem nächsten Routen-Abgleich.',
-    'js_loc_nosess'   => 'Sitzung abgelaufen.',
-    'js_loc_nopos'    => 'Bitte zuerst Standort setzen.',
-    'js_billing_err'  => 'Fehler beim Öffnen des Portals.',
-    'js_billing_conn' => 'Verbindungsfehler. Bitte erneut versuchen.',
-    'js_login_empty'  => 'Bitte E-Mail-Adresse eingeben.',
-    'js_login_noajax' => 'Konfigurationsfehler (kein AJAX-Endpunkt).',
-    'js_login_ok'     => 'Falls diese E-Mail registriert ist, erhalten Sie in Kürze einen Anmeldelink. Bitte prüfen Sie Ihren Posteingang.',
-    'js_login_err'    => 'Fehler. Bitte versuchen Sie es erneut.',
-    'js_conn_err'     => 'Verbindungsfehler.',
-    'js_token_err'    => 'Ungültiger oder abgelaufener Link.',
-    'js_vbd_type'     => 'Tourismusverband',
-    'js_active'       => '✓ Aktiv',
-    'js_inactive'     => 'Inaktiv',
-    'js_active_app'   => '✓ Aktiv in der App',
-    'js_laufzeit'     => 'Laufzeit: ',
-    'js_pkt_basic'    => '📦 Basic — Ihr Betrieb erscheint als Kartenmarker. Für Foto, Beschreibung und Angebot auf Standard oder Premium upgraden.',
-    'js_pkt_std'      => '⭐ Standard — Ihr Betrieb erscheint mit Foto, Beschreibung und Kontaktdaten.',
-    'js_pkt_prem'     => '🏆 Premium — Ihr Betrieb erscheint vollständig mit Foto, Angebot und wird Wanderern automatisch angesagt wenn sie in der Nähe sind.',
-    'js_foto_big'     => 'Datei zu gross (max. 8 MB).',
-    'js_foto_fmt'     => 'Ungültiges Format. Bitte JPEG, PNG oder WebP verwenden.',
-    'js_foto_ok'      => 'Foto erfolgreich hochgeladen!',
-    'js_foto_err'     => 'Upload fehlgeschlagen: ',
-    'js_foto_unk'     => 'Unbekannter Fehler.',
-    'js_foto_conn'    => 'Verbindungsfehler beim Hochladen.',
-    'js_foto_read'    => 'Bild konnte nicht gelesen werden.',
-    'js_save_ok'      => 'Gespeichert! Änderungen sind sofort in der App sichtbar.',
-    'js_save_err'     => 'Speichern fehlgeschlagen.',
-    'js_oz_ok'        => 'Öffnungszeiten gespeichert!',
-    'js_oz_nosess'    => 'Sitzung abgelaufen.',
-    'js_feiertage'    => [
-      ['key'=>'neujahr',            'label'=>'Neujahr',              'datum'=>'1. Jan.'],
-      ['key'=>'berchtoldstag',      'label'=>'Berchtoldstag',        'datum'=>'2. Jan.'],
-      ['key'=>'heiligeDreiKoenige', 'label'=>'Heilige Drei Könige',  'datum'=>'6. Jan.'],
-      ['key'=>'josefstag',          'label'=>'Josefstag',            'datum'=>'19. März'],
-      ['key'=>'karfreitag',         'label'=>'Karfreitag',           'datum'=>'variabel'],
-      ['key'=>'ostermontag',        'label'=>'Ostermontag',          'datum'=>'variabel'],
-      ['key'=>'tagDerArbeit',       'label'=>'Tag der Arbeit',       'datum'=>'1. Mai'],
-      ['key'=>'auffahrt',           'label'=>'Auffahrt',             'datum'=>'variabel'],
-      ['key'=>'pfingstmontag',      'label'=>'Pfingstmontag',        'datum'=>'variabel'],
-      ['key'=>'fronleichnam',       'label'=>'Fronleichnam',         'datum'=>'variabel'],
-      ['key'=>'nationalfeiertag',   'label'=>'Nationalfeiertag',     'datum'=>'1. Aug.'],
-      ['key'=>'mariaHimmelfahrt',   'label'=>'Maria Himmelfahrt',    'datum'=>'15. Aug.'],
-      ['key'=>'bettag',             'label'=>'Eidg. Bettag',         'datum'=>'3. So. Sept.'],
-      ['key'=>'allerheiligen',      'label'=>'Allerheiligen',        'datum'=>'1. Nov.'],
-      ['key'=>'mariaEmpfaengnis',   'label'=>'Maria Empfängnis',     'datum'=>'8. Dez.'],
-      ['key'=>'heiligabend',        'label'=>'Heiligabend',          'datum'=>'24. Dez.'],
-      ['key'=>'weihnachten',        'label'=>'Weihnachten',          'datum'=>'25. Dez.'],
-      ['key'=>'stephanstag',        'label'=>'Stephanstag',          'datum'=>'26. Dez.'],
-      ['key'=>'silvester',          'label'=>'Silvester',            'datum'=>'31. Dez.'],
-    ],
-  ],
-  'fr' => [
-    'login_h2'        => 'Portail partenaire',
-    'login_desc'      => 'Saisissez votre adresse e-mail. Si vous êtes enregistré comme partenaire, vous recevrez un lien de connexion valable 24 heures.',
-    'login_label'     => 'Adresse e-mail',
-    'login_ph'        => 'nom@etablissement.ch',
-    'login_btn'       => 'Recevoir le lien',
-    'logout_btn'      => 'Se déconnecter',
-    'stat_views'      => '👁 Vues du profil',
-    'stat_taps'       => '🛍 Clics sur l\'offre',
-    'stat_members'    => '👥 Membres de la communauté',
-    'stat_completed'  => '🥾 Randonnées terminées',
-    'billing_btn'     => '💳 Gérer l\'abonnement &amp; factures',
-    'foto_h2'         => 'Photo principale',
-    'foto_desc'       => 'La photo apparaît en haut de votre fiche partenaire dans l\'app. Format paysage, min. 800 × 450 px, max. 8 Mo (JPEG, PNG, WebP).',
-    'foto_choose'     => 'Choisir un fichier',
-    'foto_drag'       => 'ou glisser ici',
-    'foto_preview'    => 'Aperçu',
-    'profil_h2'       => 'Modifier le profil',
-    'beschr_label'    => 'Description courte',
-    'beschr_max'      => '(max. 250 caractères)',
-    'beschr_ph'       => 'Qu\'est-ce qui rend votre établissement unique ? Spécialités, ambiance, situation …',
-    'angebot_label'   => 'Offre SagaTrail',
-    'angebot_max'     => '(max. 120 caractères)',
-    'angebot_ph'      => 'p.ex. Café offert sur présentation de l\'app',
+',
     'angebot_hint'    => 'utilisé aussi lors de l\'annonce automatique aux randonneurs',
     'tel_label'       => 'Téléphone',
     'web_label'       => 'Site web',
@@ -1037,7 +878,8 @@ var SPP_FT     = <?php echo $spp_ft_js; ?>;
           '<span style="font-size:13px;color:#777">' + katLabel(p.kategorie) +
           ' · ' + (p.canton || '') +
           (p.paket ? ' · Paket <strong>' + p.paket.charAt(0).toUpperCase() + p.paket.slice(1) + '</strong>' : '') + '</span>';
-        if (p.portalKind === 'community') {
+        var isCommunityPortal = p.portalKind === 'community';
+        if (isCommunityPortal) {
           document.getElementById('spp-views-label').textContent = SPP_L10N.stat_members;
           document.getElementById('spp-taps-label').textContent  = SPP_L10N.stat_completed;
           document.getElementById('spp-views').textContent = fmt(p.communityMemberCount);
@@ -1059,11 +901,34 @@ var SPP_FT     = <?php echo $spp_ft_js; ?>;
           window.sppInitMapFromProfile(p.lat || null, p.lng || null);
         }
 
+        if (isCommunityPortal) {
+          [
+            'spp-billing-wrap',
+            'spp-foto-card',
+            'spp-beschr-wrap',
+            'spp-angebot-wrap',
+            'spp-kontakt-wrap',
+            'spp-reserv-wrap',
+            'spp-paket-info',
+            'spp-map-card',
+          ].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          document.querySelectorAll('#spp-dashboard > div > .spp-card').forEach(function(card) {
+            if (card.querySelector('#spp-save-btn') || card.querySelector('#spp-oz-grid')) {
+              card.style.display = 'none';
+            }
+          });
+        }
+
         var paketEl  = document.getElementById('spp-paket-info');
         var paketTxt = { basic: SPP_L10N.js_pkt_basic, standard: SPP_L10N.js_pkt_std, premium: SPP_L10N.js_pkt_prem }[p.paket] || '';
         if (paketTxt) { paketEl.textContent = paketTxt; paketEl.style.display = 'block'; }
 
-        document.getElementById('spp-billing-wrap').style.display = 'block';
+        if (!isCommunityPortal) {
+          document.getElementById('spp-billing-wrap').style.display = 'block';
+        }
 
         var isStandard = p.paket === 'standard' || p.paket === 'premium';
         var isPremium  = p.paket === 'premium';

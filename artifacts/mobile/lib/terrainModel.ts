@@ -127,7 +127,7 @@ export interface GeographicRouteDisplayOptions {
   maxSegments?: number;
   /** Real-world 1:1 distance before far route compression starts. */
   realScaleRadiusM?: number;
-  /** Optional near-field cap; farther route points are not rendered. */
+  /** Maximum route distance along the connected path to render. */
   maxRenderedDistanceM?: number;
   /** Maximum virtual distance from the observer in the AR world, in metres. */
   maxVirtualDistanceM?: number;
@@ -827,37 +827,75 @@ export function buildGeographicTerrainRouteSegments(
     routeGeometryMaxDistanceM(geometry, center);
   const worldOffset = displayOptions.worldOffset ?? [0, 0, 0];
 
-  // Only keep the first connected near-field prefix. Filtering every grade
-  // band independently by radial distance lets a later part of a loop
-  // re-enter the 50 m circle and appear as a detached floating line.
+  // Only keep the first connected prefix of the requested route length.
+  // Filtering each point by radial distance would let a winding or looped
+  // route re-enter the circle and render more than the next 50 metres.
   let reachedRenderedDistanceLimit = false;
+  let renderedRouteDistanceM = 0;
+  let previousGeographicPoint: readonly number[] | null = null;
+  let previousProjectedPoint: ProjectedGeographicRoutePoint | null = null;
   return gradeSegments.flatMap((segment) => {
     if (reachedRenderedDistanceLimit) return [];
 
-    const projected = segment.coordinates
-      .map((point) =>
-        projectGeographicRoutePoint(
-          model,
-          point,
-          center,
-          terrainRadiusM,
-          maxRouteDistanceM,
-          maxVirtualDistanceM,
-          realScaleRadiusM,
-        ),
-      )
-      .filter((point): point is ProjectedGeographicRoutePoint => point !== null);
-    const maxRenderedDistanceM = displayOptions.maxRenderedDistanceM;
     const visibleProjected: ProjectedGeographicRoutePoint[] = [];
-    for (const point of projected) {
+    for (const geographic of segment.coordinates) {
+      const point = projectGeographicRoutePoint(
+        model,
+        geographic,
+        center,
+        terrainRadiusM,
+        maxRouteDistanceM,
+        maxVirtualDistanceM,
+        realScaleRadiusM,
+      );
+      if (!point) continue;
+      const segmentDistanceM =
+        previousGeographicPoint == null
+          ? 0
+          : geographicDistanceM(geographic, {
+              lat: previousGeographicPoint[0]!,
+              lng: previousGeographicPoint[1]!,
+            }) ?? 0;
+      const maxRenderedDistanceM = displayOptions.maxRenderedDistanceM;
+      const remainingDistanceM =
+        maxRenderedDistanceM == null
+          ? Infinity
+          : Math.max(0, maxRenderedDistanceM - renderedRouteDistanceM);
+
+      if (segmentDistanceM > remainingDistanceM) {
+        if (previousProjectedPoint != null && remainingDistanceM > 0) {
+          const fraction = remainingDistanceM / segmentDistanceM;
+          visibleProjected.push({
+            point: [
+              previousProjectedPoint.point[0] +
+                (point.point[0] - previousProjectedPoint.point[0]) * fraction,
+              previousProjectedPoint.point[1] +
+                (point.point[1] - previousProjectedPoint.point[1]) * fraction,
+              previousProjectedPoint.point[2] +
+                (point.point[2] - previousProjectedPoint.point[2]) * fraction,
+            ],
+            displayDistanceM:
+              previousProjectedPoint.displayDistanceM +
+              (point.displayDistanceM -
+                previousProjectedPoint.displayDistanceM) *
+                fraction,
+          });
+        }
+        reachedRenderedDistanceLimit = true;
+        break;
+      }
+
+      visibleProjected.push(point);
+      renderedRouteDistanceM += segmentDistanceM;
+      previousGeographicPoint = geographic;
+      previousProjectedPoint = point;
       if (
         maxRenderedDistanceM != null &&
-        point.displayDistanceM > Math.max(1, maxRenderedDistanceM)
+        renderedRouteDistanceM >= maxRenderedDistanceM
       ) {
         reachedRenderedDistanceLimit = true;
         break;
       }
-      visibleProjected.push(point);
     }
     if (visibleProjected.length < 2) return [];
     const displayDistanceM =

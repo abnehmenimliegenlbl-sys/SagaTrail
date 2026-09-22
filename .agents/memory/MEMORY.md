@@ -1,6 +1,7 @@
 - [Route grade smoothing](sagatrail-route-grade-smoothing.md) — map slope colors must use smoothed ~50 m windows; point-to-point DTM values can create false red segments.
 - [Terrain grade color perception](sagatrail-grade-color-perception.md) — additive bloom makes yellow-green values look yellow; use an unambiguous neon green for flat route segments.
 - [Terrain speech density](sagatrail-terrain-speech-density.md) — keep detailed map coloring separate from voice density; nearby terrain cues are thinned, with very steep sections prioritized.
+- [AR route visibility across phone tilt](sagatrail-ar-route-visibility.md) — render one clearly visible, connected 50 m ground-route prefix; do not substitute a billboard arrow.
 - [SwissTopo profile request size](sagatrail-swisstopo-profile-chunking.md) — the profile GET URL breaks above roughly 125 LV95 points; preserve geometry with overlapping chunks and rebased distances.
 - [async-IIFE cancelled race](async-iife-cancelled-race.md) — await vor Netzwerk-Call in useEffect IIFE lässt React canceln bevor Call startet; nie `if(cancelled) return` vor dem Call, nur in .then/.finally.
 - [SBB Transport API](sagatrail-sbb-transport.md) — transport.opendata.ch ist vom Replit-Netzwerk geblockt; stattdessen timetable.search.ch (latlon + stationboard by name).
@@ -53,6 +54,7 @@
 - [Start-route choice atomicity](sagatrail-start-route-choice-atomicity.md) — route recalculation must wait until the start mode is set; position and choice can arrive in separate React renders.
 - [Drizzle fire-and-forget needs .execute()](drizzle-execute-required.md) — fire-and-forget DB writes must call .execute().catch(...); plain .catch() on a query builder without .execute() silently does nothing in Drizzle.
 - [EAS build/submit from workspace](eas-build-from-workspace.md) — temp-workflow pattern (bash 120s limit), EXPO_APPLE_TEAM_ID pflicht (TTY-Prompt haengt sonst), ERRORED-Submission ohne Fehlertext = meist doppelte buildNumber in ASC; autoIncrement anlassen.
+- [EAS native project tracking](eas-native-project-tracking.md) — when ios/android directories are present, EAS needs the checked-in manifests, shared schemes, and native configs; selective ignores can break cloud builds before compilation.
 - [EAS Xcode log compression](eas-xcode-log-compression.md) — signed EAS Xcode logs arrive Brotli-compressed despite text/plain; decode before grepping compiler diagnostics.
 - [WP lead booking action](sagatrail-wp-lead-book.md) — POST /admin/partner-leads/wp-book sendet einzelne PartnerLeads an WP via action=sagatrail_book_lead; WP-Plugin muss diesen Handler implementieren; sagatrail_book_all läuft im Hintergrund (202).
 - [SagaTrail free-hike gating](sagatrail-free-hike-gating.md) — non-premium gate is `!premium && freeHikeUsed`, NIE `isAnchorPlace`; Regel in kanton-, route- und saga-Screen synchron halten.
@@ -143,6 +145,8 @@
 - [Treffpunkt vs. Gruppenwanderung](sagatrail-meetup-group-separation.md) — public meetup attendance/safety and private synchronized group hiking must remain separate systems.
 - [Treffpunkt-Nachrichtenhistorie](sagatrail-meetup-message-history.md) — echte Nachrichten einmal speichern; Push-Outbox pro Empfänger verteilen und Limits nur auf Historieneinträge anwenden.
 - [Community bridge](sagatrail-community-bridge.md) — Facebook remains the acquisition channel; SagaTrail hosts opted-in hiking communities and structured group events.
+- [Community portal authentication](sagatrail-community-portal-auth.md) — community admins use their own account/token tables; they are not required to have a partner row.
+- [Community administrator names](sagatrail-community-admin-name-source.md) — `/communities/me` must prefer the admin membership display name and fall back to the community row.
 - [Route quality provenance](sagatrail-route-quality-provenance.md) — route APIs expose check status/date and independent source links; successful POI refresh replaces evidence, failures preserve it.
 - [Pre-start safety verdict provenance](sagatrail-prestart-safety-verdict.md) — combine live signals conservatively; regional notices and community reports must not become an official route closure.
 - [Theme evidence independence](sagatrail-theme-evidence-independence.md) — themeKeys and general route quality timestamps are independent; do not hide valid themed routes until every quality check has run.
@@ -150,3 +154,4 @@
 - [Theme evidence authority](sagatrail-theme-evidence-authority.md) — geometry-dependent theme rules belong to server refresh; mobile POI fallback must fail closed when it lacks geometry.
 - [Theme route 304 handling](sagatrail-theme-route-304.md) — dynamic theme lists must bypass bodyless conditional responses; the mobile client cannot recover routes from a 304.
 - [Production theme refresh](sagatrail-theme-production-refresh.md) — HTTP 200 with [] means missing production theme evidence; refresh existing routes before changing OTA/cache code.
+- [OTA dependency closure](sagatrail-ota-dependency-closure.md) — OTA source manifests can pass while Metro still fails if remote main lacks an imported dependency; verify the complete mobile import closure.

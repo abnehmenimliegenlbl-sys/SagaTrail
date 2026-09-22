@@ -57,6 +57,15 @@ if (NATIVE_SPEECH_AVAILABLE) {
 // Zeitspanne abdecken, sonst ist das Mikrofon lange vor Ablauf tot.
 const MAX_LISTEN_RESTARTS = 40;
 
+function transcriptFingerprint(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `${value.length}:${(hash >>> 0).toString(16).padStart(8, "0")}`;
+}
+
 type VoiceDecisionDebug = (
   event: string,
   details?: Record<string, unknown>,
@@ -94,10 +103,27 @@ export function useVoiceDecision(
   langRef.current = lang;
   listeningRef.current = listening;
   const previousActiveRef = useRef<boolean | null>(null);
+  const debugSequenceRef = useRef(0);
+  const speechSessionRef = useRef(0);
+  const stopPromiseRef = useRef<Promise<void> | null>(null);
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const emitDebug = (
+    event: string,
+    details: Record<string, unknown> = {},
+  ) => {
+    onDebugRef.current?.(event, {
+      debugSequence: ++debugSequenceRef.current,
+      speechSession: speechSessionRef.current,
+      listening: listeningRef.current,
+      active: activeRef.current,
+      ...details,
+    });
+  };
 
   useEffect(() => {
     if (previousActiveRef.current !== active) {
-      onDebugRef.current?.("active_changed", {
+      emitDebug("active_changed", {
         active,
         supported,
         listening: listeningRef.current,
@@ -119,30 +145,39 @@ export function useVoiceDecision(
   }, [active]);
 
   const stopListening = useCallback(async () => {
-    onDebugRef.current?.("stop_requested", {
-      listening: listeningRef.current,
-    });
-    try {
-      ExpoSpeechRecognitionModule?.stop();
-    } catch {
-      // Best effort — Erkennung koennte bereits beendet sein.
-    }
-    setListening(false);
-    // `stop()` ist bei expo-speech-recognition nur ein Request. Auf iOS
-    // bleibt die PlayAndRecord-Session noch kurz aktiv, bis das native
-    // "end"-Event verarbeitet wurde. Die aufrufende Entscheidung darf die
-    // Bestaetigung erst danach starten, sonst wird die Audiosession der
-    // anderen App weiter unterbrochen bzw. die Bestaetigung leise.
-    if (NATIVE_SPEECH_AVAILABLE) {
-      // iOS releases the PlayAndRecord session asynchronously after stop().
-      // Give it enough time before the next playback starts, including when
-      // a button tap closes the decision and its effect cleanup runs in
-      // parallel with the confirmation audio.
-      await new Promise<void>((resolve) => setTimeout(resolve, 500));
-    }
-    onDebugRef.current?.("stop_completed", {
-      listening: listeningRef.current,
-    });
+    if (stopPromiseRef.current) return stopPromiseRef.current;
+    const session = speechSessionRef.current;
+    const stopPromise = (async () => {
+      emitDebug("stop_requested", {
+        nativeMethod: "ExpoSpeechRecognitionModule.stop",
+        stopSession: session,
+      });
+      try {
+        emitDebug("native_stop_called", { stopSession: session });
+        ExpoSpeechRecognitionModule?.stop();
+      } catch (error) {
+        emitDebug("native_stop_failed", {
+          stopSession: session,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      setListening(false);
+      // `stop()` ist bei expo-speech-recognition nur ein Request. Auf iOS
+      // bleibt die PlayAndRecord-Session noch kurz aktiv, bis das native
+      // "end"-Event verarbeitet wurde. Die aufrufende Entscheidung darf die
+      // Bestaetigung erst danach starten, sonst wird die Audiosession der
+      // anderen App weiter unterbrochen bzw. die Bestaetigung leise.
+      if (NATIVE_SPEECH_AVAILABLE) {
+        // iOS releases the PlayAndRecord session asynchronously after stop().
+        // Give it enough time before the next playback starts, including when
+        // a button tap closes the decision and its effect cleanup runs in
+        // parallel with the confirmation audio.
+        await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      }
+      emitDebug("stop_completed", { stopSession: session });
+    })();
+    stopPromiseRef.current = stopPromise;
+    return stopPromise;
   }, []);
 
   useEffect(() => {
@@ -152,6 +187,9 @@ export function useVoiceDecision(
     }
 
     let cancelled = false;
+    speechSessionRef.current += 1;
+    const speechSession = speechSessionRef.current;
+    const previousStop = stopPromiseRef.current;
     restartsRef.current = 0;
     matchedRef.current = false;
     permissionBlockedRef.current = false;
@@ -159,21 +197,28 @@ export function useVoiceDecision(
 
     (async () => {
       try {
-        onDebugRef.current?.("permission_check_started", {
+        emitDebug("permission_check_started", {
           lang: langRef.current,
           optionCount: optionsRef.current.length,
+          speechSession,
         });
         // Kurze Pause damit laufende fire-and-forget setAudioModeAsync()-
         // Aufrufe (aus speak/didJustFinish) abgeschlossen sind, bevor die
         // Spracherkennung allowsRecording:true setzt. Ohne diese Pause kann
         // ein verspäteter Reset das Mikrofon nach dem Start wieder deaktivieren.
         await new Promise<void>((r) => setTimeout(r, 250));
+        if (previousStop) await previousStop;
         if (cancelled) return;
+        // Allow cleanup of this new session to create its own stop promise.
+        if (stopPromiseRef.current === previousStop) {
+          stopPromiseRef.current = null;
+        }
         const permissionState = await readSpeechPermissionWithRetry(
           () => ExpoSpeechRecognitionModule!.getPermissionsAsync(),
         );
-        onDebugRef.current?.("permission_check_completed", {
+        emitDebug("permission_check_completed", {
           permissionState,
+          speechSession,
         });
         if (cancelled) return;
         if (permissionState === "unknown") {
@@ -193,6 +238,11 @@ export function useVoiceDecision(
             return;
           }
         }
+        emitDebug("native_start_called", {
+          speechSession,
+          nativeMethod: "ExpoSpeechRecognitionModule.start",
+          restart: restartsRef.current,
+        });
         ExpoSpeechRecognitionModule!.start({
           lang: SPEECH_LOCALE[langRef.current],
           // interimResults: true — Treffer werden schon bei Zwischen-
@@ -203,15 +253,18 @@ export function useVoiceDecision(
           continuous: true,
         });
         setListening(true);
-        onDebugRef.current?.("recognition_started", {
+        emitDebug("recognition_started", {
           lang: SPEECH_LOCALE[langRef.current],
           restart: restartsRef.current,
+          speechSession,
         });
       } catch {
         if (!cancelled) {
           permissionBlockedRef.current = true;
           setListening(false);
-          onDebugRef.current?.("recognition_start_failed");
+          emitDebug("recognition_start_failed", {
+            speechSession,
+          });
         }
       }
     })();
@@ -232,11 +285,12 @@ export function useVoiceDecision(
       const index = matchDecisionOption(transcript, langRef.current, optionsRef.current);
       if (index != null) {
         matchedRef.current = true;
-          onDebugRef.current?.("option_matched", {
+        emitDebug("option_matched", {
             optionIndex: index,
             transcriptLength: transcript.length,
             transcriptCount: transcripts.length,
-          });
+          transcriptFingerprint: transcriptFingerprint(transcript),
+        });
         // Native Recognition und Playback duerfen nicht gleichzeitig um die
         // iOS-Audiosession kaempfen. Erst nach dem kurzen Release-Fenster die
         // Auswahl bestaetigen und die Ack-Ansage starten.
@@ -259,16 +313,20 @@ export function useVoiceDecision(
     }
     if (restartsRef.current >= MAX_LISTEN_RESTARTS) {
       setListening(false);
-      onDebugRef.current?.("restart_limit_reached", {
+      emitDebug("restart_limit_reached", {
         restartCount: restartsRef.current,
       });
       return;
     }
     restartsRef.current += 1;
-    onDebugRef.current?.("recognition_end_restart", {
+    emitDebug("recognition_end_restart", {
       restartCount: restartsRef.current,
     });
     try {
+      emitDebug("native_start_called", {
+        nativeMethod: "ExpoSpeechRecognitionModule.start",
+        restart: restartsRef.current,
+      });
       ExpoSpeechRecognitionModule?.start({
         lang: SPEECH_LOCALE[langRef.current],
         interimResults: true,
@@ -283,12 +341,12 @@ export function useVoiceDecision(
     if (event.error === "not-allowed" || event.error === "service-not-allowed") {
       permissionBlockedRef.current = true;
       setListening(false);
-      onDebugRef.current?.("recognition_blocked", {
+      emitDebug("recognition_blocked", {
         error: event.error,
       });
       return;
     }
-    onDebugRef.current?.("recognition_transient_error", {
+    emitDebug("recognition_transient_error", {
       error: event.error,
     });
     // Transiente Fehler ("no-speech", "network", "aborted" bei Session-Ende)
