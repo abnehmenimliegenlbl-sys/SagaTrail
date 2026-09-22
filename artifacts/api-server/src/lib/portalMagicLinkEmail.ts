@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export type PortalMagicLinkType = "partner" | "verband";
+export type PortalMagicLinkType = "partner" | "verband" | "community";
 
 export interface PortalMagicLinkData {
   email: string;
@@ -71,13 +71,22 @@ export async function sendPortalMagicLink(data: PortalMagicLinkData): Promise<vo
     timeZone: "Europe/Zurich",
   });
   const isVerband = data.type === "verband";
+  const isCommunity = data.type === "community";
   const subject = isVerband
     ? "Ihr SagaTrail Verbandsportal Login"
-    : "Ihr SagaTrail Partner-Portal Login";
+    : isCommunity
+      ? "Ihr SagaTrail Community-Portal Login"
+      : "Ihr SagaTrail Partner-Portal Login";
   const intro = isVerband
     ? "Hier ist Ihr persönlicher Anmeldelink für das SagaTrail Verbandsportal:"
-    : "Hier ist Ihr persönlicher Anmeldelink für das SagaTrail Partner-Portal:";
-  const button = isVerband ? "Zum Verbandsportal" : "Zum Partner-Portal";
+    : isCommunity
+      ? "Hier ist Ihr persönlicher Anmeldelink für das SagaTrail Community-Portal:"
+      : "Hier ist Ihr persönlicher Anmeldelink für das SagaTrail Partner-Portal:";
+  const button = isVerband
+    ? "Zum Verbandsportal"
+    : isCommunity
+      ? "Zum Community-Portal"
+      : "Zum Partner-Portal";
 
   await createTransporter().sendMail({
     envelope: { from: envelopeFrom, to: data.email },

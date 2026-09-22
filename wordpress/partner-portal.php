@@ -1037,7 +1037,8 @@ var SPP_FT     = <?php echo $spp_ft_js; ?>;
           '<span style="font-size:13px;color:#777">' + katLabel(p.kategorie) +
           ' · ' + (p.canton || '') +
           (p.paket ? ' · Paket <strong>' + p.paket.charAt(0).toUpperCase() + p.paket.slice(1) + '</strong>' : '') + '</span>';
-        if (p.portalKind === 'community') {
+        var isCommunityPortal = p.portalKind === 'community';
+        if (isCommunityPortal) {
           document.getElementById('spp-views-label').textContent = SPP_L10N.stat_members;
           document.getElementById('spp-taps-label').textContent  = SPP_L10N.stat_completed;
           document.getElementById('spp-views').textContent = fmt(p.communityMemberCount);
@@ -1059,11 +1060,34 @@ var SPP_FT     = <?php echo $spp_ft_js; ?>;
           window.sppInitMapFromProfile(p.lat || null, p.lng || null);
         }
 
+        if (isCommunityPortal) {
+          [
+            'spp-billing-wrap',
+            'spp-foto-card',
+            'spp-beschr-wrap',
+            'spp-angebot-wrap',
+            'spp-kontakt-wrap',
+            'spp-reserv-wrap',
+            'spp-paket-info',
+            'spp-map-card',
+          ].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          document.querySelectorAll('#spp-dashboard > div > .spp-card').forEach(function(card) {
+            if (card.querySelector('#spp-save-btn') || card.querySelector('#spp-oz-grid')) {
+              card.style.display = 'none';
+            }
+          });
+        }
+
         var paketEl  = document.getElementById('spp-paket-info');
         var paketTxt = { basic: SPP_L10N.js_pkt_basic, standard: SPP_L10N.js_pkt_std, premium: SPP_L10N.js_pkt_prem }[p.paket] || '';
         if (paketTxt) { paketEl.textContent = paketTxt; paketEl.style.display = 'block'; }
 
-        document.getElementById('spp-billing-wrap').style.display = 'block';
+        if (!isCommunityPortal) {
+          document.getElementById('spp-billing-wrap').style.display = 'block';
+        }
 
         var isStandard = p.paket === 'standard' || p.paket === 'premium';
         var isPremium  = p.paket === 'premium';

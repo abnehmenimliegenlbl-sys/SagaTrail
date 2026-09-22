@@ -5,6 +5,8 @@ import { z } from "zod/v4";
 import {
   communityAdminsTable,
   communityMembersTable,
+  communityPortalTokensTable,
+  communitiesTable,
   db,
   meetupsTable,
   partnersTable,
@@ -63,6 +65,39 @@ async function resolveVerbandToken(token: string) {
   return verband ?? null;
 }
 
+async function resolveCommunityAdminToken(token: string) {
+  const now = new Date();
+  const [row] = await db
+    .select({
+      adminId: communityAdminsTable.id,
+      email: communityAdminsTable.email,
+      displayName: communityAdminsTable.displayName,
+      active: communityAdminsTable.active,
+      communityId: communityAdminsTable.communityId,
+      communityName: communitiesTable.name,
+      communityDescription: communitiesTable.description,
+      communityActive: communitiesTable.active,
+    })
+    .from(communityPortalTokensTable)
+    .innerJoin(
+      communityAdminsTable,
+      eq(communityAdminsTable.id, communityPortalTokensTable.communityAdminId),
+    )
+    .leftJoin(
+      communitiesTable,
+      eq(communitiesTable.id, communityAdminsTable.communityId),
+    )
+    .where(
+      and(
+        eq(communityPortalTokensTable.token, token),
+        gt(communityPortalTokensTable.expiresAt, now),
+      ),
+    )
+    .limit(1);
+
+  return row ?? null;
+}
+
 async function getCommunityStats(email: string | null) {
   if (!email) return null;
   const [admin] = await db
@@ -89,6 +124,33 @@ async function getCommunityStats(email: string | null) {
       .where(
         and(
           eq(meetupsTable.communityId, admin.communityId),
+          eq(meetupsTable.status, "completed"),
+        ),
+      ),
+  ]);
+
+  return {
+    communityMemberCount: Number(members[0]?.value ?? 0),
+    completedMeetupCount: Number(completedMeetups[0]?.value ?? 0),
+  };
+}
+
+async function getCommunityStatsByCommunityId(communityId: string | null) {
+  if (!communityId) {
+    return { communityMemberCount: 0, completedMeetupCount: 0 };
+  }
+
+  const [members, completedMeetups] = await Promise.all([
+    db
+      .select({ value: count() })
+      .from(communityMembersTable)
+      .where(eq(communityMembersTable.communityId, communityId)),
+    db
+      .select({ value: count() })
+      .from(meetupsTable)
+      .where(
+        and(
+          eq(meetupsTable.communityId, communityId),
           eq(meetupsTable.status, "completed"),
         ),
       ),
@@ -174,6 +236,57 @@ router.post("/partner/portal/token", async (req, res): Promise<void> => {
     return;
   }
 
+  // Danach Community-Admins prüfen. Sie nutzen dasselbe WordPress-Portal,
+  // benötigen aber kein separates Partnerkonto.
+  const [communityAdmin] = await db
+    .select()
+    .from(communityAdminsTable)
+    .where(
+      and(
+        eq(communityAdminsTable.email, email),
+        eq(communityAdminsTable.active, true),
+      ),
+    )
+    .limit(1);
+
+  if (communityAdmin) {
+    await db.insert(communityPortalTokensTable).values({
+      id: randomUUID(),
+      communityAdminId: communityAdmin.id,
+      token,
+      expiresAt,
+    });
+    try {
+      await sendPortalMagicLink({
+        email: communityAdmin.email,
+        name: communityAdmin.displayName,
+        type: "community",
+        token,
+        expiresAt,
+        portalUrl,
+      });
+    } catch (error) {
+      req.log.error(
+        { err: error, communityAdminId: communityAdmin.id },
+        "Community-Portal-Magic-Link konnte nicht versendet werden",
+      );
+      res.status(503).json({ error: "Der Anmeldelink konnte nicht versendet werden." });
+      return;
+    }
+    req.log.info(
+      { communityAdminId: communityAdmin.id },
+      "Community-Portal-Token erstellt",
+    );
+    res.json({
+      ok: true,
+      token,
+      name: communityAdmin.displayName,
+      type: "community",
+      expiresAt: expiresAt.toISOString(),
+    });
+    return;
+  }
+
   // Keine E-Mail gefunden — stille Antwort (kein Enumeration-Leak)
   res.json({ ok: true });
 });
@@ -231,6 +344,41 @@ router.get("/partner/portal/me", async (req, res): Promise<void> => {
       isActive: verband.isActive,
       email: verband.email,
       createdAt: verband.createdAt,
+    });
+    return;
+  }
+
+  // Community-Admin-Token prüfen
+  const communityAdmin = await resolveCommunityAdminToken(token);
+  if (communityAdmin) {
+    if (!communityAdmin.active || communityAdmin.communityActive === false) {
+      res.status(403).json({ error: "Community ist inaktiv." });
+      return;
+    }
+    const communityStats = await getCommunityStatsByCommunityId(communityAdmin.communityId);
+    res.json({
+      type: "partner",
+      portalKind: "community",
+      id: communityAdmin.adminId,
+      name: communityAdmin.communityName ?? communityAdmin.displayName,
+      kategorie: "community-administrator",
+      canton: "",
+      beschreibung: communityAdmin.communityDescription,
+      angebot: null,
+      fotoUrl: null,
+      telefon: null,
+      websiteUrl: null,
+      reservierungUrl: null,
+      oeffnungszeiten: null,
+      email: communityAdmin.email,
+      paket: null,
+      lat: null,
+      lng: null,
+      isActive: true,
+      ...communityStats,
+      laufzeitStart: null,
+      laufzeitEnde: null,
+      hasStripeAccount: false,
     });
     return;
   }
