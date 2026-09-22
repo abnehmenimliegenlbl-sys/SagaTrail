@@ -29,6 +29,7 @@ import { setAudioModeAsync } from "expo-audio";
 import {
   createAudioSound,
   isAudioPlaybackFinished,
+  type AudioPlayerDebugEvent,
   type AudioSound,
 } from "@/lib/audioPlayer";
 import {
@@ -230,6 +231,15 @@ const COMPASS_ANTIQUE_FONT = Platform.select({
 
 function createClientHikeId(): string {
   return `hike_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
+}
+
+function debugFingerprint(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `${value.length}:${(hash >>> 0).toString(16).padStart(8, "0")}`;
 }
 
 type SpeakOptions = {
@@ -2368,6 +2378,7 @@ export default function LiveHike() {
   // stopNarration() der zweiten noch keinen Sound zum Stoppen).
   const narrationGenRef = useRef(0);
   const narrationTraceSequenceRef = useRef(0);
+  const narrationPlayerSequenceRef = useRef(0);
   const narrationActiveKindRef = useRef<NarrationKind | null>(null);
   const narrationActiveTraceIdRef = useRef<string | null>(null);
   // Warteschlange fuer Sprachausgaben: POI, Navigation, Wegoberflaech,
@@ -2380,7 +2391,11 @@ export default function LiveHike() {
   // Vorgeladene OpenAI-URI fuer den Entscheidungs-Ack ("Ich verstehe.").
   // Wird beim Hike-Start im Hintergrund erzeugt, damit bei der Wahl zero
   // Netzwerk-Latenz anfaellt und das OpenAI-Audio sofort ertönt.
-  const ackAudioUriRef = useRef<string | null>(null);
+  const ackAudioRef = useRef<{
+    uri: string;
+    text: string;
+    language: string;
+  } | null>(null);
   const startupSequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -5699,8 +5714,26 @@ export default function LiveHike() {
         kind: activeKind,
         chapterIndex: activeChapterIndex ?? null,
         textLength: text.length,
+        textFingerprint: debugFingerprint(text),
         preFetched: Boolean(opts?.preFetchedUri),
         useOpenAI: Boolean(opts?.useOpenAI),
+      };
+      const logNativeAudio = (
+        playerId: string,
+        event: AudioPlayerDebugEvent,
+        generation?: number,
+        source?: string,
+      ) => {
+        storyAudioLog("narration_native_audio", {
+          ...decisionDebugSnapshot(
+            activeChapterIndex ?? currentIndexRef.current,
+          ),
+          ...audioDetails,
+          ...event,
+          playerId,
+          generation: generation ?? narrationGenRef.current,
+          sourceFingerprint: source ? debugFingerprint(source) : null,
+        });
       };
       // Vor der Startbestätigung darf kein aktiver Trigger sprechen. Das
       // zusätzliche Audio-Flag schützt weiterhin den Story-Ladezustand.
@@ -5805,8 +5838,13 @@ export default function LiveHike() {
           source: Parameters<typeof createAudioSound>[0],
         ) => {
           let turnSound: AudioSound | null = null;
+          const playerId = `turn_${traceId}_${++narrationPlayerSequenceRef.current}`;
           try {
-            const { sound } = await createAudioSound(source);
+            const { sound } = await createAudioSound(source, {
+              debugId: playerId,
+              debug: (event) =>
+                logNativeAudio(playerId, event, narrationGen),
+            });
             turnSound = sound;
             if (
               turnGen !== turnGenRef.current ||
@@ -5827,6 +5865,15 @@ export default function LiveHike() {
               sound.setOnPlaybackStatusUpdate((status) => {
                 if (!status.isLoaded || status.didJustFinish) complete();
               });
+            });
+            storyAudioLog("narration_nav_play_requested", {
+              ...decisionDebugSnapshot(
+                activeChapterIndex ?? currentIndexRef.current,
+              ),
+              ...audioDetails,
+              playerId,
+              generation: narrationGen,
+              turnGeneration: turnGen,
             });
             await sound.playAsync();
             await completion;
@@ -6118,7 +6165,14 @@ export default function LiveHike() {
           });
           return;
         }
-        const { sound } = await createAudioSound({ uri });
+        const playerId = `narration_${traceId}_${++narrationPlayerSequenceRef.current}`;
+        const { sound } = await createAudioSound(
+          { uri },
+          {
+            debugId: playerId,
+            debug: (event) => logNativeAudio(playerId, event, gen, uri),
+          },
+        );
         if (gen !== narrationGenRef.current) {
           storyAudioLog("narration_discarded", {
             ...decisionDebugSnapshot(
@@ -6147,11 +6201,15 @@ export default function LiveHike() {
           kind: activeKind,
           chapterIndex: activeChapterIndex ?? null,
           generation: gen,
+          playerId,
+          sourceFingerprint: debugFingerprint(uri),
         });
         let playbackFinished = false;
         let playbackStartedLogged = false;
         let playbackResumeInFlight = false;
         let playbackResumeAttempts = 0;
+        const allowAutomaticResume =
+          activeKind !== "decisionPrompt" && activeKind !== "feedback";
         // expo-audio emits an initial `isLoaded: false` status while the
         // native player is still loading the local file. That is not the
         // same as a player that was unloaded. Treating it as an error removes
@@ -6182,6 +6240,10 @@ export default function LiveHike() {
             generation: gen,
             outcome,
             reason,
+            playerId,
+            playbackStarted: playbackStartedLogged,
+            automaticResumeAllowed: allowAutomaticResume,
+            resumeAttempts: playbackResumeAttempts,
           });
           updateNowPlaying(null);
           if (outcome === "finished") {
@@ -6284,7 +6346,33 @@ export default function LiveHike() {
             // dass das Audio steht obwohl es nicht zu Ende gespielt hat.
             // AUSNAHME: absichtliche Pause wegen Nav-Interrupt — nicht sofort
             // neu starten, sondern auf das Ende der Nav-Ansage warten.
-            if (navInterruptingRef.current) return;
+            if (navInterruptingRef.current) {
+              storyAudioLog("narration_playback_paused_for_navigation", {
+                ...decisionDebugSnapshot(
+                  activeChapterIndex ?? currentIndexRef.current,
+                ),
+                ...audioDetails,
+                playerId,
+                generation: gen,
+                positionMillis: status.positionMillis,
+              });
+              return;
+            }
+            if (!allowAutomaticResume) {
+              storyAudioLog("narration_playback_interrupted", {
+                ...decisionDebugSnapshot(
+                  activeChapterIndex ?? currentIndexRef.current,
+                ),
+                ...audioDetails,
+                playerId,
+                generation: gen,
+                positionMillis: status.positionMillis,
+                durationMillis: status.durationMillis,
+                reason: "automatic_resume_disabled_for_decision_audio",
+              });
+              finishPlayback("error", "decision_audio_interrupted");
+              return;
+            }
             if (playbackResumeInFlight) return;
             if (playbackResumeAttempts >= 2) {
               setNarrationUnavailable(true);
@@ -6293,6 +6381,18 @@ export default function LiveHike() {
             }
             playbackResumeAttempts += 1;
             playbackResumeInFlight = true;
+            storyAudioLog("narration_resume_requested", {
+              ...decisionDebugSnapshot(
+                activeChapterIndex ?? currentIndexRef.current,
+              ),
+              ...audioDetails,
+              playerId,
+              generation: gen,
+              attempt: playbackResumeAttempts,
+              positionMillis: status.positionMillis,
+              durationMillis: status.durationMillis,
+              reason: "unexpected_paused_status",
+            });
             sound
               .playAsync()
               .catch(() => {
@@ -6332,6 +6432,8 @@ export default function LiveHike() {
           kind: activeKind,
           chapterIndex: activeChapterIndex ?? null,
           generation: gen,
+          playerId,
+          allowAutomaticResume,
         });
         await sound.playAsync();
       } catch (err) {
@@ -6435,6 +6537,7 @@ export default function LiveHike() {
     const pack = STORY_PACKS[resolveLang(ackLang as Lang)];
     const ackText = pack.decisionAck;
     let cancelled = false;
+    ackAudioRef.current = null;
     (async () => {
       try {
         logDecisionFlow(
@@ -6454,13 +6557,19 @@ export default function LiveHike() {
         if (cancelled) return;
         const uri = await blobToTempFileUri(blob);
         if (!cancelled) {
-          ackAudioUriRef.current = uri;
+          ackAudioRef.current = {
+            uri,
+            text: ackText,
+            language: ackLang,
+          };
           logDecisionFlow(
             "decision_ack_prefetch_ready",
             currentIndexRef.current,
             {
               language: ackLang,
               textLength: ackText.length,
+              textFingerprint: debugFingerprint(ackText),
+              uriFingerprint: debugFingerprint(uri),
               source: "startup_prefetch",
             },
           );
@@ -6480,6 +6589,12 @@ export default function LiveHike() {
     })();
     return () => {
       cancelled = true;
+      if (
+        ackAudioRef.current?.text === ackText &&
+        ackAudioRef.current?.language === ackLang
+      ) {
+        ackAudioRef.current = null;
+      }
     };
   }, [preparing, profile?.language, startGateConfirmed]);
 
@@ -7704,6 +7819,20 @@ export default function LiveHike() {
       });
       return;
     }
+    // Der erste Treffer invalidiert alle noch laufenden alten Audio- und
+    // Prompt-Generationen synchron. Dadurch kann ein verspäteter nativer
+    // Status-Callback nach dem Treffer weder die alte Frage fortsetzen noch
+    // einen Queue-Eintrag erneut abspielen.
+    const decisionAudioGeneration = ++narrationGenRef.current;
+    const staleSound = narrationSoundRef.current;
+    narrationSoundRef.current = null;
+    narrationActiveKindRef.current = null;
+    narrationActiveTraceIdRef.current = null;
+    if (staleSound) {
+      void teardownNarrationSound(staleSound);
+    }
+    setSpeaking(false);
+    speakingRef.current = false;
     // Antwort, Ack und persoenliches Feedback sind EIN atomarer
     // Entscheidungsabschluss. GPS-Fortschritt darf in diesem Fenster nicht
     // schon zum naechsten (moeglicherweise ebenfalls entscheidenden) Kapitel
@@ -7713,6 +7842,8 @@ export default function LiveHike() {
     logDecisionFlow("choice_accepted", decisionIndex, {
       optionIndex,
       source,
+      decisionAudioGeneration,
+      invalidatedActiveAudio: Boolean(staleSound),
     });
     // Nur ein bereits vorgemerkter Prompt für diese Entscheidung ist nach der
     // Antwort veraltet. Andere Erzählungen bleiben FIFO und dürfen nicht
@@ -7778,10 +7909,15 @@ export default function LiveHike() {
         archetypeHint,
         gewaehlt ?? "",
       );
-      // Vorgeladene URI verwenden (falls verfuegbar) — OpenAI-Stimme startet
-      // sofort ohne Netzwerk-Latenz. Fallback: OpenAI-Aufruf zur Laufzeit
-      // (ackAudioUriRef.current ist null, wenn Pre-fetch noch laeuft oder scheiterte).
-      const ackUri = ackAudioUriRef.current ?? undefined;
+      // Vorgeladene URI verwenden (falls sie exakt an Text und Sprache gebunden
+      // ist) — die OpenAI-Stimme startet sofort ohne Netzwerk-Latenz. Fallback:
+      // OpenAI-Aufruf zur Laufzeit, wenn der Pre-fetch noch laeuft oder scheiterte.
+      const cachedAck = ackAudioRef.current;
+      const ackUri =
+        cachedAck?.text === ackPack.decisionAck &&
+        cachedAck.language === cueLanguage
+          ? cachedAck.uri
+          : undefined;
       const ackTraceId = `decision_ack_${decisionIndex}_${++narrationTraceSequenceRef.current}`;
       const feedbackTraceId = `decision_feedback_${decisionIndex}_${++narrationTraceSequenceRef.current}`;
       const completeDecision = () => {
@@ -7839,6 +7975,9 @@ export default function LiveHike() {
           feedbackTraceId,
           ackSource: ackUri ? "prefetched_uri" : "runtime_openai",
           ackTextLength: ackPack.decisionAck.length,
+          ackTextFingerprint: debugFingerprint(ackPack.decisionAck),
+          ackUriFingerprint: ackUri ? debugFingerprint(ackUri) : null,
+          decisionAudioGeneration,
         });
         void speaker(ackPack.decisionAck, speakDecisionFeedback, {
           ...(ackUri ? { preFetchedUri: ackUri } : { useOpenAI: true }),
