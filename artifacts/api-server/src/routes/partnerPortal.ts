@@ -14,6 +14,7 @@ import {
 } from "@workspace/db";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
 import { getUncachableStripeClient } from "../lib/stripeClient";
+import { sendPortalMagicLink } from "../lib/portalMagicLinkEmail";
 
 const router: IRouter = Router();
 const objectStorage = new ObjectStorageService();
@@ -100,13 +101,17 @@ async function getCommunityStats(email: string | null) {
 }
 
 router.post("/partner/portal/token", async (req, res): Promise<void> => {
-  const parsed = z.object({ email: z.string().email() }).safeParse(req.body);
+  const parsed = z.object({
+    email: z.string().email(),
+    portalUrl: z.string().url().optional(),
+  }).safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Gültige E-Mail-Adresse erforderlich." });
     return;
   }
 
-  const email = parsed.data.email;
+  const email = parsed.data.email.trim().toLowerCase();
+  const portalUrl = parsed.data.portalUrl;
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const token = randomBytes(32).toString("hex");
 
@@ -119,6 +124,20 @@ router.post("/partner/portal/token", async (req, res): Promise<void> => {
 
   if (partner) {
     await db.insert(partnerTokensTable).values({ id: randomUUID(), partnerId: partner.id, token, expiresAt });
+    try {
+      await sendPortalMagicLink({
+        email: partner.email ?? email,
+        name: partner.name,
+        type: "partner",
+        token,
+        expiresAt,
+        portalUrl,
+      });
+    } catch (error) {
+      req.log.error({ err: error, partnerId: partner.id }, "Partner-Portal-Magic-Link konnte nicht versendet werden");
+      res.status(503).json({ error: "Der Anmeldelink konnte nicht versendet werden." });
+      return;
+    }
     req.log.info({ partnerId: partner.id }, "Partner-Portal-Token erstellt");
     res.json({ ok: true, token, name: partner.name, partnerName: partner.name, type: "partner", expiresAt: expiresAt.toISOString() });
     return;
@@ -137,6 +156,19 @@ router.post("/partner/portal/token", async (req, res): Promise<void> => {
       return;
     }
     await db.insert(verbandTokensTable).values({ id: randomUUID(), verbandId: verband.id, token, expiresAt });
+    try {
+      await sendPortalMagicLink({
+        email: verband.email,
+        name: verband.name,
+        type: "verband",
+        token,
+        expiresAt,
+      });
+    } catch (error) {
+      req.log.error({ err: error, verbandId: verband.id }, "Verband-Portal-Magic-Link konnte nicht versendet werden");
+      res.status(503).json({ error: "Der Anmeldelink konnte nicht versendet werden." });
+      return;
+    }
     req.log.info({ verbandId: verband.id }, "Verband-Portal-Token erstellt");
     res.json({ ok: true, token, name: verband.name, type: "verband", expiresAt: expiresAt.toISOString() });
     return;
