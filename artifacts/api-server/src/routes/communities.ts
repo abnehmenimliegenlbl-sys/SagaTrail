@@ -62,11 +62,22 @@ function resolveCommunityCoverImageUrl(
   req: Request,
 ): string | null | undefined {
   if (!rawCoverImageUrl) return rawCoverImageUrl;
+  const forwardedProto = req
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim()
+    .toLowerCase();
+  const protocol =
+    forwardedProto === "https" || req.secure
+      ? "https"
+      : process.env.NODE_ENV === "production"
+        ? "https"
+        : req.protocol;
   if (rawCoverImageUrl.startsWith("/objects/")) {
-    return `${req.protocol}://${req.get("host")}/api/storage${rawCoverImageUrl}`;
+    return `${protocol}://${req.get("host")}/api/storage${rawCoverImageUrl}`;
   }
   if (rawCoverImageUrl.startsWith("/")) {
-    return `${req.protocol}://${req.get("host")}${rawCoverImageUrl}`;
+    return `${protocol}://${req.get("host")}${rawCoverImageUrl}`;
   }
   return rawCoverImageUrl;
 }
