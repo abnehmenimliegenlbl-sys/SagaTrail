@@ -8,7 +8,6 @@ import type { MeetupStrings } from "@/lib/i18n/screens/meetups";
 
 export type MeetupFilterState = {
   search: string;
-  difficulty: string | undefined;
   onlyMine: boolean;
 };
 
@@ -22,13 +21,11 @@ export function MeetupFilters({
   strings: MeetupStrings;
 }) {
   const colors = useColors();
-  const searchLabel = strings.search ?? "Suche";
-  const searchPlaceholder = strings.searchPlaceholder ?? "Route, Kanton oder Notiz";
-  const onlyMineLabel = strings.onlyMine ?? "Nur meine Teilnahmen";
-  const difficultyLabel = strings.difficulty ?? "SAC";
-  const allLabel = strings.allDifficulties ?? "Alle";
-  const hasActiveFilters = Boolean(value.search.trim() || value.difficulty || value.onlyMine);
-  const resetLabel = strings.close ?? "Filter zurücksetzen";
+  const searchLabel = strings.search;
+  const searchPlaceholder = strings.searchPlaceholder;
+  const onlyMineLabel = strings.onlyMine;
+  const hasActiveFilters = Boolean(value.search.trim() || value.onlyMine);
+  const resetLabel = strings.resetFilters;
 
   return (
     <View style={styles.wrapper}>
@@ -54,33 +51,6 @@ export function MeetupFilters({
           </Pressable>
         ) : null}
       </View>
-      <View style={styles.row}>
-        <Text style={[styles.label, { color: colors.mutedForeground }]}>{difficultyLabel}</Text>
-        <View style={styles.difficultyOptions}>
-          {["", "T1", "T2", "T3", "T4", "T5", "T6"].map((difficulty) => {
-            const selected = (value.difficulty ?? "") === difficulty;
-            return (
-              <Pressable
-                key={difficulty || "all"}
-                onPress={() => onChange({ ...value, difficulty: difficulty || undefined })}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                style={[
-                  styles.chip,
-                  {
-                    borderColor: selected ? colors.accent : colors.glassBorder,
-                    backgroundColor: selected ? colors.accent + "20" : colors.glassBg,
-                  },
-                ]}
-              >
-                <Text style={[styles.chipText, { color: selected ? colors.accent : colors.foreground }]}>
-                  {difficulty || allLabel}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
       <Pressable
         onPress={() => onChange({ ...value, onlyMine: !value.onlyMine })}
         accessibilityRole="checkbox"
@@ -102,7 +72,7 @@ export function MeetupFilters({
       </Pressable>
       {hasActiveFilters ? (
         <Pressable
-          onPress={() => onChange({ search: "", difficulty: undefined, onlyMine: false })}
+          onPress={() => onChange({ search: "", onlyMine: false })}
           accessibilityRole="button"
           accessibilityLabel={resetLabel}
           style={[styles.resetButton, { borderColor: colors.glassBorder }]}
@@ -120,10 +90,6 @@ const styles = StyleSheet.create({
   label: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.4, marginBottom: 6 },
   inputWrap: { minHeight: 42, borderWidth: 1, borderRadius: 10, paddingHorizontal: 11, flexDirection: "row", alignItems: "center", gap: 8 },
   input: { flex: 1, minHeight: 40, fontFamily: fonts.body, fontSize: 14, paddingVertical: 0 },
-  row: { marginTop: 10 },
-  difficultyOptions: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  chip: { minWidth: 38, minHeight: 32, paddingHorizontal: 9, borderWidth: 1, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  chipText: { fontFamily: fonts.mono, fontSize: 10 },
   mineRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 },
   checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   checkmark: { color: "#fff", fontSize: 14, lineHeight: 17, fontWeight: "700" },

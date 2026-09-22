@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request } from "express";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, count, inArray } from "drizzle-orm";
 import { getAuth, clerkClient } from "@clerk/express";
 import { z } from "zod/v4";
 import {
@@ -57,10 +57,33 @@ async function ensureCommunityAdminMembership(
   }
 }
 
+function resolveCommunityCoverImageUrl(
+  rawCoverImageUrl: string | null | undefined,
+  req: Request,
+): string | null | undefined {
+  if (!rawCoverImageUrl) return rawCoverImageUrl;
+  const forwardedProto = req
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim()
+    .toLowerCase();
+  const protocol =
+    forwardedProto === "https" || req.secure
+      ? "https"
+      : process.env.NODE_ENV === "production"
+        ? "https"
+        : req.protocol;
+  if (rawCoverImageUrl.startsWith("/objects/")) {
+    return `${protocol}://${req.get("host")}/api/storage${rawCoverImageUrl}`;
+  }
+  if (rawCoverImageUrl.startsWith("/")) {
+    return `${protocol}://${req.get("host")}${rawCoverImageUrl}`;
+  }
+  return rawCoverImageUrl;
+}
+
 function invitationFromRow(row: CommunityRow, req: Request) {
-  const coverImageUrl = row.coverImageUrl?.startsWith("/objects/")
-    ? `${req.protocol}://${req.get("host")}/api/storage${row.coverImageUrl}`
-    : row.coverImageUrl;
+  const coverImageUrl = resolveCommunityCoverImageUrl(row.coverImageUrl, req);
   return {
     id: row.id,
     slug: row.slug,
@@ -154,6 +177,7 @@ router.get("/communities/me", async (req, res): Promise<void> => {
       slug: communitiesTable.slug,
       name: communitiesTable.name,
       description: communitiesTable.description,
+      administratorName: communitiesTable.administratorName,
       language: communitiesTable.language,
       coverImageUrl: communitiesTable.coverImageUrl,
       active: communitiesTable.active,
@@ -172,9 +196,31 @@ router.get("/communities/me", async (req, res): Promise<void> => {
     )
     .orderBy(asc(communitiesTable.name));
 
+  const memberCounts =
+    memberships.length > 0
+      ? await db
+          .select({
+            communityId: communityMembersTable.communityId,
+            value: count(),
+          })
+          .from(communityMembersTable)
+          .where(
+            inArray(
+              communityMembersTable.communityId,
+              memberships.map((community) => community.id),
+            ),
+          )
+          .groupBy(communityMembersTable.communityId)
+      : [];
+  const countsByCommunity = new Map(
+    memberCounts.map((row) => [row.communityId, Number(row.value)]),
+  );
+
   res.json(
     memberships.map((community) => ({
       ...community,
+      coverImageUrl: resolveCommunityCoverImageUrl(community.coverImageUrl, req),
+      memberCount: countsByCommunity.get(community.id) ?? 0,
       joinedAt: community.joinedAt.toISOString(),
     })),
   );
