@@ -144,6 +144,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('usage',this)">&#128290; Nutzungsdaten</button>
   <button class="tab-btn" onclick="switchTab('partner',this)">&#127968; Partner</button>
   <button class="tab-btn" onclick="switchTab('verbande',this)">&#127956; Verbände</button>
+  <button class="tab-btn" onclick="switchTab('communities',this)">Communities</button>
   <button class="tab-btn" onclick="switchTab('medienkampagne',this)">&#128240; Medienkontakte</button>
   <button class="tab-btn" onclick="switchTab('push',this)">&#128226; Push</button>
   <button class="tab-btn" onclick="switchTab('sagen',this)">&#128218; Sagen-Fotos</button>
@@ -234,6 +235,36 @@ a{color:var(--red);text-decoration:none}
     <div class="card">
       <h2>&#127956; Bestehende Verbände</h2>
       <div id="vb-liste"><p class="loading">Wird geladen…</p></div>
+    </div>
+  </div>
+
+  <!-- COMMUNITIES -->
+  <div id="tab-communities" class="tab-pane">
+    <div class="card">
+      <h2 id="community-form-title">Neue Community</h2>
+      <p class="hint" style="margin-bottom:16px">Community anlegen oder bearbeiten. Einladungscode und Deep-Link können danach direkt kopiert werden.</p>
+      <div class="form-grid">
+        <div class="form-group"><label>Community-Name *</label><input id="community-name" type="text" maxlength="120" placeholder="z.B. Wanderfreunde Zürich" /></div>
+        <div class="form-group"><label>Slug für den Deep-Link</label><input id="community-slug" type="text" maxlength="80" placeholder="wird aus dem Namen erzeugt" /></div>
+        <div class="form-group full"><label>Beschreibung *</label><textarea id="community-description" maxlength="1000" rows="4" placeholder="Worum geht es in dieser Community?"></textarea></div>
+        <div class="form-group"><label>E-Mail Community-Admin *</label><input id="community-admin-email" type="email" maxlength="320" placeholder="admin@beispiel.ch" /></div>
+        <div class="form-group"><label>Angezeigter Adminname</label><input id="community-admin-name" type="text" maxlength="120" placeholder="optional, sonst E-Mail-Adresse" /></div>
+        <div class="form-group"><label>Einladungscode</label><input id="community-invite-code" type="text" maxlength="12" placeholder="wird automatisch erzeugt" style="text-transform:uppercase" /></div>
+        <div class="form-group"><label>Community-Bild</label><input id="community-cover" type="file" accept="image/jpeg,image/png,image/webp" onchange="communityImageSelected(this)" /><div id="community-cover-hint" class="hint" style="margin-top:4px">JPEG, PNG oder WebP, maximal 8 MB.</div></div>
+        <div class="form-group full" id="community-cover-preview-wrap" style="display:none"><label>Bildvorschau</label><div style="display:flex;align-items:center;gap:10px"><img id="community-cover-preview" alt="Community-Bildvorschau" style="width:180px;height:100px;border-radius:8px;object-fit:cover;border:1px solid var(--border)" /><button class="btn btn-ghost btn-sm" type="button" onclick="communityRemoveCover()">Bild entfernen</button></div></div>
+        <div class="form-group full"><label style="display:flex;align-items:center;gap:8px;font-weight:400"><input id="community-active" type="checkbox" checked style="width:16px;height:16px;accent-color:var(--green)" /> Community aktiv und über Code/Deep-Link beitretbar</label></div>
+      </div>
+      <div id="community-action-bar" style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="saveCommunity()">Community anlegen</button>
+        <span id="community-status" class="hint"></span>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <h2 style="margin:0">Bestehende Communities</h2>
+        <button class="btn btn-ghost btn-sm" onclick="loadCommunities()">Aktualisieren</button>
+      </div>
+      <div id="communities-body"><p class="loading">Verbinde...</p></div>
     </div>
   </div>
 
@@ -1519,10 +1550,14 @@ var _partner = [];
 var _anfragen = [];
 var _verbandAnfragen = [];
 var _verbande = [];
+var _communities = [];
 var _routen = [];
 var _routenKantons = [];
 var _lookupResults = [];
 var _editPartnerId = null;
+var _editCommunityId = null;
+var _communityImageDataUrl = null;
+var _communityRemoveCover = false;
 var LS_KEY = 'sagatrail_admin_tok';
 
 var _savedStatus = {msg: '', ok: undefined};
@@ -1563,7 +1598,7 @@ async function connect() {
   _token = document.getElementById('tok-input').value;
   try {
     setTokStatus('Lade...', undefined);
-    await Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen(), loadAnfragen(), ladeVerbande()]);
+    await Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen(), loadAnfragen(), ladeVerbande(), loadCommunities()]);
     localStorage.setItem(LS_KEY, _token);
     document.getElementById('tok-input').style.display = 'none';
     document.getElementById('tok-btn').style.display = 'none';
@@ -1594,7 +1629,7 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tok-btn').style.display = 'none';
     document.getElementById('tok-forget').style.display = '';
     setTokStatus('Lade...', undefined);
-    Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen(), loadAnfragen(), ladeVerbande()])
+    Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen(), loadAnfragen(), ladeVerbande(), loadCommunities()])
       .then(function() { setTokStatus('Verbunden \u2713', true); })
       .catch(function(e) {
         localStorage.removeItem(LS_KEY);
@@ -1621,6 +1656,7 @@ function switchTab(name, btn) {
   if (name === 'routen'   && token()) initRoutenTab();
   if (name === 'anfragen' && token()) loadAnfragen();
   if (name === 'verbande' && token()) { ladeVerbande(); loadVerbandAnfragen(); }
+  if (name === 'communities' && token()) loadCommunities();
   if (name === 'medienkampagne' && token()) { mmLoadContacts(); mmLoadLog(); }
   if (name === 'kampagne'     && token()) { kmLoadMeta(); kmLoadLog(); }
   if (name === 'android-beta' && token()) loadAndroidBeta();
@@ -1940,6 +1976,200 @@ async function loadOverview() {
 
 function statCard(num, lbl, sub) {
   return '<div class="stat-card"><div class="num">' + esc(String(num)) + '</div><div class="lbl">' + esc(lbl) + '</div>' + (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') + '</div>';
+}
+
+/* ===================== COMMUNITIES ===================== */
+async function loadCommunities() {
+  var body = document.getElementById('communities-body');
+  if (!body) return;
+  body.innerHTML = '<p class="loading">Lade Communities...</p>';
+  try {
+    _communities = await api('/api/admin/communities');
+    renderCommunities();
+  } catch(e) {
+    body.innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+  }
+}
+
+function renderCommunities() {
+  var body = document.getElementById('communities-body');
+  if (!body) return;
+  if (!_communities.length) {
+    body.innerHTML = '<p class="hint">Noch keine Communities vorhanden.</p>';
+    return;
+  }
+  var html = '<div style="overflow-x:auto"><table class="tbl" style="min-width:980px"><thead><tr>' +
+    '<th>Community</th><th>Admin</th><th>Mitglieder</th><th>Code</th><th>Deep-Link</th><th>Status</th><th></th>' +
+    '</tr></thead><tbody>';
+  _communities.forEach(function(c) {
+    var cover = c.coverImageUrl
+      ? '<img src="' + esc(c.coverImageUrl) + '" alt="" style="width:54px;height:42px;object-fit:cover;border-radius:6px;border:1px solid var(--border);vertical-align:middle;margin-right:8px" onerror="this.style.opacity=\'0.2\'" />'
+      : '<span style="display:inline-flex;width:54px;height:42px;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:6px;color:#aaa;font-size:11px;margin-right:8px">kein Bild</span>';
+    var status = c.active
+      ? '<span class="badge badge-green">Aktiv</span>'
+      : '<span class="badge badge-gray">Inaktiv</span>';
+    html += '<tr>' +
+      '<td>' + cover + '<strong>' + esc(c.name) + '</strong><div class="mono" style="margin-top:3px">' + esc(c.slug) + '</div></td>' +
+      '<td><div>' + esc(c.adminName || '–') + '</div><div class="mono">' + esc(c.adminEmail || '–') + '</div></td>' +
+      '<td style="text-align:center">' + esc(String(c.memberCount || 0)) + '</td>' +
+      '<td><code style="font-size:13px;letter-spacing:1px">' + esc(c.inviteCode) + '</code><br><button class="btn btn-ghost btn-sm" style="margin-top:5px" onclick="copyCommunityValue(\'' + esc(c.inviteCode) + '\')">Code kopieren</button></td>' +
+      '<td style="max-width:260px"><div class="mono" style="white-space:normal;word-break:break-all">' + esc(c.deepLink) + '</div><button class="btn btn-ghost btn-sm" style="margin-top:5px" onclick="copyCommunityValue(\'' + esc(c.deepLink) + '\')">Link kopieren</button></td>' +
+      '<td>' + status + '</td>' +
+      '<td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editCommunity(\'' + esc(c.id) + '\')">Bearbeiten</button> <button class="btn btn-danger btn-sm" onclick="deleteCommunity(\'' + esc(c.id) + '\')">Löschen</button></td>' +
+      '</tr>';
+  });
+  html += '</tbody></table></div>';
+  body.innerHTML = html;
+}
+
+function communitySetFormMode(id) {
+  _editCommunityId = id || null;
+  document.getElementById('community-form-title').textContent = id ? 'Community bearbeiten' : 'Neue Community';
+  document.getElementById('community-action-bar').innerHTML =
+    '<button class="btn btn-primary" onclick="saveCommunity()">' + (id ? 'Änderungen speichern' : 'Community anlegen') + '</button>' +
+    (id ? '<button class="btn btn-ghost" onclick="communityResetForm()">Abbrechen</button>' : '') +
+    '<span id="community-status" class="hint"></span>';
+}
+
+function communityResetForm() {
+  _editCommunityId = null;
+  _communityImageDataUrl = null;
+  _communityRemoveCover = false;
+  ['community-name','community-slug','community-description','community-admin-email','community-admin-name','community-invite-code'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('community-active').checked = true;
+  document.getElementById('community-cover').value = '';
+  document.getElementById('community-cover-preview-wrap').style.display = 'none';
+  document.getElementById('community-cover-hint').textContent = 'JPEG, PNG oder WebP, maximal 8 MB.';
+  communitySetFormMode(null);
+}
+
+function editCommunity(id) {
+  var c = _communities.find(function(item) { return item.id === id; });
+  if (!c) return;
+  _communityImageDataUrl = null;
+  _communityRemoveCover = false;
+  communitySetFormMode(id);
+  document.getElementById('community-name').value = c.name || '';
+  document.getElementById('community-slug').value = c.slug || '';
+  document.getElementById('community-description').value = c.description || '';
+  document.getElementById('community-admin-email').value = c.adminEmail || '';
+  document.getElementById('community-admin-name').value = c.adminName || '';
+  document.getElementById('community-invite-code').value = c.inviteCode || '';
+  document.getElementById('community-active').checked = !!c.active;
+  document.getElementById('community-cover').value = '';
+  var wrap = document.getElementById('community-cover-preview-wrap');
+  var image = document.getElementById('community-cover-preview');
+  if (c.coverImageUrl) {
+    image.src = c.coverImageUrl;
+    wrap.style.display = '';
+  } else {
+    image.removeAttribute('src');
+    wrap.style.display = 'none';
+  }
+  document.getElementById('community-cover-hint').textContent = c.coverImageUrl
+    ? 'Aktuelles Bild bleibt erhalten, wenn kein neues gewählt wird.'
+    : 'JPEG, PNG oder WebP, maximal 8 MB.';
+  document.getElementById('tab-communities').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function communityImageSelected(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024) {
+    input.value = '';
+    document.getElementById('community-status').textContent = 'Das Bild darf maximal 8 MB gross sein.';
+    return;
+  }
+  if (!['image/jpeg','image/png','image/webp'].includes(file.type)) {
+    input.value = '';
+    document.getElementById('community-status').textContent = 'Nur JPEG-, PNG- oder WebP-Bilder sind erlaubt.';
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function() {
+    _communityImageDataUrl = String(reader.result || '');
+    _communityRemoveCover = false;
+    document.getElementById('community-cover-preview').src = _communityImageDataUrl;
+    document.getElementById('community-cover-preview-wrap').style.display = '';
+    document.getElementById('community-cover-hint').textContent = file.name + ' ausgewählt';
+    document.getElementById('community-status').textContent = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function communityRemoveCover() {
+  _communityImageDataUrl = null;
+  _communityRemoveCover = true;
+  document.getElementById('community-cover').value = '';
+  document.getElementById('community-cover-preview').removeAttribute('src');
+  document.getElementById('community-cover-preview-wrap').style.display = 'none';
+  document.getElementById('community-cover-hint').textContent = 'Bild wird beim Speichern entfernt.';
+}
+
+async function saveCommunity() {
+  var payload = {
+    name: v('community-name'),
+    description: v('community-description'),
+    adminEmail: v('community-admin-email'),
+    adminName: v('community-admin-name') || undefined,
+    slug: v('community-slug') || undefined,
+    inviteCode: v('community-invite-code').toUpperCase() || undefined,
+    active: document.getElementById('community-active').checked
+  };
+  if (_communityImageDataUrl) payload.coverImageBase64 = _communityImageDataUrl;
+  if (_editCommunityId && _communityRemoveCover) payload.coverImageUrl = null;
+  if (!payload.name || !payload.description || !payload.adminEmail) {
+    document.getElementById('community-status').textContent = 'Name, Beschreibung und Admin-E-Mail sind Pflichtfelder.';
+    return;
+  }
+  var status = document.getElementById('community-status');
+  var button = document.querySelector('#community-action-bar .btn-primary');
+  if (button) button.disabled = true;
+  status.textContent = _editCommunityId ? 'Speichert...' : 'Legt an...';
+  try {
+    await api(_editCommunityId ? '/api/admin/communities/' + encodeURIComponent(_editCommunityId) : '/api/admin/communities', {
+      method: _editCommunityId ? 'PATCH' : 'POST',
+      body: JSON.stringify(payload)
+    });
+    communityResetForm();
+    status = document.getElementById('community-status');
+    status.textContent = 'Gespeichert';
+    await loadCommunities();
+  } catch(e) {
+    if (button) button.disabled = false;
+    status.textContent = 'Fehler: ' + e.message;
+  }
+}
+
+async function deleteCommunity(id) {
+  var c = _communities.find(function(item) { return item.id === id; });
+  if (!c || !confirm('Community "' + c.name + '" wirklich dauerhaft löschen? Mitglieder und der Community-Admin werden entfernt. Bestehende Treffpunkte bleiben erhalten.')) return;
+  try {
+    await api('/api/admin/communities/' + encodeURIComponent(id), { method: 'DELETE' });
+    if (_editCommunityId === id) communityResetForm();
+    await loadCommunities();
+  } catch(e) {
+    alert('Community konnte nicht gelöscht werden: ' + e.message);
+  }
+}
+
+function copyCommunityValue(value) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(value).then(function() { alert('Kopiert.'); }).catch(function() {});
+    return;
+  }
+  var input = document.createElement('textarea');
+  input.value = value;
+  input.style.position = 'fixed';
+  input.style.opacity = '0';
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand('copy');
+  input.remove();
+  alert('Kopiert.');
 }
 
 /* ===================== NUTZER ===================== */

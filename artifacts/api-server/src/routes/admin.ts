@@ -16,6 +16,10 @@ import {
   verbandsTable,
   verbandAnfragenTable,
   storiesTable,
+  communitiesTable,
+  communityAdminsTable,
+  communityMembersTable,
+  communityPortalTokensTable,
   type PartnerKategorie,
 } from "@workspace/db";
 import { istPremiumAktiv } from "../lib/premiumStatus";
@@ -42,8 +46,12 @@ import {
   type LeadRow,
 } from "../lib/leadMailer";
 import { mediaContactsTable, partnerEmailLogTable, partnerEmailBlocklistTable, partnerLeadsTable } from "@workspace/db";
+import { ObjectStorageService } from "../lib/objectStorage";
 
 const router: IRouter = Router();
+const communityStorage = new ObjectStorageService();
+const COMMUNITY_APP_STORE_URL = "https://apps.apple.com/app/id6788260668";
+const COMMUNITY_PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.sagatrail2.app";
 
 const MediaContactCreateBody = z.object({
   name: z.string().trim().min(1).max(200),
@@ -92,6 +100,330 @@ function requireAdminToken(req: Request, res: Response): boolean {
   }
   return true;
 }
+
+const AdminCommunityCreateBody = z.object({
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().min(1).max(1000),
+  adminEmail: z.string().trim().toLowerCase().email().max(320),
+  adminName: z.string().trim().max(120).optional(),
+  slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80).optional(),
+  inviteCode: z.string().trim().toUpperCase().regex(/^[A-HJ-NP-Z2-9]{6,12}$/).optional(),
+  coverImageBase64: z.string().optional(),
+  active: z.boolean().default(true),
+});
+
+const AdminCommunityUpdateBody = AdminCommunityCreateBody.partial().extend({
+  coverImageUrl: z.string().trim().startsWith("/objects/").nullable().optional(),
+});
+
+function communitySlugBase(name: string): string {
+  return name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ä/gi, "ae")
+    .replace(/ö/gi, "oe")
+    .replace(/ü/gi, "ue")
+    .replace(/ß/g, "ss")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 72) || "community";
+}
+
+async function findAvailableCommunitySlug(requested: string | undefined, name: string, excludeId?: string): Promise<string> {
+  const base = (requested ? communitySlugBase(requested) : communitySlugBase(name)).slice(0, 80);
+  for (let suffix = 0; suffix < 100; suffix += 1) {
+    const candidate = suffix === 0 ? base : `${base.slice(0, 80 - String(suffix + 1).length - 1)}-${suffix + 1}`;
+    const [existing] = await db
+      .select({ id: communitiesTable.id })
+      .from(communitiesTable)
+      .where(eq(communitiesTable.slug, candidate))
+      .limit(1);
+    if (!existing || existing.id === excludeId) return candidate;
+  }
+  throw new Error("Kein freier Community-Slug verfügbar");
+}
+
+function randomCommunityInviteCode(): string {
+  return randomBytes(6)
+    .toString("base64")
+    .replace(/[^A-HJ-NP-Z2-9]/gi, "")
+    .toUpperCase()
+    .slice(0, 8)
+    .padEnd(8, "A");
+}
+
+async function findAvailableCommunityInviteCode(requested?: string, excludeId?: string): Promise<string> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const candidate = requested ?? randomCommunityInviteCode();
+    const [existing] = await db
+      .select({ id: communitiesTable.id })
+      .from(communitiesTable)
+      .where(eq(communitiesTable.inviteCode, candidate))
+      .limit(1);
+    if (!existing || existing.id === excludeId) return candidate;
+    if (requested) break;
+  }
+  throw new Error("Der Einladungscode ist bereits vergeben");
+}
+
+function decodeCommunityImage(dataUrl: string): { buffer: Buffer; contentType: string; extension: string } {
+  const match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=\s]+)$/i);
+  if (!match) throw new Error("Nur JPEG-, PNG- oder WebP-Bilder sind erlaubt");
+  const contentType = match[1].toLowerCase();
+  const buffer = Buffer.from(match[2].replace(/\s/g, ""), "base64");
+  if (!buffer.length || buffer.length > 8 * 1024 * 1024) {
+    throw new Error("Das Community-Bild darf maximal 8 MB gross sein");
+  }
+  return {
+    buffer,
+    contentType,
+    extension: contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg",
+  };
+}
+
+function adminCommunityCoverUrl(raw: string | null, req: Request): string | null {
+  if (!raw) return null;
+  if (raw.startsWith("/objects/")) {
+    const forwardedProto = req
+      .get("x-forwarded-proto")
+      ?.split(",")[0]
+      ?.trim()
+      .toLowerCase();
+    const protocol = forwardedProto === "https" || req.secure
+      ? "https"
+      : process.env.NODE_ENV === "production"
+        ? "https"
+        : req.protocol;
+    return `${protocol}://${req.get("host")}/api/storage${raw}`;
+  }
+  return raw;
+}
+
+async function adminCommunityResponse(
+  row: typeof communitiesTable.$inferSelect,
+  req: Request,
+  admin?: typeof communityAdminsTable.$inferSelect | null,
+  memberCount?: number,
+) {
+  const resolvedAdmin = admin ?? (await db
+    .select()
+    .from(communityAdminsTable)
+    .where(eq(communityAdminsTable.communityId, row.id))
+    .limit(1))[0] ?? null;
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    coverImageUrl: adminCommunityCoverUrl(row.coverImageUrl, req),
+    active: row.active,
+    inviteCode: row.inviteCode,
+    deepLink: `mobile://community/invite/${encodeURIComponent(row.slug)}?code=${encodeURIComponent(row.inviteCode)}`,
+    adminEmail: resolvedAdmin?.email ?? null,
+    adminName: resolvedAdmin?.displayName ?? row.administratorName,
+    memberCount: memberCount ?? 0,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+router.get("/admin/communities", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const [communities, admins, memberCounts] = await Promise.all([
+    db.select().from(communitiesTable).orderBy(desc(communitiesTable.createdAt)),
+    db.select().from(communityAdminsTable),
+    db
+      .select({ communityId: communityMembersTable.communityId, value: count() })
+      .from(communityMembersTable)
+      .groupBy(communityMembersTable.communityId),
+  ]);
+  const adminsByCommunity = new Map(admins.filter((admin) => admin.communityId).map((admin) => [admin.communityId as string, admin]));
+  const countsByCommunity = new Map(memberCounts.map((row) => [row.communityId, Number(row.value)]));
+  res.json(await Promise.all(communities.map((community) =>
+    adminCommunityResponse(community, req, adminsByCommunity.get(community.id), countsByCommunity.get(community.id) ?? 0),
+  )));
+});
+
+router.post("/admin/communities", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const parsed = AdminCommunityCreateBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const data = parsed.data;
+  const communityId = randomUUID();
+  const adminId = randomUUID();
+  const slug = await findAvailableCommunitySlug(data.slug, data.name);
+  const inviteCode = await findAvailableCommunityInviteCode(data.inviteCode);
+  const adminName = data.adminName || data.adminEmail;
+  let coverImageUrl: string | null = null;
+
+  try {
+    if (data.coverImageBase64) {
+      const image = decodeCommunityImage(data.coverImageBase64);
+      coverImageUrl = await communityStorage.uploadBuffer(
+        image.buffer,
+        image.contentType,
+        `community-covers/${communityId}-${randomUUID()}.${image.extension}`,
+      );
+    }
+
+    const [community] = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(communitiesTable)
+        .values({
+          id: communityId,
+          slug,
+          name: data.name,
+          description: data.description,
+          administratorName: adminName,
+          language: "de",
+          coverImageUrl,
+          facebookGroupUrl: null,
+          announcement: null,
+          inviteCode,
+          appStoreUrl: COMMUNITY_APP_STORE_URL,
+          playStoreUrl: COMMUNITY_PLAY_STORE_URL,
+          active: data.active,
+        })
+        .returning();
+      await tx.insert(communityAdminsTable).values({
+        id: adminId,
+        email: data.adminEmail,
+        displayName: adminName,
+        active: data.active,
+        communityId,
+      });
+      return [created];
+    });
+
+    req.log.info({ communityId, slug, adminId }, "Community im Admin angelegt");
+    res.status(201).json(await adminCommunityResponse(community, req, {
+      id: adminId,
+      email: data.adminEmail,
+      displayName: adminName,
+      active: data.active,
+      communityId,
+      createdAt: community.createdAt,
+      updatedAt: community.updatedAt,
+    }, 0));
+  } catch (error) {
+    req.log.error({ err: error, communityId }, "Community konnte im Admin nicht angelegt werden");
+    res.status(400).json({ error: error instanceof Error ? error.message : "Community konnte nicht angelegt werden" });
+  }
+});
+
+router.patch("/admin/communities/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const id = z.string().uuid().safeParse(req.params.id);
+  if (!id.success) {
+    res.status(400).json({ error: "Ungültige Community-ID" });
+    return;
+  }
+  const parsed = AdminCommunityUpdateBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [current] = await db.select().from(communitiesTable).where(eq(communitiesTable.id, id.data)).limit(1);
+  const [currentAdmin] = await db.select().from(communityAdminsTable).where(eq(communityAdminsTable.communityId, id.data)).limit(1);
+  if (!current) {
+    res.status(404).json({ error: "Community nicht gefunden" });
+    return;
+  }
+  const data = parsed.data;
+
+  try {
+    const slug = data.slug !== undefined
+      ? await findAvailableCommunitySlug(data.slug, current.name, id.data)
+      : current.slug;
+    const inviteCode = data.inviteCode !== undefined
+      ? await findAvailableCommunityInviteCode(data.inviteCode, id.data)
+      : current.inviteCode;
+    const adminEmail = data.adminEmail ?? currentAdmin?.email;
+    const adminName = data.adminName || currentAdmin?.displayName || adminEmail || current.administratorName;
+    let coverImageUrl = data.coverImageUrl !== undefined ? data.coverImageUrl : current.coverImageUrl;
+
+    if (data.coverImageBase64) {
+      const image = decodeCommunityImage(data.coverImageBase64);
+      coverImageUrl = await communityStorage.uploadBuffer(
+        image.buffer,
+        image.contentType,
+        `community-covers/${id.data}-${randomUUID()}.${image.extension}`,
+      );
+    }
+
+    const [updated] = await db.transaction(async (tx) => {
+      const [community] = await tx
+        .update(communitiesTable)
+        .set({
+          slug,
+          name: data.name ?? current.name,
+          description: data.description ?? current.description,
+          administratorName: adminName,
+          coverImageUrl,
+          active: data.active ?? current.active,
+          inviteCode,
+          updatedAt: new Date(),
+        })
+        .where(eq(communitiesTable.id, id.data))
+        .returning();
+
+      if (currentAdmin) {
+        await tx
+          .update(communityAdminsTable)
+          .set({
+            email: adminEmail ?? currentAdmin.email,
+            displayName: adminName,
+            active: data.active ?? currentAdmin.active,
+            updatedAt: new Date(),
+          })
+          .where(eq(communityAdminsTable.id, currentAdmin.id));
+      } else if (adminEmail) {
+        await tx.insert(communityAdminsTable).values({
+          id: randomUUID(),
+          email: adminEmail,
+          displayName: adminName,
+          active: data.active ?? true,
+          communityId: id.data,
+        });
+      }
+      return [community];
+    });
+
+    res.json(await adminCommunityResponse(updated, req, undefined, undefined));
+  } catch (error) {
+    req.log.error({ err: error, communityId: id.data }, "Community konnte im Admin nicht aktualisiert werden");
+    res.status(400).json({ error: error instanceof Error ? error.message : "Community konnte nicht aktualisiert werden" });
+  }
+});
+
+router.delete("/admin/communities/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const id = z.string().uuid().safeParse(req.params.id);
+  if (!id.success) {
+    res.status(400).json({ error: "Ungültige Community-ID" });
+    return;
+  }
+  const deleted = await db.transaction(async (tx) => {
+    await tx.delete(communityPortalTokensTable).where(
+      sql`community_admin_id in (select id from community_admins where community_id = ${id.data})`,
+    );
+    await tx.delete(communityAdminsTable).where(eq(communityAdminsTable.communityId, id.data));
+    await tx.delete(communityMembersTable).where(eq(communityMembersTable.communityId, id.data));
+    return tx.delete(communitiesTable).where(eq(communitiesTable.id, id.data)).returning({ id: communitiesTable.id });
+  });
+  if (!deleted.length) {
+    res.status(404).json({ error: "Community nicht gefunden" });
+    return;
+  }
+  req.log.info({ communityId: id.data }, "Community im Admin gelöscht");
+  res.status(204).end();
+});
 
 // ---------------------------------------------------------------------------
 // Demo-/Review-Nutzer anlegen (ohne E-Mail-Verifizierung)
