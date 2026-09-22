@@ -56,7 +56,6 @@ export default function CommunityDetailScreen() {
   const [sortMode, setSortMode] = useState<MeetupSortMode>("date");
   const [filters, setFilters] = useState<MeetupFilterState>({
     search: "",
-    difficulty: undefined,
     onlyMine: false,
   });
   const communities = useGetMyCommunities({
@@ -100,7 +99,6 @@ export default function CommunityDetailScreen() {
     () => ({
       communityId,
       search: filters.search.trim() || undefined,
-      difficulty: filters.difficulty,
       mine: filters.onlyMine || undefined,
     }),
     [communityId, filters],
