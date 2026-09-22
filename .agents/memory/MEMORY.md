@@ -153,3 +153,4 @@
 - [Theme evidence authority](sagatrail-theme-evidence-authority.md) — geometry-dependent theme rules belong to server refresh; mobile POI fallback must fail closed when it lacks geometry.
 - [Theme route 304 handling](sagatrail-theme-route-304.md) — dynamic theme lists must bypass bodyless conditional responses; the mobile client cannot recover routes from a 304.
 - [Production theme refresh](sagatrail-theme-production-refresh.md) — HTTP 200 with [] means missing production theme evidence; refresh existing routes before changing OTA/cache code.
+- [OTA dependency closure](sagatrail-ota-dependency-closure.md) — OTA source manifests can pass while Metro still fails if remote main lacks an imported dependency; verify the complete mobile import closure.
