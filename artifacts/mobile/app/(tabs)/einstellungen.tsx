@@ -143,9 +143,9 @@ export default function Einstellungen() {
       const response = await fetch(
         `${baseUrl}${codePurpose === "community" ? "/api/communities/invitations/claim" : "/api/referrals/claim"}`,
         {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ code }),
+          method: "POST",
+          headers,
+          body: JSON.stringify({ code }),
         },
       );
       if (!response.ok) {
@@ -822,7 +822,6 @@ export default function Einstellungen() {
                     />
                     {codeStatus === "error" && (
                       <Text style={[styles.rowHint, { color: colors.destructive ?? colors.mutedForeground }]}>
-                        {t.einladungscodeError}
                         {codePurpose === "community"
                           ? t.communitycodeError
                           : t.freundschaftscodeError}
