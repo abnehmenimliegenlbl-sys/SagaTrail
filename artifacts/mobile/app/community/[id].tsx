@@ -288,13 +288,13 @@ export default function CommunityDetailScreen() {
           <View style={styles.infoItem}>
             <Feather name="users" size={17} color={colors.accent} />
             <Text style={[styles.infoText, { color: colors.foreground }]}>
-              {t.members(community.memberCount)}
+                {t.members(community.memberCount ?? 0)}
             </Text>
           </View>
           <View style={styles.infoItem}>
             <Feather name="user" size={17} color={colors.accent} />
             <Text style={[styles.infoText, { color: colors.foreground }]}>
-              {t.administrator}: {community.administratorName}
+                {t.administrator}: {community.administratorName || "–"}
             </Text>
           </View>
         </View>
