@@ -227,6 +227,40 @@ test("refreshes the AR route near the moving observer without resetting its worl
   assert.ok(points.some((point) => point[2] < worldOffset[2] - 0.5));
 });
 
+test("renders the next 50 route metres along bends instead of 50 metres by air distance", () => {
+  const metersPerLatitudeDegree = 180 / (Math.PI * 6_371_000);
+  const metersPerLongitudeDegree =
+    metersPerLatitudeDegree / Math.cos((ROUTE_CENTER.lat * Math.PI) / 180);
+  const route = [
+    [ROUTE_CENTER.lat, ROUTE_CENTER.lng],
+    [ROUTE_CENTER.lat + 30 * metersPerLatitudeDegree, ROUTE_CENTER.lng],
+    [
+      ROUTE_CENTER.lat + 30 * metersPerLatitudeDegree,
+      ROUTE_CENTER.lng + 30 * metersPerLongitudeDegree,
+    ],
+  ];
+  const segments = buildGeographicTerrainRouteSegments(
+    null,
+    route,
+    ROUTE_CENTER,
+    500,
+    null,
+    {
+      maxRenderedDistanceM: 50,
+      realScaleRadiusM: 50,
+      maxRouteDistanceM: 60,
+      maxVirtualDistanceM: 300,
+    },
+  );
+  const points = segments.flatMap((segment) => segment.points);
+  const last = points.at(-1);
+
+  assert.ok(last);
+  // 30 m north plus 20 m east is the 50 m path-length endpoint.
+  assert.ok(Math.abs(last[0] - 0.8) < 0.08);
+  assert.ok(Math.abs(last[2] + 1.2) < 0.08);
+});
+
 test("keeps only the connected near-field prefix for looped routes", () => {
   const metersPerLatitudeDegree = 180 / (Math.PI * 6_371_000);
   const route = [

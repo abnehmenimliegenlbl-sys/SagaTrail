@@ -837,31 +837,18 @@ export function buildGeographicTerrainRouteSegments(
   return gradeSegments.flatMap((segment) => {
     if (reachedRenderedDistanceLimit) return [];
 
-    const projected = segment.coordinates
-      .map((point) =>
-        ({
-          geographic: point,
-          projected: projectGeographicRoutePoint(
-            model,
-            point,
-            center,
-            terrainRadiusM,
-            maxRouteDistanceM,
-            maxVirtualDistanceM,
-            realScaleRadiusM,
-          ),
-        }),
-      )
-      .filter(
-        (
-          entry,
-        ): entry is {
-          geographic: readonly number[];
-          projected: ProjectedGeographicRoutePoint;
-        } => entry.projected !== null,
-      );
     const visibleProjected: ProjectedGeographicRoutePoint[] = [];
-    for (const { geographic, projected: point } of projected) {
+    for (const geographic of segment.coordinates) {
+      const point = projectGeographicRoutePoint(
+        model,
+        geographic,
+        center,
+        terrainRadiusM,
+        maxRouteDistanceM,
+        maxVirtualDistanceM,
+        realScaleRadiusM,
+      );
+      if (!point) continue;
       const segmentDistanceM =
         previousGeographicPoint == null
           ? 0
