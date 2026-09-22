@@ -655,10 +655,11 @@ function TerrainHologram({
                 ? TERRAIN_ROUTE_MATERIALS[segment.band]
                 : TERRAIN_ROUTE_MATERIALS.green
             }
-            // Keep the route itself as a subtle, real ground-plane trace. The
-            // smaller guide cue below handles the upright-phone case without
-            // turning the whole route into a screen-facing graphic.
-            opacity={segment && canRenderRoute ? 0.42 : 0}
+            // Keep the route itself clearly visible as the real ground-plane
+            // trace. The smaller guide cue below handles the upright-phone
+            // case without turning the whole route into a screen-facing
+            // graphic.
+            opacity={segment && canRenderRoute ? 0.82 : 0}
             renderingOrder={24}
             viroTag={`terrain-route-line-slot-${index}`}
           />
