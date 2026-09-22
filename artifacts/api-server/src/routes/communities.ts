@@ -57,10 +57,22 @@ async function ensureCommunityAdminMembership(
   }
 }
 
+function resolveCommunityCoverImageUrl(
+  rawCoverImageUrl: string | null | undefined,
+  req: Request,
+): string | null | undefined {
+  if (!rawCoverImageUrl) return rawCoverImageUrl;
+  if (rawCoverImageUrl.startsWith("/objects/")) {
+    return `${req.protocol}://${req.get("host")}/api/storage${rawCoverImageUrl}`;
+  }
+  if (rawCoverImageUrl.startsWith("/")) {
+    return `${req.protocol}://${req.get("host")}${rawCoverImageUrl}`;
+  }
+  return rawCoverImageUrl;
+}
+
 function invitationFromRow(row: CommunityRow, req: Request) {
-  const coverImageUrl = row.coverImageUrl?.startsWith("/objects/")
-    ? `${req.protocol}://${req.get("host")}/api/storage${row.coverImageUrl}`
-    : row.coverImageUrl;
+  const coverImageUrl = resolveCommunityCoverImageUrl(row.coverImageUrl, req);
   return {
     id: row.id,
     slug: row.slug,
@@ -175,6 +187,7 @@ router.get("/communities/me", async (req, res): Promise<void> => {
   res.json(
     memberships.map((community) => ({
       ...community,
+      coverImageUrl: resolveCommunityCoverImageUrl(community.coverImageUrl, req),
       joinedAt: community.joinedAt.toISOString(),
     })),
   );
