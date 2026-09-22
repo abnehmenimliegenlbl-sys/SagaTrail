@@ -196,7 +196,7 @@ function CommunityCard({
             {community.name}
           </Text>
           <Text style={[styles.communityAdministrator, { color: colors.accent }]}>
-            {community.administratorName || "–"}
+            {t.administrator}: {community.administratorName?.trim() || "–"}
           </Text>
           <Text
             style={[

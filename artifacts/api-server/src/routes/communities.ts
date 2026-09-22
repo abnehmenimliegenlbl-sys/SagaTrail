@@ -177,7 +177,8 @@ router.get("/communities/me", async (req, res): Promise<void> => {
       slug: communitiesTable.slug,
       name: communitiesTable.name,
       description: communitiesTable.description,
-      administratorName: communitiesTable.administratorName,
+      administratorName: communityAdminsTable.displayName,
+      storedAdministratorName: communitiesTable.administratorName,
       language: communitiesTable.language,
       coverImageUrl: communitiesTable.coverImageUrl,
       active: communitiesTable.active,
@@ -187,6 +188,10 @@ router.get("/communities/me", async (req, res): Promise<void> => {
     .innerJoin(
       communitiesTable,
       eq(communitiesTable.id, communityMembersTable.communityId),
+    )
+    .leftJoin(
+      communityAdminsTable,
+      eq(communityAdminsTable.communityId, communitiesTable.id),
     )
     .where(
       and(
@@ -219,6 +224,10 @@ router.get("/communities/me", async (req, res): Promise<void> => {
   res.json(
     memberships.map((community) => ({
       ...community,
+      administratorName:
+        community.administratorName?.trim() ||
+        community.storedAdministratorName?.trim() ||
+        "",
       coverImageUrl: resolveCommunityCoverImageUrl(community.coverImageUrl, req),
       memberCount: countsByCommunity.get(community.id) ?? 0,
       joinedAt: community.joinedAt.toISOString(),

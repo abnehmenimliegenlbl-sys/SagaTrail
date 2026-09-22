@@ -146,6 +146,7 @@
 - [Treffpunkt-Nachrichtenhistorie](sagatrail-meetup-message-history.md) — echte Nachrichten einmal speichern; Push-Outbox pro Empfänger verteilen und Limits nur auf Historieneinträge anwenden.
 - [Community bridge](sagatrail-community-bridge.md) — Facebook remains the acquisition channel; SagaTrail hosts opted-in hiking communities and structured group events.
 - [Community portal authentication](sagatrail-community-portal-auth.md) — community admins use their own account/token tables; they are not required to have a partner row.
+- [Community administrator names](sagatrail-community-admin-name-source.md) — `/communities/me` must prefer the admin membership display name and fall back to the community row.
 - [Route quality provenance](sagatrail-route-quality-provenance.md) — route APIs expose check status/date and independent source links; successful POI refresh replaces evidence, failures preserve it.
 - [Pre-start safety verdict provenance](sagatrail-prestart-safety-verdict.md) — combine live signals conservatively; regional notices and community reports must not become an official route closure.
 - [Theme evidence independence](sagatrail-theme-evidence-independence.md) — themeKeys and general route quality timestamps are independent; do not hide valid themed routes until every quality check has run.
