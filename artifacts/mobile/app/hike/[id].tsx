@@ -3812,6 +3812,49 @@ export default function LiveHike() {
     }
   }, [nearbyPoi, selectedPoi]);
 
+  // Die automatisch geöffnete Partnerkachel bleibt nur während der
+  // Annäherung/offenen Nähe sichtbar. GPS-Rauschen darf sie nicht sofort
+  // schließen: Drei aufeinanderfolgende Abstands-Zunahmen von mindestens 5 m
+  // bedeuten, dass der Wanderer am Partner vorbeigegangen ist.
+  useEffect(() => {
+    const automaticPartnerId = automaticPartnerIdRef.current;
+    if (
+      !automaticPartnerId ||
+      !selectedPartner ||
+      String(selectedPartner.id) !== automaticPartnerId
+    ) {
+      if (!selectedPartner) {
+        selectedPartnerDistanceRef.current = null;
+      }
+      return;
+    }
+    if (!livePos) return;
+    const dist = haversineKm(livePos, {
+      lat: selectedPartner.lat,
+      lng: selectedPartner.lng,
+    });
+    const previous = selectedPartnerDistanceRef.current;
+    if (!previous || previous.id !== automaticPartnerId) {
+      selectedPartnerDistanceRef.current = {
+        id: automaticPartnerId,
+        distanceKm: dist,
+        increasingReadings: 0,
+      };
+      return;
+    }
+    const increased = dist > previous.distanceKm + 0.005;
+    const increasingReadings = increased ? previous.increasingReadings + 1 : 0;
+    if (increasingReadings >= 3) {
+      closeSelectedPartner();
+      return;
+    }
+    selectedPartnerDistanceRef.current = {
+      id: automaticPartnerId,
+      distanceKm: dist,
+      increasingReadings,
+    };
+  }, [closeSelectedPartner, livePos, selectedPartner]);
+
   // Die automatisch geöffnete POI-Kachel bleibt nur während der Annäherung
   // offen. GPS-Rauschen darf sie aber nicht sofort schließen: Dafür muss der
   // Abstand mindestens 5 m und drei GPS-Messungen hintereinander zunehmen
@@ -4838,6 +4881,8 @@ export default function LiveHike() {
           // durch den alten "skip while awaiting" verloren.
           if (text && !awaitingDecisionRef.current) {
             announcedPremiumPartnerIdsRef.current.add(partnerId);
+            automaticPartnerIdRef.current = partnerId;
+            selectedPartnerDistanceRef.current = null;
             watchPoiLog(
               "premium partner narration accepted and staged on phone",
               {
@@ -9091,6 +9136,8 @@ export default function LiveHike() {
                   onPartnerPress={(id) => {
                     const partner = partners.find((p) => p.id === id);
                     if (!partner) return;
+                    automaticPartnerIdRef.current = null;
+                    selectedPartnerDistanceRef.current = null;
                     setPartnerAnnouncementText(null);
                     if (karteVollbild) {
                       pendingKarteActionRef.current = () =>
@@ -10607,7 +10654,7 @@ export default function LiveHike() {
       {!!selectedPartner && (
         <Pressable
           style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
-          onPress={() => setSelectedPartner(null)}
+          onPress={closeSelectedPartner}
         >
           <Pressable
             style={{ width: "100%" }}
@@ -10655,7 +10702,7 @@ export default function LiveHike() {
                 </View>
                 <CloseButton
                   accessibilityLabel={t.close}
-                  onPress={() => setSelectedPartner(null)}
+                  onPress={closeSelectedPartner}
                 />
               </View>
 
