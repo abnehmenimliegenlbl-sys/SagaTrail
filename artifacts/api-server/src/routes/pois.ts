@@ -99,8 +99,14 @@ router.get("/routes/poi-detail", async (req, res): Promise<void> => {
     return;
   }
   try {
+    // React Native kann eine bodylose 304-Antwort nicht wie der Browser aus
+    // seinem HTTP-Cache vervollständigen. Der POI-Detail-Body ist deshalb bei
+    // jeder Anfrage erforderlich.
+    delete req.headers["if-none-match"];
+    delete req.headers["if-modified-since"];
+    res.set("Cache-Control", "no-store");
     const wiki = await getPoiDetail(parsed.data, req.log);
-    res.json({ wiki: wiki ?? null });
+    res.status(200).json({ wiki: wiki ?? null });
   } catch (err) {
     req.log.error({ err }, "POI-Detail-Anreicherung fehlgeschlagen");
     res.status(502).json({ error: "Externe Datenquelle nicht erreichbar" });

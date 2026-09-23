@@ -119,14 +119,24 @@ export interface SagaWithMeta {
 /**
  * Gibt alle Sagen eines Kantons sortiert nach Proximity-Kategorie zurück.
  * Innerhalb einer Kategorie aufsteigend nach Distanz.
+ *
+ * Bei importierten oder noch nicht vollständig angereicherten Routen kann
+ * `canton` fehlen. Dann darf der Picker nicht leer bleiben: Es wird
+ * schweizweit auf die nächstgelegenen kuratierten Sagen zurückgegriffen.
+ * Dasselbe gilt, wenn der Kanton zwar gesetzt ist, aber keine Katalogsage
+ * unter genau diesem Namen vorhanden ist.
  */
 export function allCantonSagasSorted(
   routeCoord: LatLng | undefined,
   canton: string,
   sagas: Saga[],
 ): SagaWithMeta[] {
-  return sagas
-    .filter((s) => s.canton === canton)
+  const cantonMatches = canton
+    ? sagas.filter((s) => s.canton === canton)
+    : [];
+  const candidates = cantonMatches.length > 0 ? cantonMatches : sagas;
+
+  return candidates
     .map((saga) => ({
       saga,
       category: sagaProximityCategory(routeCoord, saga.coordinates),
