@@ -1714,6 +1714,20 @@ export default function LiveHike() {
     WikiSummary | null | undefined
   >(undefined);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  // Nur automatisch geöffnete Partnerdetails dürfen sich beim Vorbeilaufen
+  // selbst schließen. Manuell geöffnete Partner bleiben bis zum expliziten
+  // X-/Backdrop-Tap offen.
+  const automaticPartnerIdRef = useRef<string | null>(null);
+  const selectedPartnerDistanceRef = useRef<{
+    id: string;
+    distanceKm: number;
+    increasingReadings: number;
+  } | null>(null);
+  const closeSelectedPartner = useCallback(() => {
+    automaticPartnerIdRef.current = null;
+    selectedPartnerDistanceRef.current = null;
+    setSelectedPartner(null);
+  }, []);
   const [partnerTranslation, setPartnerTranslation] = useState<{
     beschreibung: string | null;
     angebot: string | null;
@@ -2164,6 +2178,16 @@ export default function LiveHike() {
     resolveStory: unknown;
   } | null>(null);
   const promptedDecisionRef = useRef<number>(-1);
+  /**
+   * Der Prompt-Claim bleibt über einen Story-Reload hinweg erhalten. Das ist
+   * absichtlich stärker als ein React-State-Guard: ein Profil-/Sprach-Refresh
+   * kann dieselbe letzte Entscheidung neu laden, während der alte Prompt noch
+   * in der Audio-Queue steckt.
+   */
+  const decisionPromptClaimRef = useRef<{
+    chapterIndex: number;
+    promptText: string;
+  } | null>(null);
   /** Wird synchron gesetzt, sobald eine Antwort angenommen wurde. Dadurch
    *  kann derselbe Entscheidungspunkt auch bei einem verspäteten Render,
    *  Queue-Eintrag oder Sprach-Callback nicht erneut öffnen. */
@@ -2778,11 +2802,13 @@ export default function LiveHike() {
       setChapters(story);
       decisionsRef.current = story;
       decisionTriggerCountRef.current.clear();
-      decisionPromptCountRef.current.clear();
       decisionDebugSequenceRef.current = 0;
       lastDecisionTriggeredRef.current = -1;
       resolvedDecisionIndexRef.current = null;
-      promptedDecisionRef.current = -1;
+      // Prompt-Claims und -Zähler nicht zurücksetzen: Ein erneuter
+      // resolveStory-Aufruf darf die aktive letzte Entscheidungsfrage nicht
+      // nochmals in die Queue legen. Eine neue Hike-Instanz startet mit neuen
+      // Refs und erhält damit automatisch ein frisches Prompt-Fenster.
       const resumeAt = resumeIndexRef.current;
       resumeIndexRef.current = null;
       if (resumeAt != null && resumeAt > 0 && resumeAt < story.length) {
@@ -3463,9 +3489,6 @@ export default function LiveHike() {
     const wps = computeRouteWaypoints(geom, partners, displayedPois);
     setRouteWaypoints(wps);
     waypointAnnouncedRef.current = new Set();
-    announcedPremiumPartnerIdsRef.current = new Set();
-    announcingPremiumPartnerIdsRef.current = new Set();
-    premiumPartnerDuplicateLogRef.current = new Set();
     setReachedWaypointIds(new Set());
   }, [navigationGeometry, partners, displayedPois]);
 
@@ -3650,6 +3673,14 @@ export default function LiveHike() {
       setPoiStoryLoading(false);
       return;
     }
+    // Erst den on-demand geladenen Wikipedia-/OSM-Kontext abwarten. Sonst
+    // startet die KI-Umschreibung zu früh ohne Auszug und ein Fehler kann den
+    // bereits geladenen Rohtext im Modal verdecken.
+    if (selectedPoiWiki === undefined) {
+      setPoiStory(null);
+      setPoiStoryLoading(true);
+      return;
+    }
     let cancelled = false;
     setPoiStory(null);
     setPoiStoryLoading(true);
@@ -3681,7 +3712,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [selectedPoi, storyLanguage]);
+  }, [selectedPoi, selectedPoiWiki, storyLanguage]);
 
   // Lazy Wiki-Anreicherung fuer getippte POIs (selectedPoi).
   // Identisch zum nearbyPoiWiki-Effekt, aber fuer manuell geoeffnete Karten-POIs.
@@ -3694,7 +3725,7 @@ export default function LiveHike() {
     let cancelled = false;
     (async () => {
       const cached = await getOfflinePoiDetail(selectedPoi.id);
-      if (cached !== undefined) {
+      if (cached) {
         if (!cancelled) setSelectedPoiWiki(cached);
         return;
       }
@@ -3785,6 +3816,49 @@ export default function LiveHike() {
       setSelectedPoi(null);
     }
   }, [nearbyPoi, selectedPoi]);
+
+  // Die automatisch geöffnete Partnerkachel bleibt nur während der
+  // Annäherung/offenen Nähe sichtbar. GPS-Rauschen darf sie nicht sofort
+  // schließen: Drei aufeinanderfolgende Abstands-Zunahmen von mindestens 5 m
+  // bedeuten, dass der Wanderer am Partner vorbeigegangen ist.
+  useEffect(() => {
+    const automaticPartnerId = automaticPartnerIdRef.current;
+    if (
+      !automaticPartnerId ||
+      !selectedPartner ||
+      String(selectedPartner.id) !== automaticPartnerId
+    ) {
+      if (!selectedPartner) {
+        selectedPartnerDistanceRef.current = null;
+      }
+      return;
+    }
+    if (!livePos) return;
+    const dist = haversineKm(livePos, {
+      lat: selectedPartner.lat,
+      lng: selectedPartner.lng,
+    });
+    const previous = selectedPartnerDistanceRef.current;
+    if (!previous || previous.id !== automaticPartnerId) {
+      selectedPartnerDistanceRef.current = {
+        id: automaticPartnerId,
+        distanceKm: dist,
+        increasingReadings: 0,
+      };
+      return;
+    }
+    const increased = dist > previous.distanceKm + 0.005;
+    const increasingReadings = increased ? previous.increasingReadings + 1 : 0;
+    if (increasingReadings >= 3) {
+      closeSelectedPartner();
+      return;
+    }
+    selectedPartnerDistanceRef.current = {
+      id: automaticPartnerId,
+      distanceKm: dist,
+      increasingReadings,
+    };
+  }, [closeSelectedPartner, livePos, selectedPartner]);
 
   // Die automatisch geöffnete POI-Kachel bleibt nur während der Annäherung
   // offen. GPS-Rauschen darf sie aber nicht sofort schließen: Dafür muss der
@@ -4812,6 +4886,8 @@ export default function LiveHike() {
           // durch den alten "skip while awaiting" verloren.
           if (text && !awaitingDecisionRef.current) {
             announcedPremiumPartnerIdsRef.current.add(partnerId);
+            automaticPartnerIdRef.current = partnerId;
+            selectedPartnerDistanceRef.current = null;
             watchPoiLog(
               "premium partner narration accepted and staged on phone",
               {
@@ -5758,6 +5834,27 @@ export default function LiveHike() {
           traceId,
           audioRole: opts?.audioRole,
         };
+        if (entry.kind === "decisionPrompt" && entry.chapterIndex != null) {
+          // Ein Prompt kann durch ein kurzes speaking-Flackern oder einen
+          // Story-Reload mehr als einmal angefordert werden. Der synchron
+          // gesetzte Claim verhindert den normalen Pfad; diese Queue-Sperre
+          // ist die letzte Verteidigung gegen doppelte hörbare Fragen.
+          const duplicatePrompt = narrationQueueRef.current.some(
+            (queued) =>
+              queued.kind === "decisionPrompt" &&
+              queued.chapterIndex === entry.chapterIndex,
+          );
+          if (duplicatePrompt) {
+            storyAudioLog("narration_deduplicated", {
+              ...decisionDebugSnapshot(
+                entry.chapterIndex ?? currentIndexRef.current,
+              ),
+              ...audioDetails,
+              reason: "decision_prompt_already_queued",
+            });
+            return;
+          }
+        }
         enqueueNarrationItem(narrationQueueRef.current, entry);
         if (
           opts?.kind === "decisionPrompt" ||
@@ -6815,7 +6912,7 @@ export default function LiveHike() {
     let cancelled = false;
     (async () => {
       const cached = await getOfflinePoiDetail(nearbyPoi.id);
-      if (cached !== undefined) {
+      if (cached) {
         if (!cancelled) {
           setNearbyPoiWiki(cached);
           setNearbyPoiWikiPoiId(nearbyPoi.id);
@@ -6916,6 +7013,23 @@ export default function LiveHike() {
   useEffect(() => {
     if (!nearbyPoi) return;
     if (narratedPoiIdRef.current === nearbyPoi.id) return;
+    // Ein POI ohne Wikipedia-Auszug und ohne verifizierten OSM-Kontext bleibt
+    // sichtbar, bekommt aber keine generische KI-Ansage aus Name + Kategorie.
+    // Erst die Detailantwort abwarten, damit ein noch ladender Wikipedia-Text
+    // nicht fälschlich als "kein Inhalt" behandelt wird.
+    if (nearbyPoiWiki === undefined) return;
+    const hasSpecificContent =
+      Boolean(nearbyPoi.osmContext?.trim()) ||
+      Boolean(nearbyPoiWiki?.extract?.trim());
+    if (!hasSpecificContent) {
+      narratedPoiIdRef.current = nearbyPoi.id;
+      watchPoiLog("POI narration skipped without text context", {
+        poiId: nearbyPoi.id,
+        kind: nearbyPoi.kind,
+        source: "nearby",
+      });
+      return;
+    }
     // Kulturelle/historische POIs mit spezifischem Namen werden durch den
     // progressiven Annaeherungs-Effekt erzaehlt (200 m Hinweis + 50 m Geschichte).
     if (
@@ -8032,7 +8146,6 @@ export default function LiveHike() {
       });
       return;
     }
-    promptedDecisionRef.current = currentIndex;
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
     // Kapitel-Daten ueber Ref lesen, NICHT aus State-Dep — sonst loest jede
     // chapters-Aenderung (z. B. chosenOptionIndex nach Wahl, Group-Sync) den
@@ -8046,6 +8159,7 @@ export default function LiveHike() {
     }
     const opts = decision?.options?.map((o) => o.label) ?? [];
     const question = decision?.question;
+    const promptText = pack.buildDecisionPrompt(opts, question);
     const previousPromptCount =
       decisionPromptCountRef.current.get(currentIndex) ?? 0;
     if (previousPromptCount > 0) {
@@ -8055,6 +8169,21 @@ export default function LiveHike() {
       });
       return;
     }
+    const existingClaim = decisionPromptClaimRef.current;
+    if (
+      existingClaim?.chapterIndex === currentIndex &&
+      existingClaim.promptText === promptText
+    ) {
+      logDecisionFlow("prompt_blocked", currentIndex, {
+        blockReason: "prompt_claimed",
+      });
+      return;
+    }
+    decisionPromptClaimRef.current = {
+      chapterIndex: currentIndex,
+      promptText,
+    };
+    promptedDecisionRef.current = currentIndex;
     const promptCount = previousPromptCount + 1;
     decisionPromptCountRef.current.set(currentIndex, promptCount);
     const promptTraceId = `decision_prompt_${currentIndex}_${++narrationTraceSequenceRef.current}`;
@@ -8064,7 +8193,7 @@ export default function LiveHike() {
       storyLoadGeneration: storyLoadGenerationRef.current,
       promptState: decisionDebugSnapshot(currentIndex),
     });
-    speakRef.current?.(pack.buildDecisionPrompt(opts, question), undefined, {
+    speakRef.current?.(promptText, undefined, {
       kind: "decisionPrompt",
       chapterIndex: currentIndex,
       displayTitle: t.perception,
@@ -8209,7 +8338,17 @@ export default function LiveHike() {
         getPois(bbox)
           .then((result) => {
             if (detourPoiSearchKeyRef.current !== searchKey) return;
-            setDetourPois(filterByRouteCorridor(result, geometry, 0.75));
+            // Umleitungs-POIs kommen aus einem separaten Suchpfad und dürfen
+            // den normalen Endpunktfilter nicht umgehen. Sonst landen
+            // Bushaltestellen mitten auf der Umleitungsstrecke wieder in
+            // displayedPois und werden als POI angesagt.
+            const endpointFiltered = filterBusAndTramStopsToRouteEndpoints(
+              result,
+              geometry,
+            );
+            setDetourPois(
+              filterByRouteCorridor(endpointFiltered, geometry, 0.75),
+            );
             if (result.length === 0 && attempt < 4) {
               attempt += 1;
               setTimeout(tryLoad, 35_000);
@@ -9019,6 +9158,8 @@ export default function LiveHike() {
                   onPartnerPress={(id) => {
                     const partner = partners.find((p) => p.id === id);
                     if (!partner) return;
+                    automaticPartnerIdRef.current = null;
+                    selectedPartnerDistanceRef.current = null;
                     setPartnerAnnouncementText(null);
                     if (karteVollbild) {
                       pendingKarteActionRef.current = () =>
@@ -10524,7 +10665,10 @@ export default function LiveHike() {
               >
                 {poiStoryLoading && !poiStory
                   ? t.poiStoryLoading
-                  : (poiStory ?? selectedPoi.wiki?.extract ?? t.notAvailable)}
+                  : (poiStory ??
+                    selectedPoiWiki?.extract ??
+                    selectedPoi.wiki?.extract ??
+                    t.notAvailable)}
               </Text>
             </Glass>
           </Pressable>
@@ -10535,7 +10679,7 @@ export default function LiveHike() {
       {!!selectedPartner && (
         <Pressable
           style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
-          onPress={() => setSelectedPartner(null)}
+          onPress={closeSelectedPartner}
         >
           <Pressable
             style={{ width: "100%" }}
@@ -10583,7 +10727,7 @@ export default function LiveHike() {
                 </View>
                 <CloseButton
                   accessibilityLabel={t.close}
-                  onPress={() => setSelectedPartner(null)}
+                  onPress={closeSelectedPartner}
                 />
               </View>
 
