@@ -7013,6 +7013,23 @@ export default function LiveHike() {
   useEffect(() => {
     if (!nearbyPoi) return;
     if (narratedPoiIdRef.current === nearbyPoi.id) return;
+    // Ein POI ohne Wikipedia-Auszug und ohne verifizierten OSM-Kontext bleibt
+    // sichtbar, bekommt aber keine generische KI-Ansage aus Name + Kategorie.
+    // Erst die Detailantwort abwarten, damit ein noch ladender Wikipedia-Text
+    // nicht fälschlich als "kein Inhalt" behandelt wird.
+    if (nearbyPoiWiki === undefined) return;
+    const hasSpecificContent =
+      Boolean(nearbyPoi.osmContext?.trim()) ||
+      Boolean(nearbyPoiWiki?.extract?.trim());
+    if (!hasSpecificContent) {
+      narratedPoiIdRef.current = nearbyPoi.id;
+      watchPoiLog("POI narration skipped without text context", {
+        poiId: nearbyPoi.id,
+        kind: nearbyPoi.kind,
+        source: "nearby",
+      });
+      return;
+    }
     // Kulturelle/historische POIs mit spezifischem Namen werden durch den
     // progressiven Annaeherungs-Effekt erzaehlt (200 m Hinweis + 50 m Geschichte).
     if (
