@@ -47,6 +47,7 @@ import {
 import {
   cachePoiDetail,
   cachePoiStory,
+  clearOfflinePoiDetail,
   deletePoiCaches,
 } from "@/lib/offlinePois";
 import { Profile, Saga, StoryChapter } from "@/types";
@@ -406,7 +407,10 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
                 });
                 await cachePoiDetail(poi.id, detail.wiki ?? null);
               } catch {
-                await cachePoiDetail(poi.id, null);
+                // Ein transienter Netzwerk-/Serverfehler ist kein belastbarer
+                // "kein Wikipedia-Eintrag"-Befund. Nicht als null speichern,
+                // sonst bleibt der POI offline dauerhaft ohne Detail.
+                await clearOfflinePoiDetail(poi.id);
                 poisFailed = true;
               }
               done++;

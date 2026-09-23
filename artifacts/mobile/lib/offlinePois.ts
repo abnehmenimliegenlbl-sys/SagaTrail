@@ -16,9 +16,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  *                          string = gecachter Story-Text
  */
 
-// v2 invalidiert alte, nur auf Deutsch ermittelte/als leer gespeicherte
-// Wikipedia-Ergebnisse nach der mehrsprachigen POI-Suche.
-const DETAIL_PREFIX = "sagatrail:poi-detail:v2:";
+// v3 invalidiert alte, möglicherweise durch einen transienten Fehler als leer
+// gespeicherte Detail-Ergebnisse. Ein echter "kein Wikipedia-Eintrag"-Treffer
+// darf weiterhin als null gespeichert werden; Download-Fehler werden nicht
+// mehr als null persistiert.
+const DETAIL_PREFIX = "sagatrail:poi-detail:v3:";
 const STORY_PREFIX = "sagatrail:poi-story:v1:";
 
 export interface WikiSummary {
@@ -46,6 +48,11 @@ export async function cachePoiDetail(
     detailKey(poiId),
     wiki ? JSON.stringify(wiki) : "null"
   ).catch(() => {});
+}
+
+/** Entfernt einen Detail-Cache, wenn der Netzwerkabruf fehlgeschlagen ist. */
+export async function clearOfflinePoiDetail(poiId: string): Promise<void> {
+  await AsyncStorage.removeItem(detailKey(poiId)).catch(() => {});
 }
 
 /** Speichert eine POI-Story im Cache. */

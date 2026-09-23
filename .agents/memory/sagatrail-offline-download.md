@@ -26,6 +26,13 @@ The offline downloader intentionally keeps only one indexed route package. Start
 
 **How to apply:** Treat a new download as a destructive replacement. If a download fails after cleanup, the previous package is not restored automatically; the UI should communicate that behavior if the download flow is exposed again.
 
+## POI detail cache semantics
+- A successful POI detail response with `wiki: null` may be cached as a negative result, but a thrown/network/server error must remove the detail entry instead of storing `null`. Version the detail prefix when old entries may have conflated those states.
+
+**Why:** The hike screen trusts a cached `null` and skips the live request. Caching a transient failure therefore made valid Wikipedia content appear permanently as "Nicht verfügbar" until the cache was invalidated.
+
+**How to apply:** Keep the `undefined`/`null`/summary distinction explicit in `offlinePois`; only write `null` after a completed lookup, and clear the entry in downloader error paths.
+
 ## Offline map tiles (lib/offlineTiles.ts + swisstopoMapHtml.ts)
 - Tiles are the same swisstopo WMTS XYZ scheme the online map uses (`.../3857/{z}/{x}/{y}.jpeg`, EPSG:3857 / standard slippy). Downloaded for a bounded corridor around the start point over a few zoom levels; stored via `expo-file-system/legacy` under `<documentDirectory>tiles/<sagaId>/`.
 - Render: `buildSwisstopoHtml` takes optional `offlineTiles` (record `z/x/y` -> data URI). A Leaflet `L.TileLayer` subclass overrides `getTileUrl` to return the local data URI when present, else the online URL — so missing tiles gracefully fall back online. Tiles are loaded from disk as base64 in the hike screen and passed to `SwisstopoMap`.
