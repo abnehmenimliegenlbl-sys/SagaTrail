@@ -3489,9 +3489,6 @@ export default function LiveHike() {
     const wps = computeRouteWaypoints(geom, partners, displayedPois);
     setRouteWaypoints(wps);
     waypointAnnouncedRef.current = new Set();
-    announcedPremiumPartnerIdsRef.current = new Set();
-    announcingPremiumPartnerIdsRef.current = new Set();
-    premiumPartnerDuplicateLogRef.current = new Set();
     setReachedWaypointIds(new Set());
   }, [navigationGeometry, partners, displayedPois]);
 
