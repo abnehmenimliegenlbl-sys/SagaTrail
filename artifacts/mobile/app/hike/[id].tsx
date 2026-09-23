@@ -1714,6 +1714,20 @@ export default function LiveHike() {
     WikiSummary | null | undefined
   >(undefined);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  // Nur automatisch geöffnete Partnerdetails dürfen sich beim Vorbeilaufen
+  // selbst schließen. Manuell geöffnete Partner bleiben bis zum expliziten
+  // X-/Backdrop-Tap offen.
+  const automaticPartnerIdRef = useRef<string | null>(null);
+  const selectedPartnerDistanceRef = useRef<{
+    id: string;
+    distanceKm: number;
+    increasingReadings: number;
+  } | null>(null);
+  const closeSelectedPartner = useCallback(() => {
+    automaticPartnerIdRef.current = null;
+    selectedPartnerDistanceRef.current = null;
+    setSelectedPartner(null);
+  }, []);
   const [partnerTranslation, setPartnerTranslation] = useState<{
     beschreibung: string | null;
     angebot: string | null;
