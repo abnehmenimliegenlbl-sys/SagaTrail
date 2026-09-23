@@ -71,3 +71,9 @@ werden. Die Entscheidung deshalb beim Auswählen sofort über
 `awaitingDecisionRef` und `decisionsRef` abschließen; der Prompt-Effekt muss
 zusätzlich `chosenOptionIndex` prüfen. Der Session-Reset darf während der
 Bestätigungsansage nicht laufen (`awaitingDecisionRef` oder `speakingRef`).
+
+**Pitfall (fixed 2026-09-23):** Ein erneuter Story-Resolve kann denselben
+offenen Entscheidungspunkt neu setzen, während der alte Prompt noch läuft oder
+in der Queue wartet. Prompt-Claims und Prompt-Zähler deshalb über Story-Reloads
+erhalten und zusätzlich bereits queued `decisionPrompt`-Einträge pro Kapitel
+deduplizieren. Eine neue Hike-Instanz bekommt automatisch neue Refs.

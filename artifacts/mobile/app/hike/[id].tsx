@@ -2164,6 +2164,16 @@ export default function LiveHike() {
     resolveStory: unknown;
   } | null>(null);
   const promptedDecisionRef = useRef<number>(-1);
+  /**
+   * Der Prompt-Claim bleibt über einen Story-Reload hinweg erhalten. Das ist
+   * absichtlich stärker als ein React-State-Guard: ein Profil-/Sprach-Refresh
+   * kann dieselbe letzte Entscheidung neu laden, während der alte Prompt noch
+   * in der Audio-Queue steckt.
+   */
+  const decisionPromptClaimRef = useRef<{
+    chapterIndex: number;
+    promptText: string;
+  } | null>(null);
   /** Wird synchron gesetzt, sobald eine Antwort angenommen wurde. Dadurch
    *  kann derselbe Entscheidungspunkt auch bei einem verspäteten Render,
    *  Queue-Eintrag oder Sprach-Callback nicht erneut öffnen. */
@@ -2778,11 +2788,13 @@ export default function LiveHike() {
       setChapters(story);
       decisionsRef.current = story;
       decisionTriggerCountRef.current.clear();
-      decisionPromptCountRef.current.clear();
       decisionDebugSequenceRef.current = 0;
       lastDecisionTriggeredRef.current = -1;
       resolvedDecisionIndexRef.current = null;
-      promptedDecisionRef.current = -1;
+      // Prompt-Claims und -Zähler nicht zurücksetzen: Ein erneuter
+      // resolveStory-Aufruf darf die aktive letzte Entscheidungsfrage nicht
+      // nochmals in die Queue legen. Eine neue Hike-Instanz startet mit neuen
+      // Refs und erhält damit automatisch ein frisches Prompt-Fenster.
       const resumeAt = resumeIndexRef.current;
       resumeIndexRef.current = null;
       if (resumeAt != null && resumeAt > 0 && resumeAt < story.length) {
@@ -5758,6 +5770,27 @@ export default function LiveHike() {
           traceId,
           audioRole: opts?.audioRole,
         };
+        if (entry.kind === "decisionPrompt" && entry.chapterIndex != null) {
+          // Ein Prompt kann durch ein kurzes speaking-Flackern oder einen
+          // Story-Reload mehr als einmal angefordert werden. Der synchron
+          // gesetzte Claim verhindert den normalen Pfad; diese Queue-Sperre
+          // ist die letzte Verteidigung gegen doppelte hörbare Fragen.
+          const duplicatePrompt = narrationQueueRef.current.some(
+            (queued) =>
+              queued.kind === "decisionPrompt" &&
+              queued.chapterIndex === entry.chapterIndex,
+          );
+          if (duplicatePrompt) {
+            storyAudioLog("narration_deduplicated", {
+              ...decisionDebugSnapshot(
+                entry.chapterIndex ?? currentIndexRef.current,
+              ),
+              ...audioDetails,
+              reason: "decision_prompt_already_queued",
+            });
+            return;
+          }
+        }
         enqueueNarrationItem(narrationQueueRef.current, entry);
         if (
           opts?.kind === "decisionPrompt" ||
@@ -8032,7 +8065,6 @@ export default function LiveHike() {
       });
       return;
     }
-    promptedDecisionRef.current = currentIndex;
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
     // Kapitel-Daten ueber Ref lesen, NICHT aus State-Dep — sonst loest jede
     // chapters-Aenderung (z. B. chosenOptionIndex nach Wahl, Group-Sync) den
@@ -8046,6 +8078,7 @@ export default function LiveHike() {
     }
     const opts = decision?.options?.map((o) => o.label) ?? [];
     const question = decision?.question;
+    const promptText = pack.buildDecisionPrompt(opts, question);
     const previousPromptCount =
       decisionPromptCountRef.current.get(currentIndex) ?? 0;
     if (previousPromptCount > 0) {
@@ -8055,6 +8088,21 @@ export default function LiveHike() {
       });
       return;
     }
+    const existingClaim = decisionPromptClaimRef.current;
+    if (
+      existingClaim?.chapterIndex === currentIndex &&
+      existingClaim.promptText === promptText
+    ) {
+      logDecisionFlow("prompt_blocked", currentIndex, {
+        blockReason: "prompt_claimed",
+      });
+      return;
+    }
+    decisionPromptClaimRef.current = {
+      chapterIndex: currentIndex,
+      promptText,
+    };
+    promptedDecisionRef.current = currentIndex;
     const promptCount = previousPromptCount + 1;
     decisionPromptCountRef.current.set(currentIndex, promptCount);
     const promptTraceId = `decision_prompt_${currentIndex}_${++narrationTraceSequenceRef.current}`;
@@ -8064,7 +8112,7 @@ export default function LiveHike() {
       storyLoadGeneration: storyLoadGenerationRef.current,
       promptState: decisionDebugSnapshot(currentIndex),
     });
-    speakRef.current?.(pack.buildDecisionPrompt(opts, question), undefined, {
+    speakRef.current?.(promptText, undefined, {
       kind: "decisionPrompt",
       chapterIndex: currentIndex,
       displayTitle: t.perception,
