@@ -1,5 +1,6 @@
 import type { Logger } from "pino";
 import { createHash } from "crypto";
+import { db, catalogSagasTable } from "@workspace/db";
 import { computeElevationStats } from "./elevation";
 import { deriveSacFromSwissTlm3d } from "./swisstopoHiking";
 import { deriveSeason } from "./season";
@@ -111,6 +112,103 @@ export interface RouteFromPointsMeta {
   terrain: string;
 }
 
+const CANTON_PROBE_COUNT = 12;
+const CANTON_PROBE_DELAY_MS = 1_100;
+
+/**
+ * Wenn eine Route im Ausland beginnt, liegt ihr erster Punkt ausserhalb eines
+ * Schweizer Kantons und Nominatim liefert deshalb keinen Kanton. Die
+ * gleichmaessig verteilten Proben bleiben in Routenreihenfolge, damit der
+ * erste erkannte Schweizer/Liechtensteiner Kanton gewinnt.
+ */
+async function firstCantonReached(
+  points: LatLng[],
+  log: Logger,
+): Promise<string | null> {
+  if (points.length < 2) return null;
+
+  const probes = downsample(points.slice(1), CANTON_PROBE_COUNT);
+  for (const point of probes) {
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, CANTON_PROBE_DELAY_MS),
+    );
+    const place = await reverseGeocode(point.lat, point.lng, log);
+    if (place.canton) return place.canton;
+  }
+  return null;
+}
+
+/**
+ * Letzter Fallback, wenn Reverse-Geocoding keinen Kanton liefert: Der
+ * Kanton der naechstgelegenen kuratierten Sage zur Route wird verwendet.
+ * Sagenstandorte dienen hier nur als robuste Kanton-Referenz, nicht als
+ * automatische Sage-Auswahl.
+ */
+async function nearestCatalogCanton(
+  points: LatLng[],
+  log: Logger,
+): Promise<string | null> {
+  try {
+    const rows = await db
+      .select({
+        canton: catalogSagasTable.canton,
+        lat: catalogSagasTable.lat,
+        lng: catalogSagasTable.lng,
+      })
+      .from(catalogSagasTable);
+    const references = rows.filter(
+      (row): row is typeof row & { canton: string; lat: number; lng: number } =>
+        Boolean(row.canton) &&
+        row.lat != null &&
+        row.lng != null &&
+        Number.isFinite(row.lat) &&
+        Number.isFinite(row.lng),
+    );
+    if (references.length === 0) return null;
+
+    let nearestCanton: string | null = null;
+    let nearestDistance = Infinity;
+    for (const point of downsample(points, 64)) {
+      for (const reference of references) {
+        const distance = haversineM(point, {
+          lat: reference.lat,
+          lng: reference.lng,
+        });
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestCanton = reference.canton;
+        }
+      }
+    }
+    return nearestCanton;
+  } catch (err) {
+    log.warn({ err }, "Fallback-Kanton aus Sagenstandorten fehlgeschlagen");
+    return null;
+  }
+}
+
+async function resolveRouteCanton(
+  points: LatLng[],
+  startCanton: string | null,
+  log: Logger,
+): Promise<string> {
+  if (startCanton) return startCanton;
+
+  const reached = await firstCantonReached(points, log);
+  if (reached) {
+    log.info({ canton: reached }, "Route-Kanton aus erstem erreichten Kanton");
+    return reached;
+  }
+
+  const nearest = await nearestCatalogCanton(points, log);
+  if (nearest) {
+    log.info({ canton: nearest }, "Route-Kanton aus naechstgelegener Sage");
+    return nearest;
+  }
+
+  return "";
+}
+
 /**
  * Gemeinsame Anreicherung fuer alle Routen, die als nackte Punktfolge
  * hereinkommen (eigene Routen via Valhalla, GPX-Import): Distanz-Pruefung,
@@ -146,17 +244,11 @@ export async function buildRouteFromPoints(
   const maxElevationM = elevation?.maxElevationM ?? 0;
   const sacGrade = sac ?? "unbekannt";
 
-  // Kanton-Erkennung: Startpunkt ist bevorzugt; faellt das Geocoding aus
-  // (z.B. Netzfehler oder Nominatim liefert kein verwertbares state-Feld),
-  // wird der Mittelpunkt der Route als Fallback geocodiert. Das ist wichtig
-  // fuer umgekehrte GPX-Importe, bei denen der Startpunkt nah an einer
-  // Kantonsgrenze liegt und die Kanton-Zuordnung unzuverlaessig ist.
-  let canton = startPlace.canton;
-  if (!canton && points.length > 2) {
-    const mid = points[Math.floor(points.length / 2)]!;
-    const midPlace = await reverseGeocode(mid.lat, mid.lng, log);
-    canton = midPlace.canton;
-  }
+  // Kanton-Erkennung: Startpunkt ist bevorzugt. Beginnt die Route ausserhalb
+  // der Schweiz, wird der erste entlang der Route erreichte Kanton genommen;
+  // wenn Reverse-Geocoding weiterhin keinen Treffer liefert, folgt der
+  // naechstgelegene Kanton anhand der kuratierten Sagenstandorte.
+  const canton = await resolveRouteCanton(points, startPlace.canton, log);
   const region = canton ?? "";
   const geometry: [number, number][] = downsample(points, STORED_GEOMETRY_POINTS).map(
     (p) => [p.lat, p.lng],

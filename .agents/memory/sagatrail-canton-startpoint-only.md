@@ -7,4 +7,4 @@ Rule: each route in `external_routes` is assigned exactly ONE canton — the can
 
 **Why:** User wants a simple one-canton assignment; the multi-canton backfill also added hours of Nominatim runtime.
 
-**How to apply:** Do not re-add multi-canton backfill phases to enrich-next/enrich-all. The `cantons` column still exists (empty `{}` everywhere) and the `canton = X OR X = ANY(cantons)` filter in loadCachedRoutes is harmless but inert — safe to remove in a cleanup. Never repurpose the column without asking the user first.
+**How to apply:** Do not re-add multi-canton backfill phases to enrich-next/enrich-all. The `cantons` column still exists (empty `{}` everywhere) and the `canton = X OR X = ANY(cantons)` filter in loadCachedRoutes is harmless but inert — safe to remove in a cleanup. Never repurpose the column without asking the user first. Exception: ephemeral own/GPX routes may start abroad; resolve their region from the first canton reached along the route, then use the nearest-canton fallback if geocoding finds none.
