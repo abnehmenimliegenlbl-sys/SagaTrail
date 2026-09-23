@@ -3725,7 +3725,7 @@ export default function LiveHike() {
     let cancelled = false;
     (async () => {
       const cached = await getOfflinePoiDetail(selectedPoi.id);
-      if (cached !== undefined) {
+      if (cached) {
         if (!cancelled) setSelectedPoiWiki(cached);
         return;
       }
@@ -6912,7 +6912,7 @@ export default function LiveHike() {
     let cancelled = false;
     (async () => {
       const cached = await getOfflinePoiDetail(nearbyPoi.id);
-      if (cached !== undefined) {
+      if (cached) {
         if (!cancelled) {
           setNearbyPoiWiki(cached);
           setNearbyPoiWikiPoiId(nearbyPoi.id);

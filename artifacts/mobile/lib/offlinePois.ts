@@ -8,19 +8,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  * vor einem Netzwerk-Request genutzt.
  *
  * Konvention:
- *   getOfflinePoiDetail → undefined  = kein Cache-Eintrag (→ Netzwerk noetig)
- *                          null       = gecacht als "kein Wikipedia-Eintrag"
- *                          WikiSummary = gecachte Daten
+ *   getOfflinePoiDetail → undefined/null = kein positiver Cache-Eintrag
+ *                                        (→ Netzwerk noetig)
+ *                          WikiSummary   = gecachte Daten
  *
  *   getOfflinePoiStory  → null   = kein Cache-Eintrag (→ Netzwerk noetig)
  *                          string = gecachter Story-Text
  */
 
-// v3 invalidiert alte, möglicherweise durch einen transienten Fehler als leer
-// gespeicherte Detail-Ergebnisse. Ein echter "kein Wikipedia-Eintrag"-Treffer
-// darf weiterhin als null gespeichert werden; Download-Fehler werden nicht
-// mehr als null persistiert.
-const DETAIL_PREFIX = "sagatrail:poi-detail:v3:";
+// v4 verwirft alle früheren negativen Detail-Caches. Ein "kein Wikipedia-
+// Eintrag"-Ergebnis darf nicht dauerhaft offline festgeschrieben werden, weil
+// der Server bei transienten externen Fehlern ebenfalls null zurückgeben kann.
+const DETAIL_PREFIX = "sagatrail:poi-detail:v4:";
 const STORY_PREFIX = "sagatrail:poi-story:v1:";
 
 export interface WikiSummary {
@@ -39,15 +38,16 @@ function storyKey(poiId: string, lang: string): string {
   return `${STORY_PREFIX}${poiId}:${lang}`;
 }
 
-/** Speichert das POI-Detail (wiki) im Cache. Null-Werte werden als "kein Wiki" abgelegt. */
+/** Speichert nur positive POI-Details. Null-Werte bleiben erneut abrufbar. */
 export async function cachePoiDetail(
   poiId: string,
   wiki: WikiSummary | null | undefined
 ): Promise<void> {
-  await AsyncStorage.setItem(
-    detailKey(poiId),
-    wiki ? JSON.stringify(wiki) : "null"
-  ).catch(() => {});
+  if (!wiki) {
+    await clearOfflinePoiDetail(poiId);
+    return;
+  }
+  await AsyncStorage.setItem(detailKey(poiId), JSON.stringify(wiki)).catch(() => {});
 }
 
 /** Entfernt einen Detail-Cache, wenn der Netzwerkabruf fehlgeschlagen ist. */
@@ -66,8 +66,7 @@ export async function cachePoiStory(
 
 /**
  * Liest gecachtes POI-Detail.
- * - undefined: kein Eintrag (Netzwerk noetig)
- * - null: gecacht als "kein Wikipedia-Eintrag"
+ * - undefined/null: kein positiver Eintrag (Netzwerk noetig)
  * - WikiSummary: gecachte Daten
  */
 export async function getOfflinePoiDetail(
@@ -76,7 +75,7 @@ export async function getOfflinePoiDetail(
   try {
     const raw = await AsyncStorage.getItem(detailKey(poiId));
     if (raw === null) return undefined; // nicht im Cache
-    if (raw === "null") return null;    // gecacht als "kein Wiki"
+    if (raw === "null") return null; // alter negativer Eintrag: Netzwerk erneut versuchen
     return JSON.parse(raw) as WikiSummary;
   } catch {
     return undefined;
