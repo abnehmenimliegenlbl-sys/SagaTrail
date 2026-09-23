@@ -8257,7 +8257,17 @@ export default function LiveHike() {
         getPois(bbox)
           .then((result) => {
             if (detourPoiSearchKeyRef.current !== searchKey) return;
-            setDetourPois(filterByRouteCorridor(result, geometry, 0.75));
+            // Umleitungs-POIs kommen aus einem separaten Suchpfad und dürfen
+            // den normalen Endpunktfilter nicht umgehen. Sonst landen
+            // Bushaltestellen mitten auf der Umleitungsstrecke wieder in
+            // displayedPois und werden als POI angesagt.
+            const endpointFiltered = filterBusAndTramStopsToRouteEndpoints(
+              result,
+              geometry,
+            );
+            setDetourPois(
+              filterByRouteCorridor(endpointFiltered, geometry, 0.75),
+            );
             if (result.length === 0 && attempt < 4) {
               attempt += 1;
               setTimeout(tryLoad, 35_000);
