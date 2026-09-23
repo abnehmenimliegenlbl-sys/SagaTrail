@@ -9,4 +9,4 @@ Pin pnpm through workflow `defaults.tools.pnpm` so the automatic frozen install 
 
 **Why:** Root-linked update jobs successfully installed dependencies but then failed because Expo was resolved and executed from the repository root instead of the nested app. Earlier concurrent exports were also killed under cold-cache memory pressure.
 
-**How to apply:** Ensure the EAS trigger is app-root-aware before debugging bundle code. Do not rely on workflow run-step working directories to relocate a prepackaged update job.
+**How to apply:** Ensure the EAS trigger is app-root-aware before debugging bundle code. Do not rely on workflow run-step working directories to relocate a prepackaged update job. For non-interactive `eas update`, pass the matching `--environment` explicitly; production uses `--environment production`.
