@@ -43,8 +43,12 @@ if (!directApiKey && !replitClient) {
 const directClient = directApiKey ? new Anthropic({ apiKey: directApiKey }) : null;
 
 if (directClient && replitClient) {
-  const directCreate = directClient.messages.create.bind(directClient.messages);
-  const replitCreate = replitClient.messages.create.bind(replitClient.messages);
+  const directCreate = directClient.messages.create as unknown as (
+    ...args: any[]
+  ) => Promise<unknown>;
+  const replitCreate = replitClient.messages.create as unknown as (
+    ...args: any[]
+  ) => Promise<unknown>;
 
   directClient.messages.create = (async (...args: any[]) => {
     try {
@@ -53,7 +57,7 @@ if (directClient && replitClient) {
       if (!isProviderFailureEligibleForFallback(error)) throw error;
       return replitCreate(...args);
     }
-  }) as typeof directClient.messages.create;
+  }) as unknown as typeof directClient.messages.create;
 }
 
 export const anthropic = directClient ?? replitClient!;
