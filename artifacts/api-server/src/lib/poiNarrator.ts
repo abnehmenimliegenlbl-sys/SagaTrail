@@ -14,7 +14,7 @@ import { LANGUAGE_LABEL } from "./storyGenerator";
  * Fakten, Jahreszahlen oder Geschichten zu genau diesem Ort.
  */
 
-const MODEL = "claude-sonnet-4-6";
+const MODEL = "claude-haiku-4-5";
 const MAX_TOKENS = 512;
 
 interface PoiNarrationInput {
