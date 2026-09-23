@@ -68,6 +68,45 @@ const KIND_SEARCH_LABEL: Record<string, string> = {
   "tourism=viewpoint":            "Aussichtspunkt",
 };
 
+// Schweizer POI-Namen sind nicht zuverlässig deutsch. Für automatische
+// Wikipedia-Suchen probieren wir die wichtigsten Landessprachen und Englisch
+// in fester Reihenfolge; explizite OSM-Tags wie "fr:..." behalten weiterhin
+// ihre eigene Sprache.
+const POI_WIKIPEDIA_LANGUAGES = ["de", "fr", "it", "en"] as const;
+
+async function findWikidataSummary(
+  qid: string,
+  lat: number,
+  lng: number,
+): Promise<{ wiki: WikiSummary; lang: string } | null> {
+  for (const lang of POI_WIKIPEDIA_LANGUAGES) {
+    const title = await resolveWikidataTitle(qid, lang);
+    if (!title) continue;
+    const wiki = await fetchWikipediaSummary(title, lang, lat, lng);
+    if (wiki) return { wiki, lang };
+  }
+  return null;
+}
+
+async function searchPoiWikipedia(
+  name: string,
+  lat: number,
+  lng: number,
+  kind: string | undefined,
+): Promise<WikiSummary | null> {
+  for (const lang of POI_WIKIPEDIA_LANGUAGES) {
+    // Der REST-Summary-Endpunkt ist stabiler als die MediaWiki-Such-API.
+    // Ein exakter OSM-Name darf direkt aufgelöst werden, aber nur wenn der
+    // Artikel eigene Koordinaten innerhalb von 5 km zum POI trägt.
+    const exact = await fetchWikipediaSummary(name, lang, lat, lng, 5, true);
+    if (exact) return exact;
+
+    const wiki = await searchNearbyWikipedia(name, lat, lng, lang, kind);
+    if (wiki) return wiki;
+  }
+  return null;
+}
+
 /** Commons-Suchbegriff fuer einen POI. Reine Codes/Zahlen werden durch
  *  den Typ ersetzt, damit Commons etwas Sinnvolles zurueckgibt. */
 function commonsSearchTerm(name: string, kind: string | undefined): string | null {
@@ -380,50 +419,23 @@ async function enrichPoiWithWikipedia(
     }
     if (poi.wikidataTag) {
       // Titel und P18-Bild parallel auflosen — beides kommt aus Wikidata, aber
-      // resolveWikidataTitle laedt nur Sitelinks, fetchWikidataImage nur Claims.
-      // Statt zwei serieller Requests: Titel zuerst (brauchen wir fuer Summary),
-      // dann Summary + P18 parallel.
-      const title = await resolveWikidataTitle(poi.wikidataTag);
-      if (title) {
-        const [wiki, p18Image] = await Promise.all([
-          fetchWikipediaSummary(title, "de", poi.lat, poi.lng),
-          fetchWikidataImage(poi.wikidataTag),
-        ]);
-        if (wiki) {
-          // Bild-Hierarchie: Wikipedia-Thumbnail > P18 > P373-Kategorie > Commons-Name > Commons-Geo
-          const image =
-            wiki.image ??
-            p18Image ??
-            (await fetchWikidataCommonsCategory(poi.wikidataTag)) ??
-            (await fetchCommonsImageByName(poi.name))?.url ??
-            (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
-          return { ...poi, wiki: { ...wiki, image } };
-        }
-        // Kein Wikipedia-Artikel: Wikidata-Fakten + Bild + KI parallel.
-        // Wikidata-Fakten (Beschreibung + Einweihungsjahr) haben Vorrang vor
-        // searchAiPoiKnowledge — verifizierte Fakten vor geratenen.
-        const [imageFromWikidata, wikidataFacts, aiTextWiki] = await Promise.all([
-          (async () =>
-            p18Image ??
-            (poi.wikidataTag ? await fetchWikidataCommonsCategory(poi.wikidataTag) : null) ??
-            ((await fetchCommonsImageByName(poi.name))?.url) ??
-            (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name)))(),
-          poi.wikidataTag ? fetchWikidataFacts(poi.wikidataTag) : Promise.resolve(null),
-          searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
-        ]);
-        const extractA = wikidataFacts ?? aiTextWiki?.extract ?? "";
-        if (imageFromWikidata || extractA) {
-          return {
-            ...poi,
-            wiki: {
-              title: aiTextWiki?.title ?? poi.name,
-              extract: extractA,
-              url: aiTextWiki?.url ?? "",
-              lang: "de",
-              image: imageFromWikidata ?? aiTextWiki?.image ?? null,
-            },
-          };
-        }
+      // Den Wikipedia-Sitelink in den wichtigsten Schweizer Sprachen suchen.
+      const wikidataSummary = await findWikidataSummary(
+        poi.wikidataTag,
+        poi.lat,
+        poi.lng,
+      );
+      if (wikidataSummary) {
+        const { wiki: summary, lang } = wikidataSummary;
+        const p18Image = await fetchWikidataImage(poi.wikidataTag);
+        // Bild-Hierarchie: Wikipedia-Thumbnail > P18 > P373-Kategorie > Commons-Name > Commons-Geo
+        const image =
+          summary.image ??
+          p18Image ??
+          (await fetchWikidataCommonsCategory(poi.wikidataTag)) ??
+          (await fetchCommonsImageByName(poi.name))?.url ??
+          (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
+        return { ...poi, wiki: { ...summary, image, lang } };
       } else {
         // Kein Wikipedia-Eintrag: Wikidata-Fakten + Bild + KI parallel.
         // Wikidata-Fakten haben Vorrang vor searchAiPoiKnowledge.
@@ -459,7 +471,7 @@ async function enrichPoiWithWikipedia(
     // Artikel und eine Namens-Suche nach "42" wuerde falsche Treffer liefern.
     if (geoSearchBudget.rest > 0 && !isCodeName(poi.name)) {
       geoSearchBudget.rest--;
-      const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng, "de", poi.kind);
+      const wiki = await searchPoiWikipedia(poi.name, poi.lat, poi.lng, poi.kind);
       if (wiki) {
         // Bild-Hierarchie: Commons-Name-Suche zuerst (findet z.B. Denkmal-Foto
         // auch wenn der Artikel ueber die Person handelt und nur ein Portrait als
@@ -660,7 +672,16 @@ export async function getPoiDetail(
   },
   log: Logger,
 ): Promise<WikiSummary | null> {
-  const cacheKey = `${params.lat.toFixed(5)},${params.lng.toFixed(5)},${params.name}`;
+  // Sprach-/Quellenvarianten dürfen sich nicht denselben leeren Treffer teilen:
+  // Ein POI kann beim ersten Aufruf noch ohne OSM-Wikipedia-Tag kommen und
+  // später mit einem expliziten fr:- oder it:-Verweis erneut angereichert werden.
+  const cacheKey = [
+    params.lat.toFixed(5),
+    params.lng.toFixed(5),
+    params.name,
+    params.wikipediaTag ?? "",
+    params.wikidataTag ?? "",
+  ].join(",");
   const hit = poiDetailCache.get(cacheKey);
   if (hit && Date.now() - hit.at < POI_DETAIL_TTL_MS) return hit.wiki;
   const rawPoi: RawPoi = {

@@ -61,3 +61,9 @@ Safety markers are clustered in the map renderer rather than in the API payload:
 **Why:** The map still needs each real safety record for accurate local display and details, but rendering hundreds of nearby markers individually overwhelms the route view.
 
 **How to apply:** Keep cluster counts visible at overview zoom, show category-coded individual markers only after zooming in, and preserve a detail popup for each individual point.
+
+Automatic Wikipedia POI lookup must try the Swiss language variants (`de`, `fr`, `it`, `en`) and should first resolve an exact title through the REST summary endpoint with a tight coordinate check; MediaWiki search can be temporarily overloaded.
+
+**Why:** French/Italian POI names can have no usable German search result, while a stale empty detail-cache entry can also hide a later explicit language-tag result.
+
+**How to apply:** Preserve explicit OSM `wikipedia` tag languages, include source tags in the on-demand detail cache key, and use the verified raw extract as the mobile modal fallback when AI rewriting fails.

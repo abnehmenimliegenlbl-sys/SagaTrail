@@ -3673,6 +3673,14 @@ export default function LiveHike() {
       setPoiStoryLoading(false);
       return;
     }
+    // Erst den on-demand geladenen Wikipedia-/OSM-Kontext abwarten. Sonst
+    // startet die KI-Umschreibung zu früh ohne Auszug und ein Fehler kann den
+    // bereits geladenen Rohtext im Modal verdecken.
+    if (selectedPoiWiki === undefined) {
+      setPoiStory(null);
+      setPoiStoryLoading(true);
+      return;
+    }
     let cancelled = false;
     setPoiStory(null);
     setPoiStoryLoading(true);
@@ -3704,7 +3712,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [selectedPoi, storyLanguage]);
+  }, [selectedPoi, selectedPoiWiki, storyLanguage]);
 
   // Lazy Wiki-Anreicherung fuer getippte POIs (selectedPoi).
   // Identisch zum nearbyPoiWiki-Effekt, aber fuer manuell geoeffnete Karten-POIs.
@@ -10640,7 +10648,10 @@ export default function LiveHike() {
               >
                 {poiStoryLoading && !poiStory
                   ? t.poiStoryLoading
-                  : (poiStory ?? selectedPoi.wiki?.extract ?? t.notAvailable)}
+                  : (poiStory ??
+                    selectedPoiWiki?.extract ??
+                    selectedPoi.wiki?.extract ??
+                    t.notAvailable)}
               </Text>
             </Glass>
           </Pressable>

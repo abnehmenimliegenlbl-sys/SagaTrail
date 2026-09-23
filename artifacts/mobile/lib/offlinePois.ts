@@ -16,7 +16,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  *                          string = gecachter Story-Text
  */
 
-const DETAIL_PREFIX = "sagatrail:poi-detail:v1:";
+// v2 invalidiert alte, nur auf Deutsch ermittelte/als leer gespeicherte
+// Wikipedia-Ergebnisse nach der mehrsprachigen POI-Suche.
+const DETAIL_PREFIX = "sagatrail:poi-detail:v2:";
 const STORY_PREFIX = "sagatrail:poi-story:v1:";
 
 export interface WikiSummary {
