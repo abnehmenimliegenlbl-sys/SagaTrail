@@ -30,6 +30,7 @@
 - [Profile date wire format](sagatrail-profile-date-wire-format.md) — OpenAPI date schemas coerce server values to Date; profile responses must serialize birthdays back as YYYY-MM-DD.
 - [Env vars land im Klartext in .replit](replit-env-plaintext.md) — setEnvVars schreibt ALLE Scopes versioniert in .replit; Tokens/Keys nur als Secret (requestEnvVar), nie als Env-Variable.
 - [SagaTrail "keine POI gefunden"](sagatrail-poi-not-found.md) — drei Ursachen: Kartenmitte faellt auf Sagen-Koordinate falls Route nicht vorab gecacht; Overpass-Timeouts bis 6 Min statt ~12s; fehlender POI-Kontext = poi-story/Anthropic-Endpoint pruefen, nicht Wikipedia.
+- [Sagen-Fallback ohne Startkanton](sagatrail-missing-start-canton.md) — fehlt route.region oder passt kein Katalogkanton, Sagen schweizweit nach Nähe sortieren statt den Picker leer zu lassen.
 - [Zwei RN Modals gleichzeitig offen](rn-double-modal-stacking.md) — Vollbildkarte + POI-Detail als separate RN `Modal`s ueberlappen sich plattformabhaengig; vor Oeffnen des zweiten immer das erste per Callback schliessen.
 - [Replit AI Integrations Proxy Ausfall](ai-integrations-proxy-fallback.md) — Anthropic-Proxy kann "not configured" liefern trotz korrekt gesetzter Env-Vars und 3x Neuprovisionierung; Fallback auf direkten ANTHROPIC_API_KEY im Client eingebaut.
 - [SagaTrail walk-to-trailhead hint](sagatrail-walk-to-start.md) — pre-hike banner is straight-line distance+compass to route start, deliberately not real pedestrian routing (that's a separate, bigger feature).

@@ -14,8 +14,13 @@ router.get("/routes/poi-story", async (req, res): Promise<void> => {
   }
   const { name, extract, kind, lang, osmContext } = parsed.data;
   try {
+    // Auch die Story-Antwort darf nicht als bodylose 304 beim nativen Client
+    // ankommen; bei einem KI-Fehler zeigt die App den Roh-Extract an.
+    delete req.headers["if-none-match"];
+    delete req.headers["if-modified-since"];
+    res.set("Cache-Control", "no-store");
     const text = await narratePoi({ name, extract, kind, lang, osmContext }, req.log);
-    res.json(GetPoiStoryResponse.parse({ text }));
+    res.status(200).json(GetPoiStoryResponse.parse({ text }));
   } catch (err) {
     req.log.error({ err }, "POI-Erzaehltext konnte nicht umgeschrieben werden");
     res.status(502).json({ error: "KI-Umschreibung fehlgeschlagen" });
