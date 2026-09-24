@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { GLAS_3D_STARK } from "@/constants/depth";
-import { useSharedStrings } from "@/lib/i18n/screens/shared";
+import { useSharedStringsSafe } from "@/lib/i18n/screens/shared";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -24,7 +24,7 @@ export type ErrorFallbackProps = {
 
 export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
   const colors = useColors();
-  const t = useSharedStrings();
+  const t = useSharedStringsSafe();
   const insets = useSafeAreaInsets();
 
   const [isModalVisible, setIsModalVisible] = useState(false);

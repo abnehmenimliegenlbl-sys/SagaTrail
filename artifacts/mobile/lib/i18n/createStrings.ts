@@ -1,4 +1,4 @@
-import { useApp } from "@/contexts/AppContext";
+import { useApp, useLanguageSafe } from "@/contexts/AppContext";
 
 import { LanguageCode, SUPPORTED_LANGUAGES } from "./languageCode";
 
@@ -17,6 +17,13 @@ export type StringsDict<T> = Record<LanguageCode, T>;
 export function createUseStrings<T>(dict: StringsDict<T>) {
   return function useStrings(): T {
     const { language } = useApp();
+    return dict[language];
+  };
+}
+
+export function createUseStringsSafe<T>(dict: StringsDict<T>) {
+  return function useStringsSafe(): T {
+    const language = useLanguageSafe();
     return dict[language];
   };
 }

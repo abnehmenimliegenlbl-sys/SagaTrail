@@ -1,4 +1,8 @@
-import { createUseStrings, StringsDict } from "../createStrings";
+import {
+  createUseStrings,
+  createUseStringsSafe,
+  StringsDict,
+} from "../createStrings";
 
 export interface SharedStrings {
   back: string;
@@ -30,3 +34,4 @@ const SHARED_STRINGS: StringsDict<SharedStrings> = {
 };
 
 export const useSharedStrings = createUseStrings(SHARED_STRINGS);
+export const useSharedStringsSafe = createUseStringsSafe(SHARED_STRINGS);
