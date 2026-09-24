@@ -128,7 +128,9 @@ function AuthTokenBridge({ children }: { children: React.ReactNode }) {
 
 function ClerkGuard({ children }: { children: React.ReactNode }) {
   const { isLoaded } = useAuth();
-  const t = useStartupStrings();
+  // ClerkGuard is above AppProvider in the tree, so its startup copy must not
+  // use the AppContext-backed translation hook yet.
+  const t = INITIAL_STARTUP_STRINGS;
   if (!isLoaded) {
     return Platform.OS === "web" ? (
       <StartupState

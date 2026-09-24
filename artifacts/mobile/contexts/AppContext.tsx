@@ -221,6 +221,11 @@ export function useThemeModeSafe(): ThemeMode {
   return ctx?.themeMode ?? "hell";
 }
 
+export function useLanguageSafe(): LanguageCode {
+  const ctx = useContext(AppContext);
+  return ctx?.language ?? DEFAULT_LANGUAGE;
+}
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { isLoaded: authLoaded, isSignedIn, userId, getToken } = useAuth();
 
