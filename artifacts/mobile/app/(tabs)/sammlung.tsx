@@ -612,7 +612,7 @@ export default function Sammlung() {
                             ]}
                             hitSlop={8}
                             accessibilityRole="button"
-                            accessibilityLabel="GPX exportieren"
+                             accessibilityLabel={t.exportGpx}
                           >
                             <Feather name="download" size={14} color={colors.mutedForeground} />
                             <Text style={[styles.gpxBtnLabel, { color: colors.mutedForeground }]}>

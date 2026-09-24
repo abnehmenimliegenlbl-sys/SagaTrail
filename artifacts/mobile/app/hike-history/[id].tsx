@@ -22,6 +22,7 @@ import { useApp } from "@/contexts/AppContext";
 import { hapticSelection } from "@/lib/haptics";
 import { alert } from "@/lib/appAlert";
 import { useCollectionStrings } from "@/lib/i18n/screens/collection";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { useColors } from "@/hooks/useColors";
 
 export default function HikeHistoryDetail() {
@@ -31,6 +32,7 @@ export default function HikeHistoryDetail() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const t = useCollectionStrings();
+  const ts = useSharedStrings();
 
   const hike = hikeHistory.find((h) => h.id === id);
 
@@ -91,7 +93,7 @@ export default function HikeHistoryDetail() {
         ]}
       >
         <BackButton
-          accessibilityLabel="Zurück"
+           accessibilityLabel={ts.back}
           onPress={() => { hapticSelection(); router.back(); }}
         />
         <Text

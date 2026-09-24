@@ -32,6 +32,7 @@ import {
 import { createTerrainArea } from "@workspace/api-client-react";
 import { BackButton } from "@/components/brand/BackButton";
 import { useColors } from "@/hooks/useColors";
+import { useComponentStrings } from "@/lib/i18n/components";
 import {
   buildRouteGradeSegments,
   getSmoothedGradePctAtDistance,
@@ -2000,6 +2001,7 @@ export default function RouteTerrain3D({
   terrainProfile,
 }: Props) {
   const colors = useColors();
+  const componentT = useComponentStrings();
   const window = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [ready, setReady] = useState<boolean | null>(null);
@@ -2206,7 +2208,7 @@ export default function RouteTerrain3D({
                   {loadProgress < 20
                     ? "3D-Grafik wird vorbereitet …"
                     : loadProgress < 70
-                      ? "3D-Gelände wird geladen …"
+                      ? `${componentT.terrain3dTitle} …`
                       : "Satellitenkarte wird geladen …"}
                 </Text>
                 <View style={styles.progressTrack}>
@@ -2232,7 +2234,7 @@ export default function RouteTerrain3D({
         {(mode === "walk" || mode === "flight") && model && walkProgress && (
           <View style={[styles.walkStatus, { top: insets.top }]}>
             <BackButton
-              accessibilityLabel="Zurück zur Übersicht"
+              accessibilityLabel={componentT.backToOverview}
               onPress={onClose}
               style={styles.walkBackButton}
             />
@@ -2257,7 +2259,7 @@ export default function RouteTerrain3D({
               >
                 <Pressable
                   accessibilityRole="adjustable"
-                  accessibilityLabel="Position in der 3D-Zeitleiste"
+                  accessibilityLabel={componentT.timeline}
                   onPress={(event) => {
                     if (timelineWidth <= 0 || routeLengthKm <= 0) return;
                     const ratio = Math.max(
@@ -2289,7 +2291,7 @@ export default function RouteTerrain3D({
               <View style={styles.playbackActions}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={isPlaying ? "Pause" : "Abspielen"}
+                  accessibilityLabel={isPlaying ? componentT.pause : componentT.play}
                   onPress={() => setIsPlaying((value) => !value)}
                   style={styles.playbackButton}
                 >
@@ -2306,7 +2308,7 @@ export default function RouteTerrain3D({
                 </Text>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Tempo ${playbackRate}x`}
+                  accessibilityLabel={componentT.speed(playbackRate)}
                   onPress={() =>
                     setPlaybackRate((value) =>
                       value >= 4 ? 0.5 : value === 2 ? 4 : value * 2,
@@ -2322,7 +2324,7 @@ export default function RouteTerrain3D({
           )}
         {mode === "overview" && (model || error) && (
           <BackButton
-            accessibilityLabel="Zurück zur App"
+            accessibilityLabel={componentT.backToApp}
             onPress={onClose}
             style={[styles.backButton, { top: insets.top + 8 }]}
           />
@@ -2331,9 +2333,9 @@ export default function RouteTerrain3D({
           <View style={[styles.controls, { paddingBottom: 8 }]}>
             {(
               [
-                ["overview", "map", "Übersicht"],
-                ["walk", "edit-3", "Gehen"],
-                ["flight", "navigation", "Flug"],
+                ["overview", "map", componentT.backToOverview],
+                ["walk", "edit-3", componentT.play],
+                ["flight", "navigation", componentT.terrain3dTitle],
               ] as const
             ).map(([value, icon, label]) => {
               const active = mode === value;

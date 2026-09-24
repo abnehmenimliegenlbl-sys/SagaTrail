@@ -112,6 +112,7 @@ export function SwisstopoMap({
           poi: t.legendPoi,
           partner: t.legendPartner,
           safetyCodes: t.legendSafetyCodes,
+          copyrightLabel: t.copyrightLabel,
         },
       ),
     // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.

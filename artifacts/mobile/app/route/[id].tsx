@@ -105,19 +105,31 @@ const PARTNER_WOCHENTAGE: Record<string, Record<string, string>> = {
   es:  { montag: "lunes", dienstag: "martes", mittwoch: "miércoles", donnerstag: "jueves", freitag: "viernes", samstag: "sábado", sonntag: "domingo" },
   pt:  { montag: "segunda", dienstag: "terça", mittwoch: "quarta", donnerstag: "quinta", freitag: "sexta", samstag: "sábado", sonntag: "domingo" },
   zh:  { montag: "周一", dienstag: "周二", mittwoch: "周三", donnerstag: "周四", freitag: "周五", samstag: "周六", sonntag: "周日" },
+  ru:  { montag: "понедельник", dienstag: "вторник", mittwoch: "среда", donnerstag: "четверг", freitag: "пятница", samstag: "суббота", sonntag: "воскресенье" },
 };
 function formatPartnerOeffnungszeit(
   partner: { istOffen?: boolean | null; schliesstUm?: string | null; oeffnetAmTag?: string | null; oeffnetUm?: string | null },
   lang: string,
 ): string | null {
-  if (partner.istOffen && partner.schliesstUm) return `Schliesst um ${partner.schliesstUm} Uhr`;
+  const copy = {
+    de: ["Schliesst um", "Öffnet", "heute", "morgen", "Öffnet am", "Uhr"],
+    gsw: ["Schlisst um", "Öffnet", "hüt", "morn", "Öffnet am", "Uhr"],
+    en: ["Closes at", "Opens", "today", "tomorrow", "Opens on", ""],
+    fr: ["Ferme à", "Ouvre", "aujourd’hui", "demain", "Ouvre", ""] ,
+    it: ["Chiude alle", "Apre", "oggi", "domani", "Apre", ""],
+    es: ["Cierra a las", "Abre", "hoy", "mañana", "Abre el", ""],
+    pt: ["Fecha às", "Abre", "hoje", "amanhã", "Abre na", ""],
+    zh: ["于", "开放", "今天", "明天", "", ""],
+    ru: ["Закрывается в", "Открывается", "сегодня", "завтра", "", ""],
+  }[lang as "de" | "gsw" | "en" | "fr" | "it" | "es" | "pt" | "zh" | "ru"] ?? ["Closes at", "Opens", "today", "tomorrow", "Opens on", ""];
+  if (partner.istOffen && partner.schliesstUm) return `${copy[0]} ${partner.schliesstUm}${copy[5] ? ` ${copy[5]}` : ""}`;
   if (!partner.istOffen && partner.oeffnetAmTag && partner.oeffnetUm) {
     const tag = partner.oeffnetAmTag;
     const uhr = partner.oeffnetUm;
-    if (tag === "heute")  return `Öffnet heute um ${uhr} Uhr`;
-    if (tag === "morgen") return `Öffnet morgen um ${uhr} Uhr`;
-    const tagName = PARTNER_WOCHENTAGE[lang]?.[tag] ?? PARTNER_WOCHENTAGE["de"]?.[tag] ?? tag;
-    return `Öffnet am ${tagName} um ${uhr} Uhr`;
+    if (tag === "heute") return `${copy[1]} ${copy[2]} ${uhr}${copy[5] ? ` ${copy[5]}` : ""}`;
+    if (tag === "morgen") return `${copy[1]} ${copy[3]} ${uhr}${copy[5] ? ` ${copy[5]}` : ""}`;
+    const tagName = PARTNER_WOCHENTAGE[lang]?.[tag] ?? tag;
+    return `${copy[4]} ${tagName} ${uhr}${copy[5] ? ` ${copy[5]}` : ""}`;
   }
   return null;
 }
@@ -1333,7 +1345,7 @@ export default function Routenplanung() {
         </View>
 
         {routeThemes.length > 0 && (
-          <View style={styles.routeThemes} accessibilityLabel="Themen dieser Route">
+          <View style={styles.routeThemes} accessibilityLabel={t.title}>
             {routeThemes.map((theme) => (
               <View
                 key={theme}
@@ -1406,8 +1418,8 @@ export default function Routenplanung() {
             elevProfile.length < 2
           }
           accessibilityRole="button"
-          accessibilityLabel="Diese Route virtuell ansehen"
-          accessibilityHint="Öffnet die Route als dreidimensionale Landschaft"
+          accessibilityLabel={t.title}
+          accessibilityHint={t.elevationProfile}
           style={({ pressed }) => [
             styles.virtualRouteCard,
             {

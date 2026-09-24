@@ -178,6 +178,7 @@ export interface MapLegendLabels {
   poi: string;
   partner: string;
   safetyCodes: string;
+  copyrightLabel?: string;
 }
 
 /**

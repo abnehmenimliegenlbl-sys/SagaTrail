@@ -32,6 +32,22 @@ import {
 import { AgeTier, Archetype } from "@/types";
 
 const WEB_TOP = 67;
+const PROFILE_COPY: Record<LanguageCode, {
+  avatarSelected: string;
+  avatarSelect: string;
+  birthDate: string;
+  birthPlaceholder: string;
+}> = {
+  de: { avatarSelected: "Profilbild ausgewählt", avatarSelect: "Profilbild auswählen (optional)", birthDate: "Geburtsdatum", birthPlaceholder: "TT.MM.JJJJ" },
+  gsw: { avatarSelected: "Profilbild usgwählt", avatarSelect: "Profilbild usswähle (optional)", birthDate: "Geburtsdatum", birthPlaceholder: "TT.MM.JJJJ" },
+  fr: { avatarSelected: "Photo sélectionnée", avatarSelect: "Choisir une photo (facultatif)", birthDate: "Date de naissance", birthPlaceholder: "JJ.MM.AAAA" },
+  it: { avatarSelected: "Foto selezionata", avatarSelect: "Scegli foto (facoltativo)", birthDate: "Data di nascita", birthPlaceholder: "GG.MM.AAAA" },
+  en: { avatarSelected: "Profile picture selected", avatarSelect: "Choose profile picture (optional)", birthDate: "Date of birth", birthPlaceholder: "DD.MM.YYYY" },
+  zh: { avatarSelected: "已选择头像", avatarSelect: "选择头像（可选）", birthDate: "出生日期", birthPlaceholder: "日.月.年" },
+  es: { avatarSelected: "Foto de perfil seleccionada", avatarSelect: "Elegir foto de perfil (opcional)", birthDate: "Fecha de nacimiento", birthPlaceholder: "DD.MM.AAAA" },
+  pt: { avatarSelected: "Foto de perfil selecionada", avatarSelect: "Escolher foto de perfil (opcional)", birthDate: "Data de nascimento", birthPlaceholder: "DD.MM.AAAA" },
+  ru: { avatarSelected: "Фото профиля выбрано", avatarSelect: "Выбрать фото профиля (необязательно)", birthDate: "Дата рождения", birthPlaceholder: "ДД.ММ.ГГГГ" },
+};
 
 function normalizeBirthDate(value: string): string {
   const match = value.trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
@@ -52,6 +68,7 @@ export default function Onboarding() {
   const insets = useSafeAreaInsets();
   const { saveProfile, uploadProfileAvatar, language: activeLanguage, setPendingLanguage } = useApp();
   const t = useOnboardingStrings();
+  const profileCopy = PROFILE_COPY[activeLanguage];
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -218,14 +235,14 @@ export default function Onboarding() {
             >
               <Feather name={avatarUri ? "check" : "camera"} size={18} color={colors.accent} />
               <Text style={[styles.photoButtonText, { color: colors.accent }]}>
-                {avatarUri ? "Profilbild ausgewählt" : "Profilbild auswählen (optional)"}
+                 {avatarUri ? profileCopy.avatarSelected : profileCopy.avatarSelect}
               </Text>
             </Pressable>
-            <Text style={[styles.label, { color: colors.foreground }]}>Geburtsdatum</Text>
+            <Text style={[styles.label, { color: colors.foreground }]}>{profileCopy.birthDate}</Text>
             <TextInput
               value={dateOfBirth}
               onChangeText={setDateOfBirth}
-              placeholder="TT.MM.JJJJ"
+              placeholder={profileCopy.birthPlaceholder}
               placeholderTextColor={colors.mutedForeground}
               keyboardType="numbers-and-punctuation"
               style={[styles.input, { color: colors.foreground, borderColor: colors.glassBorder, borderRadius: colors.radius }]}

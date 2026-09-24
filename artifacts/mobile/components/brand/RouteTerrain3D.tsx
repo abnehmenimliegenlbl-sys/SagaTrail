@@ -2,6 +2,7 @@ import { Modal, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { BackButton } from "@/components/brand/BackButton";
 import { useColors } from "@/hooks/useColors";
+import { useComponentStrings } from "@/lib/i18n/components";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 
 type Props = {
@@ -14,19 +15,20 @@ type Props = {
 /** Web/non-GL is deliberately not a fake 3D scene. */
 export default function RouteTerrain3D({ visible, onClose }: Props) {
   const colors = useColors();
+  const t = useComponentStrings();
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <BackButton
-          accessibilityLabel="Zurück zur App"
+          accessibilityLabel={t.backToApp}
           onPress={onClose}
           style={styles.backButton}
         />
         <View style={styles.message}>
           <Feather name="map" size={32} color={colors.mutedForeground} />
-          <Text style={[styles.title, { color: colors.foreground }]}>3D-Gelände</Text>
+          <Text style={[styles.title, { color: colors.foreground }]}>{t.terrain3dTitle}</Text>
           <Text style={[styles.copy, { color: colors.mutedForeground }]}>
-            Die 3D-Geländeansicht ist auf diesem Gerät ohne native Grafikunterstützung nicht verfügbar.
+            {t.terrain3dUnavailable}
           </Text>
         </View>
       </View>

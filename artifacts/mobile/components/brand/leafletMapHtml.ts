@@ -66,7 +66,7 @@ function markerData(items?: MapPoi[] | null): string {
 export function buildLeafletMapHtml(
   {
     center,
-    label = "Start",
+    label,
     geometry,
     waypoints,
     offlineTiles,
@@ -92,6 +92,7 @@ export function buildLeafletMapHtml(
     lat: Number.isFinite(center.lat) ? center.lat : 46.8,
     lng: Number.isFinite(center.lng) ? center.lng : 8.2,
   };
+  const markerLabel = label ?? legend?.start ?? "";
   const route = points(geometry);
   const waypointData = json(
     waypoints?.filter(
@@ -262,7 +263,7 @@ export function buildLeafletMapHtml(
   </div>
   ${legendHtml}
   <div id="copyright-info">
-    <button id="copyright-toggle" type="button" aria-label="Karten-Copyrights" aria-expanded="false">i</button>
+    <button id="copyright-toggle" type="button" aria-label="${escapeHtml(legend?.copyrightLabel ?? "")}" aria-expanded="false">i</button>
     <div id="copyright-panel">© swisstopo<br>© OpenStreetMap</div>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -477,10 +478,10 @@ export function buildLeafletMapHtml(
       if (alternateRoute && alternateRoute.length > 1) L.polyline(alternateRoute, { color: "#2EC4B6", weight: 3, dashArray: "7 6", opacity: .9 }).addTo(map);
       var bounds = L.latLngBounds(latLngRoute);
       map.fitBounds(bounds, { padding: [25, 25], maxZoom: 15 });
-      addMarker({ lat: route[0][0], lng: route[0][1], name: ${json(label)} }, flagIcon("start"), null);
-      addMarker({ lat: route[route.length - 1][0], lng: route[route.length - 1][1], name: "Ziel" }, flagIcon("finish"), null);
+      addMarker({ lat: route[0][0], lng: route[0][1], name: ${json(markerLabel)} }, flagIcon("start"), null);
+      addMarker({ lat: route[route.length - 1][0], lng: route[route.length - 1][1], name: ${json(legend?.ziel ?? "")} }, flagIcon("finish"), null);
     } else {
-      addMarker({ lat: center[0], lng: center[1], name: ${json(label)} }, flagIcon("start"), null);
+      addMarker({ lat: center[0], lng: center[1], name: ${json(markerLabel)} }, flagIcon("start"), null);
     }
     (waypoints || []).forEach(function (point) {
       var numberIcon = icon("waypoint-number", String(point.number), [28, 28]);

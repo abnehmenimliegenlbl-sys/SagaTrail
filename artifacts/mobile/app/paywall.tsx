@@ -171,7 +171,7 @@ export default function Paywall() {
       } else if (!err?.userCancelled) {
         setTimeout(() => {
           if (!mountedRef.current) return;
-          alert(t.purchaseErrorTitle, err?.message ?? String(err));
+           alert(t.purchaseErrorTitle, t.purchaseErrorTitle);
         }, 600);
       }
     } finally {
@@ -205,7 +205,7 @@ export default function Paywall() {
       });
       setTimeout(() => {
         if (!mountedRef.current) return;
-        alert(t.restoreErrorTitle, err?.message ?? t.restoreErrorMsg);
+         alert(t.restoreErrorTitle, t.restoreErrorMsg);
       }, 600);
     } finally {
       setBusy(false);

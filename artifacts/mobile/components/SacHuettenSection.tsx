@@ -22,6 +22,7 @@ import { GLAS_3D } from "@/constants/depth";
 import { CloseButton } from "@/components/brand/CloseButton";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
+import { useComponentStrings } from "@/lib/i18n/components";
 import { RouteAccordionCard } from "@/components/brand/RouteAccordionCard";
 
 export interface SacHuette {
@@ -215,6 +216,7 @@ function DetailModal({ huette, onClose, t }: { huette: SacHuette; onClose: () =>
 export default function SacHuettenSection({ huetten, loading, error }: Props) {
   const colors = useColors();
   const t = useRouteStrings();
+  const componentT = useComponentStrings();
   const [selected, setSelected] = useState<SacHuette | null>(null);
 
   function openHuette(h: SacHuette) {
@@ -313,7 +315,7 @@ export default function SacHuettenSection({ huetten, loading, error }: Props) {
                   {/* Tap-Hinweis */}
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
                     <Feather name="info" size={11} color={colors.accent} />
-                    <Text style={{ color: colors.accent, fontSize: 11, fontFamily: fonts.body }}>Details</Text>
+                    <Text style={{ color: colors.accent, fontSize: 11, fontFamily: fonts.body }}>{componentT.details}</Text>
                   </View>
                 </View>
               </Pressable>

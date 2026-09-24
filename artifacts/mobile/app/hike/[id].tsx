@@ -104,6 +104,7 @@ import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { BackButton } from "@/components/brand/BackButton";
 import { useHikeStrings } from "@/lib/i18n/screens/hike";
+import { useComponentStrings } from "@/lib/i18n/components";
 import { useMapStrings } from "@/lib/i18n/screens/map";
 import { useObjectRecognitionStrings } from "@/lib/i18n/objectRecognition";
 import {
@@ -523,8 +524,7 @@ function formatPartnerOeffnungsInfo(
       return `${t.partnerOeffnetUm} ${t.partnerHeute} ${uhr}${uhrSuffix}`;
     if (tag === "morgen")
       return `${t.partnerOeffnetUm} ${t.partnerMorgen} ${uhr}${uhrSuffix}`;
-    const tagName =
-      PARTNER_WOCHENTAGE[lang]?.[tag] ?? PARTNER_WOCHENTAGE["de"]?.[tag] ?? tag;
+    const tagName = PARTNER_WOCHENTAGE[lang]?.[tag] ?? tag;
     return `${t.partnerOeffnetAm} ${tagName} ${uhr}${uhrSuffix}`;
   }
   return null;
@@ -872,10 +872,11 @@ function AudioWaveBar({
 }
 
 function AudioWaveform({ color }: { color: string }) {
+  const componentT = useComponentStrings();
   return (
     <View
       style={styles.audioWaveform}
-      accessibilityLabel="Audio wird abgespielt"
+      accessibilityLabel={componentT.play}
     >
       {AUDIO_WAVE_HEIGHTS.map((height, index) => (
         <AudioWaveBar
@@ -2125,7 +2126,7 @@ export default function LiveHike() {
     // emergency flow. It does not imply that emergency services were reached.
     setSosAcknowledgement("none");
     setSosOpen(true);
-    void sendWatchSos(null).then((handled) => {
+    void sendWatchSos(null, language).then((handled) => {
       setSosAcknowledgement(handled ? "acknowledged" : "failed");
     });
   }, []);
@@ -4534,7 +4535,7 @@ export default function LiveHike() {
         hasFreshGps,
         position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
       },
-      { force },
+      { force, language },
     );
   }, [
     ascentM,
@@ -9368,7 +9369,7 @@ export default function LiveHike() {
             },
             {
               id: "panorama",
-              title: "Panorama",
+              title: t.panorama,
               subtitle: `${
                 panoramaOnlinePois.length > 0
                   ? panoramaOnlinePois.length
@@ -9424,7 +9425,7 @@ export default function LiveHike() {
             },
             {
               id: "route-3d",
-              title: "3D ROUTE",
+                    title: t.panoramaTerrainModel,
               subtitle:
                 terrainProfile && terrainProfile.length > 1
                   ? "Gelände & Flug"
@@ -9819,7 +9820,7 @@ export default function LiveHike() {
             <Pressable
               onPress={() => setStoryTileOpen(true)}
               accessibilityRole="button"
-              accessibilityLabel="Sagentext öffnen"
+                accessibilityLabel={t.readAloud}
               style={styles.audioMiniOpen}
             >
               <Feather name="chevron-up" size={16} color={colors.accent} />
@@ -9836,7 +9837,7 @@ export default function LiveHike() {
               onPress={() => setStoryTileOpen((open) => !open)}
               style={styles.storyTileHeaderMain}
               accessibilityRole="button"
-              accessibilityLabel="Sagentext öffnen"
+                accessibilityLabel={t.readAloud}
               accessibilityState={{ expanded: storyTileOpen }}
             >
               <View style={styles.storyTileHeaderText}>
@@ -11360,13 +11361,13 @@ function WatchCompanionCard({
               onEnable();
             }}
             accessibilityRole="button"
-            accessibilityLabel="Watch-Mitteilungen erlauben"
+            accessibilityLabel={t.allow}
             style={[styles.watchEnable, { borderColor: colors.glassBorder }]}
           >
             <Text
               style={[styles.watchEnableText, { color: colors.foreground }]}
             >
-              Erlauben
+              {t.allow}
             </Text>
           </Pressable>
         )}

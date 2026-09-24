@@ -181,7 +181,7 @@ export default function SagaDetail() {
       await refreshCustomerInfo();
     } catch (err: any) {
       if (!err?.userCancelled) {
-        alert(t.packErrorTitle, err?.message ?? String(err));
+         alert(t.packErrorTitle, t.packErrorTitle);
       }
     } finally {
       setPackBusy(false);

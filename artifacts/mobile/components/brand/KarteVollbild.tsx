@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
+import { useComponentStrings } from "@/lib/i18n/components";
 
 interface KarteVollbildProps {
   /** Hoehe der eingebetteten (nicht-Vollbild-)Karte. */
@@ -57,6 +58,7 @@ export function KarteVollbild({
   onFullyClosed,
 }: KarteVollbildProps) {
   const colors = useColors();
+  const t = useComponentStrings();
   const insets = useSafeAreaInsets();
   const { height: fensterHoehe } = useWindowDimensions();
   const [vollbild, setVollbildState] = useState(false);
@@ -83,7 +85,7 @@ export function KarteVollbild({
         {!vollbild && renderKarte(height, 0)}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Karte im Vollbild anzeigen"
+          accessibilityLabel={t.fullscreenMap}
           onPress={() => setVollbild(true)}
           style={StyleSheet.absoluteFill}
         />
@@ -105,7 +107,7 @@ export function KarteVollbild({
           {renderKarte(fensterHoehe, insets.top)}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Vollbild schliessen"
+            accessibilityLabel={t.closeFullscreen}
             onPress={() => setVollbild(false)}
             hitSlop={10}
             style={[

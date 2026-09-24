@@ -5,6 +5,7 @@ import {
   type WatchStatusGateSnapshot,
 } from "./watchStatusGate";
 import { makeLogger } from "./debugLog";
+import type { LanguageCode } from "./i18n/languageCode";
 
 const watchCompanionLog = makeLogger("[WATCH-COMPANION]", "watch_companion");
 
@@ -204,6 +205,22 @@ let lastLiveStateSentAt = 0;
 let lastStatusSnapshot: WatchStatusGateSnapshot | null = null;
 let lastInvalidStateLogKey: string | null = null;
 let lastOmittedFieldsLogKey: string | null = null;
+
+const WATCH_NOTIFICATION_COPY: Record<LanguageCode, { remaining: (km: number) => string; sos: string }> = {
+  de: { remaining: (km) => `${km.toFixed(1)} km übrig`, sos: "Notfallansicht auf dem Telefon geöffnet" },
+  gsw: { remaining: (km) => `${km.toFixed(1)} km übrig`, sos: "Notfallansicht uf em Telefon uf" },
+  fr: { remaining: (km) => `${km.toFixed(1)} km restantes`, sos: "Vue d’urgence ouverte sur le téléphone" },
+  it: { remaining: (km) => `${km.toFixed(1)} km rimanenti`, sos: "Vista di emergenza aperta sul telefono" },
+  en: { remaining: (km) => `${km.toFixed(1)} km remaining`, sos: "Emergency view opened on the phone" },
+  zh: { remaining: (km) => `还剩 ${km.toFixed(1)} 公里`, sos: "已在手机上打开紧急视图" },
+  es: { remaining: (km) => `${km.toFixed(1)} km restantes`, sos: "Vista de emergencia abierta en el teléfono" },
+  pt: { remaining: (km) => `${km.toFixed(1)} km restantes`, sos: "Vista de emergência aberta no telemóvel" },
+  ru: { remaining: (km) => `Осталось ${km.toFixed(1)} км`, sos: "Экстренный экран открыт на телефоне" },
+};
+
+function watchNotificationCopy(language?: string) {
+  return WATCH_NOTIFICATION_COPY[(language as LanguageCode)] ?? WATCH_NOTIFICATION_COPY.en;
+}
 
 function liveStateDebugSummary(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object") {
@@ -856,7 +873,7 @@ export async function prepareWatchCompanion(): Promise<boolean> {
 }
 
 /** Notification mirror for companions without the optional native protocol module. */
-export async function sendWatchStatus(snapshot: WatchLiveSnapshot, options?: { force?: boolean }): Promise<boolean> {
+export async function sendWatchStatus(snapshot: WatchLiveSnapshot, options?: { force?: boolean; language?: string }): Promise<boolean> {
   // A real companion receives the private live-state channel. Scheduling a
   // phone notification as well would visibly notify the user every cycle.
   if (
@@ -877,7 +894,7 @@ export async function sendWatchStatus(snapshot: WatchLiveSnapshot, options?: { f
     statusNotificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: `SagaTrail · ${snapshot.direction}`,
-        body: `${snapshot.remainingKm.toFixed(1)} km übrig`,
+        body: watchNotificationCopy(options?.language).remaining(snapshot.remainingKm),
         sound: false,
         data: { kind: "watch-status", heading: snapshot.heading, remainingKm: snapshot.remainingKm },
       }, trigger: null,
@@ -892,7 +909,7 @@ export async function sendWatchStatus(snapshot: WatchLiveSnapshot, options?: { f
 }
 
 /** SOS mirrors an instruction only; coordinates never enter notification body or data. */
-export async function sendWatchSos(_position: { lat: number; lng: number } | null): Promise<boolean> {
+export async function sendWatchSos(_position: { lat: number; lng: number } | null, language?: string): Promise<boolean> {
   watchCompanionLog("SOS notification requested", { platform: Platform.OS });
   if (Platform.OS === "web" || !(await prepareWatchCompanion())) {
     watchCompanionLog("SOS notification unavailable");
@@ -900,7 +917,7 @@ export async function sendWatchSos(_position: { lat: number; lng: number } | nul
   }
   try {
     await Notifications.scheduleNotificationAsync({
-      content: { title: "SagaTrail · SOS", body: "Notfallansicht auf dem Telefon geöffnet", sound: "default", data: { kind: "watch-sos" } },
+      content: { title: "SagaTrail · SOS", body: watchNotificationCopy(language).sos, sound: "default", data: { kind: "watch-sos" } },
       trigger: null,
     });
     watchCompanionLog("SOS notification scheduled");

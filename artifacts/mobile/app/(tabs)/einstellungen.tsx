@@ -42,6 +42,7 @@ import { useSubscription } from "@/lib/revenuecat";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
 import { useEinstellungenStrings } from "@/lib/i18n/screens/einstellungen";
 import {
+  LanguageCode,
   NATIVE_LANGUAGE_NAMES,
   SUPPORTED_LANGUAGES,
 } from "@/lib/i18n/languageCode";
@@ -54,6 +55,24 @@ import { canSelectGarminDevice, selectGarminDevice } from "@/lib/watchCompanion"
 import { AgeTier, Archetype } from "@/types";
 
 const WEB_TOP = 67;
+const PROFILE_COPY: Record<LanguageCode, {
+  birthDate: string;
+  notProvided: string;
+  avatarSaveTitle: string;
+  profileSaveTitle: string;
+  invalidBirth: string;
+  retry: string;
+}> = {
+  de: { birthDate: "Geburtsdatum", notProvided: "Nicht angegeben", avatarSaveTitle: "Profilbild konnte nicht gespeichert werden", profileSaveTitle: "Profil konnte nicht gespeichert werden", invalidBirth: "Bitte ein gültiges Datum zwischen 13 und 120 Jahren eingeben.", retry: "Bitte später erneut versuchen." },
+  gsw: { birthDate: "Geburtsdatum", notProvided: "Nöd aa gäh", avatarSaveTitle: "Profilbild het nöd chönne gspeicheret werde", profileSaveTitle: "Profil het nöd chönne gspeicheret werde", invalidBirth: "Bitte es gültigs Datum zwüsche 13 und 120 Jahr iigäh.", retry: "Bitte spöter nomal probiere." },
+  fr: { birthDate: "Date de naissance", notProvided: "Non indiqué", avatarSaveTitle: "Impossible d'enregistrer la photo", profileSaveTitle: "Impossible d'enregistrer le profil", invalidBirth: "Saisissez une date valide entre 13 et 120 ans.", retry: "Veuillez réessayer plus tard." },
+  it: { birthDate: "Data di nascita", notProvided: "Non indicata", avatarSaveTitle: "Impossibile salvare la foto", profileSaveTitle: "Impossibile salvare il profilo", invalidBirth: "Inserisci una data valida tra 13 e 120 anni.", retry: "Riprova più tardi." },
+  en: { birthDate: "Date of birth", notProvided: "Not provided", avatarSaveTitle: "Could not save profile picture", profileSaveTitle: "Could not save profile", invalidBirth: "Enter a valid date for an age between 13 and 120.", retry: "Please try again later." },
+  zh: { birthDate: "出生日期", notProvided: "未填写", avatarSaveTitle: "无法保存头像", profileSaveTitle: "无法保存个人资料", invalidBirth: "请输入有效日期，年龄须在 13 至 120 岁之间。", retry: "请稍后重试。" },
+  es: { birthDate: "Fecha de nacimiento", notProvided: "No indicada", avatarSaveTitle: "No se pudo guardar la foto", profileSaveTitle: "No se pudo guardar el perfil", invalidBirth: "Introduce una fecha válida para una edad entre 13 y 120 años.", retry: "Vuelve a intentarlo más tarde." },
+  pt: { birthDate: "Data de nascimento", notProvided: "Não indicada", avatarSaveTitle: "Não foi possível guardar a foto", profileSaveTitle: "Não foi possível guardar o perfil", invalidBirth: "Introduz uma data válida para uma idade entre 13 e 120 anos.", retry: "Tenta novamente mais tarde." },
+  ru: { birthDate: "Дата рождения", notProvided: "Не указана", avatarSaveTitle: "Не удалось сохранить фото профиля", profileSaveTitle: "Не удалось сохранить профиль", invalidBirth: "Введите корректную дату для возраста от 13 до 120 лет.", retry: "Повторите попытку позже." },
+};
 
 // Kurzer Vorhoer-Satz pro Erzaehlsprache — bewusst in der Zielsprache,
 // damit man die Erzaehlstimme direkt beurteilen kann.
@@ -93,6 +112,7 @@ export default function Einstellungen() {
   const router = useRouter();
   const { signOut, getToken } = useAuth();
   const t = useEinstellungenStrings();
+  const profileCopy = PROFILE_COPY[profile?.language ?? "en"];
   const onboardingStrings = useOnboardingStrings();
   const {
     profile,
@@ -207,7 +227,7 @@ export default function Einstellungen() {
     try {
       await uploadProfileAvatar(result.assets[0].uri);
     } catch (error) {
-      alert("Profilbild konnte nicht gespeichert werden", error instanceof Error ? error.message : "Bitte später erneut versuchen.");
+      alert(profileCopy.avatarSaveTitle, profileCopy.retry);
     } finally {
       setAvatarUploading(false);
     }
@@ -217,7 +237,7 @@ export default function Einstellungen() {
     if (!nameInput.trim()) return;
     const normalizedBirthDate = normalizeBirthDateForProfile(birthInput);
     if (birthInput.trim() && !normalizedBirthDate) {
-      alert("Geburtsdatum prüfen", "Bitte ein gültiges Datum zwischen 13 und 120 Jahren eingeben.");
+      alert(profileCopy.birthDate, profileCopy.invalidBirth);
       return;
     }
     setProfileSaving(true);
@@ -229,7 +249,7 @@ export default function Einstellungen() {
       });
       setEditingName(false);
     } catch (error) {
-      alert("Profil konnte nicht gespeichert werden", error instanceof Error ? error.message : "Bitte später erneut versuchen.");
+      alert(profileCopy.profileSaveTitle, profileCopy.retry);
     } finally {
       setProfileSaving(false);
     }
@@ -418,7 +438,7 @@ export default function Einstellungen() {
             icon="camera"
             onPress={() => void pickProfileAvatar()}
           />
-          <RowButton label="Geburtsdatum" value={profile?.dateOfBirth ?? "Nicht angegeben"} icon="gift" onPress={() => {
+          <RowButton label={profileCopy.birthDate} value={profile?.dateOfBirth ?? profileCopy.notProvided} icon="gift" onPress={() => {
             setNameInput(profile?.name ?? "");
             setBioInput(profile?.bio ?? "");
             setBirthInput(profile?.dateOfBirth ?? "");

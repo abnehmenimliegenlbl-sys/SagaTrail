@@ -116,11 +116,11 @@ export default function Gruppe() {
     ? groupError === "not_found"
       ? t.errorNotFound
       : groupError === "full"
-        ? "Diese Gruppe ist voll."
+        ? t.errorFull
         : groupError === "already_in_group"
-          ? "Du bist bereits in einer anderen Gruppe."
+          ? t.errorAlreadyInGroup
           : groupError === "expired"
-            ? "Diese Gruppe ist abgelaufen. Bitte erstelle eine neue."
+            ? t.errorExpired
       : groupError === "network"
         ? t.errorNetwork
         : t.errorUnknown
@@ -257,10 +257,10 @@ export default function Gruppe() {
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.locationConsentTitle, { color: colors.foreground }]}>
-                    {t.locationSharingTitle ?? "Standort in der Gruppe teilen"}
+                     {t.locationSharingTitle}
                   </Text>
                   <Text style={[styles.locationConsentBody, { color: colors.mutedForeground }]}>
-                    {t.locationSharingBody ?? "Nur während einer aktiven Wanderung und nur mit deiner Zustimmung."}
+                     {t.locationSharingBody}
                   </Text>
                 </View>
               </Pressable>
@@ -282,7 +282,7 @@ export default function Gruppe() {
               )}
               {groupSession.rendezvous && (
                 <Text style={[styles.rendezvous, { color: colors.accent }]}>
-                  {t.rendezvousLabel ?? "Rendezvous"}: {groupSession.rendezvous.lat.toFixed(5)},{" "}
+                   {t.rendezvousLabel}: {groupSession.rendezvous.lat.toFixed(5)},{" "}
                   {groupSession.rendezvous.lng.toFixed(5)}
                 </Text>
               )}
@@ -324,7 +324,7 @@ export default function Gruppe() {
               {groupSession.isLeader && (
                 <PrimaryButton
                   variant="secondary"
-                  label={t.setRendezvousButton ?? "Set rendezvous here"}
+                   label={t.setRendezvousButton}
                   onPress={async () => {
                     const permission = await Location.getForegroundPermissionsAsync();
                     if (permission.status !== Location.PermissionStatus.GRANTED) return;
@@ -375,7 +375,7 @@ export default function Gruppe() {
                     {m.activity.type === "wandert"
                       ? `  ·  ${t.activityWandering(m.activity.sagaTitle)}`
                       : `  ·  ${t.activityReady}`}
-                    {m.connected === false ? "  ·  offline" : ""}
+                     {m.connected === false ? `  ·  ${t.offline}` : ""}
                   </Text>
                    <Text style={[styles.locationStatus, {
                      color: m.location
@@ -385,9 +385,10 @@ export default function Gruppe() {
                    }]}>
                      {m.location
                        ? (Date.now() - m.location.updatedAt > 120_000
-                           ? (t.locationStale ?? "Location stale")
-                           : (t.locationFresh ?? "Location current"))
-                       : (t.locationUnavailable ?? "No GPS location shared")}
+                        ? (Date.now() - m.location.updatedAt > 120_000
+                            ? t.locationStale
+                            : t.locationFresh)
+                        : t.locationUnavailable}
                    </Text>
                 </View>
                  {!groupSession.isLeader &&

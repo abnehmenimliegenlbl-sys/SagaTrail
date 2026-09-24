@@ -70,6 +70,7 @@ import { readRequiredPermissionSnapshot } from "@/lib/requiredPermissions";
 import { isCommunityInviteSegments } from "@/lib/communityInviteFlow";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { StartupState } from "@/components/brand/StartupState";
+import { useStartupStrings } from "@/lib/i18n/screens/startup";
 
 const CRASH_KEY = "__sagatrail_last_crash__";
 const appRuntimeLog = makeLogger("[APP-RUNTIME]", "app_runtime");
@@ -124,11 +125,12 @@ function AuthTokenBridge({ children }: { children: React.ReactNode }) {
 
 function ClerkGuard({ children }: { children: React.ReactNode }) {
   const { isLoaded } = useAuth();
+  const t = useStartupStrings();
   if (!isLoaded) {
     return Platform.OS === "web" ? (
       <StartupState
-        title="Anmeldung wird geprüft"
-        detail="SagaTrail stellt deine Sitzung wieder her."
+        title={t.checkingSignIn}
+        detail={t.restoringSession}
       />
     ) : null;
   }
@@ -137,6 +139,7 @@ function ClerkGuard({ children }: { children: React.ReactNode }) {
 
 function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   const { hydrated, profile } = useApp();
+  const t = useStartupStrings();
   const { isLoaded, isSignedIn } = useAuth();
   const updatesState = Updates.useUpdates();
   usePushToken();
@@ -326,8 +329,8 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   if (!isLoaded) {
     return Platform.OS === "web" ? (
       <StartupState
-        title="SagaTrail wird vorbereitet"
-        detail="Katalog, Profil und Wanderungen werden geladen."
+        title={t.preparing}
+        detail={t.loadingData}
       />
     ) : null;
   }
@@ -335,8 +338,8 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   if (!hydrated) {
     return Platform.OS === "web" ? (
       <StartupState
-        title="Dein Profil wird geladen"
-        detail="Deine gespeicherten Wanderungen bleiben erhalten."
+        title={t.loadingProfile}
+        detail={t.keepingTrips}
       />
     ) : null;
   }
@@ -394,7 +397,7 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
                     fontSize: 14,
                   }}
                 >
-                  Berechtigungen werden geprüft
+                  {t.checkingPermissions}
                 </Text>
                 <Text
                   style={{
@@ -404,7 +407,7 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
                     marginTop: 2,
                   }}
                 >
-                  Du kannst währenddessen weiter stöbern.
+                  {t.browsingMeanwhile}
                 </Text>
               </View>
             </View>

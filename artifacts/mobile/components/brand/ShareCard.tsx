@@ -5,6 +5,7 @@ import Svg, { Circle, Defs, LinearGradient as SvgGradient, Path, Polygon, Rect, 
 
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
+import { useShareCardStrings } from "@/lib/i18n/screens/shareCard";
 
 // ─── Typen ──────────────────────────────────────────────────────────────────
 export interface ElevationPoint {
@@ -265,6 +266,7 @@ function StatTile({
 
 // ─── Hauptkomponente ─────────────────────────────────────────────────────────
 export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(props, ref) {
+  const t = useShareCardStrings();
   const {
     sagaTitle,
     routeName,
@@ -326,7 +328,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
           ) : null}
           <Text style={s.heroTitle} numberOfLines={2}>{routeName}</Text>
           <Text style={s.heroSub} numberOfLines={1}>
-            {sacScale ? `${sacScale} · Wanderweg` : "Wanderweg"}
+            {sacScale ? `${sacScale} · ${t.route}` : t.route}
           </Text>
         </View>
       </View>
@@ -342,7 +344,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
             icon={<IconPeak />}
             value={maxAltM ? `${maxAltM}` : "–"}
             unit={maxAltM ? "m" : ""}
-            label="MAX. HÖHE"
+            label={t.maxAltitude}
           />
           <StatTile
             icon={<IconClock />}
@@ -374,12 +376,12 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
             <View style={s.statValRow}>
               <Text style={s.statVal}>{visitedPlaceCount ?? 0}</Text>
             </View>
-            <Text style={s.statLabel}>POIS</Text>
+            <Text style={s.statLabel}>{t.pointsOfInterest}</Text>
           </View>
 
           {/* Höhenprofil — 3 Spalten breit */}
           <View style={[s.elevTile, { width: colW * 3 + 2 * 6 }]}>
-            <Text style={s.elevHeader}>HÖHENPROFIL</Text>
+            <Text style={s.elevHeader}>{t.elevationProfile}</Text>
             {elevationProfile && elevationProfile.length >= 2 ? (
               <ElevationMiniChart profile={elevationProfile} width={elevW} />
             ) : (
@@ -407,7 +409,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
           </Svg>
         </View>
         <View style={s.sagaText}>
-          <Text style={s.sagaEyebrow}>🧚 SAGE DIESER ROUTE</Text>
+          <Text style={s.sagaEyebrow}>🧚 {t.sagaForRoute}</Text>
           <Text style={s.sagaTitle} numberOfLines={2}>{sagaTitle}</Text>
         </View>
         <Svg width={14} height={14} viewBox="0 0 14 14" style={s.sagaChevron}>
@@ -483,8 +485,8 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
           </View>
         </View>
         <View style={s.footerRight}>
-          <Text style={s.footerTagline}>WANDERAPP SCHWEIZ</Text>
-          <Text style={s.footerSub}>Sagen auf dem Trail erleben</Text>
+          <Text style={s.footerTagline}>{t.footerTagline}</Text>
+          <Text style={s.footerSub}>{t.footerSubtitle}</Text>
         </View>
       </View>
 

@@ -41,6 +41,7 @@ export interface MapStrings {
   safetyPoiFilterTitle: string;
   safetyPoiFilterHint: string;
   safetyPoiFilterAll: string;
+  copyrightLabel: string;
 }
 
 const MAP_STRINGS: StringsDict<MapStrings> = {
@@ -72,6 +73,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterTitle: "Sicherheitspunkte auf der Karte",
     safetyPoiFilterHint: "Wähle aus, welche Sicherheitspunkte sichtbar sind.",
     safetyPoiFilterAll: "Alle Sicherheitspunkte",
+    copyrightLabel: "Karten-Copyrights",
   },
   gsw: {
     legendTitle: "Legände",
@@ -101,6 +103,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterTitle: "Sicherheitspünkt uf de Charte",
     safetyPoiFilterHint: "Wähl, weli Sicherheitspunkt sichtbar sind.",
     safetyPoiFilterAll: "Alli Sicherheitspünkt",
+    copyrightLabel: "Charte-Copyrights",
   },
   fr: {
     legendTitle: "Légende",
@@ -130,6 +133,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterTitle: "Points de sécurité sur la carte",
     safetyPoiFilterHint: "Choisissez les points de sécurité visibles.",
     safetyPoiFilterAll: "Tous les points de sécurité",
+    copyrightLabel: "Copyright de la carte",
   },
   it: {
     legendTitle: "Legenda",
@@ -159,6 +163,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterTitle: "Punti di sicurezza sulla mappa",
     safetyPoiFilterHint: "Scegli quali punti di sicurezza mostrare.",
     safetyPoiFilterAll: "Tutti i punti di sicurezza",
+    copyrightLabel: "Copyright della mappa",
   },
   en: {
     legendTitle: "Legend",
@@ -188,6 +193,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterTitle: "Safety points on the map",
     safetyPoiFilterHint: "Choose which safety points are visible.",
     safetyPoiFilterAll: "All safety points",
+    copyrightLabel: "Map copyright",
   },
   zh: {
     legendTitle: "图例",
@@ -217,6 +223,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterTitle: "地图上的安全兴趣点",
     safetyPoiFilterHint: "选择要显示的安全点。",
     safetyPoiFilterAll: "所有安全兴趣点",
+    copyrightLabel: "地图版权",
   },
   es: {
     legendTitle: "Leyenda",
@@ -246,6 +253,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterTitle: "Puntos de seguridad en el mapa",
     safetyPoiFilterHint: "Elige qué puntos de seguridad mostrar.",
     safetyPoiFilterAll: "Todos los puntos de seguridad",
+    copyrightLabel: "Derechos de autor del mapa",
   },
   pt: {
     legendTitle: "Legenda",
@@ -275,6 +283,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterTitle: "Pontos de segurança no mapa",
     safetyPoiFilterHint: "Escolhe quais os pontos de segurança visíveis.",
     safetyPoiFilterAll: "Todos os pontos de segurança",
+    copyrightLabel: "Direitos de autor do mapa",
   },
   ru: {
     legendTitle: "Легенда",
@@ -304,6 +313,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterTitle: "Точки безопасности на карте",
     safetyPoiFilterHint: "Выберите видимые точки безопасности.",
     safetyPoiFilterAll: "Все точки безопасности",
+    copyrightLabel: "Авторские права на карту",
   },
 };
 

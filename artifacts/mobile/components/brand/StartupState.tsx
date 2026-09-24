@@ -4,10 +4,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 
-export function StartupState({
-  title = "SagaTrail wird vorbereitet",
-  detail = "Deine Daten und deine Wanderungen werden geladen.",
-}: {
+export function StartupState({ title = "SagaTrail is getting ready", detail = "Your data and hikes are loading." }: {
   title?: string;
   detail?: string;
 }) {

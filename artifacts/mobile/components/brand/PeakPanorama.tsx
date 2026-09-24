@@ -25,6 +25,7 @@ import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
 import type { LatLng, RecognitionJournalEntry } from "@/types";
 import { PeakTerrainGl } from "./PeakTerrainGl";
+import { useComponentStrings } from "@/lib/i18n/components";
 
 const PANORAMA_VIEW_DEGREES = 140;
 const PANORAMA_TOTAL_DEGREES = 140;
@@ -503,6 +504,7 @@ export function PeakPanorama({
   onCameraOpen,
 }: PeakPanoramaProps) {
   const colors = useColors();
+  const componentT = useComponentStrings();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
@@ -873,7 +875,7 @@ export function PeakPanorama({
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel="AR Kamera öffnen"
+              accessibilityLabel={componentT.arCamera}
             >
               <Text
                 style={[
@@ -883,7 +885,7 @@ export function PeakPanorama({
                   },
                 ]}
               >
-                AR Kamera
+                {componentT.arCamera}
               </Text>
             </Pressable>
           )}
@@ -911,7 +913,7 @@ export function PeakPanorama({
       {hasGps && !terrainModel && (
         <View
           style={styles.profileProgress}
-          accessibilityLabel="Höhenprofil wird geladen"
+          accessibilityLabel={componentT.terrainProfileLoading}
           accessibilityRole="progressbar"
           accessibilityValue={{ min: 0, max: 100, now: terrainLoadPercent }}
         >
@@ -1163,11 +1165,7 @@ export function PeakPanorama({
                },
              ]}
              pointerEvents="none"
-             accessibilityLabel={
-               terrainTextureMode === "map"
-                 ? "Karte wird geladen"
-                 : "Satellitenbild wird geladen"
-             }
+              accessibilityLabel={terrainTextureMode === "map" ? componentT.mapLoading : componentT.satelliteLoading}
              accessibilityRole="progressbar"
              accessibilityValue={{
                min: 0,
@@ -1178,8 +1176,8 @@ export function PeakPanorama({
              <View style={styles.profileProgressHeader}>
                <Text style={[styles.profileProgressLabel, { color: colors.mutedForeground }]}>
                  {terrainTextureMode === "map"
-                   ? "KARTE WIRD GELADEN"
-                   : "SATELLITENBILD WIRD GELADEN"}
+                   ? componentT.mapLoading.toUpperCase()
+                   : componentT.satelliteLoading.toUpperCase()}
                </Text>
                <Text style={[styles.profileProgressCount, { color: colors.tint }]}>
                  {terrainTextureLoadPercent}%
@@ -1213,8 +1211,8 @@ export function PeakPanorama({
           ]}
         >
           {([
-            ["map", "Karte"],
-            ["satellite", "Sat"],
+            ["map", componentT.mapLoading],
+            ["satellite", componentT.satelliteLoading],
           ] as const).map(([mode, label]) => {
             const active = terrainTextureMode === mode;
             return (

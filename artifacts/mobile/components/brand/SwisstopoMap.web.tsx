@@ -100,6 +100,7 @@ export function SwisstopoMap({
           poi: t.legendPoi,
           partner: t.legendPartner,
           safetyCodes: t.legendSafetyCodes,
+          copyrightLabel: t.copyrightLabel,
         },
       ),
     [initialView.lat, initialView.lng, initialZoom, label, geometry, elevationProfile, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, safetyPois, pickerMode, drawMode, preserveViewOnReload, t]

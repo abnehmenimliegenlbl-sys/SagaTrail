@@ -83,8 +83,7 @@ export default function ReferralReward() {
       await queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
       setDone(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      alert("Fehler", msg);
+      alert(t.title, t.errorBody);
     } finally {
       setLoading(false);
     }

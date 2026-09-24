@@ -121,7 +121,7 @@ export default function MeetupPhotos() {
       setDepictedPeopleConsent(false);
       await refresh();
     } catch (error) {
-      alert(t.uploadTitle, error instanceof Error ? error.message : t.uploadFailure);
+       alert(t.uploadTitle, t.uploadFailure);
     } finally {
       setUploading(false);
     }
@@ -211,7 +211,7 @@ export default function MeetupPhotos() {
         [{ text: t.openFacebook, onPress: () => void openFacebookGroup() }],
       );
     } catch (error) {
-      alert(t.shareDialogTitle, error instanceof Error ? error.message : t.sharePrepareFailure);
+       alert(t.shareDialogTitle, t.sharePrepareFailure);
     } finally {
       setSharing(false);
     }

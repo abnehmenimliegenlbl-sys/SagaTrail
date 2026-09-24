@@ -8,6 +8,10 @@ export interface GruppeStrings {
   errorNotFound: string;
   errorNetwork: string;
   errorUnknown: string;
+  errorFull: string;
+  errorAlreadyInGroup: string;
+  errorExpired: string;
+  offline: string;
   createSessionTitle: string;
   createSessionBody: (isPremium: boolean) => string;
   createSessionButton: string;
@@ -30,13 +34,13 @@ export interface GruppeStrings {
   inviteLabel: string;
   inviteText: (code: string) => string;
   ageTiers: Record<AgeTier, string>;
-  locationFresh?: string;
-  locationStale?: string;
-  locationUnavailable?: string;
-  locationSharingTitle?: string;
-  locationSharingBody?: string;
-  rendezvousLabel?: string;
-  setRendezvousButton?: string;
+  locationFresh: string;
+  locationStale: string;
+  locationUnavailable: string;
+  locationSharingTitle: string;
+  locationSharingBody: string;
+  rendezvousLabel: string;
+  setRendezvousButton: string;
 }
 
 const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
@@ -46,7 +50,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     intro: "Erlebt eine Sage zusammen. Die Alterstufe des jüngsten Mitglieds bestimmt die Erzählung, das Gerät der Leitung führt per GPS.",
     errorNotFound: "Kein aktiver Beitritts-Code mit dieser Nummer gefunden.",
     errorNetwork: "Server nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
-    errorUnknown: "Unerwarteter Fehler. Bitte versuche es erneut.",
+    errorUnknown: "Unerwarteter Fehler. Bitte versuche es erneut.", errorFull: "Diese Gruppe ist voll.", errorAlreadyInGroup: "Du bist bereits in einer anderen Gruppe.", errorExpired: "Diese Gruppe ist abgelaufen. Bitte erstelle eine neue.", offline: "offline",
     createSessionTitle: "Session erstellen",
     createSessionBody: (isPremium) => `Erzeuge einen Beitritts-Code, den deine Gruppe eingeben kann. Der Code gilt nur für diese Wanderung.${!isPremium ? " Erfordert Premium." : ""}`,
     createSessionButton: "Session erstellen",
@@ -87,7 +91,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     intro: "Erläbet e Sag zäme. D Altersstuefe vom jünschte Mitgliid bestimmt d Erzählig, s Grät vode Leitig führt per GPS.",
     errorNotFound: "Kei aktive Biitritts-Code mit dere Nummere gfunde.",
     errorNetwork: "Server nid erreichbar. Prüf dini Verbindig und probiers nomal.",
-    errorUnknown: "Unerwartete Fehler. Bitte probiers nomal.",
+    errorUnknown: "Unerwartete Fehler. Bitte probiers nomal.", errorFull: "Die Gruppe isch voll.", errorAlreadyInGroup: "Du bisch scho i ere andere Gruppe.", errorExpired: "Die Gruppe isch abgloffe. Erstell bitte e nöii.", offline: "offline",
     createSessionTitle: "Session erstelle",
     createSessionBody: (isPremium) => `Gits en Biitritts-Code, wo dini Gruppe cha iigee. De Code giltet nume für die Wanderig.${!isPremium ? " Brucht Premium." : ""}`,
     createSessionButton: "Session erstelle",
@@ -128,7 +132,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     intro: "Vivez une légende ensemble. La tranche d'âge du plus jeune membre détermine le récit, l'appareil du responsable guide par GPS.",
     errorNotFound: "Aucun code d'adhésion actif trouvé avec ce numéro.",
     errorNetwork: "Serveur inaccessible. Vérifiez votre connexion et réessayez.",
-    errorUnknown: "Erreur inattendue. Veuillez réessayer.",
+    errorUnknown: "Erreur inattendue. Veuillez réessayer.", errorFull: "Ce groupe est complet.", errorAlreadyInGroup: "Tu fais déjà partie d’un autre groupe.", errorExpired: "Ce groupe a expiré. Créez-en un nouveau.", offline: "hors ligne",
     createSessionTitle: "Créer une session",
     createSessionBody: (isPremium) => `Générez un code d'adhésion que votre groupe pourra saisir. Le code n'est valable que pour cette randonnée.${!isPremium ? " Nécessite Premium." : ""}`,
     createSessionButton: "Créer une session",
@@ -169,7 +173,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     intro: "Vivete una leggenda insieme. La fascia d'età del membro più giovane determina la narrazione, il dispositivo della guida conduce via GPS.",
     errorNotFound: "Nessun codice di accesso attivo trovato con questo numero.",
     errorNetwork: "Server non raggiungibile. Controlla la tua connessione e riprova.",
-    errorUnknown: "Errore imprevisto. Riprova.",
+    errorUnknown: "Errore imprevisto. Riprova.", errorFull: "Il gruppo è pieno.", errorAlreadyInGroup: "Fai già parte di un altro gruppo.", errorExpired: "Questo gruppo è scaduto. Creane uno nuovo.", offline: "offline",
     createSessionTitle: "Crea sessione",
     createSessionBody: (isPremium) => `Genera un codice di accesso che il tuo gruppo può inserire. Il codice è valido solo per questa escursione.${!isPremium ? " Richiede Premium." : ""}`,
     createSessionButton: "Crea sessione",
@@ -210,7 +214,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     intro: "Experience a legend together. The age tier of the youngest member determines the narrative, the leader's device guides via GPS.",
     errorNotFound: "No active join code found with this number.",
     errorNetwork: "Server unreachable. Check your connection and try again.",
-    errorUnknown: "Unexpected error. Please try again.",
+    errorUnknown: "Unexpected error. Please try again.", errorFull: "This group is full.", errorAlreadyInGroup: "You are already in another group.", errorExpired: "This group has expired. Please create a new one.", offline: "offline",
     createSessionTitle: "Create session",
     createSessionBody: (isPremium) => `Generate a join code that your group can enter. The code is only valid for this hike.${!isPremium ? " Requires Premium." : ""}`,
     createSessionButton: "Create session",
@@ -251,7 +255,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     intro: "一起体验传说。最年轻成员的年龄段决定了叙事内容，领队的设备通过 GPS 进行引导。",
     errorNotFound: "未找到该编号的有效加入代码。",
     errorNetwork: "无法连接服务器。请检查您的网络连接并重试。",
-    errorUnknown: "意外错误。请重试。",
+    errorUnknown: "意外错误。请重试。", errorFull: "群组已满。", errorAlreadyInGroup: "你已经在另一个群组中。", errorExpired: "该群组已过期，请创建新的群组。", offline: "离线",
     createSessionTitle: "创建会话",
     createSessionBody: (isPremium) => `生成一个加入代码供您的小组输入。该代码仅对本次徒步有效。${!isPremium ? " 需要高级版。" : ""}`,
     createSessionButton: "创建会话",
@@ -292,7 +296,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     intro: "Vivid una leyenda juntos. El grupo de edad del miembro más joven determina la narrativa, el dispositivo del guía conduce por GPS.",
     errorNotFound: "No se ha encontrado ningún código de acceso activo con este número.",
     errorNetwork: "Servidor inalcanzable. Comprueba tu conexión e inténtalo de nuevo.",
-    errorUnknown: "Error inesperado. Por favor, inténtalo de nuevo.",
+    errorUnknown: "Error inesperado. Por favor, inténtalo de nuevo.", errorFull: "Este grupo está lleno.", errorAlreadyInGroup: "Ya estás en otro grupo.", errorExpired: "Este grupo ha caducado. Crea uno nuevo.", offline: "sin conexión",
     createSessionTitle: "Crear sesión",
     createSessionBody: (isPremium) => `Genera un código de acceso que tu grupo pueda introducir. El código solo es válido para esta caminata.${!isPremium ? " Requiere Premium." : ""}`,
     createSessionButton: "Crear sesión",
@@ -333,7 +337,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     intro: "Vivam uma lenda juntos. A faixa etária do membro mais jovem determina a narrativa, o dispositivo do líder guia via GPS.",
     errorNotFound: "Nenhum código de adesão ativo encontrado com este número.",
     errorNetwork: "Servidor inacessível. Verifique sua conexão e tente novamente.",
-    errorUnknown: "Erro inesperado. Por favor, tente novamente.",
+    errorUnknown: "Erro inesperado. Por favor, tente novamente.", errorFull: "Este grupo está cheio.", errorAlreadyInGroup: "Já estás noutro grupo.", errorExpired: "Este grupo expirou. Cria um novo.", offline: "offline",
     createSessionTitle: "Criar sessão",
     createSessionBody: (isPremium) => `Gere um código de adesão que seu grupo possa inserir. O código é válido apenas para esta caminhada.${!isPremium ? " Requer Premium." : ""}`,
     createSessionButton: "Criar sessão",
@@ -374,7 +378,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     intro: "Переживите легенду вместе. Возрастная группа самого младшего участника определяет повествование, устройство лидера ведёт по GPS.",
     errorNotFound: "Активный код присоединения с этим номером не найден.",
     errorNetwork: "Сервер недоступен. Проверь соединение и попробуй снова.",
-    errorUnknown: "Неожиданная ошибка. Пожалуйста, попробуй снова.",
+    errorUnknown: "Неожиданная ошибка. Пожалуйста, попробуй снова.", errorFull: "Группа заполнена.", errorAlreadyInGroup: "Вы уже состоите в другой группе.", errorExpired: "Срок действия группы истёк. Создайте новую.", offline: "офлайн",
     createSessionTitle: "Создать сессию",
     createSessionBody: (isPremium) => `Сгенерируй код присоединения, который сможет ввести твоя группа. Код действителен только для этого похода.${!isPremium ? " Требуется Premium." : ""}`,
     createSessionButton: "Создать сессию",

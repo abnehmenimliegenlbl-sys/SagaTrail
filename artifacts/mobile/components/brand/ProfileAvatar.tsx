@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { getApiBaseUrl } from "@/lib/apiConfig";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
 
 export function profileAvatarUri(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -24,6 +25,7 @@ export function ProfileAvatar({
   size?: number;
 }) {
   const colors = useColors();
+  const t = useSharedStrings();
   const [imageFailed, setImageFailed] = useState(false);
   const uri = profileAvatarUri(avatarUrl);
   const initial = name?.trim().charAt(0).toUpperCase() || "?";
@@ -36,7 +38,7 @@ export function ProfileAvatar({
     <View
       accessible
       accessibilityRole="image"
-      accessibilityLabel={name ? `Profilbild von ${name}` : "Profilbild"}
+      accessibilityLabel={name ? `${t.avatarOf} ${name}` : t.avatar}
       style={[
         styles.avatar,
         {

@@ -505,9 +505,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
           body: JSON.stringify({ routeName, durationMinutes: selectedDuration }),
         });
         if (!response.ok) {
-          throw new Error(
-            "Der Sicherheitslink konnte nicht erstellt werden. Bitte versuche es erneut.",
-          );
+          throw new Error("safety-link-creation-failed");
         }
         const data = await response.json() as { token: string; path: string; expiresAt: string };
         const parsedExpiry = Date.parse(data.expiresAt);
