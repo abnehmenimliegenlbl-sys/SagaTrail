@@ -9,6 +9,7 @@ import {
   getPartners,
   getPois,
   getPoiDetail,
+  getPoiStory,
   getWeather,
   getAvalancheBulletin,
   getTransportStationboard,
@@ -412,6 +413,12 @@ export default function Routenplanung() {
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   // undefined = lädt, null = nichts gefunden, WikiSummary = fertig
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
+  const [selectedPoiWikiPoiId, setSelectedPoiWikiPoiId] = useState<string | null>(null);
+  const [selectedPoiStory, setSelectedPoiStory] = useState<{
+    poiId: string;
+    text: string;
+  } | null>(null);
+  const [selectedPoiStoryLoading, setSelectedPoiStoryLoading] = useState(false);
   const routeThemes = useMemo(
     () => {
       const serverThemes = (route?.themeKeys ?? []).filter(
@@ -449,9 +456,11 @@ export default function Routenplanung() {
   useEffect(() => {
     if (!selectedPoi) {
       setSelectedPoiWiki(undefined);
+      setSelectedPoiWikiPoiId(null);
       return;
     }
     setSelectedPoiWiki(undefined);
+    setSelectedPoiWikiPoiId(null);
     let cancelled = false;
     getPoiDetail({
       name: selectedPoi.name,
@@ -461,10 +470,60 @@ export default function Routenplanung() {
       ...(selectedPoi.wikipediaTag ? { wikipediaTag: selectedPoi.wikipediaTag } : {}),
       ...(selectedPoi.wikidataTag ? { wikidataTag: selectedPoi.wikidataTag } : {}),
     })
-      .then((r) => { if (!cancelled) setSelectedPoiWiki(r.wiki ?? null); })
-      .catch(() => { if (!cancelled) setSelectedPoiWiki(null); });
+      .then((r) => {
+        if (!cancelled) {
+          setSelectedPoiWiki(r.wiki ?? null);
+          setSelectedPoiWikiPoiId(selectedPoi.id);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSelectedPoiWiki(null);
+          setSelectedPoiWikiPoiId(selectedPoi.id);
+        }
+      });
     return () => { cancelled = true; };
   }, [selectedPoi?.id]);
+
+  // Detail-Text in der aktiven App-Sprache erzeugen, statt den oft deutschen
+  // Wikipedia-Auszug unverändert im POI-Modal anzuzeigen.
+  useEffect(() => {
+    if (!selectedPoi) {
+      setSelectedPoiStory(null);
+      setSelectedPoiStoryLoading(false);
+      return;
+    }
+    if (selectedPoiWikiPoiId !== selectedPoi.id) {
+      setSelectedPoiStory(null);
+      setSelectedPoiStoryLoading(true);
+      return;
+    }
+
+    let cancelled = false;
+    setSelectedPoiStory(null);
+    setSelectedPoiStoryLoading(true);
+    getPoiStory({
+      name: selectedPoi.name,
+      extract: selectedPoiWiki?.extract ?? selectedPoi.wiki?.extract,
+      kind: selectedPoi.kind,
+      lang: language,
+      osmContext: selectedPoi.osmContext ?? undefined,
+    })
+      .then((result) => {
+        if (!cancelled) {
+          setSelectedPoiStory({ poiId: selectedPoi.id, text: result.text });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSelectedPoiStory(null);
+      })
+      .finally(() => {
+        if (!cancelled) setSelectedPoiStoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPoi?.id, selectedPoiWiki, selectedPoiWikiPoiId, language]);
 
   // ShareCard ref für Native-Share-Export
   const shareCardRef = useRef<View>(null);
@@ -2241,7 +2300,7 @@ export default function Routenplanung() {
         >
           <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
             <Glass overlayColor={poiOverlay}>
-              {selectedPoiWiki === undefined ? (
+              {selectedPoiWikiPoiId !== selectedPoi.id || selectedPoiWiki === undefined ? (
                 <View style={[styles.poiModalImage, { alignItems: "center", justifyContent: "center" }]}>
                   <ActivityIndicator color={colors.accent} />
                 </View>
@@ -2261,9 +2320,15 @@ export default function Routenplanung() {
                 </View>
                 <CloseButton accessibilityLabel={ts.close} onPress={() => setSelectedPoi(null)} />
               </View>
-              {!!(selectedPoiWiki?.extract) && (
+              {selectedPoiStoryLoading ? (
+                <View style={{ alignItems: "center", marginTop: 14 }}>
+                  <ActivityIndicator color={colors.accent} />
+                </View>
+              ) : (
                 <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 10 }]}>
-                  {selectedPoiWiki.extract}
+                  {selectedPoiStory?.poiId === selectedPoi.id
+                    ? selectedPoiStory.text
+                    : ts.poiDescriptionUnavailable}
                 </Text>
               )}
               {!!selectedPoi.source && (

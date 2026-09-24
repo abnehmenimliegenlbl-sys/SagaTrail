@@ -932,6 +932,7 @@ export default function LiveHike() {
   }, [router, t]);
   const {
     profile,
+    language,
     emergencyContact,
     premium,
     freeHikeUsed,
@@ -948,7 +949,6 @@ export default function LiveHike() {
     clearActiveHike,
     hikeHistory,
   } = useApp();
-  const language = profile?.language ?? "en";
 
   // Beim ersten Aufbau der Story einmalig pruefen, ob eine unterbrochene
   // Wanderung derselben Sage fortgesetzt wird — dann ab dem gespeicherten
@@ -2494,7 +2494,7 @@ export default function LiveHike() {
   // Premium — kein Offline-Fallback. Fuer "gsw" wird dabei NIE Dialekt-Text
   // verwendet: die Story wird in diesem Fall in Hochdeutsch angefordert, die
   // Schweizer Faerbung kommt allein ueber die Stimmwahl (server-seitig).
-  const storyLanguage = effectiveStoryLanguage(profile?.language ?? "de", true);
+  const storyLanguage = effectiveStoryLanguage(language, true);
   const localizedSagaTitle = saga
     ? getLocalizedSagaTitle(saga, storyLanguage)
     : (route?.name ?? "");
@@ -7160,6 +7160,17 @@ export default function LiveHike() {
       setWatchPoiStory(null);
       releasePoiNarration("audio_finished");
     };
+    const skipPoiNarration = (reason: string) => {
+      watchPoiLog("POI narration skipped without usable story text", {
+        traceId,
+        poiId: nearbyPoi.id,
+        kind: "poi",
+        source: "nearby",
+        reason,
+      });
+      setWatchPoiStory(null);
+      releasePoiNarration(reason);
+    };
     const pack = STORY_PACKS[resolveLang(cueLanguage)];
     const rawExtract = nearbyPoiWiki?.extract ?? null;
     let cancelled = false;
@@ -7233,9 +7244,9 @@ export default function LiveHike() {
     // Offline-Cache bevorzugen, sonst Netzwerk-Request.
     (async () => {
       const cached = await getOfflinePoiStory(nearbyPoi.id, cueLanguage);
-      if (cached !== null) {
+      if (cached?.trim()) {
         if (!cancelled) {
-          if (!nearbyPoiWiki?.extract) setNearbyPoiKontext(cached);
+          setNearbyPoiKontext(cached);
           erzaehle(
             isSagaHeart ? cached : pack.poiAside(nearbyPoi.name, cached),
           );
@@ -7250,20 +7261,18 @@ export default function LiveHike() {
         osmContext: nearbyPoi.osmContext ?? undefined,
       })
         .then((r) => {
-          if (!cancelled && !nearbyPoiWiki?.extract)
-            setNearbyPoiKontext(r.text);
+          const storyText = r.text.trim();
+          if (!storyText) {
+            skipPoiNarration("empty_story_text");
+            return;
+          }
+          if (!cancelled) setNearbyPoiKontext(storyText);
           erzaehle(
-            isSagaHeart ? r.text : pack.poiAside(nearbyPoi.name, r.text),
+            isSagaHeart ? storyText : pack.poiAside(nearbyPoi.name, storyText),
           );
         })
         .catch(() => {
-          if (!isSagaHeart)
-            erzaehle(
-              pack.poiAside(
-                nearbyPoi.name,
-                rawExtract ? trimForNarration(rawExtract) : null,
-              ),
-            );
+          skipPoiNarration("story_text_unavailable");
         });
     })();
     return () => {
@@ -7370,6 +7379,17 @@ export default function LiveHike() {
         releasePoiNarration("audio_finished");
       };
       const erzaehle = (text: string) => {
+        if (!text.trim()) {
+          watchPoiLog("POI narration skipped without usable story text", {
+            traceId,
+            poiId: capturedPoi.id,
+            kind: "poi",
+            source: "approach-50m",
+            reason: "empty_spoken_text",
+          });
+          releasePoiNarration("empty_spoken_text");
+          return;
+        }
         if (!isPoiStillRelevant(capturedPoi, 0.1)) {
           watchPoiLog("POI narration expired before audio", {
             traceId,
@@ -7404,8 +7424,8 @@ export default function LiveHike() {
       };
       (async () => {
         const cached = await getOfflinePoiStory(capturedPoi.id, cueLanguage);
-        if (cached !== null) {
-          if (!nearbyPoiWiki?.extract) setNearbyPoiKontext(cached);
+        if (cached?.trim()) {
+          setNearbyPoiKontext(cached);
           erzaehle(pack.poiAside(capturedPoi.name, cached));
           return;
         }
@@ -7417,16 +7437,29 @@ export default function LiveHike() {
           osmContext: capturedPoi.osmContext ?? undefined,
         })
           .then((r) => {
-            if (!nearbyPoiWiki?.extract) setNearbyPoiKontext(r.text);
-            erzaehle(pack.poiAside(capturedPoi.name, r.text));
+            const storyText = r.text.trim();
+            if (!storyText) {
+              watchPoiLog("POI narration skipped without usable story text", {
+                traceId,
+                poiId: capturedPoi.id,
+                kind: "poi",
+                source: "approach-50m",
+                reason: "empty_story_text",
+              });
+              releasePoiNarration("empty_story_text");
+              return;
+            }
+            setNearbyPoiKontext(storyText);
+            erzaehle(pack.poiAside(capturedPoi.name, storyText));
           })
           .catch(() => {
-            erzaehle(
-              pack.poiAside(
-                capturedPoi.name,
-                rawExtract ? trimForNarration(rawExtract) : null,
-              ),
-            );
+            watchPoiLog("POI narration skipped because story text is unavailable", {
+              traceId,
+              poiId: capturedPoi.id,
+              kind: "poi",
+              source: "approach-50m",
+            });
+            releasePoiNarration("story_text_unavailable");
           });
       })();
       return () => {
@@ -9784,12 +9817,12 @@ export default function LiveHike() {
               <Text style={[styles.poiTitle, { color: colors.foreground }]}>
                 {poiDisplayName(nearbyPoi.name, nearbyPoi.kind)}
               </Text>
-              {(nearbyPoiWiki?.extract || nearbyPoiKontext) && (
+              {nearbyPoiKontext && (
                 <Text
                   style={[styles.poiSummary, { color: colors.foreground }]}
                   numberOfLines={10}
                 >
-                  {nearbyPoiWiki?.extract ?? nearbyPoiKontext}
+                  {nearbyPoiKontext}
                 </Text>
               )}
             </Glass>
@@ -10758,10 +10791,7 @@ export default function LiveHike() {
               >
                 {poiStoryLoading && !poiStory
                   ? t.poiStoryLoading
-                  : (poiStory ??
-                    selectedPoiWiki?.extract ??
-                    selectedPoi.wiki?.extract ??
-                    t.notAvailable)}
+                    : (poiStory ?? t.notAvailable)}
               </Text>
             </Glass>
           </Pressable>
