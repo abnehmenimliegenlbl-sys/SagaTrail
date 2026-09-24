@@ -18,6 +18,7 @@ export type NarrationQueueItem = {
   allowDuringStartup?: boolean;
   useOpenAI?: boolean;
   preFetchedUri?: string;
+  preFetchedBlob?: Blob;
   replaceQueuedCategory?: ReplaceableNarrationCategory;
   kind?: NarrationKind;
   chapterIndex?: number;

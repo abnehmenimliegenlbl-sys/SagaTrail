@@ -19,6 +19,7 @@ const narrationDir = (sagaId: string) =>
 
 const chapterFile = (sagaId: string, index: number) =>
   `${narrationDir(sagaId)}ch_${index}.mp3`;
+let decisionAckFileSequence = 0;
 
 /** Liest einen Blob als Base64-String (ohne data:-Prefix). */
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -55,6 +56,37 @@ export async function blobToTempFileUri(blob: Blob): Promise<string> {
     encoding: FileSystem.EncodingType.Base64,
   });
   return uri;
+}
+
+/**
+ * Materializes a prefetched decision acknowledgement only when it is about to
+ * play. It must not share narration_current.mp3: later chapter/question TTS
+ * writes to that path and would replace the cached acknowledgement's bytes.
+ */
+export async function blobToDecisionAckTempFileUri(
+  blob: Blob,
+): Promise<string> {
+  const base64 = await blobToBase64(blob);
+  const fileName = `sagatrail_decision_ack_${Date.now().toString(36)}_${(
+    ++decisionAckFileSequence
+  ).toString(36)}.mp3`;
+  const uri = (FileSystem.cacheDirectory ?? "") + fileName;
+  await FileSystem.writeAsStringAsync(uri, base64, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  return uri;
+}
+
+/** Removes only temporary decision-ack files created by this module. */
+export async function deleteDecisionAckTempFile(uri: string): Promise<void> {
+  const cacheDirectory = FileSystem.cacheDirectory;
+  if (
+    !cacheDirectory ||
+    !uri.startsWith(`${cacheDirectory}sagatrail_decision_ack_`)
+  ) {
+    return;
+  }
+  await FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
 }
 
 /**

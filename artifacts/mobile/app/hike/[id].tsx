@@ -143,7 +143,12 @@ import {
   isLocalTerrainModel,
   type LocalTerrainModel,
 } from "@/lib/terrainModel";
-import { blobToTempFileUri, getOfflineAudioUri } from "@/lib/narrationAudio";
+import {
+  blobToDecisionAckTempFileUri,
+  blobToTempFileUri,
+  deleteDecisionAckTempFile,
+  getOfflineAudioUri,
+} from "@/lib/narrationAudio";
 import { getTurnAudio } from "@/lib/turnAudio";
 import { getOfflinePoiDetail, getOfflinePoiStory } from "@/lib/offlinePois";
 import { GPS_FRESHNESS_WINDOW_MS, isFreshGpsFix } from "@/lib/gpsSafety";
@@ -249,6 +254,7 @@ type SpeakOptions = {
   chapterIndex?: number;
   useOpenAI?: boolean;
   preFetchedUri?: string;
+  preFetchedBlob?: Blob;
   navInterrupt?: boolean;
   turnAudio?: "links" | "rechts";
   replaceQueuedCategory?: ReplaceableNarrationCategory;
@@ -2413,14 +2419,14 @@ export default function LiveHike() {
   // Solange die Einleitung noch nicht gestartet/abgeschlossen ist, werden
   // alle nicht-navigierenden Ansagen bereits vorgemerkt.
   const startupSequenceActiveRef = useRef(false);
-  // Vorgeladene OpenAI-URI fuer den Entscheidungs-Ack ("Ich verstehe.").
-  // Wird beim Hike-Start im Hintergrund erzeugt, damit bei der Wahl zero
-  // Netzwerk-Latenz anfaellt und das OpenAI-Audio sofort ertönt.
+  // Vorgeladener OpenAI-Blob fuer den Entscheidungs-Ack. Keine URI speichern:
+  // die allgemeine TTS-URI zeigt auf eine Datei, die spaetere Audios ueberschreiben.
   const ackAudioRef = useRef<{
-    uri: string;
+    blob: Blob;
     text: string;
     language: string;
   } | null>(null);
+  const activeDecisionAckFileRef = useRef<string | null>(null);
   const startupSequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -5676,9 +5682,12 @@ export default function LiveHike() {
 
   const stopNarration = useCallback(async () => {
     const sound = narrationSoundRef.current;
+    const decisionAckUri = activeDecisionAckFileRef.current;
     narrationSoundRef.current = null;
+    activeDecisionAckFileRef.current = null;
     navInterruptingRef.current = false;
     await Promise.all([stopTurnAudio(), teardownNarrationSound(sound)]);
+    if (decisionAckUri) await deleteDecisionAckTempFile(decisionAckUri);
     // Zurueck auf MixWithOthers — andere Apps duerfen wieder ungedimmt spielen.
     setAudioModeAsync({
       allowsRecording: false,
@@ -5795,8 +5804,8 @@ export default function LiveHike() {
         chapterIndex: activeChapterIndex ?? null,
         textLength: text.length,
         textFingerprint: debugFingerprint(text),
-        preFetched: Boolean(opts?.preFetchedUri),
-        useOpenAI: Boolean(opts?.useOpenAI),
+        preFetched: Boolean(opts?.preFetchedUri || opts?.preFetchedBlob),
+        useOpenAI: Boolean(opts?.useOpenAI || opts?.preFetchedBlob),
       };
       const logNativeAudio = (
         playerId: string,
@@ -5831,6 +5840,7 @@ export default function LiveHike() {
           allowDuringStartup: opts?.allowDuringStartup,
           useOpenAI: opts?.useOpenAI,
           preFetchedUri: opts?.preFetchedUri,
+          preFetchedBlob: opts?.preFetchedBlob,
           replaceQueuedCategory: opts?.replaceQueuedCategory,
           kind: opts?.kind,
           chapterIndex: opts?.chapterIndex,
@@ -6141,6 +6151,13 @@ export default function LiveHike() {
       // sofort unterbricht.
       speakingRef.current = true;
 
+      let temporaryDecisionAckUri: string | null = null;
+      const cleanupTemporaryDecisionAck = async () => {
+        const uri = temporaryDecisionAckUri;
+        temporaryDecisionAckUri = null;
+        if (uri) await deleteDecisionAckTempFile(uri);
+      };
+
       try {
         // TTS-Anfrage VOR dem Stopp des laufenden Audios: solange der
         // Netzwerk-Request laeuft, spielt das vorherige Audio weiter —
@@ -6157,20 +6174,28 @@ export default function LiveHike() {
           kind: activeKind,
           chapterIndex: activeChapterIndex ?? null,
           generation: gen,
-          source: opts?.preFetchedUri ? "prefetched_uri" : "generated_audio",
+          source: opts?.preFetchedUri
+            ? "prefetched_uri"
+            : opts?.preFetchedBlob
+              ? "prefetched_blob"
+              : "generated_audio",
         });
-        const uri =
-          opts?.preFetchedUri ??
-          (await (async () => {
-            // gsw: Heidi-Stimme via gsw-language-Key; Text ist bereits Hochdeutsch (storyGenerator)
-            const narrationLang = profile?.language;
-            const blob = await createNarration({
-              text,
-              language: narrationLang,
-              ...(opts?.useOpenAI ? { provider: "openai" as const } : {}),
-            });
-            return blobToTempFileUri(blob);
-          })());
+        let uri: string;
+        if (opts?.preFetchedUri) {
+          uri = opts.preFetchedUri;
+        } else if (opts?.preFetchedBlob) {
+          uri = await blobToDecisionAckTempFileUri(opts.preFetchedBlob);
+          temporaryDecisionAckUri = uri;
+        } else {
+          // gsw: Heidi-Stimme via gsw-language-Key; Text ist bereits Hochdeutsch (storyGenerator)
+          const narrationLang = profile?.language;
+          const blob = await createNarration({
+            text,
+            language: narrationLang,
+            ...(opts?.useOpenAI ? { provider: "openai" as const } : {}),
+          });
+          uri = await blobToTempFileUri(blob);
+        }
         storyAudioLog("narration_source_ready", {
           ...decisionDebugSnapshot(
             activeChapterIndex ?? currentIndexRef.current,
@@ -6180,7 +6205,11 @@ export default function LiveHike() {
           kind: activeKind,
           chapterIndex: activeChapterIndex ?? null,
           generation: gen,
-          source: opts?.preFetchedUri ? "prefetched_uri" : "generated_audio",
+          source: opts?.preFetchedUri
+            ? "prefetched_uri"
+            : opts?.preFetchedBlob
+              ? "prefetched_blob"
+              : "generated_audio",
         });
         if (gen !== narrationGenRef.current) {
           storyAudioLog("narration_discarded", {
@@ -6195,6 +6224,7 @@ export default function LiveHike() {
             currentGeneration: narrationGenRef.current,
             reason: "stale_after_source_ready",
           });
+          await cleanupTemporaryDecisionAck();
           return;
         }
         // Normale Narration und Abbiegeclip teilen denselben exklusiven
@@ -6216,6 +6246,7 @@ export default function LiveHike() {
             currentGeneration: narrationGenRef.current,
             reason: "stale_after_turn_stop",
           });
+          await cleanupTemporaryDecisionAck();
           return;
         }
         // Vorheriges Audio direkt stoppen — kein setState, damit speaking=true
@@ -6242,6 +6273,7 @@ export default function LiveHike() {
             currentGeneration: narrationGenRef.current,
             reason: "stale_after_previous_teardown",
           });
+          await cleanupTemporaryDecisionAck();
           return;
         }
         // Vor dem Abspielen auf DuckOthers wechseln — nur waehrend aktiver Erzaehlung.
@@ -6264,6 +6296,7 @@ export default function LiveHike() {
             currentGeneration: narrationGenRef.current,
             reason: "stale_before_player_create",
           });
+          await cleanupTemporaryDecisionAck();
           return;
         }
         const playerId = `narration_${traceId}_${++narrationPlayerSequenceRef.current}`;
@@ -6288,9 +6321,13 @@ export default function LiveHike() {
             reason: "stale_after_player_create",
           });
           await teardownNarrationSound(sound);
+          await cleanupTemporaryDecisionAck();
           return;
         }
         narrationSoundRef.current = sound;
+        if (temporaryDecisionAckUri) {
+          activeDecisionAckFileRef.current = temporaryDecisionAckUri;
+        }
         narrationActiveKindRef.current = activeKind;
         narrationActiveTraceIdRef.current = traceId;
         storyAudioLog("narration player started", {
@@ -6329,7 +6366,16 @@ export default function LiveHike() {
             narrationActiveKindRef.current = null;
             narrationActiveTraceIdRef.current = null;
           }
-          void teardownNarrationSound(sound);
+          if (
+            temporaryDecisionAckUri &&
+            activeDecisionAckFileRef.current === temporaryDecisionAckUri
+          ) {
+            activeDecisionAckFileRef.current = null;
+          }
+          const teardownPromise = teardownNarrationSound(sound);
+          if (temporaryDecisionAckUri) {
+            void teardownPromise.finally(cleanupTemporaryDecisionAck);
+          }
           storyAudioLog("narration player finished", {
             ...decisionDebugSnapshot(
               activeChapterIndex ?? currentIndexRef.current,
@@ -6376,6 +6422,7 @@ export default function LiveHike() {
                 useOpenAI: next.useOpenAI,
                 allowDuringStartup: next.allowDuringStartup,
                 preFetchedUri: next.preFetchedUri,
+                preFetchedBlob: next.preFetchedBlob,
                 replaceQueuedCategory: next.replaceQueuedCategory,
                 kind: next.kind,
                 chapterIndex: next.chapterIndex,
@@ -6521,7 +6568,14 @@ export default function LiveHike() {
             currentGeneration: narrationGenRef.current,
             reason: "stale_before_play_request",
           });
+          if (
+            temporaryDecisionAckUri &&
+            activeDecisionAckFileRef.current === temporaryDecisionAckUri
+          ) {
+            activeDecisionAckFileRef.current = null;
+          }
           await teardownNarrationSound(sound);
+          await cleanupTemporaryDecisionAck();
           return;
         }
         storyAudioLog("narration_play_requested", {
@@ -6552,6 +6606,14 @@ export default function LiveHike() {
             reason: "stale_in_error_handler",
             error: err instanceof Error ? err.message : String(err),
           });
+          if (
+            temporaryDecisionAckUri &&
+            activeDecisionAckFileRef.current === temporaryDecisionAckUri
+          ) {
+            activeDecisionAckFileRef.current = null;
+          }
+          await narrationTeardownRef.current;
+          await cleanupTemporaryDecisionAck();
           return;
         }
         // Bei jedem Fehler (Rate-Limit, Netzwerkfehler, Server-Fehler, Offline)
@@ -6565,8 +6627,19 @@ export default function LiveHike() {
         narrationSoundRef.current = null;
         narrationActiveKindRef.current = null;
         narrationActiveTraceIdRef.current = null;
+        if (
+          temporaryDecisionAckUri &&
+          activeDecisionAckFileRef.current === temporaryDecisionAckUri
+        ) {
+          activeDecisionAckFileRef.current = null;
+        }
         if (failedSound) {
-          void teardownNarrationSound(failedSound);
+          const teardownPromise = teardownNarrationSound(failedSound);
+          if (temporaryDecisionAckUri) {
+            void teardownPromise.finally(cleanupTemporaryDecisionAck);
+          }
+        } else if (temporaryDecisionAckUri) {
+          void cleanupTemporaryDecisionAck();
         }
         storyAudioLog("narration player failed", {
           traceId,
@@ -6592,6 +6665,7 @@ export default function LiveHike() {
               useOpenAI: next.useOpenAI,
               allowDuringStartup: next.allowDuringStartup,
               preFetchedUri: next.preFetchedUri,
+              preFetchedBlob: next.preFetchedBlob,
               replaceQueuedCategory: next.replaceQueuedCategory,
               kind: next.kind,
               chapterIndex: next.chapterIndex,
@@ -6623,9 +6697,9 @@ export default function LiveHike() {
   speakRef.current = speak;
 
   // Entscheidungs-Ack ("Ich verstehe." etc.) vorausladen sobald die Wanderung
-  // startet. Der Text ist je Sprache fix, wird genau einmal synthetisiert und
-  // bleibt dauerhaft im Narrations-Cache. Das stellt sicher, dass bei der
-  // Wahl (Kapitel 3/5) sofort OpenAI-Audio ertönt, ohne Netzwerk-Latenz.
+  // startet. Den Blob im Ref halten, nicht die URI: narration_current.mp3 wird
+  // von späteren Fragen/Kapiteln überschrieben. Beim Abspielen erhält das Ack
+  // eine eigene temporäre Datei.
   useEffect(() => {
     if (!startGateConfirmedRef.current || preparing) return;
     const lang = profile?.language;
@@ -6656,10 +6730,9 @@ export default function LiveHike() {
           provider: "openai",
         });
         if (cancelled) return;
-        const uri = await blobToTempFileUri(blob);
         if (!cancelled) {
           ackAudioRef.current = {
-            uri,
+            blob,
             text: ackText,
             language: ackLang,
           };
@@ -6670,8 +6743,8 @@ export default function LiveHike() {
               language: ackLang,
               textLength: ackText.length,
               textFingerprint: debugFingerprint(ackText),
-              uriFingerprint: debugFingerprint(uri),
-              source: "startup_prefetch",
+              blobBytes: blob.size,
+              source: "startup_prefetch_blob",
             },
           );
         }
@@ -8031,10 +8104,10 @@ export default function LiveHike() {
       // ist) — die OpenAI-Stimme startet sofort ohne Netzwerk-Latenz. Fallback:
       // OpenAI-Aufruf zur Laufzeit, wenn der Pre-fetch noch laeuft oder scheiterte.
       const cachedAck = ackAudioRef.current;
-      const ackUri =
+      const ackBlob =
         cachedAck?.text === ackPack.decisionAck &&
         cachedAck.language === cueLanguage
-          ? cachedAck.uri
+          ? cachedAck.blob
           : undefined;
       const ackTraceId = `decision_ack_${decisionIndex}_${++narrationTraceSequenceRef.current}`;
       const feedbackTraceId = `decision_feedback_${decisionIndex}_${++narrationTraceSequenceRef.current}`;
@@ -8091,14 +8164,15 @@ export default function LiveHike() {
           })),
           ackTraceId,
           feedbackTraceId,
-          ackSource: ackUri ? "prefetched_uri" : "runtime_openai",
+          ackSource: ackBlob ? "prefetched_blob" : "runtime_openai",
           ackTextLength: ackPack.decisionAck.length,
           ackTextFingerprint: debugFingerprint(ackPack.decisionAck),
-          ackUriFingerprint: ackUri ? debugFingerprint(ackUri) : null,
+          ackBlobBytes: ackBlob?.size ?? null,
           decisionAudioGeneration,
         });
         void speaker(ackPack.decisionAck, speakDecisionFeedback, {
-          ...(ackUri ? { preFetchedUri: ackUri } : { useOpenAI: true }),
+          useOpenAI: true,
+          ...(ackBlob ? { preFetchedBlob: ackBlob } : {}),
           kind: "feedback",
           displayTitle: t.perception,
           traceId: ackTraceId,
