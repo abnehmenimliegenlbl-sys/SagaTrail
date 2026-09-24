@@ -86,7 +86,7 @@
 - [POI approach categories](sagatrail-poi-approach-categories.md) — a POI can load and be tappable yet miss the 200/50 m flow when its OSM kind is absent from the mobile approach set.
 - [POI tile closing](sagatrail-poi-tile-closing.md) — auto-opened POI tiles close after three clear consecutive distance increases, with a 5 m GPS-noise tolerance.
 - [POI story deduplication](sagatrail-poi-story-dedup.md) — general and approach POI flows share one physical-place claim so leaving/re-entering cannot replay a full story.
-- [EAS OTA monorepo release](sagatrail-eas-ota-monorepo.md) — run OTA from the mobile app root; pin pnpm, export platforms sequentially, and exclude workspace caches.
+- [EAS OTA monorepo release](sagatrail-eas-ota-monorepo.md) — app-root workflow; local Git push auth is separate from the GitHub API connector, which cannot preserve local commit history.
 - [GitHub large-file transfer](eas-ota-release.md) — never send large GitHub blobs through shell output; use direct filesystem bytes and base64 in the integration call to avoid silent truncation.
 - [Prod-Secret-Dialog-Fallback](prod-secret-dialog-fallback.md) — requestSecrets kann trotz Bestätigung false liefern; gewährte Secrets ggf. nur als Boolean im Workflow-Env prüfen, nie ausgeben.
 - [Viro iOS 26 camera crash](sagatrail-viro-ios26-crash.md) — ARKit can abort natively before JS errors; verify the physical-device crash report before further Viro changes.
