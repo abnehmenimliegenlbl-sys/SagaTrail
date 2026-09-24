@@ -80,6 +80,11 @@ export function isBusOrTramStopPoi(item: { kind?: string | null }): boolean {
   return item.kind != null && BUS_AND_TRAM_STOP_KINDS.has(item.kind);
 }
 
+/** Transit stops may remain visible near route endpoints, but are not story POIs. */
+export function isAutoNarratablePoi(item: { kind?: string | null }): boolean {
+  return !isBusOrTramStopPoi(item);
+}
+
 export function distanceToRouteEndpointKm(
   point: LatLng,
   geometry: number[][] | null | undefined,

@@ -121,6 +121,7 @@ import {
   filterByRouteCorridor,
   fortschrittAufRoute,
   haversineKm,
+  isAutoNarratablePoi,
 } from "@/lib/geo";
 import {
   computeRouteWaypoints,
@@ -4678,6 +4679,9 @@ export default function LiveHike() {
     // node-NNN und als way-MMM in Overpass auftauchen — gleicher Ort, zwei IDs).
     const DEDUP_KM = 0.1;
     const hit = displayedPois.find((poi) => {
+      // Endpoint transit stops can stay visible as map markers, but they are
+      // transport labels rather than story locations and must not be narrated.
+      if (!isAutoNarratablePoi(poi)) return false;
       // Sagenmittelpunkt: 500 m Radius (Herzort der laufenden Sage ist
       // immer relevant, auch auf dem Land). Normale POIs: 300 m.
       const radiusKm = poi.kind === "saga=heart" ? 0.5 : 0.3;

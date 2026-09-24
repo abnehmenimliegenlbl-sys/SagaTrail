@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   distanceToRouteEndpointKm,
   filterBusAndTramStopsToRouteEndpoints,
+  isAutoNarratablePoi,
 } from "./geo";
 
 const geometry = [
@@ -41,4 +42,10 @@ test("does not apply endpoint-only filtering to other POI types", () => {
     [chapel],
   );
   assert.ok(distanceToRouteEndpointKm(chapel, geometry) > 0.5);
+});
+
+test("bus and tram stops can stay in the POI list but never trigger an auto story", () => {
+  assert.equal(isAutoNarratablePoi({ kind: "highway=bus_stop" }), false);
+  assert.equal(isAutoNarratablePoi({ kind: "railway=tram_stop" }), false);
+  assert.equal(isAutoNarratablePoi({ kind: "historic=castle" }), true);
 });
