@@ -131,18 +131,25 @@ function ClerkGuard({ children }: { children: React.ReactNode }) {
   // ClerkGuard is above AppProvider in the tree, so its startup copy must not
   // use the AppContext-backed translation hook yet.
   const t = INITIAL_STARTUP_STRINGS;
+  useEffect(() => {
+    appRuntimeLog("Clerk startup gate", {
+      platform: Platform.OS,
+      isLoaded,
+    });
+  }, [isLoaded]);
+
   if (!isLoaded) {
-    return Platform.OS === "web" ? (
+    return (
       <StartupState
         title={t.checkingSignIn}
         detail={t.restoringSession}
       />
-    ) : null;
+    );
   }
   return <>{children}</>;
 }
 
-function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
+function RootLayoutNav() {
   const { hydrated, profile } = useApp();
   const t = useStartupStrings();
   const { isLoaded, isSignedIn } = useAuth();
@@ -156,11 +163,6 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   const permissionCheckGenerationRef = useRef(0);
   const updateReloadStartedRef = useRef(false);
   const shouldCheckPermissions = hydrated && isLoaded && isSignedIn && Boolean(profile);
-
-  useEffect(() => {
-    if (!fontsReady || !isLoaded || !hydrated) return;
-    void SplashScreen.hideAsync();
-  }, [fontsReady, hydrated, isLoaded]);
 
   const refreshRequiredPermissions = useCallback(async (reason = "app-start") => {
     const generation = ++permissionCheckGenerationRef.current;
@@ -443,6 +445,16 @@ export default function RootLayout() {
     checkPreviousCrash();
   }, []);
 
+  useEffect(() => {
+    appRuntimeLog("font startup gate", {
+      platform: Platform.OS,
+      fontsLoaded,
+      fontError: Boolean(fontError),
+    });
+    if (!fontsLoaded && !fontError) return;
+    void SplashScreen.hideAsync();
+  }, [fontError, fontsLoaded]);
+
   if (!fontsLoaded && !fontError) {
     return Platform.OS === "web" ? (
       <StartupState
@@ -465,19 +477,19 @@ export default function RootLayout() {
               <QueryClientProvider client={queryClient}>
                 <GestureHandlerRootView>
                   <KeyboardProvider>
-                    <AppAlertProvider>
-                      <AuthTokenBridge>
-                        <SubscriptionProvider>
-                          <AppProvider>
+                    <AuthTokenBridge>
+                      <SubscriptionProvider>
+                        <AppProvider>
+                          <AppAlertProvider>
                             <CatalogProvider>
                               <DownloadProvider>
-                                <RootLayoutNav fontsReady={fontsLoaded || Boolean(fontError)} />
+                                <RootLayoutNav />
                               </DownloadProvider>
                             </CatalogProvider>
-                          </AppProvider>
-                        </SubscriptionProvider>
-                      </AuthTokenBridge>
-                    </AppAlertProvider>
+                          </AppAlertProvider>
+                        </AppProvider>
+                      </SubscriptionProvider>
+                    </AuthTokenBridge>
                   </KeyboardProvider>
                 </GestureHandlerRootView>
               </QueryClientProvider>
