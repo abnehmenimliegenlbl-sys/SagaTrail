@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { getCuratedPoiSummary } from "./curatedPoiInfo";
+import { getCuratedPoiNarration, getCuratedPoiSummary } from "./curatedPoiInfo";
 import { fetchCommonsImageSource } from "./wikipedia";
 
 test("returns the Lörrach park history for the Hebelpark bus stop", () => {
@@ -47,6 +47,39 @@ test("returns documented facts for the Hebel-Denkmal", () => {
   );
 });
 
+test("returns Zoo Basel's verified Kinderzoo details and narration", () => {
+  const result = getCuratedPoiSummary(
+    "Kinderzoo",
+    "tourism=attraction",
+    47.5467252,
+    7.5794107,
+  );
+
+  assert.ok(result);
+  assert.equal(result.title, "Kinderzoo im Zoo Basel");
+  assert.equal(result.url, "https://www.zoobasel.ch/de/zooerlebnisse/r/19/kinderzoo/");
+  assert.equal(result.lang, "de");
+  assert.match(result.extract, /Kinder ab acht Jahren/);
+  assert.match(result.extract, /Bauernhof-Streichelgehege/);
+  assert.deepEqual(result.sources, [
+    {
+      role: "text",
+      provider: "Zoo Basel",
+      title: "Arbeiten im Kinderzoo",
+      url: result.url,
+    },
+  ]);
+  assert.match(
+    getCuratedPoiNarration(
+      "Kinderzoo",
+      "tourism=attraction",
+      result.extract,
+      "de",
+    ) ?? "",
+    /Tierpflegerinnen und Tierpfleger leiten sie dabei an/,
+  );
+});
+
 test("does not apply Lörrach facts to distant or different POIs", () => {
   assert.equal(
     getCuratedPoiSummary("Hebelpark", "highway=bus_stop", 47.62, 7.66),
@@ -72,6 +105,31 @@ test("does not apply Lörrach facts to distant or different POIs", () => {
   assert.ok(park);
   assert.match(stop.extract, /Haltestelle/);
   assert.doesNotMatch(park.extract, /Haltestelle/);
+});
+
+test("does not apply Kinderzoo details to distant or different POIs", () => {
+  assert.equal(
+    getCuratedPoiSummary("Kinderzoo", "tourism=attraction", 47.55, 7.58),
+    null,
+  );
+  assert.equal(
+    getCuratedPoiSummary(
+      "Kinderzoo",
+      "leisure=park",
+      47.5467252,
+      7.5794107,
+    ),
+    null,
+  );
+  assert.equal(
+    getCuratedPoiSummary(
+      "Zoo Basel",
+      "tourism=attraction",
+      47.5467252,
+      7.5794107,
+    ),
+    null,
+  );
 });
 
 test("resolves Commons thumbnail metadata without treating image text as POI facts", async () => {

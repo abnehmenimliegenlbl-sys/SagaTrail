@@ -17,6 +17,9 @@ const HEBELPARK_PAGE_URL =
   "https://www.loerrach.de/de/Loerrach-Erleben/Tourismus/EntdeckensWert/NaturLust/Parks";
 const LORRACH_HISTORY_URL =
   "https://www.loerrach.de/de/Stadt-Buergerschaft/Loerrach-im-ueberblick/Stadtportraet/Geschichte";
+const KINDERZOO_LOCATION = { lat: 47.5467252, lng: 7.5794107 };
+const KINDERZOO_URL =
+  "https://www.zoobasel.ch/de/zooerlebnisse/r/19/kinderzoo/";
 const HEBELPARK_HISTORY =
   "Der Hebelpark in Lörrach diente früher als Friedhof. Nachdem der Friedhof an der Stadtkirche nach der Pest zu klein geworden war, wurde er hierher verlegt. In den 1860er Jahren, nach Inbetriebnahme der Bahnlinie, wurde der Friedhof an die Brombacher Straße verlegt. Eine Platte an der Turmstraße erinnert an den früheren Stadtturm, der von 1688 bis 1867 bestand.";
 const HEBELPARK_STOP_EXTRACT =
@@ -27,6 +30,25 @@ const HEBELPARK_STORY =
   "Der Hebelpark in Lörrach diente früher als Friedhof. Nachdem der Friedhof an der Stadtkirche nach der Pest zu klein geworden war, wurde er hierher verlegt. In den 1860er Jahren, nach Inbetriebnahme der Bahnlinie, wurde der Friedhof an die Brombacher Straße verlegt. Eine Platte an der Turmstraße erinnert an den früheren Stadtturm, der von 1688 bis 1867 bestand.";
 const HEBEL_MEMORIAL_EXTRACT =
   "Das überlebensgroße Denkmal in der Mitte des Hebelparks erinnert an den alemannischen Heimatdichter Johann Peter Hebel. Die Stadtchronik nennt 1910 als Jahr der Einweihung. Am 10. Mai, dem Hebeltag, fanden hier Kundgebungen statt, bei denen Schülerinnen und Schüler Gedichte vortrugen.";
+const KINDERZOO_EXTRACT =
+  "Im Kinderzoo des Zoo Basel können Kinder ab acht Jahren im Bauernhof-Streichelgehege bei der Pflege der Tiere mithelfen. Unter Anleitung einer Tierpflegerin oder eines Tierpflegers übernehmen sie zum Beispiel Stallreinigung, bereiten ein frisches Strohbett vor oder füllen die Tränkebecken.";
+const KINDERZOO_STORY =
+  "Im Kinderzoo des Zoo Basel können Kinder ab acht Jahren im Bauernhof-Streichelgehege bei der Tierpflege mithelfen. Tierpflegerinnen und Tierpfleger leiten sie dabei an – etwa beim Reinigen des Stalls, beim Vorbereiten eines frischen Strohbets und beim Auffüllen der Tränkebecken.";
+const KINDERZOO_SUMMARY: CuratedPoiSummary = {
+  title: "Kinderzoo im Zoo Basel",
+  extract: KINDERZOO_EXTRACT,
+  url: KINDERZOO_URL,
+  lang: "de",
+  image: null,
+  sources: [
+    {
+      role: "text",
+      provider: "Zoo Basel",
+      title: "Arbeiten im Kinderzoo",
+      url: KINDERZOO_URL,
+    },
+  ],
+};
 
 function normalizeName(name: string): string {
   return name
@@ -91,6 +113,14 @@ export function getCuratedPoiSummary(
   const location = { lat, lng };
 
   if (
+    normalizedName === "kinderzoo" &&
+    kind === "tourism=attraction" &&
+    distanceMeters(location, KINDERZOO_LOCATION) <= 150
+  ) {
+    return KINDERZOO_SUMMARY;
+  }
+
+  if (
     normalizedName === "hebelpark" &&
     distanceMeters(location, PARK_CENTER) <= 300
   ) {
@@ -139,6 +169,13 @@ export function getCuratedPoiNarration(
 
   const normalizedName = normalizeName(name);
   const sourceText = extract.trim();
+  if (
+    normalizedName === "kinderzoo" &&
+    kind === "tourism=attraction" &&
+    sourceText === KINDERZOO_EXTRACT
+  ) {
+    return KINDERZOO_STORY;
+  }
   if (
     normalizedName === "hebelpark" &&
     kind === "highway=bus_stop" &&
