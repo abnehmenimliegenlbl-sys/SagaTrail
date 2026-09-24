@@ -32,3 +32,4 @@ export * from "./communities";
 export * from "./communityMembers";
 export * from "./communityAdmins";
 export * from "./communityPortalTokens";
+export * from "./clientDebugLogs";

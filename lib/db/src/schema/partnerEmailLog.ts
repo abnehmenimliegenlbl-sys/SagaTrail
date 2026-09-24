@@ -1,16 +1,23 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 /** Jede versendete (oder fehlgeschlagene) E-Mail einer Kampagne. */
-export const partnerEmailLogTable = pgTable("partner_email_log", {
-  id:            uuid("id").primaryKey().defaultRandom(),
-  campaignId:    uuid("campaign_id").notNull(),
-  subject:       text("subject").notNull(),
-  email:         text("email").notNull(),
-  recipientName: text("recipient_name"),
-  status:        text("status").notNull(), // 'ok' | 'fail'
-  error:         text("error"),
-  sentAt:        timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const partnerEmailLogTable = pgTable(
+  "partner_email_log",
+  {
+    id:            uuid("id").primaryKey().defaultRandom(),
+    campaignId:    uuid("campaign_id").notNull(),
+    subject:       text("subject").notNull(),
+    email:         text("email").notNull(),
+    recipientName: text("recipient_name"),
+    status:        text("status").notNull(), // 'ok' | 'fail'
+    error:         text("error"),
+    sentAt:        timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_pel_campaign").on(table.campaignId),
+    index("idx_pel_email").on(table.email),
+  ],
+);
 
 /** E-Mail-Adressen die sich abgemeldet haben. */
 export const partnerEmailBlocklistTable = pgTable("partner_email_blocklist", {

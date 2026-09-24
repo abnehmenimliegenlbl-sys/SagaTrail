@@ -1,4 +1,13 @@
-import { pgTable, text, uuid, timestamp, real } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import {
+  index,
+  pgTable,
+  real,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 /**
  * Einheitliche Lead-Tabelle – ersetzt WP-MySQL als primäre Quelle.
@@ -26,4 +35,13 @@ export const partnerLeadsTable = pgTable("partner_leads", {
   lng:       real("lng"),
   tier:      text("tier"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("idx_pl_quelle_osm")
+    .on(table.quelle, table.osmId)
+    .where(sql`${table.osmId} IS NOT NULL`),
+  uniqueIndex("idx_pl_orgs_email")
+    .on(table.email)
+    .where(sql`${table.quelle} = 'orgs' AND ${table.email} IS NOT NULL`),
+  index("idx_pl_kanton").on(table.kanton),
+  index("idx_pl_quelle").on(table.quelle),
+]);

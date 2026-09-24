@@ -4,35 +4,6 @@ import { sql } from "drizzle-orm";
 
 const router: IRouter = Router();
 const PERSISTED_TAGS = new Set(["decision_flow", "story_audio"]);
-let tableReady: Promise<void> | null = null;
-
-function ensureDebugLogTable(): Promise<void> {
-  if (!tableReady) {
-    tableReady = db
-      .execute(sql`
-        CREATE TABLE IF NOT EXISTS client_debug_logs (
-          id BIGSERIAL PRIMARY KEY,
-          tag TEXT NOT NULL,
-          message TEXT NOT NULL,
-          event_id TEXT,
-          emitted_at TIMESTAMPTZ,
-          sequence INTEGER,
-          client_hike_id TEXT,
-          hike_debug_instance_id TEXT,
-          data JSONB NOT NULL DEFAULT '[]'::jsonb,
-          received_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `)
-      .then(() =>
-        db.execute(sql`
-          CREATE INDEX IF NOT EXISTS client_debug_logs_received_idx
-          ON client_debug_logs (received_at DESC)
-        `),
-      )
-      .then(() => undefined);
-  }
-  return tableReady;
-}
 
 function firstDataObject(data: unknown): Record<string, unknown> {
   const value = Array.isArray(data) ? data[0] : data;
@@ -66,7 +37,6 @@ router.post("/debug/log", async (req, res) => {
   );
   if (PERSISTED_TAGS.has(normalizedTag)) {
     try {
-      await ensureDebugLogTable();
       const context = firstDataObject(data);
       await db.execute(sql`
         INSERT INTO client_debug_logs (
@@ -110,7 +80,6 @@ router.get("/debug/logs", async (req, res) => {
   const parsedLimit = Number(req.query.limit ?? 500);
   const limit = Math.max(1, Math.min(2_000, Number.isFinite(parsedLimit) ? parsedLimit : 500));
   try {
-    await ensureDebugLogTable();
     const result = requestedTag
       ? await db.execute(sql`
           SELECT id, tag, message, event_id AS "eventId",

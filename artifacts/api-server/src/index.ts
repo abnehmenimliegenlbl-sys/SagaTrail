@@ -114,8 +114,6 @@ const server = app.listen(port, async (err) => {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_pel_campaign ON partner_email_log(campaign_id)`);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_pel_email    ON partner_email_log(email)`);
     logger.info("Schema-Migration: partner_email_log + blocklist sichergestellt");
   } catch (migErr) {
     logger.warn({ err: migErr }, "Schema-Migration partner_email_log fehlgeschlagen (nicht kritisch)");
@@ -173,18 +171,6 @@ const server = app.listen(port, async (err) => {
         created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
-    await db.execute(sql`
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_pl_quelle_osm
-        ON partner_leads(quelle, osm_id)
-        WHERE osm_id IS NOT NULL
-    `);
-    await db.execute(sql`
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_pl_orgs_email
-        ON partner_leads(email)
-        WHERE quelle = 'orgs' AND email IS NOT NULL
-    `);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_pl_kanton ON partner_leads(kanton)`);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_pl_quelle ON partner_leads(quelle)`);
     logger.info("Schema-Migration: partner_leads sichergestellt");
   } catch (migErr) {
     logger.warn({ err: migErr }, "Schema-Migration partner_leads fehlgeschlagen (nicht kritisch)");

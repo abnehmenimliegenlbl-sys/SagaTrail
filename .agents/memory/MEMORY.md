@@ -8,7 +8,7 @@
 - [OpenTopoMap HTTP/2 tile cache](opentopomap-http2-tile-cache.md) — a cached `Upgrade: h2c` header can break one WKWebView tile; retry same z/x/y with a query cache-buster.
 - [opendata arrivals at small stops](sagatrail-opendata-arrivals.md) — type=arrival gives arrival=null at small stops; must fall back to departure time or board is empty; lookups use route coords, not user GPS.
 - [EAWS avalanche API](sagatrail-eaws-avalanche.md) — EAWS v6 Connect-JSON; empty body in summer = correct no-bulletin; HikingRoute has no .canton; get canton via sagas.find(s=>s.id===route.sagaId)?.canton + kantonSlug().
-- [Drizzle dev schema push](drizzle-dev-schema-push.md) — new tables and existing constraint conflicts can require a pseudo-TTY; choose create/no-truncate, then restart the API.
+- [Drizzle dev schema push](drizzle-dev-schema-push.md) — model runtime tables/indexes in Drizzle or Publish can drop prod-only objects; use a TTY and choose create/no-truncate.
 - [OSM stitching lessons](sagatrail-stitching-ordered-traversal.md) — stitch in OSM member order (greedy fails on loops); kink-optimizers need a length budget; version-gate cleanups; never grep for literal version numbers left behind.
 - [SagaTrail Swiss geo/hiking data](sagatrail-swiss-geo-data.md) — SAC difficulty from swissTLM3D identify (hikingtype), tolerance is in pixels, ASTRA Wanderland is WMS-only (not identifiable).
 - [Orval query params -> api-zod barrel clash](orval-query-params-barrel.md) — first endpoint with query params breaks the api-zod barrel (TS2308); fix by `export * as types` in its index.ts.
