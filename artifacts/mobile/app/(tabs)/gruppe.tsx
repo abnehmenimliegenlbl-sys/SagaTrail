@@ -121,9 +121,9 @@ export default function Gruppe() {
           ? t.errorAlreadyInGroup
           : groupError === "expired"
             ? t.errorExpired
-      : groupError === "network"
-        ? t.errorNetwork
-        : t.errorUnknown
+            : groupError === "network"
+              ? t.errorNetwork
+              : t.errorUnknown
     : null;
 
   return (
@@ -383,8 +383,7 @@ export default function Gruppe() {
                            ? colors.destructive : colors.accent)
                        : colors.mutedForeground,
                    }]}>
-                     {m.location
-                       ? (Date.now() - m.location.updatedAt > 120_000
+                      {m.location
                         ? (Date.now() - m.location.updatedAt > 120_000
                             ? t.locationStale
                             : t.locationFresh)

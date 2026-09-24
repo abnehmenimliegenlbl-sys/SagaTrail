@@ -72,6 +72,7 @@ import { useColors } from "@/hooks/useColors";
 import { meetupCreatePath } from "@/lib/meetupNavigation";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
+import { useExtendedComponentStrings } from "@/lib/i18n/components";
 import {
   bboxAroundGeometry,
   distanzZuSegmentKm,
@@ -92,8 +93,25 @@ import {
 import { hasServerThemeEvidence } from "@/lib/routeThemeIndex";
 import { formatQualityDate, routeQualityLabels } from "@/lib/routeQualityLabels";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
+import { useHikeStrings } from "@/lib/i18n/screens/hike";
 
 const WEB_TOP = 67;
+const ROUTE_FALLBACK_LABELS: Record<string, {
+  report: string;
+  water: string;
+  parking: string;
+  maxElevation: string;
+}> = {
+  de: { report: "Meldung", water: "Trinkwasser", parking: "Parkplatz", maxElevation: "Max. Höhe" },
+  gsw: { report: "Meldig", water: "Trinkwasser", parking: "Parkplatz", maxElevation: "Max. Höchi" },
+  fr: { report: "Signalement", water: "Eau potable", parking: "Parking", maxElevation: "Altitude max." },
+  it: { report: "Segnalazione", water: "Acqua potabile", parking: "Parcheggio", maxElevation: "Altitudine max." },
+  en: { report: "Report", water: "Drinking water", parking: "Parking", maxElevation: "Max. elevation" },
+  zh: { report: "报告", water: "饮用水", parking: "停车场", maxElevation: "最高海拔" },
+  es: { report: "Aviso", water: "Agua potable", parking: "Aparcamiento", maxElevation: "Altitud máx." },
+  pt: { report: "Aviso", water: "Água potável", parking: "Estacionamento", maxElevation: "Altitude máx." },
+  ru: { report: "Сообщение", water: "Питьевая вода", parking: "Парковка", maxElevation: "Макс. высота" },
+};
 
 // ─── Partner-Marker Hilfskonstanten (analog hike/[id].tsx) ──────────────────
 const PARTNER_WOCHENTAGE: Record<string, Record<string, string>> = {
@@ -121,7 +139,7 @@ function formatPartnerOeffnungszeit(
     pt: ["Fecha às", "Abre", "hoje", "amanhã", "Abre na", ""],
     zh: ["于", "开放", "今天", "明天", "", ""],
     ru: ["Закрывается в", "Открывается", "сегодня", "завтра", "", ""],
-  }[lang as "de" | "gsw" | "en" | "fr" | "it" | "es" | "pt" | "zh" | "ru"] ?? ["Closes at", "Opens", "today", "tomorrow", "Opens on", ""];
+  }[lang as "de" | "gsw" | "en" | "fr" | "it" | "es" | "pt" | "zh" | "ru"] ?? ["Schliesst um", "Öffnet", "heute", "morgen", "Öffnet am", "Uhr"];
   if (partner.istOffen && partner.schliesstUm) return `${copy[0]} ${partner.schliesstUm}${copy[5] ? ` ${copy[5]}` : ""}`;
   if (!partner.istOffen && partner.oeffnetAmTag && partner.oeffnetUm) {
     const tag = partner.oeffnetAmTag;
@@ -147,8 +165,10 @@ const PARTNER_KAT_DEFAULT: { icon: FeatherIconName; label: string } = { icon: "c
 
 export default function Routenplanung() {
   const t = useRouteStrings();
+  const hikeT = useHikeStrings();
   const meetupT = useMeetupStrings();
   const ts = useSharedStrings();
+  const componentT = useExtendedComponentStrings();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -468,7 +488,7 @@ export default function Routenplanung() {
         const arr = Array.isArray(data)
           ? (data as Array<Record<string, unknown>>).map((item) => ({
               id: String(item.id ?? ""),
-              title: String(item.titel ?? item.title ?? "Meldung"),
+              title: String(item.titel ?? item.title ?? (ROUTE_FALLBACK_LABELS[language] ?? ROUTE_FALLBACK_LABELS.en).report),
               details: typeof item.beschreibung === "string"
                 ? item.beschreibung
                 : typeof item.details === "string"
@@ -792,7 +812,7 @@ export default function Routenplanung() {
       .then((r) => r.json())
       .then((data: { osmId: string; lat: number; lng: number; name: string | null }[]) => {
         if (!cancelled && Array.isArray(data)) {
-          const mapped = data.map((w) => ({ id: w.osmId, name: w.name ?? "Trinkwasser", lat: w.lat, lng: w.lng }));
+          const mapped = data.map((w) => ({ id: w.osmId, name: w.name ?? (ROUTE_FALLBACK_LABELS[language] ?? ROUTE_FALLBACK_LABELS.en).water, lat: w.lat, lng: w.lng }));
           setWaterSources(filterByRouteCorridor(mapped, geom, 0.75));
         }
       })
@@ -830,7 +850,7 @@ export default function Routenplanung() {
           if (item.capacity) descParts.push(`${item.capacity} Plätze`);
           merged.push({
             id: item.osmId,
-            name: item.name ?? item.parkingType ?? "Parkplatz",
+            name: item.name ?? item.parkingType ?? (ROUTE_FALLBACK_LABELS[language] ?? ROUTE_FALLBACK_LABELS.en).parking,
             lat: item.lat,
             lng: item.lng,
             description: descParts.length > 0 ? descParts.join(" · ") : null,
@@ -1222,7 +1242,7 @@ export default function Routenplanung() {
         <Animated.View entering={FadeInDown} style={styles.statsGrid}>
           <StatTile icon="map-pin"     label={t.distance} value={`${meta.distanceKm}`}                         unit="km" />
           <StatTile icon="trending-up" label={t.ascent}   value={`${meta.ascentM}`}                            unit="hm" />
-          <StatTile icon="triangle"    label="Max. Höhe"  value={`${elevProfile && elevProfile.length > 1 ? Math.max(...elevProfile.map((p) => p.altM)) : (route.maxElevationM ?? meta.ascentM)}`} unit="m" />
+          <StatTile icon="triangle"    label={(ROUTE_FALLBACK_LABELS[language] ?? ROUTE_FALLBACK_LABELS.en).maxElevation}  value={`${elevProfile && elevProfile.length > 1 ? Math.max(...elevProfile.map((p) => p.altM)) : (route.maxElevationM ?? meta.ascentM)}`} unit="m" />
           <StatTile icon="clock"       label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`}         unit="h"  />
           <StatTile icon="shield"      label={t.sacScale} value={meta.sac}                                     unit=""   />
         </Animated.View>
@@ -1449,7 +1469,7 @@ export default function Routenplanung() {
                 { color: colors.accent },
               ]}
             >
-              3D ROUTE
+              {componentT.virtualEyebrow}
             </Text>
             <Text
               style={[
@@ -1457,7 +1477,7 @@ export default function Routenplanung() {
                 { color: colors.foreground },
               ]}
             >
-              Diese Route virtuell ansehen
+              {componentT.virtualTitle}
             </Text>
             <Text
               style={[
@@ -1465,9 +1485,7 @@ export default function Routenplanung() {
                 { color: colors.mutedForeground },
               ]}
             >
-              {elevProfile && elevProfile.length >= 2
-                ? "Übersicht, Gehen und Flug"
-                : "Wird vorbereitet …"}
+              {componentT.virtualSubtitle}
             </Text>
           </View>
           {elevProfileLoading && !elevProfile ? (
@@ -1528,7 +1546,7 @@ export default function Routenplanung() {
             ]}
           >
             <Text style={[styles.elevChartTitle, { color: colors.foreground }]}>
-              Über diese Route
+              {componentT.virtualTitle}
             </Text>
             <Text
               style={{ color: colors.mutedForeground, fontSize: 14, lineHeight: 21 }}
@@ -1539,7 +1557,7 @@ export default function Routenplanung() {
             <View style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 16 }}>
               <Pressable onPress={() => setBeschreibungOffen((v) => !v)} hitSlop={8}>
                 <Text style={{ color: colors.accent, fontSize: 13, fontFamily: fonts.bodyMedium }}>
-                  {beschreibungOffen ? "Weniger anzeigen" : "Mehr anzeigen"}
+                  {beschreibungOffen ? componentT.less : componentT.more}
                 </Text>
               </Pressable>
               {!!route.descriptionSource && beschreibungOffen && (
@@ -1548,7 +1566,7 @@ export default function Routenplanung() {
                   hitSlop={8}
                 >
                   <Text style={{ color: colors.mutedForeground, fontSize: 12, textDecorationLine: "underline" }}>
-                    Quelle: Wikipedia
+                    {componentT.sourceWikipedia}
                   </Text>
                 </Pressable>
               )}
@@ -2292,7 +2310,7 @@ export default function Routenplanung() {
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 11, color: colors.accent, fontFamily: fonts.bodyBold, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    {(PARTNER_KATEGORIE[selectedPartner.kategorie ?? ""] ?? PARTNER_KAT_DEFAULT).label}
+                    {componentT.partnerCategories[selectedPartner.kategorie ?? ""] ?? componentT.partnerCategories.default}
                   </Text>
                   <Text style={[styles.poiTitle, { color: colors.foreground }]}>
                     {selectedPartner.name}
@@ -2342,7 +2360,7 @@ export default function Routenplanung() {
                           onPress={() => Linking.openURL(selectedPartner.reservierungUrl!)}
                           style={{ backgroundColor: colors.accent, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 9 }}
                         >
-                          <Text style={{ color: "#fff", fontSize: 14, fontFamily: fonts.bodyBold }}>Reservieren</Text>
+                          <Text style={{ color: "#fff", fontSize: 14, fontFamily: fonts.bodyBold }}>{hikeT.partnerReservierung}</Text>
                         </Pressable>
                       )}
                       {!!selectedPartner.websiteUrl && (
@@ -2350,7 +2368,7 @@ export default function Routenplanung() {
                           onPress={() => Linking.openURL(selectedPartner.websiteUrl!)}
                           style={{ borderWidth: 1.5, borderColor: colors.accent, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 9 }}
                         >
-                          <Text style={{ color: colors.accent, fontSize: 14 }}>Website</Text>
+                          <Text style={{ color: colors.accent, fontSize: 14 }}>{hikeT.partnerWebsite}</Text>
                         </Pressable>
                       )}
                     </View>
@@ -2361,7 +2379,7 @@ export default function Routenplanung() {
               {!!selectedPartner.angebot && (
                 <View style={{ backgroundColor: colors.accent + "20", borderRadius: 8, padding: 12, marginTop: 14, borderLeftWidth: 3, borderLeftColor: colors.accent }}>
                   <Text style={{ fontSize: 11, color: colors.accent, fontFamily: fonts.bodyBold, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    SagaTrail-Angebot
+                    {hikeT.partnerOffer}
                   </Text>
                   <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 0 }]}>
                     {selectedPartner.angebot}

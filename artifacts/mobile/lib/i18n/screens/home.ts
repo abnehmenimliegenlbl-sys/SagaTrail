@@ -26,6 +26,8 @@ export interface HomeStrings {
   communityHint: string;
   searchCanton: string;
   clearSearch: string;
+  recommendationTitle: string;
+  recommendationHint: string;
 }
 
 const HOME_STRINGS: StringsDict<HomeStrings> = {
@@ -55,6 +57,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     communityHint: "Alle Communities, denen du angehörst",
     searchCanton: "Kanton suchen",
     clearSearch: "Suche löschen",
+    recommendationTitle: "Beste Route für heute",
+    recommendationHint: "Zeit, Begleitung, Wetter und ÖV zusammen entscheiden lassen",
   },
   gsw: {
     welcomeBack: "Willkomme zrugg",
@@ -82,6 +86,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     communityHint: "Alli Communitiys, zu dene du ghörsch",
     searchCanton: "Kanton sueche",
     clearSearch: "Suechi lösche",
+    recommendationTitle: "Bescht Route für hüt",
+    recommendationHint: "Ziit, Begleitig, Wätter und ÖV zäme entscheide lah",
   },
   en: {
     welcomeBack: "Welcome back",
@@ -109,6 +115,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     communityHint: "All communities you belong to",
     searchCanton: "Search canton",
     clearSearch: "Clear search",
+    recommendationTitle: "Best route for today",
+    recommendationHint: "Choose with time, group, weather and transport together",
   },
   fr: {
     welcomeBack: "Bon retour parmi nous",
@@ -136,6 +144,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     communityHint: "Toutes les communautés auxquelles tu appartiens",
     searchCanton: "Rechercher un canton",
     clearSearch: "Effacer la recherche",
+    recommendationTitle: "Meilleur itinéraire pour aujourd’hui",
+    recommendationHint: "Choisir selon le temps, le groupe, la météo et les transports",
   },
   it: {
     welcomeBack: "Bentornato/a",
@@ -163,6 +173,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     communityHint: "Tutte le community di cui fai parte",
     searchCanton: "Cerca cantone",
     clearSearch: "Cancella ricerca",
+    recommendationTitle: "Il miglior percorso per oggi",
+    recommendationHint: "Decidi insieme in base a tempo, compagnia, meteo e trasporti",
   },
   es: {
     welcomeBack: "Bienvenido/a de nuevo",
@@ -190,6 +202,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     communityHint: "Todas las comunidades a las que perteneces",
     searchCanton: "Buscar cantón",
     clearSearch: "Borrar búsqueda",
+    recommendationTitle: "La mejor ruta para hoy",
+    recommendationHint: "Decide teniendo en cuenta tiempo, compañía, clima y transporte",
   },
   pt: {
     welcomeBack: "Bem-vindo/a de volta",
@@ -217,6 +231,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     communityHint: "Todas as comunidades a que pertence",
     searchCanton: "Pesquisar cantão",
     clearSearch: "Limpar pesquisa",
+    recommendationTitle: "A melhor rota para hoje",
+    recommendationHint: "Decida considerando tempo, companhia, clima e transporte",
   },
   zh: {
     welcomeBack: "欢迎回来",
@@ -244,6 +260,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     communityHint: "你加入的所有社区",
     searchCanton: "搜索联邦州",
     clearSearch: "清除搜索",
+    recommendationTitle: "今天的最佳路线",
+    recommendationHint: "综合考虑时间、同行者、天气和交通",
   },
   ru: {
     welcomeBack: "С возвращением",
@@ -271,6 +289,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     communityHint: "Все сообщества, в которых ты состоишь",
     searchCanton: "Найти кантон",
     clearSearch: "Очистить поиск",
+    recommendationTitle: "Лучший маршрут на сегодня",
+    recommendationHint: "Учитывай время, компанию, погоду и транспорт",
   },
 };
 

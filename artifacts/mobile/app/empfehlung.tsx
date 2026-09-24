@@ -64,6 +64,7 @@ import {
   routeThemeCache,
 } from "@/lib/routeThemeIndex";
 import { routePathWithCommunity } from "@/lib/meetupNavigation";
+import { useRecommendationStrings as useLocalizedRecommendationStrings } from "@/lib/i18n/screens/empfehlung";
 
 const WEB_TOP = 67;
 const INTERESTS: RouteThemeKey[] = [
@@ -132,166 +133,6 @@ type Copy = {
   caution: Record<string, string>;
 };
 
-const COPY_DE: Copy = {
-  eyebrow: "Deine nächste Wanderung",
-  title: "Was passt heute?",
-  intro:
-    "Sag uns kurz, wie dein Tag aussieht. SagaTrail wählt eine konkrete Route und zeigt dir offen, warum sie passt.",
-  locationScope: "Suche aktuelle Routen in deiner Nähe per GPS",
-  allCantons: "Standort nicht verfügbar – zeige Routen aus allen Kantonen",
-  time: "Wie viel Zeit hast du?",
-  fitness: "Wie viel möchtest du heute leisten?",
-  companion: "Wer ist dabei?",
-  travel: "Wie möchtest du anreisen?",
-  returnConnection: "ÖV-Rückweg soll heute gut funktionieren",
-  nearbySearch: "Nach meiner GPS-Position suchen",
-  nearbyLocating: "Standort wird ermittelt …",
-  nearbyDenied:
-    "Standort nicht verfügbar – erlaube den Zugriff für die Suche in deiner Nähe.",
-  nearbyMode: "In meiner Nähe",
-  manualMode: "Ort eingeben",
-  manualHint: "Wähle einen Ort für die Routensuche",
-  placeOptional: "Suchort eingeben",
-  placePlaceholder: "Ort, Gemeinde oder Region",
-  placeSearching: "Orte werden gesucht …",
-  placeNoResults: "Kein passender Ort gefunden",
-  placeSelected: (place) => `Suche nahe ${place}`,
-  locationGroup: "Suchort",
-  profileGroup: "Wegprofil",
-  travelGroup: "Begleitung & Anreise",
-  interestsGroup: "Interessen",
-  interests: "Was möchtest du unterwegs sehen?",
-  find: "Beste Route für heute finden",
-  searching: "Route, Wetter, Bedingungen und Anreise werden verglichen …",
-  noRoutes:
-    "Keine Route passt gleichzeitig zu Zeit, Begleitung und Belastung. Versuche ein grösseres Zeitbudget.",
-  error:
-    "Die Empfehlung konnte gerade nicht geladen werden. Prüfe die Verbindung und versuche es erneut.",
-  bestMatch: "Das ist heute deine beste Wahl",
-  why: "Warum diese Route?",
-  themeArea: "Themenbereich",
-  noThemeEvidence: "Für diese Route ist noch kein Themenbeleg vorhanden.",
-  noThemeMatch:
-    "Keine Route mit deinen ausgewählten Themen passt gerade zu den übrigen Filtern.",
-  alternatives: "Weitere passende Optionen",
-  open: "Route ansehen",
-  weather: "Wetter",
-  conditions: "Wegbedingungen",
-  transit: "ÖV-Rückweg",
-  parking: "Parkplatz",
-  dataUnavailable: {
-    weather: "Wetter: keine Live-Daten",
-    conditions: "Wegbedingungen: keine aktuelle Meldung",
-    transit: "ÖV: keine Live-Daten für diesen Punkt",
-    parking: "Parkplatz: keine Live-Daten",
-  },
-  values: {
-    time: { 90: "1½ Stunden", 180: "3 Stunden", 300: "5 Stunden" },
-    fitness: { easy: "Locker", moderate: "Mittel", strong: "Anspruchsvoll" },
-    companion: {
-      solo: "Allein / Erwachsene",
-      children: "Mit Kindern",
-      wheelchair: "Mit Rollstuhl",
-    },
-    travel: { publicTransport: "ÖV", car: "Auto", flexible: "Offen" },
-  },
-  reason: {
-    time: (r) =>
-      `passt in dein Zeitbudget von ${Math.round((r.route.minutes / 60) * 10) / 10} h`,
-    fitness: () => "passt zu deiner gewünschten Belastung",
-    companion: () => "passt zu deiner Begleitung",
-    interest: () => "trifft mindestens eines deiner Themen",
-    nearby: () => "liegt in deiner Nähe",
-    season: () => "ist für die aktuelle Saison eingeordnet",
-    weather: () => "das aktuelle Wetter spricht dafür",
-    conditions: () => "die aktuellen Wegbedingungen sprechen dafür",
-    return: () => "am Ziel gibt es passende ÖV-Abfahrten",
-    arrival: () => "der Start ist mit ÖV erreichbar",
-    parking: () => "am Start wurde ein Parkplatz gefunden",
-  },
-  caution: {
-    time: "liegt über deinem Zeitbudget",
-    fitness: "ist für deine gewünschte Belastung anspruchsvoller",
-    companion: "die Eignung für deine Begleitung ist nicht ideal",
-    interest: "deine ausgewählten Themen sind dort nicht belegt",
-    season: "ist saisonal weniger passend",
-    weather: "das aktuelle Wetter verlangt Vorsicht",
-    conditions: "es gibt aktuelle Hinweise zu den Wegbedingungen",
-    return: "ÖV-Rückweg ist nicht zuverlässig belegt",
-    nearby: "liegt weiter von deinem Standort entfernt",
-  },
-};
-
-const COPY_EN: Copy = {
-  ...COPY_DE,
-  eyebrow: "Your next hike",
-  title: "What fits today?",
-  intro:
-    "Tell us how your day looks. SagaTrail chooses one concrete route and explains why it fits.",
-  locationScope: "Find current routes near you using GPS",
-  allCantons: "Location unavailable – showing routes from all cantons",
-  time: "How much time do you have?",
-  fitness: "How much effort do you want today?",
-  companion: "Who is joining?",
-  travel: "How do you want to travel?",
-  returnConnection: "A reliable public-transport return matters today",
-  nearbySearch: "Search near my GPS position",
-  nearbyLocating: "Getting your location …",
-  nearbyDenied: "Location unavailable – allow access to search near you.",
-  nearbyMode: "Near me",
-  manualMode: "Enter a place",
-  manualHint: "Choose a place for your route search",
-  placeOptional: "Enter a search location",
-  placePlaceholder: "Town, municipality or region",
-  placeSearching: "Searching places …",
-  placeNoResults: "No matching place found",
-  placeSelected: (place) => `Searching near ${place}`,
-  locationGroup: "Search area",
-  profileGroup: "Trail profile",
-  travelGroup: "Company & travel",
-  interestsGroup: "Interests",
-  interests: "What would you like to see?",
-  find: "Find my best route today",
-  searching: "Comparing routes, weather, conditions and transport …",
-  noRoutes:
-    "No route fits the time, group and effort together. Try a larger time budget.",
-  error:
-    "The recommendation could not be loaded. Check your connection and try again.",
-  bestMatch: "Your best choice today",
-  why: "Why this route?",
-  themeArea: "Theme area",
-  noThemeEvidence: "No theme evidence is available for this route yet.",
-  noThemeMatch:
-    "No route with your selected themes currently matches the other filters.",
-  alternatives: "Other good options",
-  open: "View route",
-  weather: "Weather",
-  conditions: "Trail conditions",
-  transit: "Return transport",
-  parking: "Parking",
-  dataUnavailable: {
-    weather: "Weather: no live data",
-    conditions: "Trail conditions: no current report",
-    transit: "Public transport: no live data for this point",
-    parking: "Parking: no live data",
-  },
-  values: {
-    ...COPY_DE.values,
-    time: { 90: "1½ hours", 180: "3 hours", 300: "5 hours" },
-    fitness: { easy: "Easy", moderate: "Moderate", strong: "Demanding" },
-    companion: {
-      solo: "Solo / adults",
-      children: "With children",
-      wheelchair: "With wheelchair",
-    },
-    travel: {
-      publicTransport: "Public transport",
-      car: "Car",
-      flexible: "Open",
-    },
-  },
-};
-
 function signalLabel(
   signals: RecommendationSignals,
   preferences: RecommendationPreferences,
@@ -320,7 +161,7 @@ function signalLabel(
   }
   if (signals.parkingAvailable != null) {
     labels.push(
-      `${copy.parking}: ${signals.parkingAvailable ? "ja" : "nicht belegt"}`,
+        `${copy.parking}: ${signals.parkingAvailable ? "✓" : "—"}`,
     );
   } else if (preferences.travel === "car") {
     labels.push(copy.dataUnavailable.parking);
@@ -338,7 +179,7 @@ export default function Empfehlung() {
     : params.communityId;
   const { language } = useApp();
   const { loadCantonRoutes } = useCatalog();
-  const copy = language === "de" || language === "gsw" ? COPY_DE : COPY_EN;
+  const copy = useLocalizedRecommendationStrings();
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   const [timeBudgetMin, setTimeBudgetMin] = useState(180);

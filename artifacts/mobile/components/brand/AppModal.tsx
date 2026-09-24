@@ -17,6 +17,7 @@ import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
 import { CloseButton } from "@/components/brand/CloseButton";
 import { useColors } from "@/hooks/useColors";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
 
 /**
  * Einheitliches App-Modal im SagaTrail-Design (Frozen-Glass), das
@@ -56,9 +57,11 @@ export function AppModal({
   backdropStyle,
   cardStyle,
   scrollable = false,
-  closeLabel = "Schliessen",
+  closeLabel,
 }: AppModalProps) {
   const colors = useColors();
+  const shared = useSharedStrings();
+  const resolvedCloseLabel = closeLabel ?? shared.close;
 
   useEffect(() => {
     if (visible && Platform.OS !== "web") {
@@ -106,7 +109,7 @@ export function AppModal({
               ]}
             />
             <CloseButton
-              accessibilityLabel={closeLabel}
+              accessibilityLabel={resolvedCloseLabel}
               onPress={onRequestClose}
               style={styles.closeButton}
             />

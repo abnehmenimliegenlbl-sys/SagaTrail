@@ -41,6 +41,7 @@ import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useCollectionStrings } from "@/lib/i18n/screens/collection";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
+import { useMeetupPhotoStrings } from "@/lib/i18n/screens/meetupPhotos";
 import { useApp } from "@/contexts/AppContext";
 import { alert } from "@/lib/appAlert";
 
@@ -52,6 +53,7 @@ export default function MeetupDetail() {
   const router = useRouter();
   const t = useMeetupStrings();
   const collectionT = useCollectionStrings();
+  const photoT = useMeetupPhotoStrings();
   const { language, profile } = useApp();
   const flow = FLOW_COPY[language] ?? FLOW_COPY.en;
   const params = useLocalSearchParams<{ id?: string }>();
@@ -543,7 +545,7 @@ export default function MeetupDetail() {
             {isCompleted && (meetup.joined || meetup.isOrganizer) ? (
               <SmallAction
                 icon="image"
-                label="Fotos"
+                label={photoT.title}
                 onPress={() => router.push(`/treffpunkt-fotos/${meetup.id}`)}
                 colors={colors}
               />

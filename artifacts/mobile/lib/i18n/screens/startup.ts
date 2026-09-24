@@ -1,4 +1,4 @@
-import { createUseStrings, StringsDict } from "../createStrings";
+import { createUseStrings, StringsDict, LanguageCode } from "../createStrings";
 
 export interface StartupStrings {
   preparing: string;
@@ -11,7 +11,7 @@ export interface StartupStrings {
   browsingMeanwhile: string;
 }
 
-const STARTUP_STRINGS: StringsDict<StartupStrings> = {
+export const STARTUP_STRINGS: StringsDict<StartupStrings> = {
   de: { preparing: "SagaTrail wird vorbereitet", loadingData: "Deine Daten und deine Wanderungen werden geladen.", checkingSignIn: "Anmeldung wird geprüft", restoringSession: "SagaTrail stellt deine Sitzung wieder her.", loadingProfile: "Dein Profil wird geladen", keepingTrips: "Deine gespeicherten Wanderungen bleiben erhalten.", checkingPermissions: "Berechtigungen werden geprüft", browsingMeanwhile: "Du kannst währenddessen weiter stöbern." },
   gsw: { preparing: "SagaTrail wird vorbereitet", loadingData: "Dini Date und dini Wanderige werde glade.", checkingSignIn: "Aamäldig wird prüeft", restoringSession: "SagaTrail stellt dini Sitzig wieder her.", loadingProfile: "Dis Profil wird glade", keepingTrips: "Dini gspeicherete Wanderige bliibed erhalte.", checkingPermissions: "Berechtigunge werde prüeft", browsingMeanwhile: "Du chasch derwiile wiiter stöbere." },
   fr: { preparing: "SagaTrail se prépare", loadingData: "Tes données et tes randonnées sont chargées.", checkingSignIn: "Connexion en cours de vérification", restoringSession: "SagaTrail restaure ta session.", loadingProfile: "Ton profil est chargé", keepingTrips: "Tes randonnées enregistrées restent disponibles.", checkingPermissions: "Vérification des autorisations", browsingMeanwhile: "Tu peux continuer à parcourir l'application." },
@@ -24,3 +24,6 @@ const STARTUP_STRINGS: StringsDict<StartupStrings> = {
 };
 
 export const useStartupStrings = createUseStrings(STARTUP_STRINGS);
+export function getStartupStrings(language: LanguageCode): StartupStrings {
+  return STARTUP_STRINGS[language];
+}

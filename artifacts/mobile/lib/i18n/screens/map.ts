@@ -42,6 +42,10 @@ export interface MapStrings {
   safetyPoiFilterHint: string;
   safetyPoiFilterAll: string;
   copyrightLabel: string;
+  safetyClusterLabel: string;
+  sagaMarkerLabel: string;
+  parkingMarkerLabel: string;
+  languageTag: string;
 }
 
 const MAP_STRINGS: StringsDict<MapStrings> = {
@@ -74,6 +78,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterHint: "Wähle aus, welche Sicherheitspunkte sichtbar sind.",
     safetyPoiFilterAll: "Alle Sicherheitspunkte",
     copyrightLabel: "Karten-Copyrights",
+    safetyClusterLabel: "Sicherheitspunkte",
+    sagaMarkerLabel: "Sage",
+    parkingMarkerLabel: "Parkplatz",
+    languageTag: "de",
   },
   gsw: {
     legendTitle: "Legände",
@@ -104,6 +112,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterHint: "Wähl, weli Sicherheitspunkt sichtbar sind.",
     safetyPoiFilterAll: "Alli Sicherheitspünkt",
     copyrightLabel: "Charte-Copyrights",
+    safetyClusterLabel: "Sicherheitspünkt",
+    sagaMarkerLabel: "Sag",
+    parkingMarkerLabel: "Parkplatz",
+    languageTag: "gsw",
   },
   fr: {
     legendTitle: "Légende",
@@ -134,6 +146,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterHint: "Choisissez les points de sécurité visibles.",
     safetyPoiFilterAll: "Tous les points de sécurité",
     copyrightLabel: "Copyright de la carte",
+    safetyClusterLabel: "Points de sécurité",
+    sagaMarkerLabel: "Légende",
+    parkingMarkerLabel: "Parking",
+    languageTag: "fr",
   },
   it: {
     legendTitle: "Legenda",
@@ -164,6 +180,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterHint: "Scegli quali punti di sicurezza mostrare.",
     safetyPoiFilterAll: "Tutti i punti di sicurezza",
     copyrightLabel: "Copyright della mappa",
+    safetyClusterLabel: "Punti di sicurezza",
+    sagaMarkerLabel: "Leggenda",
+    parkingMarkerLabel: "Parcheggio",
+    languageTag: "it",
   },
   en: {
     legendTitle: "Legend",
@@ -194,6 +214,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterHint: "Choose which safety points are visible.",
     safetyPoiFilterAll: "All safety points",
     copyrightLabel: "Map copyright",
+    safetyClusterLabel: "Safety points",
+    sagaMarkerLabel: "Legend",
+    parkingMarkerLabel: "Parking",
+    languageTag: "en",
   },
   zh: {
     legendTitle: "图例",
@@ -224,6 +248,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterHint: "选择要显示的安全点。",
     safetyPoiFilterAll: "所有安全兴趣点",
     copyrightLabel: "地图版权",
+    safetyClusterLabel: "安全点",
+    sagaMarkerLabel: "传说",
+    parkingMarkerLabel: "停车场",
+    languageTag: "zh",
   },
   es: {
     legendTitle: "Leyenda",
@@ -254,6 +282,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterHint: "Elige qué puntos de seguridad mostrar.",
     safetyPoiFilterAll: "Todos los puntos de seguridad",
     copyrightLabel: "Derechos de autor del mapa",
+    safetyClusterLabel: "Puntos de seguridad",
+    sagaMarkerLabel: "Leyenda",
+    parkingMarkerLabel: "Aparcamiento",
+    languageTag: "es",
   },
   pt: {
     legendTitle: "Legenda",
@@ -284,6 +316,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterHint: "Escolhe quais os pontos de segurança visíveis.",
     safetyPoiFilterAll: "Todos os pontos de segurança",
     copyrightLabel: "Direitos de autor do mapa",
+    safetyClusterLabel: "Pontos de segurança",
+    sagaMarkerLabel: "Lenda",
+    parkingMarkerLabel: "Estacionamento",
+    languageTag: "pt",
   },
   ru: {
     legendTitle: "Легенда",
@@ -314,6 +350,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     safetyPoiFilterHint: "Выберите видимые точки безопасности.",
     safetyPoiFilterAll: "Все точки безопасности",
     copyrightLabel: "Авторские права на карту",
+    safetyClusterLabel: "Точки безопасности",
+    sagaMarkerLabel: "Легенда",
+    parkingMarkerLabel: "Парковка",
+    languageTag: "ru",
   },
 };
 

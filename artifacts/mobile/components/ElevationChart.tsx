@@ -11,6 +11,7 @@ import Svg, {
 } from "react-native-svg";
 import { useColors } from "@/hooks/useColors";
 import { fonts } from "@/constants/typography";
+import { useElevationChartStrings } from "@/lib/i18n/components";
 
 export interface ElevationPoint {
   distanceKm: number;
@@ -35,15 +36,6 @@ const DANGER_TEXT_COLOR: Record<number, string> = {
   5: "#7f0000",
   6: "#300000",
 };
-const DANGER_LABEL: Record<number, string> = {
-  1: "Gefahrenstufe 1 – Gering",
-  2: "Gefahrenstufe 2 – Mäßig",
-  3: "Gefahrenstufe 3 – Erheblich",
-  4: "Gefahrenstufe 4 – Groß",
-  5: "Gefahrenstufe 5 – Sehr groß",
-  6: "Gefahrenstufe 6 – Extrem",
-};
-
 // ── UV-Index → Gefahrenstufe 1–5 ─────────────────────────────────────────────
 function uvToLevel(uv: number): number {
   if (uv < 3)  return 1;
@@ -90,6 +82,7 @@ export function ElevationChart({
   officialDistanceKm,
 }: Props) {
   const colors = useColors();
+  const t = useElevationChartStrings();
   const [svgWidth, setSvgWidth] = useState(0);
 
   if (profile.length < 2) return null;
@@ -117,17 +110,17 @@ export function ElevationChart({
   const hazards: Hazard[] = [];
 
   if (dangerLevel && dangerLevel >= 1) {
-    hazards.push({ level: dangerLevel, icon: "🏔️", label: `Lawine Stufe ${dangerLevel}` });
+    hazards.push({ level: dangerLevel, icon: "🏔️", label: t.avalanche(dangerLevel) });
     // Schnee/Eis: wenn Route über Schneegrenze reicht
     if (maxAlt > snowLineM) {
-      hazards.push({ level: dangerLevel, icon: "❄️", label: `Schnee/Eis ab ${snowLineM} m` });
+      hazards.push({ level: dangerLevel, icon: "❄️", label: t.snowIce(snowLineM) });
     }
   }
   if (isThunderstorm) {
-    hazards.push({ level: 4, icon: "⛈️", label: "Gewittergefahr" });
+    hazards.push({ level: 4, icon: "⛈️", label: t.thunderstorm });
   }
   if (uvIndex != null && uvIndex >= 3) {
-    hazards.push({ level: uvToLevel(uvIndex), icon: "☀️", label: `UV ${uvIndex.toFixed(0)}` });
+    hazards.push({ level: uvToLevel(uvIndex), icon: "☀️", label: t.uv(Math.round(uvIndex)) });
   }
 
   const effectiveLevel = hazards.length > 0
@@ -268,7 +261,7 @@ export function ElevationChart({
             {sortedHazards.map((h) => h.icon).join("  ")}
           </Text>
           <Text style={[styles.dangerLabel, { color: textColor }]}>
-            {DANGER_LABEL[effectiveLevel] ?? `Stufe ${effectiveLevel}`}
+            {t.hazardLevel(effectiveLevel)}
           </Text>
         </View>
       )}

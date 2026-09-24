@@ -71,9 +71,12 @@ import { isCommunityInviteSegments } from "@/lib/communityInviteFlow";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { StartupState } from "@/components/brand/StartupState";
 import { useStartupStrings } from "@/lib/i18n/screens/startup";
+import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
+import { getStartupStrings } from "@/lib/i18n/screens/startup";
 
 const CRASH_KEY = "__sagatrail_last_crash__";
 const appRuntimeLog = makeLogger("[APP-RUNTIME]", "app_runtime");
+const INITIAL_STARTUP_STRINGS = getStartupStrings(detectSystemLanguage());
 
 async function checkPreviousCrash() {
   try {
@@ -439,7 +442,12 @@ export default function RootLayout() {
   }, []);
 
   if (!fontsLoaded && !fontError) {
-    return Platform.OS === "web" ? <StartupState /> : null;
+    return Platform.OS === "web" ? (
+      <StartupState
+        title={INITIAL_STARTUP_STRINGS.preparing}
+        detail={INITIAL_STARTUP_STRINGS.loadingData}
+      />
+    ) : null;
   }
 
   return (

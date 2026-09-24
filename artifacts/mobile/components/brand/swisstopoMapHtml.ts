@@ -179,6 +179,10 @@ export interface MapLegendLabels {
   partner: string;
   safetyCodes: string;
   copyrightLabel?: string;
+  safetyClusterLabel?: string;
+  sagaMarkerLabel?: string;
+  parkingMarkerLabel?: string;
+  languageTag?: string;
 }
 
 /**
@@ -208,7 +212,7 @@ export function buildSwisstopoHtml(
 ): string {
   const lat = center.lat;
   const lng = center.lng;
-  const title = JSON.stringify(label ?? "Start");
+  const title = JSON.stringify(label ?? legend?.start ?? "");
   const geometryJson =
     geometry && geometry.length > 1 ? JSON.stringify(geometry) : "null";
   const routeGradeSegments = buildRouteGradeSegments(geometry, elevationProfile);
@@ -282,7 +286,7 @@ export function buildSwisstopoHtml(
   })() : "";
 
   return `<!DOCTYPE html>
-<html lang="de">
+<html lang="${legend?.languageTag ?? "en"}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -666,7 +670,7 @@ ${legendHtml}
 
       new maplibregl.Marker({ element: makeFahneEl('ziel'), anchor: 'bottom-left', zIndex: 30 })
         .setLngLat([coords[coords.length-1][0], coords[coords.length-1][1]])
-        .setPopup(new maplibregl.Popup({ offset: 12 }).setText('Ziel'))
+        .setPopup(new maplibregl.Popup({ offset: 12 }).setText(${JSON.stringify(legend?.ziel ?? "")}))
         .addTo(map);
 
       var bounds = coords.reduce(function(b,c){ return b.extend(c); }, new maplibregl.LngLatBounds(coords[0], coords[0]));
@@ -952,10 +956,10 @@ ${legendHtml}
       wrap.className = 'stt-saga-tipp';
       var img = document.createElement('img');
       img.src = SAGA_B64;
-      img.alt = pin.name || 'Sage';
+      img.alt = pin.name || ${JSON.stringify(legend?.sagaMarkerLabel ?? "")};
       wrap.appendChild(img);
       var popup = new maplibregl.Popup({ offset: [0, -4], maxWidth: '200px' })
-        .setHTML('<div style="font-family:-apple-system,system-ui,sans-serif;font-size:12px;font-weight:600;color:#10181A;padding:2px 0">' + (pin.name || 'Sage') + '</div>');
+        .setHTML('<div style="font-family:-apple-system,system-ui,sans-serif;font-size:12px;font-weight:600;color:#10181A;padding:2px 0">' + (pin.name || ${JSON.stringify(legend?.sagaMarkerLabel ?? "")}) + '</div>');
       _sttSagaMarker = new maplibregl.Marker({ element: wrap, anchor: 'bottom' })
         .setLngLat([pin.lng, pin.lat])
         .setPopup(popup)
@@ -1134,7 +1138,7 @@ ${legendHtml}
         var el = document.createElement('div'); el.className = 'stt-parking';
         el.textContent = 'P';
         var popupHtml = '<div style="font-family:-apple-system,system-ui,sans-serif;font-size:12px;line-height:1.4;max-width:160px">';
-        popupHtml += '<strong style="font-size:13px">' + (p.name || 'Parkplatz') + '</strong>';
+        popupHtml += '<strong style="font-size:13px">' + (p.name || ${JSON.stringify(legend?.parkingMarkerLabel ?? "")}) + '</strong>';
         if (p.description) popupHtml += '<div style="margin-top:3px;color:#8A9BA8">' + p.description + '</div>';
         popupHtml += '</div>';
         new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([p.lng, p.lat])

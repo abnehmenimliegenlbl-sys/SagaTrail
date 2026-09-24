@@ -17,6 +17,7 @@ import { CloseButton } from "@/components/brand/CloseButton";
 import { useThemeModeSafe } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
 
 export interface FeatureTile {
   id: string;
@@ -43,11 +44,13 @@ export function FeatureTileDeck({
   tiles,
   tileOrder,
   columns = 3,
-  closeLabel = "Schliessen",
+  closeLabel,
   onTileOpen,
   closeSignal = 0,
 }: Props) {
   const colors = useColors();
+  const shared = useSharedStrings();
+  const resolvedCloseLabel = closeLabel ?? shared.close;
   const themeMode = useThemeModeSafe();
   const insets = useSafeAreaInsets();
   const modalOverlay =
@@ -196,7 +199,7 @@ export function FeatureTileDeck({
                   {activeTile?.title}
                 </Text>
               </View>
-              <CloseButton accessibilityLabel={closeLabel} onPress={closeModal} />
+              <CloseButton accessibilityLabel={resolvedCloseLabel} onPress={closeModal} />
             </View>
             <View
               style={[

@@ -173,7 +173,7 @@ export function buildLeafletMapHtml(
     : "";
 
   return `<!doctype html>
-<html lang="de">
+<html lang="${legend?.languageTag ?? "en"}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -583,7 +583,7 @@ export function buildLeafletMapHtml(
         var label = safetyCategoryLabel(p.category);
         counts[label] = (counts[label] || 0) + 1;
       });
-      return "Sicherheitspunkte: " + group.length + "\\n" +
+      return "${escapeHtml(legend?.safetyClusterLabel ?? "")}: " + group.length + "\\n" +
         Object.keys(counts).map(function (key) { return key + ": " + counts[key]; }).join(" · ");
     }
     function addSafetyMarker(p) {
@@ -632,7 +632,7 @@ export function buildLeafletMapHtml(
     map.on("zoomend moveend", renderSafetyClusters);
     renderSafetyClusters();
     if (sagaPin && Number.isFinite(sagaPin.lat) && Number.isFinite(sagaPin.lng)) {
-      var sagaHtml = '<div class="saga-tipp"><img src="data:image/png;base64,${SAGA_PIN_B64}" alt="Sage"></div>';
+      var sagaHtml = '<div class="saga-tipp"><img src="data:image/png;base64,${SAGA_PIN_B64}" alt="${escapeHtml(legend?.sagaMarkerLabel ?? "")}"></div>';
       addMarker(sagaPin, L.divIcon({ className: "", html: sagaHtml, iconSize: [38,38], iconAnchor: [19,35] }), null);
     }
 

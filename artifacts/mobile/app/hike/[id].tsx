@@ -104,7 +104,7 @@ import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { BackButton } from "@/components/brand/BackButton";
 import { useHikeStrings } from "@/lib/i18n/screens/hike";
-import { useComponentStrings } from "@/lib/i18n/components";
+import { useComponentStrings, useExtendedComponentStrings } from "@/lib/i18n/components";
 import { useMapStrings } from "@/lib/i18n/screens/map";
 import { useObjectRecognitionStrings } from "@/lib/i18n/objectRecognition";
 import {
@@ -228,6 +228,17 @@ const locationDiagnosticContext = () => ({
 });
 
 const WEB_TOP = 67;
+const HIKE_FALLBACK_LABELS: Record<string, { water: string; parking: string }> = {
+  de: { water: "Trinkwasser", parking: "Parkplatz" },
+  gsw: { water: "Trinkwasser", parking: "Parkplatz" },
+  fr: { water: "Eau potable", parking: "Parking" },
+  it: { water: "Acqua potabile", parking: "Parcheggio" },
+  en: { water: "Drinking water", parking: "Parking" },
+  zh: { water: "饮用水", parking: "停车场" },
+  es: { water: "Agua potable", parking: "Aparcamiento" },
+  pt: { water: "Água potável", parking: "Estacionamento" },
+  ru: { water: "Питьевая вода", parking: "Парковка" },
+};
 const COMPASS_GOLD = "#D8A84E";
 const COMPASS_ANTIQUE_FONT = Platform.select({
   web: "Georgia, Times New Roman, serif",
@@ -898,6 +909,7 @@ export default function LiveHike() {
   const poiOverlay =
     themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
   const t = useHikeStrings();
+  const componentT = useExtendedComponentStrings();
   const mapT = useMapStrings();
   const objectRecognitionT = useObjectRecognitionStrings();
   const insets = useSafeAreaInsets();
@@ -936,6 +948,7 @@ export default function LiveHike() {
     clearActiveHike,
     hikeHistory,
   } = useApp();
+  const language = profile?.language ?? "en";
 
   // Beim ersten Aufbau der Story einmalig pruefen, ob eine unterbrochene
   // Wanderung derselben Sage fortgesetzt wird — dann ab dem gespeicherten
@@ -960,7 +973,7 @@ export default function LiveHike() {
     }
     // Nur einmalig beim Mount ausfuehren.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [language]);
   // Beim Fortsetzen nach Absturz/Neustart: die mitpersistierte Route aus dem
   // gespeicherten Wanderstand — Routen sind online-only, der Katalog ist nach
   // einem Kaltstart also oft (noch) leer.
@@ -2129,7 +2142,7 @@ export default function LiveHike() {
     void sendWatchSos(null, language).then((handled) => {
       setSosAcknowledgement(handled ? "acknowledged" : "failed");
     });
-  }, []);
+  }, [language]);
 
   const setHikePause = useCallback((paused: boolean) => {
     if (paused) {
@@ -3324,7 +3337,7 @@ export default function LiveHike() {
           .filter((w) => w?.osmId)
           .map((w) => ({
             id: w.osmId,
-            name: w.name ?? "Trinkwasser",
+            name: w.name ?? (HIKE_FALLBACK_LABELS[language] ?? HIKE_FALLBACK_LABELS.en).water,
             lat: w.lat,
             lng: w.lng,
             description: null,
@@ -3475,7 +3488,7 @@ export default function LiveHike() {
         if (item.capacity) descParts.push(`${item.capacity} Plätze`);
         merged.push({
           id: item.osmId,
-          name: item.name ?? item.parkingType ?? "Parkplatz",
+          name: item.name ?? item.parkingType ?? (HIKE_FALLBACK_LABELS[language] ?? HIKE_FALLBACK_LABELS.en).parking,
           lat: item.lat,
           lng: item.lng,
           description: descParts.length > 0 ? descParts.join(" · ") : null,
@@ -4758,7 +4771,7 @@ export default function LiveHike() {
             )
             .join("\n\n");
           const storyText = (
-            partnerText || "Partner entlang deiner Route."
+            partnerText || componentT.partnerCategories.default
           ).slice(0, 8_000);
           setWatchPoiStory({
             id: wp.id,
@@ -9428,8 +9441,8 @@ export default function LiveHike() {
                     title: t.panoramaTerrainModel,
               subtitle:
                 terrainProfile && terrainProfile.length > 1
-                  ? "Gelände & Flug"
-                  : "Karten-Fallback",
+                  ? componentT.virtualSubtitle
+                  : componentT.virtualSubtitle,
               icon: "box",
               action: true,
               content: null,
@@ -9485,6 +9498,7 @@ export default function LiveHike() {
                             : t.compassDirections[compassIndex(compassHeading)]
                         }
                         remainingKm={Math.max(0, totalKm * (1 - timeProgress))}
+                        allowLabel={t.allow}
                         onEnable={() => {
                           void prepareWatchCompanion().then(setWatchReady);
                         }}
@@ -10369,7 +10383,7 @@ export default function LiveHike() {
               <View style={styles.completionHeader}>
                 <Feather name="flag" size={18} color={colors.accent} />
                 <Text style={[styles.completionTitle, { color: colors.foreground }]}>
-                  Wanderung abgeschlossen
+                  {componentT.completionTitle}
                 </Text>
               </View>
               <View style={styles.completionStats}>
@@ -10380,11 +10394,11 @@ export default function LiveHike() {
                   {Math.round((Date.now() - startTimeRef.current) / 60000)} {t.unitMin}
                 </Text>
                 <Text style={[styles.completionStat, { color: colors.mutedForeground }]}>
-                  {chapters.length} Kapitel
+                  {chapters.length} {componentT.chapter}
                 </Text>
               </View>
               <Text style={[styles.completionHint, { color: colors.mutedForeground }]}>
-                Speichere jetzt deine persönliche Zusammenfassung mit Route, Sagen und Erlebnissen.
+                {componentT.completionHint}
               </Text>
             </View>
           )}
@@ -10797,10 +10811,7 @@ export default function LiveHike() {
                   />
                   <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
                     {
-                      (
-                        PARTNER_KATEGORIE[selectedPartner.kategorie ?? ""] ??
-                        PARTNER_KAT_DEFAULT
-                      ).label
+                      componentT.partnerCategories[selectedPartner.kategorie ?? ""] ?? componentT.partnerCategories.default
                     }
                   </Text>
                 </View>
@@ -11096,14 +11107,14 @@ export default function LiveHike() {
                 if (!hasFreshGps || !livePos) {
                   alert(
                     t.emergency,
-                    "Eine aktuelle GPS-Position ist erforderlich, bevor dein Standort geteilt werden kann.",
+                    componentT.sosGpsRequired,
                   );
                   return;
                 }
                 if (!emergencyContact?.phone?.trim()) {
                   alert(
                     t.emergency,
-                    "Bitte hinterlege zuerst einen Notfallkontakt.",
+                    componentT.sosNoContact,
                   );
                   return;
                 }
@@ -11244,13 +11255,14 @@ function GpsLiveCard({
   altitudeLabel: string;
 }) {
   const colors = useColors();
+  const componentT = useExtendedComponentStrings();
   const values = [
     {
-      label: "Signalalter",
+      label: componentT.watchRemaining,
       value: hasFreshGps && gpsAgeSec != null ? `${gpsAgeSec} s` : "—",
     },
     {
-      label: "Genauigkeit",
+      label: componentT.watchDirection,
       value: accuracyM != null ? `±${Math.round(accuracyM)} m` : "—",
     },
     { label: placeLabel, value: hasFreshGps ? (place ?? "—") : "—" },
@@ -11311,19 +11323,22 @@ function WatchCompanionCard({
   direction,
   remainingKm,
   onEnable,
+  allowLabel,
 }: {
   ready: boolean | null;
   direction: string | null;
   remainingKm: number;
   onEnable: () => void;
+  allowLabel: string;
 }) {
   const colors = useColors();
+  const componentT = useExtendedComponentStrings();
   const enabled = ready === true;
   const status = enabled
-    ? "Watch-Verbindung aktiv"
+    ? componentT.watchActive
     : ready === false
-      ? "Watch-Mitteilungen nicht erlaubt"
-      : "Watch-Begleitung wird geprüft";
+      ? componentT.watchDenied
+      : componentT.watchChecking;
   return (
     <Glass style={{ marginTop: 14 }}>
       <View style={styles.watchCardHead}>
@@ -11343,7 +11358,7 @@ function WatchCompanionCard({
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.watchTitle, { color: colors.foreground }]}>
-            Watch-Begleitung
+            {componentT.watchTitle}
           </Text>
           <Text
             style={[
@@ -11361,13 +11376,13 @@ function WatchCompanionCard({
               onEnable();
             }}
             accessibilityRole="button"
-            accessibilityLabel={t.allow}
+            accessibilityLabel={allowLabel}
             style={[styles.watchEnable, { borderColor: colors.glassBorder }]}
           >
             <Text
               style={[styles.watchEnableText, { color: colors.foreground }]}
             >
-              {t.allow}
+              {allowLabel}
             </Text>
           </Pressable>
         )}
@@ -11380,7 +11395,7 @@ function WatchCompanionCard({
           <Text
             style={[styles.watchMetricLabel, { color: colors.mutedForeground }]}
           >
-            Richtung
+            {componentT.watchDirection}
           </Text>
           <Text style={[styles.watchMetricValue, { color: colors.foreground }]}>
             {direction ?? "—"}
@@ -11391,7 +11406,7 @@ function WatchCompanionCard({
           <Text
             style={[styles.watchMetricLabel, { color: colors.mutedForeground }]}
           >
-            Rest
+            {componentT.watchRemaining}
           </Text>
           <Text style={[styles.watchMetricValue, { color: colors.foreground }]}>
             {remainingKm.toFixed(1)} km
@@ -11399,9 +11414,7 @@ function WatchCompanionCard({
         </View>
       </View>
       <Text style={[styles.watchHint, { color: colors.mutedForeground }]}>
-        Nur Abbiegehinweise und SOS werden als native Mitteilungen auf die
-        gekoppelte Watch gespiegelt. Regelmässige Status-Pushes mit Richtung
-        oder Distanz sind deaktiviert.
+        {componentT.watchHint}
       </Text>
     </Glass>
   );

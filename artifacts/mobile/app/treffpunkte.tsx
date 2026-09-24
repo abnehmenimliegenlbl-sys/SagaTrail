@@ -216,8 +216,8 @@ function MeetupCard({
   const time = start.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   const isFull = meetup.participantCount >= meetup.maxParticipants && !meetup.joined;
   const distanceToMeetingPoint = getMeetupDistanceKm(meetup, currentPosition);
-  const waitlistLabel = t.joinWaitlist ?? "Warteliste";
-  const leaveWaitlistLabel = t.leaveWaitlist ?? t.leave;
+  const waitlistLabel = t.joinWaitlist;
+  const leaveWaitlistLabel = t.leaveWaitlist;
   const participationLabel = meetup.joined
     ? t.leave
     : meetup.isWaitlisted
@@ -273,7 +273,7 @@ function MeetupCard({
         <View style={[styles.waitlistPill, { backgroundColor: colors.accent + "14", borderColor: colors.accent + "55" }]}>
           <Feather name="clock" size={12} color={colors.accent} />
           <Text style={[styles.waitlistText, { color: colors.accent }]}>
-            {(t.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)}
+            {t.waitlistPosition(meetup.waitlistPosition ?? 0)}
           </Text>
         </View>
       ) : null}

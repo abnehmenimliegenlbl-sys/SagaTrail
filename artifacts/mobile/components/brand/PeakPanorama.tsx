@@ -1231,7 +1231,7 @@ export function PeakPanorama({
                 ]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
-                accessibilityLabel={`${label} als Geländeoberfläche`}
+                accessibilityLabel={`${label} ${componentT.terrainSurface}`}
               >
                 <Text
                   style={[

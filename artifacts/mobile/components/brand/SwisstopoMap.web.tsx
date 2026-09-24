@@ -19,7 +19,7 @@ type MapWindow = Window & {
 export function SwisstopoMap({
   center,
   position,
-  label = "Start",
+  label,
   height = 220,
   geometry,
   elevationProfile,
@@ -101,6 +101,10 @@ export function SwisstopoMap({
           partner: t.legendPartner,
           safetyCodes: t.legendSafetyCodes,
           copyrightLabel: t.copyrightLabel,
+          safetyClusterLabel: t.safetyClusterLabel,
+          sagaMarkerLabel: t.sagaMarkerLabel,
+          parkingMarkerLabel: t.parkingMarkerLabel,
+          languageTag: t.languageTag,
         },
       ),
     [initialView.lat, initialView.lng, initialZoom, label, geometry, elevationProfile, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, safetyPois, pickerMode, drawMode, preserveViewOnReload, t]

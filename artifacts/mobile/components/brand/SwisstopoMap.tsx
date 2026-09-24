@@ -21,7 +21,7 @@ import { SwisstopoMapProps } from "./swisstopoMapHtml";
 export function SwisstopoMap({
   center,
   position,
-  label = "Start",
+  label,
   height = 220,
   geometry,
   waypoints,
@@ -113,6 +113,10 @@ export function SwisstopoMap({
           partner: t.legendPartner,
           safetyCodes: t.legendSafetyCodes,
           copyrightLabel: t.copyrightLabel,
+          safetyClusterLabel: t.safetyClusterLabel,
+          sagaMarkerLabel: t.sagaMarkerLabel,
+          parkingMarkerLabel: t.parkingMarkerLabel,
+          languageTag: t.languageTag,
         },
       ),
     // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.

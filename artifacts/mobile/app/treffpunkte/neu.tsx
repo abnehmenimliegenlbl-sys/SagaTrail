@@ -27,7 +27,6 @@ import { useColors } from "@/hooks/useColors";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useHomeStrings } from "@/lib/i18n/screens/home";
 import { useMeetupStrings } from "@/lib/i18n/screens/meetups";
-import { useApp } from "@/contexts/AppContext";
 import { alert } from "@/lib/appAlert";
 import {
   CANTONS_HOME_BANNER,
@@ -44,7 +43,6 @@ export default function NeuerTreffpunkt() {
   const router = useRouter();
   const t = useMeetupStrings();
   const homeT = useHomeStrings();
-  const { language } = useApp();
   const { cantons } = useCatalog();
   const params = useLocalSearchParams<{
     routeId?: string;
@@ -60,16 +58,6 @@ export default function NeuerTreffpunkt() {
     : params.communityId;
   const communityPath = (path: string) =>
     withCommunityId(path, initialCommunityId);
-  const recommendationCopy =
-    language === "de" || language === "gsw"
-      ? {
-          title: "Beste Route für heute",
-          hint: "Zeit, Begleitung, Wetter und ÖV zusammen entscheiden lassen",
-        }
-      : {
-          title: "Best route for today",
-          hint: "Choose with time, group, weather and transport together",
-        };
   const [date, setDate] = useState(() => {
     const next = new Date(Date.now() + 86_400_000);
     return next.toISOString().slice(0, 10);
@@ -169,8 +157,8 @@ export default function NeuerTreffpunkt() {
               order={2}
               icon="sunrise"
               image={require("../../assets/images/banner-wanderroute-heute.jpg")}
-              title={recommendationCopy.title}
-              hint={recommendationCopy.hint}
+              title={homeT.recommendationTitle}
+              hint={homeT.recommendationHint}
               onPress={() => router.push(communityPath("/empfehlung"))}
             />
             <HomeEntryCard

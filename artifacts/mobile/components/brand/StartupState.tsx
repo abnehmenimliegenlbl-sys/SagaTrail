@@ -4,9 +4,9 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 
-export function StartupState({ title = "SagaTrail is getting ready", detail = "Your data and hikes are loading." }: {
-  title?: string;
-  detail?: string;
+export function StartupState({ title, detail }: {
+  title: string;
+  detail: string;
 }) {
   const colors = useColors();
 
@@ -15,7 +15,7 @@ export function StartupState({ title = "SagaTrail is getting ready", detail = "Y
       style={[styles.container, { backgroundColor: colors.talschatten }]}
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={`${title}. ${detail}`}
+       accessibilityLabel={`${title}. ${detail}`}
     >
       <View
         style={[

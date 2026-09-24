@@ -109,6 +109,23 @@ function calcSunsetCH(date: Date): { h: number; m: number } {
 
 const WEB_TOP = 67;
 
+const SUITABILITY_COPY: Record<LanguageCode, {
+  title: string;
+  family: string;
+  accessible: string;
+  note: string;
+}> = {
+  de: { title: "Technische Empfehlung", family: "Für Kinder/Familien geeignet", accessible: "Offiziell barrierearme Route", note: "Die Empfehlung für Kinder/Familien ist technisch; Barrierearmut nutzt die offizielle SchweizMobil-Klassifikation." },
+  gsw: { title: "Technischi Empfehlig", family: "Für Chind/Familie geeignet", accessible: "Offiziell barrierearmi Route", note: "D Empfehlig für Chind/Familie isch technisch; d Barrierearmut basiert uf de offizielle SchweizMobil-Klassifikation." },
+  fr: { title: "Recommandation technique", family: "Adapté aux enfants et aux familles", accessible: "Itinéraire officiellement accessible", note: "La recommandation enfants/familles est technique ; l’accessibilité repose sur la classification officielle de SuisseMobile." },
+  it: { title: "Raccomandazione tecnica", family: "Adatto a bambini e famiglie", accessible: "Percorso ufficialmente accessibile", note: "La raccomandazione per bambini e famiglie è tecnica; l’accessibilità si basa sulla classificazione ufficiale di SvizzeraMobile." },
+  en: { title: "Technical recommendation", family: "Suitable for children and families", accessible: "Officially step-free route", note: "The children and families recommendation is technical; accessibility uses SwitzerlandMobility’s official classification." },
+  zh: { title: "技术推荐", family: "适合儿童和家庭", accessible: "官方无障碍路线", note: "儿童和家庭推荐为技术判断；无障碍信息采用 SwitzerlandMobility 的官方分类。" },
+  es: { title: "Recomendación técnica", family: "Apta para niños y familias", accessible: "Ruta oficialmente accesible", note: "La recomendación para niños y familias es técnica; la accesibilidad usa la clasificación oficial de SwitzerlandMobility." },
+  pt: { title: "Recomendação técnica", family: "Adequado para crianças e famílias", accessible: "Rota oficialmente acessível", note: "A recomendação para crianças e famílias é técnica; a acessibilidade usa a classificação oficial da SwitzerlandMobility." },
+  ru: { title: "Техническая рекомендация", family: "Подходит детям и семьям", accessible: "Официально доступный маршрут", note: "Рекомендация для детей и семей носит технический характер; доступность определяется официальной классификацией SwitzerlandMobility." },
+};
+
 export default function KantonRouten() {
   const t = useKantonStrings();
   const ts = useSharedStrings();
@@ -265,12 +282,7 @@ export default function KantonRouten() {
   const [themeFilterLoading, setThemeFilterLoading] = useState(false);
   const [themeFilterError, setThemeFilterError] = useState(false);
   const themeFilterActive = selectedThemeKeys.length > 0;
-  const suitabilityCopy = useMemo(() => {
-    if (language === "fr") return { title: "Recommandation technique", family: "Adapté aux enfants / familles", accessible: "Accès sans barrières officiel", note: "La recommandation enfants / familles est technique; l'accès sans barrières repose sur la classification officielle de SuisseMobile." };
-    if (language === "it") return { title: "Raccomandazione tecnica", family: "Adatto a bambini / famiglie", accessible: "Accesso senza barriere ufficiale", note: "La raccomandation bambini / famiglie è tecnica; l'accesso senza barriere si basa sulla classificazione ufficiale di SvizzeraMobile." };
-    if (language === "en") return { title: "Technical recommendation", family: "Suitable for children / families", accessible: "Official step-free route", note: "The children / families result is a technical recommendation; step-free access uses only SwitzerlandMobility's official classification." };
-    return { title: "Technische Empfehlung", family: "Für Kinder/Familien geeignet", accessible: "Offiziell barrierearme Route", note: "Die Empfehlung für Kinder/Familien ist technisch; Barrierearmut nutzt die offizielle SchweizMobil-Klassifikation." };
-  }, [language]);
+  const suitabilityCopy = SUITABILITY_COPY[language as LanguageCode] ?? SUITABILITY_COPY.en;
 
   const sunsetTime = useMemo(() => calcSunsetCH(new Date()), []);
   const sunsetTimeStr = `${String(sunsetTime.h).padStart(2, "0")}:${String(sunsetTime.m).padStart(2, "0")}`;

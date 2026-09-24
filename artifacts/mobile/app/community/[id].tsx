@@ -518,7 +518,7 @@ function CommunityMeetupCard({
     : isWaitlisted
       ? meetupStrings.leaveWaitlist ?? meetupStrings.leave
       : isFull
-        ? meetupStrings.joinWaitlist ?? "Warteliste"
+       ? meetupStrings.joinWaitlist
         : meetupStrings.join;
   const quietParticipationStyle = meetup.joined || isWaitlisted;
   const capacityColor = isWaitlisted
@@ -551,7 +551,7 @@ function CommunityMeetupCard({
           <View style={[styles.waitlistPill, { backgroundColor: colors.accent + "14", borderColor: colors.accent + "55" }]}>
             <Feather name="clock" size={12} color={colors.accent} />
             <Text style={[styles.meetupMeta, { color: colors.accent, marginTop: 0 }]}>
-              {(meetupStrings.waitlistPosition ?? ((position: number) => `Wartelistenplatz ${position}`))(meetup.waitlistPosition ?? 0)}
+              {meetupStrings.waitlistPosition(meetup.waitlistPosition ?? 0)}
             </Text>
           </View>
         ) : null}

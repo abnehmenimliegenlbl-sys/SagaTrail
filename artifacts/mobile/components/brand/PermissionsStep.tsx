@@ -19,6 +19,7 @@ import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { NATIVE_MODULES_AVAILABLE } from "@/lib/nativeEnv";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import {
   isSpeechPermissionGranted,
   readSpeechPermissionWithRetry,
@@ -48,6 +49,7 @@ export function PermissionsStep({
 }) {
   const colors = useColors();
   const t = useOnboardingStrings();
+  const shared = useSharedStrings();
   const [statuses, setStatuses] = useState<Record<PermissionKey, PermissionStatus>>({
     location: "pending",
     microphone: "pending",
@@ -258,8 +260,8 @@ export function PermissionsStep({
                   accessibilityRole="button"
                   accessibilityLabel={
                     settingsBlocked[key]
-                      ? "Systemeinstellungen öffnen"
-                      : `${strings.title} erlauben`
+                       ? shared.permissionSettings
+                       : shared.permissionAllow(strings.title)
                   }
                   style={[styles.permissionAction, { borderColor: colors.accent }]}
                 >

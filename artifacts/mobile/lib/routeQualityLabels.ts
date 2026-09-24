@@ -1,4 +1,4 @@
-type QualityLanguage = "de" | "gsw" | "en" | "fr" | "it" | "es" | "pt" | "zh";
+type QualityLanguage = "de" | "gsw" | "en" | "fr" | "it" | "es" | "pt" | "zh" | "ru";
 
 const LABELS: Record<QualityLanguage, {
   title: string;
@@ -81,10 +81,19 @@ const LABELS: Record<QualityLanguage, {
     partial: "部分检查——缺少一些来源",
     invalid: "检查有提示——请对照来源核实",
   },
+  ru: {
+    title: "Состояние данных и источники",
+    checkedAt: (date) => `Последняя проверка: ${date}`,
+    source: "Открыть источник",
+    unverified: "Ещё не проверено",
+    verified: "Данные маршрута проверены",
+    partial: "Проверено частично — некоторые источники отсутствуют",
+    invalid: "Есть замечания — сверяйте данные с источником",
+  },
 };
 
 export function routeQualityLabels(language: string) {
-  return LABELS[language as QualityLanguage] ?? LABELS.de;
+  return LABELS[language as QualityLanguage] ?? LABELS.en;
 }
 
 export function formatQualityDate(value: Date | string | null | undefined, language: string): string | null {

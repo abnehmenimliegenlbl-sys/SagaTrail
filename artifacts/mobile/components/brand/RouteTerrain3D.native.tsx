@@ -32,7 +32,10 @@ import {
 import { createTerrainArea } from "@workspace/api-client-react";
 import { BackButton } from "@/components/brand/BackButton";
 import { useColors } from "@/hooks/useColors";
-import { useComponentStrings } from "@/lib/i18n/components";
+import {
+  useComponentStrings,
+  useTerrainAccessibilityStrings,
+} from "@/lib/i18n/components";
 import {
   buildRouteGradeSegments,
   getSmoothedGradePctAtDistance,
@@ -108,12 +111,15 @@ function gradeInstrumentLabel(gradePct: number | null): string {
   return `${rounded > 0 ? "+" : ""}${rounded}%`;
 }
 
-function gradeInstrumentAccessibilityLabel(gradePct: number | null): string {
-  if (gradePct == null || !Number.isFinite(gradePct)) return "Neigung wird berechnet";
+function gradeInstrumentAccessibilityLabel(
+  gradePct: number | null,
+  t: ReturnType<typeof useTerrainAccessibilityStrings>,
+): string {
+  if (gradePct == null || !Number.isFinite(gradePct)) return t.gradeCalculating;
   const rounded = Math.round(gradePct);
-  if (rounded > 0) return `Steigung ${rounded} Prozent`;
-  if (rounded < 0) return `Gefälle ${Math.abs(rounded)} Prozent`;
-  return "Ebene Route, 0 Prozent";
+  if (rounded > 0) return t.gradeUphill(rounded);
+  if (rounded < 0) return t.gradeDownhill(Math.abs(rounded));
+  return t.gradeFlat;
 }
 const flightSkyVertexShader = `
   varying vec3 vWorldDirection;
@@ -1955,7 +1961,13 @@ function WalkMetric({
   );
 }
 
-function GradeAttitudeInstrument({ gradePct }: { gradePct: number | null }) {
+function GradeAttitudeInstrument({
+  gradePct,
+  t,
+}: {
+  gradePct: number | null;
+  t: ReturnType<typeof useTerrainAccessibilityStrings>;
+}) {
   const color = gradeInstrumentColor(gradePct);
   const label = gradeInstrumentLabel(gradePct);
   // A positive route grade means the virtual hiker pitches upward. In a
@@ -1967,9 +1979,9 @@ function GradeAttitudeInstrument({ gradePct }: { gradePct: number | null }) {
     <View
       style={[styles.walkMetric, styles.attitudeMetric]}
       accessible
-      accessibilityLabel={gradeInstrumentAccessibilityLabel(gradePct)}
+      accessibilityLabel={gradeInstrumentAccessibilityLabel(gradePct, t)}
     >
-      <Text style={styles.walkMetricLabel}>Neigung</Text>
+      <Text style={styles.walkMetricLabel}>{t.gradeMetric}</Text>
       <View style={styles.attitudeInstrument}>
         <View
           style={[
@@ -2002,6 +2014,7 @@ export default function RouteTerrain3D({
 }: Props) {
   const colors = useColors();
   const componentT = useComponentStrings();
+  const terrainT = useTerrainAccessibilityStrings();
   const window = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [ready, setReady] = useState<boolean | null>(null);
@@ -2038,10 +2051,10 @@ export default function RouteTerrain3D({
       if (state === "loading") setLoadProgress((value) => Math.max(value, 70));
       if (state === "ready") setLoadProgress(100);
       if (state === "error") {
-        setError("Die Satellitenkarte konnte nicht geladen werden.");
+        setError(terrainT.satelliteError);
       }
     },
-    [],
+    [terrainT.satelliteError],
   );
   const flightComplete = useMemo(
     () => () => {
@@ -2103,8 +2116,8 @@ export default function RouteTerrain3D({
 
   useEffect(() => {
     if (visible && ready === false)
-      setError("Die native 3D-Grafik ist auf diesem Gerät nicht verfügbar.");
-  }, [visible, ready]);
+      setError(terrainT.graphicsUnavailable);
+  }, [terrainT.graphicsUnavailable, visible, ready]);
 
   useEffect(() => {
     if (!visible || ready !== true) return;
@@ -2114,7 +2127,7 @@ export default function RouteTerrain3D({
       !terrainProfile ||
       terrainProfile.length < 2
     ) {
-      setError("Für diese Route fehlen die benötigten Geländedaten.");
+      setError(terrainT.missingData);
       return;
     }
     let active = true;
@@ -2151,7 +2164,7 @@ export default function RouteTerrain3D({
       })
       .catch(() => {
         clearInterval(progressTimer);
-        if (active) setError("Das 3D-Gelände konnte nicht geladen werden.");
+        if (active) setError(terrainT.terrainError);
       });
     return () => {
       active = false;
@@ -2198,7 +2211,7 @@ export default function RouteTerrain3D({
                 <Text
                   style={[styles.statusHint, { color: colors.mutedForeground }]}
                 >
-                  Es werden keine Höhenwerte geschätzt.
+                  {terrainT.noElevationEstimate}
                 </Text>
               </>
             ) : (
@@ -2206,10 +2219,10 @@ export default function RouteTerrain3D({
                 <ActivityIndicator color={colors.accent} />
                 <Text style={[styles.statusText, { color: colors.foreground }]}>
                   {loadProgress < 20
-                    ? "3D-Grafik wird vorbereitet …"
+                    ? terrainT.preparing
                     : loadProgress < 70
                       ? `${componentT.terrain3dTitle} …`
-                      : "Satellitenkarte wird geladen …"}
+                      : terrainT.satelliteLoading}
                 </Text>
                 <View style={styles.progressTrack}>
                   <View
@@ -2239,10 +2252,10 @@ export default function RouteTerrain3D({
               style={styles.walkBackButton}
             />
             <View style={styles.walkMetricRow}>
-              <WalkMetric label="Gegangene Distanz" value={`${walkProgress.distanceM} m`} icon="map" />
-              <WalkMetric label="Höhenmeter" value={`${walkProgress.ascentM} m`} icon="trending-up" />
-              <WalkMetric label="Gehzeit" value={`${walkProgress.minutes} min`} icon="clock" />
-              <GradeAttitudeInstrument gradePct={currentGradePct} />
+              <WalkMetric label={terrainT.walkedDistance} value={`${walkProgress.distanceM} m`} icon="map" />
+              <WalkMetric label={terrainT.elevationGain} value={`${walkProgress.ascentM} m`} icon="trending-up" />
+              <WalkMetric label={terrainT.walkingTime} value={`${walkProgress.minutes} min`} icon="clock" />
+              <GradeAttitudeInstrument gradePct={currentGradePct} t={terrainT} />
             </View>
           </View>
         )}

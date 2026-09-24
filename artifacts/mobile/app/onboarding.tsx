@@ -49,17 +49,30 @@ const PROFILE_COPY: Record<LanguageCode, {
   ru: { avatarSelected: "Фото профиля выбрано", avatarSelect: "Выбрать фото профиля (необязательно)", birthDate: "Дата рождения", birthPlaceholder: "ДД.ММ.ГГГГ" },
 };
 
-function normalizeBirthDate(value: string): string {
+const BIRTHDATE_ERRORS: Record<LanguageCode, { invalid: string; age: string }> = {
+  de: { invalid: "Ungültiges Geburtsdatum", age: "Ungültiges Alter" },
+  gsw: { invalid: "Ungültigs Geburtsdatum", age: "Ungültigs Alter" },
+  fr: { invalid: "Date de naissance invalide", age: "Âge invalide" },
+  it: { invalid: "Data di nascita non valida", age: "Età non valida" },
+  en: { invalid: "Invalid date of birth", age: "Invalid age" },
+  zh: { invalid: "出生日期无效", age: "年龄无效" },
+  es: { invalid: "Fecha de nacimiento no válida", age: "Edad no válida" },
+  pt: { invalid: "Data de nascimento inválida", age: "Idade inválida" },
+  ru: { invalid: "Недействительная дата рождения", age: "Недопустимый возраст" },
+};
+
+function normalizeBirthDate(value: string, language: LanguageCode): string {
+  const errors = BIRTHDATE_ERRORS[language];
   const match = value.trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
-  if (!match) throw new Error("Ungültiges Geburtsdatum");
+  if (!match) throw new Error(errors.invalid);
   const [, day, month, year] = match;
   const iso = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
   const date = new Date(`${iso}T00:00:00Z`);
   if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== iso) {
-    throw new Error("Ungültiges Geburtsdatum");
+    throw new Error(errors.invalid);
   }
   const age = new Date().getUTCFullYear() - date.getUTCFullYear();
-  if (age < 13 || age > 120) throw new Error("Ungültiges Alter");
+  if (age < 13 || age > 120) throw new Error(errors.age);
   return iso;
 }
 
@@ -90,7 +103,7 @@ export default function Onboarding() {
       case 0:
         if (name.trim().length < 2 || !dateOfBirth.trim()) return false;
         try {
-          normalizeBirthDate(dateOfBirth);
+           normalizeBirthDate(dateOfBirth, language);
           return true;
         } catch {
           return false;
@@ -126,7 +139,7 @@ export default function Onboarding() {
         await saveProfile({
           name: name.trim(),
           bio: bio.trim() || null,
-          dateOfBirth: normalizeBirthDate(dateOfBirth),
+           dateOfBirth: normalizeBirthDate(dateOfBirth, language),
           archetype,
           language,
           ageTier,

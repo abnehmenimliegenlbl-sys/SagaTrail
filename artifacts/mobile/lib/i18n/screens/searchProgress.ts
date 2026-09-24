@@ -28,7 +28,7 @@ const SEARCH_PROGRESS_STRINGS: StringsDict<SearchProgressStrings> = {
   },
   fr: {
     title: "Recherche d'itinéraires de randonnée",
-    stepSearching: (cantonName) => `Recherche dans le canton de ${cantonName || "Kanton"}…`,
+    stepSearching: (cantonName) => `Recherche dans le canton de ${cantonName || "ce canton"}…`,
     stepFiltering: "Filtrage des itinéraires adaptés…",
     stepLoadingElevation: "Chargement des profils d'altitude swisstopo…",
     stepCompiling: "Assemblage des itinéraires…",
@@ -36,7 +36,7 @@ const SEARCH_PROGRESS_STRINGS: StringsDict<SearchProgressStrings> = {
   },
   it: {
     title: "Ricerca di veri percorsi escursionistici",
-    stepSearching: (cantonName) => `Ricerca nel cantone ${cantonName || "Kanton"}…`,
+    stepSearching: (cantonName) => `Ricerca nel cantone ${cantonName || "questo cantone"}…`,
     stepFiltering: "Filtraggio dei percorsi adatti…",
     stepLoadingElevation: "Caricamento dei profils altimetrici swisstopo…",
     stepCompiling: "Assemblaggio dei percorsi…",
@@ -60,7 +60,7 @@ const SEARCH_PROGRESS_STRINGS: StringsDict<SearchProgressStrings> = {
   },
   es: {
     title: "Buscando rutas de senderismo reales",
-    stepSearching: (cantonName) => `Buscando en el cantón ${cantonName || "Kanton"}…`,
+    stepSearching: (cantonName) => `Buscando en el cantón ${cantonName || "este cantón"}…`,
     stepFiltering: "Filtrando rutas adecuadas…",
     stepLoadingElevation: "Cargando perfiles de altitud de swisstopo…",
     stepCompiling: "Compilando rutas…",
@@ -68,7 +68,7 @@ const SEARCH_PROGRESS_STRINGS: StringsDict<SearchProgressStrings> = {
   },
   pt: {
     title: "Buscando rotas de caminhada reais",
-    stepSearching: (cantonName) => `Buscando no cantão ${cantonName || "Kanton"}…`,
+    stepSearching: (cantonName) => `Buscando no cantão ${cantonName || "este cantão"}…`,
     stepFiltering: "Filtrando rotas adequadas…",
     stepLoadingElevation: "Carregando perfis de altitude do swisstopo…",
     stepCompiling: "Compilando rotas…",
@@ -76,7 +76,7 @@ const SEARCH_PROGRESS_STRINGS: StringsDict<SearchProgressStrings> = {
   },
   ru: {
     title: "Поиск настоящих пеших маршрутов",
-    stepSearching: (cantonName) => `Поиск в кантоне ${cantonName || "Kanton"}…`,
+    stepSearching: (cantonName) => `Поиск в кантоне ${cantonName || "этом кантоне"}…`,
     stepFiltering: "Отбор подходящих маршрутов…",
     stepLoadingElevation: "Загрузка профилей высот swisstopo…",
     stepCompiling: "Составление маршрутов…",

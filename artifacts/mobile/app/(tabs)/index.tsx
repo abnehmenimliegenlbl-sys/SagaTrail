@@ -46,7 +46,6 @@ export default function Entdecken() {
   const router = useRouter();
   const {
     profile,
-    language,
     activeHike,
     clearActiveHike,
     premium,
@@ -57,16 +56,6 @@ export default function Entdecken() {
   const { isElite } = useSubscription();
   const t = useHomeStrings();
   const meetupT = useMeetupStrings();
-  const recommendationCopy =
-    language === "de" || language === "gsw"
-      ? {
-          title: "Beste Route für heute",
-          hint: "Zeit, Begleitung, Wetter und ÖV zusammen entscheiden lassen",
-        }
-      : {
-          title: "Best route for today",
-          hint: "Choose with time, group, weather and transport together",
-        };
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const onboardingStrings = useOnboardingStrings();
@@ -243,8 +232,8 @@ export default function Entdecken() {
           order={4}
           icon="sunrise"
           image={require("../../assets/images/banner-wanderroute-heute.jpg")}
-          title={recommendationCopy.title}
-          hint={recommendationCopy.hint}
+          title={t.recommendationTitle}
+          hint={t.recommendationHint}
           onPress={() => router.push("/empfehlung")}
         />
         <HomeEntryCard
