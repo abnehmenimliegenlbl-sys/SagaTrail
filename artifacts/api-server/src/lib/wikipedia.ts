@@ -1,4 +1,3 @@
-import { anthropic } from "@workspace/integrations-anthropic-ai";
 import type { Logger } from "pino";
 import { haversineM } from "./geo";
 
@@ -24,6 +23,16 @@ export interface WikiSummary {
   url: string;
   lang: string;
   image: string | null;
+  sources?: PoiSource[];
+}
+
+export interface PoiSource {
+  role: "text" | "image";
+  provider: string;
+  title?: string;
+  url: string;
+  license?: string;
+  creator?: string;
 }
 
 export interface CommonsImageMatch {
@@ -312,6 +321,77 @@ async function commonsImageUrl(filename: string, widthPx = 600): Promise<string 
   const pages = Object.values(json?.query?.pages ?? {});
   const info = pages[0]?.imageinfo?.[0];
   return info?.thumburl ?? info?.url ?? null;
+}
+
+/**
+ * Liefert die Commons-Dateiseite und Lizenzangaben zu einem Commons-Thumbnail.
+ * Bei einem fehlgeschlagenen Metadatenabruf bleibt zumindest ein belastbarer
+ * Link zur Dateiseite erhalten; Lizenz und Urheber werden nicht geraten.
+ */
+export async function fetchCommonsImageSource(imageUrl: string): Promise<PoiSource | null> {
+  try {
+    const parsed = new URL(imageUrl);
+    if (parsed.hostname !== "upload.wikimedia.org") return null;
+
+    const segments = decodeURIComponent(parsed.pathname).split("/").filter(Boolean);
+    const commonsIndex = segments.findIndex(
+      (segment, index) => segment === "commons" && segments[index - 1] === "wikipedia",
+    );
+    if (commonsIndex < 0) return null;
+
+    const tail = segments.slice(commonsIndex + 1);
+    const filename = tail[0] === "thumb"
+      ? tail.slice(3, -1).join("/")
+      : tail.slice(2).join("/");
+    if (!filename) return null;
+
+    const fileTitle = `File:${filename}`;
+    const fallbackSource: PoiSource = {
+      role: "image",
+      provider: "Wikimedia Commons",
+      title: filename.replace(/_/g, " "),
+      url: `https://commons.wikimedia.org/wiki/${encodeURIComponent(fileTitle)}`,
+    };
+    const apiUrl =
+      `https://commons.wikimedia.org/w/api.php?action=query` +
+      `&titles=${encodeURIComponent(fileTitle)}` +
+      `&prop=imageinfo&iiprop=url%7Cextmetadata&format=json&origin=*`;
+    const json = await fetchJson<{
+      query?: {
+        pages?: Record<string, {
+          title?: string;
+          imageinfo?: {
+            descriptionurl?: string;
+            extmetadata?: Record<string, { value?: string }>;
+          }[];
+        }>;
+      };
+    }>(apiUrl);
+    const page = Object.values(json?.query?.pages ?? {})[0];
+    const info = page?.imageinfo?.[0];
+    const clean = (value?: string) =>
+      value
+        ?.replace(/<[^>]*>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/\s+/g, " ")
+        .trim() || undefined;
+    const title = page?.title?.replace(/^File:/i, "").replace(/_/g, " ");
+
+    return {
+      ...fallbackSource,
+      ...(title ? { title } : {}),
+      ...(info?.descriptionurl ? { url: info.descriptionurl } : {}),
+      ...(clean(info?.extmetadata?.LicenseShortName?.value)
+        ? { license: clean(info?.extmetadata?.LicenseShortName?.value) }
+        : {}),
+      ...(clean(info?.extmetadata?.Artist?.value)
+        ? { creator: clean(info?.extmetadata?.Artist?.value) }
+        : {}),
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -767,83 +847,6 @@ export async function searchNearbyWikipedia(
   }
 
   return null;
-}
-
-// Separater In-Memory-Cache fuer KI-generierte POI-Informationen.
-// Laengere TTL als Wikipedia (7 Tage), da KI-Antworten nicht veralten.
-const AI_POI_CACHE_MAX = 300;
-const aiPoiCache = new Map<string, { at: number; summary: WikiSummary | null }>();
-const AI_POI_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-/**
- * Vierte Anreicherungsstufe: fragt Claude nach faktischem Wissen ueber einen
- * konkreten Schweizer POI, wenn alle Wikipedia-Pfade erfolglos waren.
- *
- * Claude antwortet entweder mit 2–3 faktischen Saetzen ODER mit dem Wort
- * "UNBEKANNT" (wenn kein konkretes Wissen vorliegt). Letzteres wird als null
- * zurueckgegeben, damit kein halluzinierter Inhalt in die App gelangt.
- *
- * Ergebnisse (inkl. null) werden 7 Tage gecacht, um Kosten zu minimieren.
- */
-export async function searchAiPoiKnowledge(
-  name: string,
-  kind: string,
-  lang: string = DEFAULT_LANG,
-  lat?: number,
-  lng?: number,
-): Promise<WikiSummary | null> {
-  const key = `${lang}::${name}::${kind}`;
-  const hit = aiPoiCache.get(key);
-  if (hit && Date.now() - hit.at < AI_POI_TTL_MS) return hit.summary;
-
-  const langLabels: Record<string, string> = {
-    de: "Deutsch", en: "English", fr: "Français", it: "Italiano",
-    es: "Español", pt: "Português", zh: "中文", ru: "Русский",
-  };
-  const langLabel = langLabels[lang] ?? "Deutsch";
-  const coordHint = lat !== undefined && lng !== undefined
-    ? `Koordinaten: ${lat.toFixed(4)}, ${lng.toFixed(4)} (Schweiz)`
-    : `Region: Schweiz`;
-
-  const prompt = [
-    `Du bist ein Experte für Schweizer Kulturgeschichte und Sehenswürdigkeiten.`,
-    ``,
-    `Ort: "${name}"`,
-    `OSM-Kategorie: ${kind}`,
-    coordHint,
-    ``,
-    `Aufgabe: Schreibe 2–3 faktische Sätze über genau diesen Ort an den angegebenen`,
-    `Koordinaten (Bedeutung, Geschichte, was man vor Ort sieht). Antworte auf ${langLabel}.`,
-    ``,
-    `Wichtig: Beziehe dich NUR auf diesen konkreten Ort, nicht auf andere Orte`,
-    `gleichen Namens in anderen Städten oder Ländern.`,
-    ``,
-    `Wenn du diesen konkreten Ort nicht kennst oder keine verlässlichen Fakten hast,`,
-    `antworte ausschliesslich mit dem Wort: UNBEKANNT`,
-    ``,
-    `Keine Einleitung, keine Erklärungen — nur den Sachtext oder UNBEKANNT.`,
-  ].join("\n");
-
-  try {
-    const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      max_tokens: 256,
-      messages: [{ role: "user", content: prompt }],
-    });
-    const textBlock = message.content.find((b) => b.type === "text");
-    const text = textBlock?.type === "text" ? textBlock.text.trim() : "";
-    if (!text || text.toUpperCase().startsWith("UNBEKANNT") || text.length < 20) {
-      if (aiPoiCache.size >= AI_POI_CACHE_MAX) { const k = aiPoiCache.keys().next().value; if (k !== undefined) aiPoiCache.delete(k); }
-      aiPoiCache.set(key, { at: Date.now(), summary: null });
-      return null;
-    }
-    const summary: WikiSummary = { title: name, extract: text, url: "", lang, image: null };
-    if (aiPoiCache.size >= AI_POI_CACHE_MAX) { const k = aiPoiCache.keys().next().value; if (k !== undefined) aiPoiCache.delete(k); }
-    aiPoiCache.set(key, { at: Date.now(), summary });
-    return summary;
-  } catch {
-    return null;
-  }
 }
 
 /**

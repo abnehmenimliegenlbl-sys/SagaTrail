@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /**
- * Offline-Cache fuer POI-Detail (Wikipedia-Auszug) und POI-Story (KI-Text).
+ * Offline-Cache fuer POI-Detail (quellenbelegte Angaben) und POI-Story.
  *
  * Beim Download einer Route werden Details und Geschichten aller POIs vorab
  * geladen und in AsyncStorage abgelegt. Im Hike-Screen werden sie bevorzugt
@@ -18,8 +18,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Neue verifizierte Ortsquellen und das angepasste POI-Narrativ dürfen nicht
 // durch ältere, generische Offline-Texte verdeckt werden.
-const DETAIL_PREFIX = "sagatrail:poi-detail:v5:";
-const STORY_PREFIX = "sagatrail:poi-story:v2:";
+const DETAIL_PREFIX = "sagatrail:poi-detail:v6:";
+const STORY_PREFIX = "sagatrail:poi-story:v3:";
 
 export interface WikiSummary {
   title: string;
@@ -27,6 +27,14 @@ export interface WikiSummary {
   url: string;
   lang: string;
   image?: string | null;
+  sources?: {
+    role: "text" | "image";
+    provider: string;
+    title?: string;
+    url: string;
+    license?: string;
+    creator?: string;
+  }[];
 }
 
 function detailKey(poiId: string): string {

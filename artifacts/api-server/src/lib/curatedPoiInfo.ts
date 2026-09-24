@@ -1,9 +1,12 @@
+import type { PoiSource } from "./wikipedia";
+
 export interface CuratedPoiSummary {
   title: string;
   extract: string;
   url: string;
   lang: string;
   image: null;
+  sources: PoiSource[];
 }
 
 const PARK_CENTER = { lat: 47.6127239, lng: 7.6634480 };
@@ -47,8 +50,28 @@ function summary(
   title: string,
   extract: string,
   url: string,
+  supportingSourceUrls: string[] = [],
 ): CuratedPoiSummary {
-  return { title, extract, url, lang: "de", image: null };
+  return {
+    title,
+    extract,
+    url,
+    lang: "de",
+    image: null,
+    sources: [url, ...supportingSourceUrls].map((sourceUrl) => ({
+      role: "text" as const,
+      provider: "Stadt Lörrach",
+      title:
+        sourceUrl === HEBELPARK_HISTORY_URL
+          ? "Sitzbänke am Hebelpark"
+          : sourceUrl === HEBELPARK_PAGE_URL
+            ? "Parks in Lörrach"
+            : sourceUrl === LORRACH_HISTORY_URL
+              ? "Geschichte der Stadt Lörrach"
+              : undefined,
+      url: sourceUrl,
+    })),
+  };
 }
 
 /**
@@ -80,7 +103,12 @@ export function getCuratedPoiSummary(
     }
 
     if (kind === "leisure=park" || kind === "tourism=attraction") {
-      return summary("Hebelpark (Lörrach)", HEBELPARK_HISTORY, HEBELPARK_PAGE_URL);
+      return summary(
+        "Hebelpark (Lörrach)",
+        HEBELPARK_HISTORY,
+        HEBELPARK_HISTORY_URL,
+        [HEBELPARK_PAGE_URL],
+      );
     }
   }
 
@@ -93,6 +121,7 @@ export function getCuratedPoiSummary(
       "Hebel-Denkmal (Lörrach)",
       HEBEL_MEMORIAL_EXTRACT,
       LORRACH_HISTORY_URL,
+      [HEBELPARK_PAGE_URL],
     );
   }
 

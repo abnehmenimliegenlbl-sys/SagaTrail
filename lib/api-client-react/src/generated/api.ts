@@ -809,8 +809,8 @@ export const getGetPoiDetailUrl = (params: GetPoiDetailParams,) => {
 }
 
 /**
- * Laedt Wikipedia-Zusammenfassung und Bild fuer einen einzelnen Point of Interest. Wird erst aufgerufen wenn der Nutzer den POI oeffnet (lazy), nicht beim initialen Karten-Laden. Ergebnis wird 24 h serverseitig gecacht.
- * @summary Wikipedia/Commons-Anreicherung eines einzelnen POI on demand
+ * Laedt belegte Fakten aus Wikipedia, Wikidata oder kuratierten Ortsquellen sowie optional ein passendes Bild. Die Antwort enthaelt getrennte Quellenangaben fuer Text und Bild. Wird erst beim Oeffnen des POI geladen und 24 h serverseitig gecacht.
+ * @summary Quellenbasierte Anreicherung eines einzelnen POI on demand
  */
 export const getPoiDetail = async (params: GetPoiDetailParams, options?: RequestInit): Promise<PoiDetailResponse> => {
 
@@ -857,7 +857,7 @@ export type GetPoiDetailQueryError = ErrorType<ErrorResponse>
 
 
 /**
- * @summary Wikipedia/Commons-Anreicherung eines einzelnen POI on demand
+ * @summary Quellenbasierte Anreicherung eines einzelnen POI on demand
  */
 
 export function useGetPoiDetail<TData = Awaited<ReturnType<typeof getPoiDetail>>, TError = ErrorType<ErrorResponse>>(
@@ -979,8 +979,8 @@ export const getGetPoiStoryUrl = (params: GetPoiStoryParams,) => {
 }
 
 /**
- * Formt den rohen Wikipedia-Auszug eines Point of Interest (Name + Extract) per KI in einen kurzen, atmosphaerischen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Fehlt der Wikipedia-Auszug, entsteht stattdessen ein kurzer, zurueckhaltender Kontext aus Name und OSM-Kategorie (kind), ohne erfundene Fakten. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
- * @summary Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
+ * Formt einen belegten Auszug aus Wikipedia, Wikidata oder einer Ortsquelle (Name + Extract) per KI in einen kurzen, sachlichen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Fehlt der Wikipedia-Auszug, entsteht stattdessen ein kurzer, zurueckhaltender Kontext aus Name und OSM-Kategorie (kind), ohne erfundene Fakten. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
+ * @summary Quellengebundenen Kontexttext eines Point of Interest erzeugen
  */
 export const getPoiStory = async (params: GetPoiStoryParams, options?: RequestInit): Promise<PoiStory> => {
 
@@ -1027,7 +1027,7 @@ export type GetPoiStoryQueryError = ErrorType<ErrorResponse>
 
 
 /**
- * @summary Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
+ * @summary Quellengebundenen Kontexttext eines Point of Interest erzeugen
  */
 
 export function useGetPoiStory<TData = Awaited<ReturnType<typeof getPoiStory>>, TError = ErrorType<ErrorResponse>>(

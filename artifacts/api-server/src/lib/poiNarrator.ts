@@ -4,7 +4,7 @@ import { getCuratedPoiNarration } from "./curatedPoiInfo";
 import { LANGUAGE_LABEL } from "./storyGenerator";
 
 /**
- * Formt einen rohen Wikipedia-Auszug eines Point of Interest per KI in einen
+ * Formt einen quellenbelegten Auszug eines Point of Interest per KI in einen
  * kurzen, atmosphaerischen Text im Erzaehlstil der App-Sagen um. Das
  * Detail-Modal beim Antippen eines POI-Markers zeigt so keine trockene
  * Enzyklopaedie-Sprache, sondern denselben Ton wie die Sagen selbst.
@@ -206,7 +206,7 @@ function buildPrompt(input: PoiNarrationInput): string {
   return [
     ...kopf,
     "",
-    "Zu diesem Ort gibt es keinen Wikipedia-Artikel.",
+    "Zu diesem Ort liegt kein belegter Detailauszug vor.",
     "Dir sind bekannt: der Name, die OpenStreetMap-Kategorie und — falls vorhanden — zusätzliche OSM-Informationen.",
     "",
     `Ort: "${input.name}"`,

@@ -8,7 +8,7 @@
 import type { WikiSummary } from './wikiSummary';
 
 /**
- * On-demand-Anreicherung eines einzelnen POI mit Wikipedia-Zusammenfassung und/oder Bild (kann null sein wenn nichts gefunden wurde).
+ * On-demand-Anreicherung eines POI mit quellenbelegtem Text und/oder Bild (kann null sein wenn nichts gefunden wurde).
  */
 export interface PoiDetailResponse {
   wiki?: WikiSummary;

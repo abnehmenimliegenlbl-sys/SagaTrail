@@ -413,12 +413,12 @@ paths:
     get:
       operationId: getPoiDetail
       tags: [routes]
-      summary: Wikipedia/Commons-Anreicherung eines einzelnen POI on demand
+      summary: Quellenbasierte Anreicherung eines einzelnen POI on demand
       description: >
-        Laedt Wikipedia-Zusammenfassung und Bild fuer einen einzelnen Point of
-        Interest. Wird erst aufgerufen wenn der Nutzer den POI oeffnet (lazy),
-        nicht beim initialen Karten-Laden. Ergebnis wird 24 h serverseitig
-        gecacht.
+        Laedt belegte Fakten aus Wikipedia, Wikidata oder kuratierten Ortsquellen
+        sowie optional ein passendes Bild. Die Antwort enthaelt getrennte
+        Quellenangaben fuer Text und Bild. Wird erst beim Oeffnen des POI geladen
+        und 24 h serverseitig gecacht.
       parameters:
         - name: name
           in: query
@@ -505,10 +505,10 @@ paths:
     get:
       operationId: getPoiStory
       tags: [routes]
-      summary: Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
+      summary: Quellengebundenen Kontexttext eines Point of Interest erzeugen
       description: >
-        Formt den rohen Wikipedia-Auszug eines Point of Interest (Name +
-        Extract) per KI in einen kurzen, atmosphaerischen Text im
+        Formt einen belegten Auszug aus Wikipedia, Wikidata oder einer Ortsquelle
+        (Name + Extract) per KI in einen kurzen, sachlichen Text im
         Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein
         Gendern. Fehlt der Wikipedia-Auszug, entsteht stattdessen ein
         kurzer, zurueckhaltender Kontext aus Name und OSM-Kategorie
@@ -4006,8 +4006,8 @@ components:
     PoiDetailResponse:
       type: object
       description: >
-        On-demand-Anreicherung eines einzelnen POI mit Wikipedia-Zusammenfassung
-        und/oder Bild (kann null sein wenn nichts gefunden wurde).
+        On-demand-Anreicherung eines POI mit quellenbelegtem Text und/oder Bild
+        (kann null sein wenn nichts gefunden wurde).
       properties:
         wiki:
           $ref: "#/components/schemas/WikiSummary"
@@ -4226,7 +4226,7 @@ components:
         - lng
     WikiSummary:
       type: object
-      description: Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).
+      description: Quellenbelegte POI-Informationen und optionales Bild.
       properties:
         title:
           type: string
@@ -4240,14 +4240,40 @@ components:
           type: string
           nullable: true
           description: Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.
+        sources:
+          type: array
+          description: Getrennte Provenienzangaben fuer Detailtext und Bild.
+          items:
+            $ref: "#/components/schemas/PoiSource"
       required:
         - title
         - extract
         - url
         - lang
+    PoiSource:
+      type: object
+      description: Herkunft und Lizenz eines POI-Textes oder -Bildes.
+      properties:
+        role:
+          type: string
+          enum: [text, image]
+        provider:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        license:
+          type: string
+        creator:
+          type: string
+      required:
+        - role
+        - provider
+        - url
     PoiStory:
       type: object
-      description: Sagen-stilisierte Umschreibung eines Wikipedia-Auszugs.
+      description: Sachliche, quellengebundene Umschreibung eines POI-Auszuges.
       properties:
         text:
           type: string

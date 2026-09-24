@@ -96,6 +96,8 @@ export * from './partnerKategorie';
 export * from './partnerPaket';
 export * from './poi';
 export * from './poiDetailResponse';
+export * from './poiSource';
+export * from './poiSourceRole';
 export * from './poiStory';
 export * from './premiumUpdate';
 export * from './prepareMeetupPhotoShare200';

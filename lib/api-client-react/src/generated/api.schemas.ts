@@ -910,8 +910,28 @@ export interface GeocodePlace {
   lng: number;
 }
 
+export type PoiSourceRole = typeof PoiSourceRole[keyof typeof PoiSourceRole];
+
+
+export const PoiSourceRole = {
+  text: 'text',
+  image: 'image',
+} as const;
+
 /**
- * Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).
+ * Herkunft und Lizenz eines POI-Textes oder -Bildes.
+ */
+export interface PoiSource {
+  role: PoiSourceRole;
+  provider: string;
+  title?: string;
+  url: string;
+  license?: string;
+  creator?: string;
+}
+
+/**
+ * Quellenbelegte POI-Informationen und optionales Bild.
  */
 export interface WikiSummary {
   title: string;
@@ -920,6 +940,8 @@ export interface WikiSummary {
   lang: string;
   /** Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden. */
   image?: string | null;
+  /** Getrennte Provenienzangaben fuer Detailtext und Bild. */
+  sources?: PoiSource[];
 }
 
 /**
@@ -950,7 +972,7 @@ export interface Poi {
 }
 
 /**
- * On-demand-Anreicherung eines einzelnen POI mit Wikipedia-Zusammenfassung und/oder Bild (kann null sein wenn nichts gefunden wurde).
+ * On-demand-Anreicherung eines POI mit quellenbelegtem Text und/oder Bild (kann null sein wenn nichts gefunden wurde).
  */
 export interface PoiDetailResponse {
   wiki?: WikiSummary;
@@ -1110,7 +1132,7 @@ export interface Partner {
 }
 
 /**
- * Sagen-stilisierte Umschreibung eines Wikipedia-Auszugs.
+ * Sachliche, quellengebundene Umschreibung eines POI-Auszuges.
  */
 export interface PoiStory {
   text: string;

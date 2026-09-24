@@ -5,9 +5,10 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { PoiSource } from './poiSource';
 
 /**
- * Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).
+ * Quellenbelegte POI-Informationen und optionales Bild.
  */
 export interface WikiSummary {
   title: string;
@@ -16,4 +17,6 @@ export interface WikiSummary {
   lang: string;
   /** Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden. */
   image?: string | null;
+  /** Getrennte Provenienzangaben fuer Detailtext und Bild. */
+  sources?: PoiSource[];
 }

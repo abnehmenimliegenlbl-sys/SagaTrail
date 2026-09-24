@@ -348,8 +348,16 @@ export const GetPoisResponseItem = zod.object({
   "extract": zod.string(),
   "url": zod.string(),
   "lang": zod.string(),
-  "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.')
-}).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).'),
+  "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.'),
+  "sources": zod.array(zod.object({
+  "role": zod.enum(['text', 'image']),
+  "provider": zod.string(),
+  "title": zod.string().optional(),
+  "url": zod.string(),
+  "license": zod.string().optional(),
+  "creator": zod.string().optional()
+}).describe('Herkunft und Lizenz eines POI-Textes oder -Bildes.')).optional().describe('Getrennte Provenienzangaben fuer Detailtext und Bild.')
+}).optional().describe('Quellenbelegte POI-Informationen und optionales Bild.'),
   "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
   "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.'),
   "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.'),
@@ -390,8 +398,16 @@ export const GetPeakPoisResponseItem = zod.object({
   "extract": zod.string(),
   "url": zod.string(),
   "lang": zod.string(),
-  "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.')
-}).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).'),
+  "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.'),
+  "sources": zod.array(zod.object({
+  "role": zod.enum(['text', 'image']),
+  "provider": zod.string(),
+  "title": zod.string().optional(),
+  "url": zod.string(),
+  "license": zod.string().optional(),
+  "creator": zod.string().optional()
+}).describe('Herkunft und Lizenz eines POI-Textes oder -Bildes.')).optional().describe('Getrennte Provenienzangaben fuer Detailtext und Bild.')
+}).optional().describe('Quellenbelegte POI-Informationen und optionales Bild.'),
   "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
   "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.'),
   "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.'),
@@ -403,8 +419,8 @@ export const GetPeakPoisResponse = zod.array(GetPeakPoisResponseItem)
 
 
 /**
- * Laedt Wikipedia-Zusammenfassung und Bild fuer einen einzelnen Point of Interest. Wird erst aufgerufen wenn der Nutzer den POI oeffnet (lazy), nicht beim initialen Karten-Laden. Ergebnis wird 24 h serverseitig gecacht.
- * @summary Wikipedia/Commons-Anreicherung eines einzelnen POI on demand
+ * Laedt belegte Fakten aus Wikipedia, Wikidata oder kuratierten Ortsquellen sowie optional ein passendes Bild. Die Antwort enthaelt getrennte Quellenangaben fuer Text und Bild. Wird erst beim Oeffnen des POI geladen und 24 h serverseitig gecacht.
+ * @summary Quellenbasierte Anreicherung eines einzelnen POI on demand
  */
 export const GetPoiDetailQueryParams = zod.object({
   "name": zod.coerce.string(),
@@ -421,9 +437,17 @@ export const GetPoiDetailResponse = zod.object({
   "extract": zod.string(),
   "url": zod.string(),
   "lang": zod.string(),
-  "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.')
-}).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).')
-}).describe('On-demand-Anreicherung eines einzelnen POI mit Wikipedia-Zusammenfassung und\/oder Bild (kann null sein wenn nichts gefunden wurde).\n')
+  "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.'),
+  "sources": zod.array(zod.object({
+  "role": zod.enum(['text', 'image']),
+  "provider": zod.string(),
+  "title": zod.string().optional(),
+  "url": zod.string(),
+  "license": zod.string().optional(),
+  "creator": zod.string().optional()
+}).describe('Herkunft und Lizenz eines POI-Textes oder -Bildes.')).optional().describe('Getrennte Provenienzangaben fuer Detailtext und Bild.')
+}).optional().describe('Quellenbelegte POI-Informationen und optionales Bild.')
+}).describe('On-demand-Anreicherung eines POI mit quellenbelegtem Text und\/oder Bild (kann null sein wenn nichts gefunden wurde).\n')
 
 
 /**
@@ -461,8 +485,8 @@ export const GetPartnersResponse = zod.array(GetPartnersResponseItem)
 
 
 /**
- * Formt den rohen Wikipedia-Auszug eines Point of Interest (Name + Extract) per KI in einen kurzen, atmosphaerischen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Fehlt der Wikipedia-Auszug, entsteht stattdessen ein kurzer, zurueckhaltender Kontext aus Name und OSM-Kategorie (kind), ohne erfundene Fakten. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
- * @summary Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
+ * Formt einen belegten Auszug aus Wikipedia, Wikidata oder einer Ortsquelle (Name + Extract) per KI in einen kurzen, sachlichen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Fehlt der Wikipedia-Auszug, entsteht stattdessen ein kurzer, zurueckhaltender Kontext aus Name und OSM-Kategorie (kind), ohne erfundene Fakten. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
+ * @summary Quellengebundenen Kontexttext eines Point of Interest erzeugen
  */
 export const GetPoiStoryQueryParams = zod.object({
   "name": zod.coerce.string(),
@@ -474,7 +498,7 @@ export const GetPoiStoryQueryParams = zod.object({
 
 export const GetPoiStoryResponse = zod.object({
   "text": zod.string()
-}).describe('Sagen-stilisierte Umschreibung eines Wikipedia-Auszugs.')
+}).describe('Sachliche, quellengebundene Umschreibung eines POI-Auszuges.')
 
 
 /**

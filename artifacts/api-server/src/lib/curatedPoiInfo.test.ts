@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { getCuratedPoiSummary } from "./curatedPoiInfo";
+import { fetchCommonsImageSource } from "./wikipedia";
 
 test("returns the Lörrach park history for the Hebelpark bus stop", () => {
   const result = getCuratedPoiSummary(
@@ -15,6 +16,14 @@ test("returns the Lörrach park history for the Hebelpark bus stop", () => {
   assert.match(result.extract, /Friedhof/);
   assert.match(result.extract, /1688 bis 1867/);
   assert.equal(result.url, "https://www.loerrach.de/lieblingsorte/Sitzbaenke-am-Hebelpark");
+  assert.deepEqual(result.sources, [
+    {
+      role: "text",
+      provider: "Stadt Lörrach",
+      title: "Sitzbänke am Hebelpark",
+      url: result.url,
+    },
+  ]);
 });
 
 test("returns documented facts for the Hebel-Denkmal", () => {
@@ -29,6 +38,13 @@ test("returns documented facts for the Hebel-Denkmal", () => {
   assert.match(result.extract, /Johann Peter Hebel/);
   assert.match(result.extract, /1910/);
   assert.match(result.extract, /10\. Mai/);
+  assert.deepEqual(
+    result.sources.map((source) => source.url),
+    [
+      "https://www.loerrach.de/de/Stadt-Buergerschaft/Loerrach-im-ueberblick/Stadtportraet/Geschichte",
+      "https://www.loerrach.de/de/Loerrach-Erleben/Tourismus/EntdeckensWert/NaturLust/Parks",
+    ],
+  );
 });
 
 test("does not apply Lörrach facts to distant or different POIs", () => {
@@ -56,4 +72,44 @@ test("does not apply Lörrach facts to distant or different POIs", () => {
   assert.ok(park);
   assert.match(stop.extract, /Haltestelle/);
   assert.doesNotMatch(park.extract, /Haltestelle/);
+});
+
+test("resolves Commons thumbnail metadata without treating image text as POI facts", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestedUrl = "";
+  globalThis.fetch = async (input) => {
+    requestedUrl = String(input);
+    return new Response(JSON.stringify({
+      query: {
+        pages: {
+          "123": {
+            title: "File:Hebel-Denkmal.jpg",
+            imageinfo: [{
+              descriptionurl: "https://commons.wikimedia.org/wiki/File:Hebel-Denkmal.jpg",
+              extmetadata: {
+                LicenseShortName: { value: "CC BY-SA 4.0" },
+                Artist: { value: '<a href="https://example.org">A. Beispiel</a>' },
+              },
+            }],
+          },
+        },
+      },
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+
+  try {
+    const source = await fetchCommonsImageSource(
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Hebel-Denkmal.jpg/600px-Hebel-Denkmal.jpg",
+    );
+    assert.ok(source);
+    assert.equal(source.role, "image");
+    assert.equal(source.provider, "Wikimedia Commons");
+    assert.equal(source.title, "Hebel-Denkmal.jpg");
+    assert.equal(source.url, "https://commons.wikimedia.org/wiki/File:Hebel-Denkmal.jpg");
+    assert.equal(source.license, "CC BY-SA 4.0");
+    assert.equal(source.creator, "A. Beispiel");
+    assert.match(requestedUrl, /File%3AHebel-Denkmal.jpg/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

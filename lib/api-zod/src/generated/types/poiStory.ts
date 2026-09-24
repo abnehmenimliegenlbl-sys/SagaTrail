@@ -7,7 +7,7 @@
  */
 
 /**
- * Sagen-stilisierte Umschreibung eines Wikipedia-Auszugs.
+ * Sachliche, quellengebundene Umschreibung eines POI-Auszuges.
  */
 export interface PoiStory {
   text: string;

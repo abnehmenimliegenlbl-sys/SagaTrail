@@ -3740,7 +3740,7 @@ export default function LiveHike() {
     };
   }, [selectedPoi, selectedPoiWiki, storyLanguage]);
 
-  // Lazy Wiki-Anreicherung fuer getippte POIs (selectedPoi).
+  // Quellenbasierte Detail-Anreicherung fuer getippte POIs (selectedPoi).
   // Identisch zum nearbyPoiWiki-Effekt, aber fuer manuell geoeffnete Karten-POIs.
   useEffect(() => {
     if (!selectedPoi) {
@@ -6996,7 +6996,7 @@ export default function LiveHike() {
   // siehe oben), erzaehlt der Erzaehler kurz davon — mit dem bereits
   // Lazy Wiki-Anreicherung: wird ausgeloest wenn ein neuer nearbyPoi erscheint.
   // Die Karte zeigt sofort Name + Typ; Bild und Beschreibungstext folgen nach
-  // ~1-2 s wenn der Server zurückmeldet (Wikipedia/Commons/AI).
+  // ~1-2 s wenn der Server mit Quellenangaben zurückmeldet.
   useEffect(() => {
     if (!nearbyPoi) {
       setNearbyPoiWiki(undefined);
@@ -10798,6 +10798,77 @@ export default function LiveHike() {
                   ? t.poiStoryLoading
                     : (poiStory ?? t.notAvailable)}
               </Text>
+              {!!selectedPoi.source && (
+                <Pressable
+                  disabled={!selectedPoi.sourceUrl}
+                  onPress={() =>
+                    selectedPoi.sourceUrl && void Linking.openURL(selectedPoi.sourceUrl)
+                  }
+                  accessibilityRole={selectedPoi.sourceUrl ? "link" : undefined}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    marginTop: 12,
+                  }}
+                >
+                  <Feather
+                    name="database"
+                    size={13}
+                    color={colors.mutedForeground}
+                  />
+                  <Text
+                    style={{
+                      flex: 1,
+                      color: colors.mutedForeground,
+                      fontSize: 11,
+                      lineHeight: 16,
+                    }}
+                  >
+                    {selectedPoi.source}
+                  </Text>
+                  {!!selectedPoi.sourceUrl && (
+                    <Feather
+                      name="external-link"
+                      size={12}
+                      color={colors.accent}
+                    />
+                  )}
+                </Pressable>
+              )}
+              {(selectedPoiWiki?.sources ?? []).map((source, index) => (
+                <Pressable
+                  key={`${source.role}:${source.url}:${index}`}
+                  onPress={() => void Linking.openURL(source.url)}
+                  accessibilityRole="link"
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    marginTop: 12,
+                  }}
+                >
+                  <Feather
+                    name={source.role === "image" ? "image" : "book-open"}
+                    size={13}
+                    color={colors.mutedForeground}
+                  />
+                  <Text
+                    style={{
+                      flex: 1,
+                      color: colors.mutedForeground,
+                      fontSize: 11,
+                      lineHeight: 16,
+                    }}
+                    numberOfLines={2}
+                  >
+                    {[source.provider, source.title, source.creator, source.license]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </Text>
+                  <Feather name="external-link" size={12} color={colors.accent} />
+                </Pressable>
+              ))}
             </Glass>
           </Pressable>
         </Pressable>

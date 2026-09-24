@@ -394,7 +394,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
             const total = 1 + pois.length * 2;
             let done = 1;
             for (const poi of pois) {
-              // Detail (Wikipedia-Auszug oder verifizierte Ortsquelle)
+              // Quellenbelegtes Detail (Wikipedia, Wikidata oder Ortsquelle)
               setProgress({ sagaId: saga.id, phase: "pois", done, total });
               let narrationExtract = poi.wiki?.extract;
               try {

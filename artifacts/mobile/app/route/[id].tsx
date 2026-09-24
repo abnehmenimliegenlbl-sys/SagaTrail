@@ -2347,6 +2347,29 @@ export default function Routenplanung() {
                   {!!selectedPoi.sourceUrl && <Feather name="external-link" size={12} color={colors.accent} />}
                 </Pressable>
               )}
+              {(selectedPoiWiki?.sources ?? []).map((source, index) => (
+                <Pressable
+                  key={`${source.role}:${source.url}:${index}`}
+                  onPress={() => void Linking.openURL(source.url)}
+                  accessibilityRole="link"
+                  style={styles.poiSourceRow}
+                >
+                  <Feather
+                    name={source.role === "image" ? "image" : "book-open"}
+                    size={13}
+                    color={colors.mutedForeground}
+                  />
+                  <Text
+                    style={[styles.poiSourceText, { color: colors.mutedForeground }]}
+                    numberOfLines={2}
+                  >
+                    {[source.provider, source.title, source.creator, source.license]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </Text>
+                  <Feather name="external-link" size={12} color={colors.accent} />
+                </Pressable>
+              ))}
             </Glass>
           </Pressable>
         </Pressable>

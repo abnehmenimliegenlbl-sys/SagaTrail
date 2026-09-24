@@ -149,9 +149,10 @@ import {
   resolveWikidataTitle,
   fetchWikidataCommonsCategory,
   fetchWikipediaArticleImageByPoiName,
-  searchAiPoiKnowledge,
+  fetchCommonsImageSource,
   searchCantonLegend,
   searchNearbyWikipedia,
+  type PoiSource,
   type WikiSummary,
 } from "./wikipedia";
 import { getCuratedPoiSummary } from "./curatedPoiInfo";
@@ -392,10 +393,32 @@ function peaksInRequestedRadius(
 const POI_DETAIL_CACHE_MAX = 200;
 const poiDetailCache = new Map<string, { at: number; wiki: WikiSummary | null }>();
 
+function wikipediaPoiSource(wiki: WikiSummary): PoiSource {
+  return {
+    role: "text",
+    provider: "Wikipedia",
+    title: wiki.title,
+    url: wiki.url,
+    license: "CC BY-SA 4.0",
+  };
+}
+
+function wikidataPoiSource(qid: string): PoiSource {
+  return {
+    role: "text",
+    provider: "Wikidata",
+    url: `https://www.wikidata.org/wiki/${encodeURIComponent(qid)}`,
+    license: "CC0 1.0",
+  };
+}
+
+function withPoiSource(wiki: WikiSummary, source: PoiSource): WikiSummary {
+  return { ...wiki, sources: [...(wiki.sources ?? []), source] };
+}
+
 /**
- * Loest die Wikipedia-Referenz eines POI auf: zuerst der OSM-`wikipedia`-Tag
- * (enthaelt bereits Sprache + Titel), sonst der `wikidata`-Tag (Q-ID -> Titel
- * der Zielsprache), sonst kein Treffer.
+ * Loest die Textquelle eines POI auf: zuerst der OSM-`wikipedia`-Tag,
+ * dann Wikipedia ueber den `wikidata`-Tag oder strukturierte Wikidata-Fakten.
  */
 /**
  * Laedt das Wikidata-P18-Bild (falls vorhanden) und fuegt es in ein bereits
@@ -416,7 +439,15 @@ async function enrichPoiWithWikipedia(
   try {
     if (poi.wikipediaTag) {
       const wiki = await resolveOsmWikipediaTag(poi.wikipediaTag, "de", poi.lat, poi.lng);
-      if (wiki) return { ...poi, wiki: await withP18Image(wiki, poi.wikidataTag) };
+      if (wiki) {
+        return {
+          ...poi,
+          wiki: await withP18Image(
+            withPoiSource(wiki, wikipediaPoiSource(wiki)),
+            poi.wikidataTag,
+          ),
+        };
+      }
     }
     if (poi.wikidataTag) {
       // Titel und P18-Bild parallel auflosen — beides kommt aus Wikidata, aber
@@ -436,32 +467,37 @@ async function enrichPoiWithWikipedia(
           (await fetchWikidataCommonsCategory(poi.wikidataTag)) ??
           (await fetchCommonsImageByName(poi.name))?.url ??
           (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
-        return { ...poi, wiki: { ...summary, image, lang } };
+        return {
+          ...poi,
+          wiki: withPoiSource(
+            { ...summary, image, lang },
+            wikipediaPoiSource(summary),
+          ),
+        };
       } else {
-        // Kein Wikipedia-Eintrag: Wikidata-Fakten + Bild + KI parallel.
-        // Wikidata-Fakten haben Vorrang vor searchAiPoiKnowledge.
-        const [p18Image, p373Image, nameMatch, geoImage, wikidataFactsB, aiTextWiki] = await Promise.all([
+        // Kein Wikipedia-Eintrag: nur strukturierte Wikidata-Fakten und Bilder.
+        const [p18Image, p373Image, nameMatch, geoImage, wikidataFactsB] = await Promise.all([
           fetchWikidataImage(poi.wikidataTag),
           fetchWikidataCommonsCategory(poi.wikidataTag),
           fetchCommonsImageByName(poi.name),
           fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
           fetchWikidataFacts(poi.wikidataTag),
-          searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
         ]);
         const image = p18Image ?? p373Image ?? nameMatch?.url ?? geoImage;
-        // Die unbeschränkte Namenssuche hat hier keinen Ortsabgleich; ihre
-        // Bildbeschreibung darf deshalb nicht als POI-Fakt verwendet werden.
-        const extractB = wikidataFactsB ?? aiTextWiki?.extract ?? "";
+        const extractB = wikidataFactsB ?? "";
         if (image || extractB) {
+          const summary: WikiSummary = {
+            title: poi.name,
+            extract: extractB,
+            url: "",
+            lang: "de",
+            image,
+          };
           return {
             ...poi,
-            wiki: {
-              title: aiTextWiki?.title ?? poi.name,
-              extract: extractB,
-              url: aiTextWiki?.url ?? nameMatch?.descriptionUrl ?? "",
-              lang: "de",
-              image: image ?? aiTextWiki?.image ?? null,
-            },
+            wiki: extractB
+              ? withPoiSource(summary, wikidataPoiSource(poi.wikidataTag))
+              : summary,
           };
         }
       }
@@ -484,35 +520,31 @@ async function enrichPoiWithWikipedia(
           (await fetchWikipediaArticleImageByPoiName(wiki.title, poi.name)) ??
           wiki.image ??
           (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
-        return { ...poi, wiki: { ...wiki, image } };
+        return {
+          ...poi,
+          wiki: withPoiSource({ ...wiki, image }, wikipediaPoiSource(wiki)),
+        };
       }
     }
-    // Vierte + Fuenfte Stufe parallel: Commons-Bild mit Ortskontext UND
-    // Claude-Text gleichzeitig suchen. Der Ortskontext macht die Suche
-    // spezifisch genug fuer gleichnamige POIs in verschiedenen Orten.
+    // Ohne verifizierten Text bleibt nur ein optionales Bild aus Commons.
     const placeHint = await getPoiPlaceHint(poi.lat, poi.lng, log);
     const searchTerm = commonsSearchTerm(poi.name, poi.kind);
-    const [nameMatch, geoImage, aiWiki] = await Promise.all([
+    const [nameMatch, geoImage] = await Promise.all([
       placeHint && searchTerm
         ? fetchCommonsImageByName(searchTerm, 600, placeHint)
         : Promise.resolve(null),
       fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
-      searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
     ]);
     const commonsImage = nameMatch?.url ?? geoImage;
-    const commonsDescription = nameMatch?.description ?? "";
-    const verifiedExtract = [commonsDescription, aiWiki?.extract]
-      .filter((part): part is string => Boolean(part?.trim()))
-      .join("\n\n");
-    if (commonsImage || verifiedExtract) {
+    if (commonsImage) {
       return {
         ...poi,
         wiki: {
-          title: aiWiki?.title ?? poi.name,
-          extract: verifiedExtract,
-          url: aiWiki?.url ?? nameMatch?.descriptionUrl ?? "",
-          lang: aiWiki?.lang ?? "de",
-          image: commonsImage ?? aiWiki?.image ?? null,
+          title: poi.name,
+          extract: "",
+          url: "",
+          lang: "de",
+          image: commonsImage,
         },
       };
     }
@@ -725,7 +757,12 @@ export async function getPoiDetail(
   // unpassende Bilder (Lok statt Refugium, Portrait statt Denkmal) verwerfen.
   if (wiki?.image) {
     const passend = await istPoiBildPassend(wiki.image, params.name, params.kind, log);
-    if (!passend) wiki = { ...wiki, image: null };
+    if (!passend) {
+      wiki = { ...wiki, image: null };
+    } else {
+      const imageSource = await fetchCommonsImageSource(wiki.image);
+      if (imageSource) wiki = withPoiSource(wiki, imageSource);
+    }
   }
   remember(wiki);
   log.info({ name: params.name, hasImage: !!wiki?.image, hasExtract: !!wiki?.extract }, "POI-Detail angereichert");
