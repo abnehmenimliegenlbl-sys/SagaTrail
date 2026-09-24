@@ -16,11 +16,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  *                          string = gecachter Story-Text
  */
 
-// v4 verwirft alle früheren negativen Detail-Caches. Ein "kein Wikipedia-
-// Eintrag"-Ergebnis darf nicht dauerhaft offline festgeschrieben werden, weil
-// der Server bei transienten externen Fehlern ebenfalls null zurückgeben kann.
-const DETAIL_PREFIX = "sagatrail:poi-detail:v4:";
-const STORY_PREFIX = "sagatrail:poi-story:v1:";
+// Neue verifizierte Ortsquellen und das angepasste POI-Narrativ dürfen nicht
+// durch ältere, generische Offline-Texte verdeckt werden.
+const DETAIL_PREFIX = "sagatrail:poi-detail:v5:";
+const STORY_PREFIX = "sagatrail:poi-story:v2:";
 
 export interface WikiSummary {
   title: string;

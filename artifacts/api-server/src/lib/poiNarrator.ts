@@ -1,5 +1,6 @@
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import type { Logger } from "pino";
+import { getCuratedPoiNarration } from "./curatedPoiInfo";
 import { LANGUAGE_LABEL } from "./storyGenerator";
 
 /**
@@ -8,14 +9,24 @@ import { LANGUAGE_LABEL } from "./storyGenerator";
  * Detail-Modal beim Antippen eines POI-Markers zeigt so keine trockene
  * Enzyklopaedie-Sprache, sondern denselben Ton wie die Sagen selbst.
  *
- * Ohne Wikipedia-Auszug (viele kleine POIs haben keinen Artikel) entsteht
- * stattdessen ein kurzer, bewusst zurueckhaltender Kontext aus Name und
- * OSM-Kategorie: Was fuer ein Ort das typischerweise ist -- OHNE erfundene
- * Fakten, Jahreszahlen oder Geschichten zu genau diesem Ort.
+ * Ohne Auszug und ohne verifizierten OSM-Kontext wird kein generischer
+ * Kategorie-Text erzeugt; stattdessen wird transparent auf fehlende Details
+ * hingewiesen.
  */
 
 const MODEL = "claude-haiku-4-5";
 const MAX_TOKENS = 512;
+const NO_VERIFIED_DETAILS: Record<string, string> = {
+  de: "Zu diesem Ort liegen derzeit keine verlässlichen Detailinformationen vor.",
+  gsw: "Zu diesem Ort liegen derzeit keine verlässlichen Detailinformationen vor.",
+  en: "Reliable background information for this place is not available yet.",
+  fr: "Aucune information fiable sur ce lieu n’est disponible pour le moment.",
+  it: "Al momento non sono disponibili informazioni affidabili su questo luogo.",
+  es: "Por ahora no hay información fiable disponible sobre este lugar.",
+  pt: "Ainda não há informações fiáveis disponíveis sobre este local.",
+  zh: "目前没有关于此地点的可靠背景信息。",
+  ru: "Надёжная информация об этом месте пока недоступна.",
+};
 
 interface PoiNarrationInput {
   name: string;
@@ -35,7 +46,7 @@ const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const cache = new Map<string, CacheEntry>();
 
 function cacheKey(input: PoiNarrationInput): string {
-  return `${input.lang}::${input.name}::${input.extract ?? ""}::${input.kind ?? ""}::${input.osmContext ?? ""}`;
+  return `poi-narration-v2::${input.lang}::${input.name}::${input.extract ?? ""}::${input.kind ?? ""}::${input.osmContext ?? ""}`;
 }
 
 /** Uebersetzt rohe OSM-Kind-Tags ("historic=boundary_stone") in lesbare
@@ -63,6 +74,10 @@ function translateKind(kind: string | undefined): string {
     "historic=building":          "Historisches Gebäude",
     "historic=tomb":              "Historisches Grabmal",
     "historic=yes":               "Historisches Objekt",
+    "highway=bus_stop":           "Bushaltestelle",
+    "railway=station":            "Bahnhof",
+    "railway=halt":               "Bahn-Haltestelle",
+    "railway=tram_stop":          "Tramhaltestelle",
     // saga
     "saga=heart":                 "Herzort der Sage",
     // tourism
@@ -110,7 +125,7 @@ function buildPrompt(input: PoiNarrationInput): string {
   const kindLabel = translateKind(input.kind);
   const institutionalCategory = detectInstitutionalCategory(input.name);
   const kopf = [
-    "Du bist derselbe Erzähler, der in einer Schweizer Wander-App regionale Sagen live erzählt.",
+    "Du verfasst für eine Schweizer Wander-App kurze, quellengebundene Ortsinformationen.",
     "Eine wandernde Person kommt unterwegs an einem realen Ort vorbei.",
     "",
     // Schweizer Dialekt-Hinweis — nur zur korrekten Übersetzung des Namens:
@@ -130,7 +145,12 @@ function buildPrompt(input: PoiNarrationInput): string {
     "Strikte Regeln:",
     "- Schreibe im Präsens, in der Du-Anrede.",
     "- Verwende KEIN Gendern (keine Formen wie 'Wanderer*innen'); nutze neutrale oder generische Formen.",
-    "- 2 bis 8 Sätze, keine Aufzählungen, keine Überschrift.",
+    "- 1 bis 4 Sätze, keine Aufzählungen, keine Überschrift.",
+    "- Schreibe einen sachlichen Ortsbericht, keine erfundene Szene.",
+    "- Keine Metaphern, Personifizierungen oder szenischen Ausschmückungen.",
+    "- Leite keine Jahreszeiten, Zeiträume, Ursachen, Abläufe oder Regelmäßigkeiten ab, die nicht ausdrücklich in den Quellen stehen.",
+    "- Jeder Satz muss mindestens eine konkrete Information aus den Quellen enthalten.",
+    "- Fülle den Text nicht mit allgemeinen Aussagen über die Objektkategorie auf; bei wenigen Fakten schreibe entsprechend kurz.",
     "- Kein einladender Abschlusssatz: KEINE Formulierungen wie 'Schau genauer hin', 'Vielleicht findest du noch etwas',",
     "  'Halte die Augen offen', 'Nimm dir einen Moment' oder ähnliche Handlungsaufforderungen am Ende.",
     "  Der Text endet mit einer faktischen Aussage, nicht mit einer Einladung.",
@@ -149,7 +169,7 @@ function buildPrompt(input: PoiNarrationInput): string {
       ]
     : [];
 
-  if (input.extract) {
+  if (input.extract?.trim()) {
     // Wenn der Name eine institutionelle Kategorie enthält (z.B. "Jagdbanngebiet"),
     // beschreibt der Wikipedia-Auszug oft nur die geografische Lage (den Berg, das Tal),
     // nicht die Institution selbst. Explizit klarstellen, was das Hauptthema ist.
@@ -157,10 +177,10 @@ function buildPrompt(input: PoiNarrationInput): string {
       ? [
           "",
           `WICHTIG: Der POI-Name enthält eine institutionelle Kategorie: "${institutionalCategory}".`,
-          "Der Wikipedia-Auszug beschreibt möglicherweise das geografische Objekt (Berg, Tal, Gewässer),",
+           "Der Ortsauszug beschreibt möglicherweise das geografische Objekt (Berg, Tal, Gewässer),",
           "das Teil des Namens ist — NICHT die Institution selbst.",
           `Dein Text soll erklären, was ein ${institutionalCategory} ist und welche Bedeutung`,
-          "es für Natur und Wandernde hat. Nutze den Wikipedia-Auszug nur als geografischen Kontext",
+           "es für Natur und Wandernde hat. Nutze den Ortsauszug nur als geografischen Kontext",
           "(Lage, Größe, Höhe) — beschreibe NICHT primär das geografische Objekt.",
         ]
       : [];
@@ -168,21 +188,21 @@ function buildPrompt(input: PoiNarrationInput): string {
     return [
       ...kopf,
       "",
-      "Forme den folgenden nüchternen Wikipedia-Auszug über diesen Ort in einen kurzen,",
-      "atmosphärischen Erzähltext im selben Sagen-Erzählton um -- so, als würdest du der",
-      "wandernden Person im Vorbeigehen davon erzählen.",
+      "Forme den folgenden nüchternen Ortsauszug in einen kurzen, konkreten und",
+      "faktengebundenen Text für eine wandernde Person um.",
       "",
       `Ort: "${input.name}"`,
       `Objekttyp: ${kindLabel}`,
-      `Wikipedia-Auszug: ${input.extract}`,
+      `Ortsauszug: ${input.extract.trim()}`,
       ...institutionalNote,
       ...osmBlock,
       ...fuss,
       "- Erfinde KEINE neuen Fakten, Ereignisse oder Sagen -- nutze ausschliesslich die Angaben aus Auszug und OSM-Kontext.",
+      "- Verwechsle den POI-Typ nicht mit einem gleichnamigen Ziel in der Nähe. Eine Bushaltestelle ist nicht selbst der Park, dessen Namen sie trägt.",
     ].join("\n");
   }
 
-  // Ohne Wikipedia-Auszug: Name + OSM-Kategorie + optionaler OSM-Kontext bekannt.
+  // Ohne Auszug, aber mit OSM-Kontext: nur die konkreten Tags erzählen.
   return [
     ...kopf,
     "",
@@ -201,8 +221,7 @@ function buildPrompt(input: PoiNarrationInput): string {
     "  Beispiel: 'Lass deine Steine hier' → NICHT: 'Hier legen Pilger Steine nieder als Symbol ...'",
     "  (Das wäre erfunden, solange kein OSM-Kontext oder Wikipedia-Artikel das belegt.)",
     "- Wenn OSM-Kontext vorhanden: nutze ihn vollständig und wörtlich.",
-    "- Wenn kein OSM-Kontext vorhanden: beschreibe nur, was ein Objekt des Typs «" + kindLabel + "»",
-    "  typischerweise ist und warum es für Wandernde interessant sein kann.",
+    "- Erkläre nicht, was ein Objekt dieses Typs typischerweise ist oder warum es allgemein interessant sein könnte.",
     "- KEIN Satz der behauptet, was an genau diesem Ort passiert ist oder wer ihn gebaut hat,",
     "  es sei denn, dies steht explizit im OSM-Kontext.",
   ].join("\n");
@@ -212,6 +231,28 @@ export async function narratePoi(
   input: PoiNarrationInput,
   log: Logger,
 ): Promise<string> {
+  const curatedNarration = getCuratedPoiNarration(
+    input.name,
+    input.kind ?? "",
+    input.extract ?? "",
+    input.lang,
+  );
+  if (curatedNarration) {
+    log.info(
+      { name: input.name, kind: input.kind, lang: input.lang },
+      "POI-Erzählung direkt aus verifizierter Ortsquelle geliefert",
+    );
+    return curatedNarration;
+  }
+
+  if (!input.extract?.trim() && !input.osmContext?.trim()) {
+    log.info(
+      { name: input.name, kind: input.kind },
+      "POI-Erzählung ohne verifizierte Detailquelle ausgelassen",
+    );
+    return NO_VERIFIED_DETAILS[input.lang] ?? NO_VERIFIED_DETAILS.de;
+  }
+
   const key = cacheKey(input);
   const cached = cache.get(key);
   const now = Date.now();

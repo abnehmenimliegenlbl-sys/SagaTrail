@@ -394,8 +394,9 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
             const total = 1 + pois.length * 2;
             let done = 1;
             for (const poi of pois) {
-              // Detail (Wikipedia-Auszug)
+              // Detail (Wikipedia-Auszug oder verifizierte Ortsquelle)
               setProgress({ sagaId: saga.id, phase: "pois", done, total });
+              let narrationExtract = poi.wiki?.extract;
               try {
                 const detail = await getPoiDetail({
                   name: poi.name,
@@ -406,6 +407,9 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
                   ...(poi.wikidataTag ? { wikidataTag: poi.wikidataTag } : {}),
                 });
                 await cachePoiDetail(poi.id, detail.wiki ?? null);
+                if (detail.wiki?.extract?.trim()) {
+                  narrationExtract = detail.wiki.extract;
+                }
               } catch {
                 // Ein transienter Netzwerk-/Serverfehler ist kein belastbarer
                 // "kein Wikipedia-Eintrag"-Befund. Nicht als null speichern,
@@ -419,7 +423,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
               try {
                 const story = await getPoiStory({
                   name: poi.name,
-                  extract: poi.wiki?.extract,
+                  extract: narrationExtract,
                   kind: poi.kind,
                   lang,
                   osmContext: poi.osmContext ?? undefined,

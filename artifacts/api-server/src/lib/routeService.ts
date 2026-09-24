@@ -154,6 +154,7 @@ import {
   searchNearbyWikipedia,
   type WikiSummary,
 } from "./wikipedia";
+import { getCuratedPoiSummary } from "./curatedPoiInfo";
 
 /**
  * Orchestriert die dynamischen Routen: laedt reale Wanderrouten je Kanton aus
@@ -679,9 +680,31 @@ export async function getPoiDetail(
     params.lat.toFixed(5),
     params.lng.toFixed(5),
     params.name,
+    params.kind,
     params.wikipediaTag ?? "",
     params.wikidataTag ?? "",
   ].join(",");
+  const remember = (wiki: WikiSummary | null) => {
+    if (poiDetailCache.size >= POI_DETAIL_CACHE_MAX) {
+      const k = poiDetailCache.keys().next().value;
+      if (k !== undefined) poiDetailCache.delete(k);
+    }
+    poiDetailCache.set(cacheKey, { at: Date.now(), wiki });
+  };
+  const curated = getCuratedPoiSummary(
+    params.name,
+    params.kind,
+    params.lat,
+    params.lng,
+  );
+  if (curated) {
+    remember(curated);
+    log.info(
+      { name: params.name, kind: params.kind, source: curated.url },
+      "POI-Detail aus verifizierter Ortsquelle",
+    );
+    return curated;
+  }
   const hit = poiDetailCache.get(cacheKey);
   if (hit && Date.now() - hit.at < POI_DETAIL_TTL_MS) return hit.wiki;
   const rawPoi: RawPoi = {
@@ -704,8 +727,7 @@ export async function getPoiDetail(
     const passend = await istPoiBildPassend(wiki.image, params.name, params.kind, log);
     if (!passend) wiki = { ...wiki, image: null };
   }
-  if (poiDetailCache.size >= POI_DETAIL_CACHE_MAX) { const k = poiDetailCache.keys().next().value; if (k !== undefined) poiDetailCache.delete(k); }
-  poiDetailCache.set(cacheKey, { at: Date.now(), wiki });
+  remember(wiki);
   log.info({ name: params.name, hasImage: !!wiki?.image, hasExtract: !!wiki?.extract }, "POI-Detail angereichert");
   return wiki;
 }
