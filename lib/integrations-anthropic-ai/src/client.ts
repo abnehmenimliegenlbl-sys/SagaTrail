@@ -43,10 +43,14 @@ if (!directApiKey && !replitClient) {
 const directClient = directApiKey ? new Anthropic({ apiKey: directApiKey }) : null;
 
 if (directClient && replitClient) {
-  const directCreate = directClient.messages.create as unknown as (
+  const directCreate = directClient.messages.create.bind(
+    directClient.messages,
+  ) as unknown as (
     ...args: any[]
   ) => Promise<unknown>;
-  const replitCreate = replitClient.messages.create as unknown as (
+  const replitCreate = replitClient.messages.create.bind(
+    replitClient.messages,
+  ) as unknown as (
     ...args: any[]
   ) => Promise<unknown>;
 

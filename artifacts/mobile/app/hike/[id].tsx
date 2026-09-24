@@ -3724,7 +3724,12 @@ export default function LiveHike() {
           if (!cancelled) setPoiStory(result.text);
         })
         .catch(() => {
-          // Fallback bleibt der rohe Wikipedia-Auszug (siehe Rendering unten).
+          // Wenn die KI-Umschreibung ausfällt, den vorhandenen Wikipedia-Auszug
+          // anzeigen statt im Detail-Modal nur "nicht verfügbar" zu zeigen.
+          if (cancelled) return;
+          const rawExtract =
+            selectedPoiWiki?.extract ?? selectedPoi.wiki?.extract ?? null;
+          setPoiStory(rawExtract?.trim() ? rawExtract : null);
         })
         .finally(() => {
           if (!cancelled) setPoiStoryLoading(false);
