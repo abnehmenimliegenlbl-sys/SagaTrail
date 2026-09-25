@@ -25,6 +25,10 @@ import type { LatLng } from "@/types";
 import { persistJournalImage } from "@/lib/journalMedia";
 import { makeLogger } from "@/lib/debugLog";
 import type { RecognitionJournalEntry } from "@/types";
+import {
+  HikeSystemStatusBanner,
+  type HikeSystemStatusIssue,
+} from "./HikeSystemStatusBanner";
 import type { PeakPanoramaStrings } from "./PeakPanorama";
 import { PeakArNavigator } from "./PeakArNavigator";
 
@@ -32,6 +36,7 @@ const peakCameraLog = makeLogger("[PeakCamera]", "peak_camera");
 
 interface PeakCameraOverlayProps {
   visible: boolean;
+  isOffline: boolean;
   peaks: readonly PanoramaGipfel[];
   arCandidates?: readonly PanoramaGipfel[];
   terrainProfile?: readonly TerrainProfilePoint[] | null;
@@ -49,6 +54,16 @@ interface PeakCameraOverlayProps {
     label: string;
   } | null;
   observerElevationM?: number | null;
+  statusStrings: {
+    gpsTitle: string;
+    gpsDetail: string;
+    offlineTitle: string;
+    offlineDetail: string;
+    compassTitle: string;
+    compassDetail: string;
+    arTrackingDetail: string;
+    arUnavailableDetail: string;
+  };
   strings: PeakPanoramaStrings;
   onClose: () => void;
   onCaptured?: (entry: RecognitionJournalEntry) => void | Promise<void>;
@@ -56,6 +71,7 @@ interface PeakCameraOverlayProps {
 
 export function PeakCameraOverlay({
   visible,
+  isOffline,
   peaks,
   arCandidates = peaks,
   terrainProfile = null,
@@ -68,6 +84,7 @@ export function PeakCameraOverlay({
   heading,
   nextTurn = null,
   observerElevationM = null,
+  statusStrings,
   strings,
   onClose,
   onCaptured,
@@ -151,24 +168,44 @@ export function PeakCameraOverlay({
     observerPosition != null &&
     heading != null &&
     trackingState === "ready";
-  const routePauseReason =
+  const systemIssue: HikeSystemStatusIssue | null =
     observerPosition == null
-      ? strings.noGps
+      ? {
+          kind: "gps",
+          title: statusStrings.gpsTitle,
+          detail: statusStrings.gpsDetail,
+        }
       : heading == null
-        ? strings.needCompass
+        ? {
+            kind: "compass",
+            title: statusStrings.compassTitle,
+            detail: statusStrings.compassDetail,
+          }
         : trackingState === "initializing"
-          ? strings.arTrackingStarting
+          ? {
+              kind: "ar",
+              title: strings.arTrackingStarting,
+              detail: statusStrings.arTrackingDetail,
+            }
           : trackingState === "limited"
-            ? strings.arTrackingLimited
-            : strings.arUnavailable;
-  const routePauseDetail =
-    observerPosition == null
-      ? strings.noGps
-      : heading == null
-        ? strings.needCompass
-        : trackingState === "unavailable"
-          ? strings.arUnavailable
-          : strings.arTrackingPaused;
+            ? {
+                kind: "ar",
+                title: strings.arTrackingLimited,
+                detail: statusStrings.arTrackingDetail,
+              }
+            : trackingState === "unavailable"
+              ? {
+                  kind: "ar",
+                  title: strings.arUnavailable,
+                  detail: statusStrings.arUnavailableDetail,
+                }
+              : isOffline
+                ? {
+                    kind: "connection",
+                    title: statusStrings.offlineTitle,
+                    detail: statusStrings.offlineDetail,
+                  }
+                : null;
   const handleTrackingStateChange = useCallback(
     (state: "initializing" | "ready" | "limited" | "unavailable") => {
       setTrackingState(state);
@@ -585,25 +622,17 @@ export function PeakCameraOverlay({
             />
           </View>
         </View>
-        {!routeGuidanceReady && contentMounted && (
+        {systemIssue && contentMounted && (
           <View
             style={[
-              styles.routePausedHint,
-              {
-                backgroundColor: colors.glassBgStrong,
-                borderColor: colors.destructive,
-              },
+              styles.cameraStatusPosition,
+              routeGuidanceReady &&
+                nextTurn &&
+                systemIssue.kind === "connection" &&
+                styles.cameraStatusBelowTurn,
             ]}
           >
-            <Feather name="pause-circle" size={18} color={colors.destructive} />
-            <View style={styles.routePausedCopy}>
-              <Text style={[styles.routePausedTitle, { color: colors.photoScrimText }]}>
-                {routePauseReason}
-              </Text>
-              <Text style={[styles.routePausedDetail, { color: colors.photoScrimMuted }]}>
-                {routePauseDetail}
-              </Text>
-            </View>
+            <HikeSystemStatusBanner issue={systemIssue} variant="camera" />
           </View>
         )}
         {routeGuidanceReady && nextTurn && (
@@ -704,30 +733,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
   },
-  routePausedHint: {
+  cameraStatusPosition: {
     position: "absolute",
     top: 112,
     left: 18,
     right: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    paddingHorizontal: 13,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderRadius: 14,
   },
-  routePausedCopy: { flex: 1, gap: 2 },
-  routePausedTitle: {
-    fontFamily: fonts.titleBold,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.4,
-  },
-  routePausedDetail: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    fontWeight: "700",
+  cameraStatusBelowTurn: {
+    top: 194,
   },
   scanLineTop: {
     position: "absolute",

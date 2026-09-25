@@ -92,6 +92,10 @@ import {
 import { RouteMap } from "@/components/brand/RouteMap";
 import { PeakPanorama } from "@/components/brand/PeakPanorama";
 import { PeakCameraOverlay } from "@/components/brand/PeakCameraOverlay";
+import {
+  HikeSystemStatusBanner,
+  type HikeSystemStatusIssue,
+} from "@/components/brand/HikeSystemStatusBanner";
 import { FeatureTileDeck } from "@/components/brand/FeatureTileDeck";
 import { ObjectRecognition } from "@/components/brand/ObjectRecognition";
 import { SparkMountain } from "@/components/brand/SparkMountain";
@@ -9085,37 +9089,33 @@ export default function LiveHike() {
   }, [hasFreshGps, livePos, navigationGeometry]);
   const gpsSignalLost =
     startGateConfirmed && locState === "granted" && !hasFreshGps && !finished;
+  const primaryHikeIssue: HikeSystemStatusIssue | null =
+    locState === "denied"
+      ? {
+          kind: "gps",
+          title: t.noLocationAccess,
+          detail: t.locationDeniedHint,
+          actionLabel: t.allow,
+          onAction: () => void requestLocationAccess(),
+        }
+      : gpsSignalLost
+        ? {
+            kind: "gps",
+            title: t.gpsSignalLostTitle,
+            detail: t.gpsSignalLostHint,
+            actionLabel: t.gpsRetry,
+            onAction: () => void requestLocationAccess(),
+          }
+        : isOffline
+          ? {
+              kind: "connection",
+              title: t.offlineHikeBanner,
+              detail: t.offlineHikeDetail,
+            }
+          : null;
 
   return (
     <Background>
-      {/* Standort-Banner */}
-      {locState === "denied" && (
-        <View
-          style={[styles.banner, { top: topPad, backgroundColor: colors.card }]}
-        >
-          <View style={styles.bannerHead}>
-            <Feather name="map-pin" size={16} color={colors.accent} />
-            <Text style={[styles.bannerText, { color: colors.foreground }]}>
-              {t.noLocationAccess}
-            </Text>
-          </View>
-          <Text style={[styles.bannerHint, { color: colors.mutedForeground }]}>
-            {t.locationDeniedHint}
-          </Text>
-          <Pressable
-            onPress={() => void requestLocationAccess()}
-            accessibilityRole="button"
-            accessibilityLabel={t.allow}
-            style={[styles.bannerBtn, { borderColor: colors.glassBorder }]}
-          >
-            <Feather name="settings" size={14} color={colors.accent} />
-            <Text style={[styles.bannerAction, { color: colors.accent }]}>
-              {t.allow}
-            </Text>
-          </Pressable>
-        </View>
-      )}
-
       {!startReached && locState !== "denied" && walkToStart && !preparing && (
         <Animated.View
           entering={FadeIn}
@@ -9139,63 +9139,23 @@ export default function LiveHike() {
       <ScrollView
         contentContainerStyle={{
           paddingTop:
-            locState === "denied"
-              ? topPad + 148
-              : !startReached && walkToStart && !preparing
-                ? topPad + 92
-                : topPad,
+            !startReached &&
+            locState !== "denied" &&
+            walkToStart &&
+            !preparing
+              ? topPad + 92
+              : topPad,
           paddingHorizontal: 16,
           paddingBottom: insets.bottom + 120,
         }}
         showsVerticalScrollIndicator={false}
       >
-        {isOffline && (
+        {primaryHikeIssue && (
           <Animated.View
             entering={FadeIn}
             exiting={FadeOut}
-            style={[
-              styles.offlineBannerInline,
-              { backgroundColor: colors.card, borderColor: colors.destructive },
-            ]}
           >
-            <Feather name="wifi-off" size={15} color={colors.destructive} />
-            <Text style={[styles.bannerText, { color: colors.foreground }]}>
-              {t.offlineHikeBanner}
-            </Text>
-          </Animated.View>
-        )}
-
-        {gpsSignalLost && (
-          <Animated.View
-            entering={FadeIn}
-            exiting={FadeOut}
-            style={[
-              styles.offlineBannerInline,
-              { backgroundColor: colors.card, borderColor: colors.destructive },
-            ]}
-          >
-            <Feather name="map-pin" size={15} color={colors.destructive} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.bannerText, { color: colors.foreground }]}>
-                {t.gpsSignalLostTitle}
-              </Text>
-              <Text style={[styles.bannerHint, { color: colors.mutedForeground }]}>
-                {t.gpsSignalLostHint}
-              </Text>
-              <Pressable
-                onPress={() => void requestLocationAccess()}
-                accessibilityRole="button"
-                style={[
-                  styles.gpsRetryButton,
-                  { borderColor: colors.accent, backgroundColor: colors.glassBg },
-                ]}
-              >
-                <Feather name="refresh-cw" size={13} color={colors.accent} />
-                <Text style={[styles.gpsRetryText, { color: colors.accent }]}>
-                  GPS erneut prüfen
-                </Text>
-              </Pressable>
-            </View>
+            <HikeSystemStatusBanner issue={primaryHikeIssue} />
           </Animated.View>
         )}
 
@@ -9803,6 +9763,7 @@ export default function LiveHike() {
 
         <PeakCameraOverlay
           visible={panoramaCameraOpen}
+          isOffline={isOffline}
           peaks={panoramaPeaks}
           arCandidates={panoramaArCandidates}
           terrainProfile={terrainProfile}
@@ -9818,6 +9779,16 @@ export default function LiveHike() {
           heading={compassHeading}
           nextTurn={nextArTurn}
           observerElevationM={hasFreshGps ? liveAltitude : null}
+          statusStrings={{
+            gpsTitle: t.gpsSignalLostTitle,
+            gpsDetail: t.gpsSignalLostHint,
+            offlineTitle: t.offlineHikeBanner,
+            offlineDetail: t.offlineHikeDetail,
+            compassTitle: t.panoramaNeedCompass,
+            compassDetail: t.compassStatusHint,
+            arTrackingDetail: t.arTrackingHint,
+            arUnavailableDetail: t.arUnavailableHint,
+          }}
           strings={{
             title: t.panorama,
             hint: t.panoramaHint,
