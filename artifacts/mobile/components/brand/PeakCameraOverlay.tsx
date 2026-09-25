@@ -622,42 +622,36 @@ export function PeakCameraOverlay({
             />
           </View>
         </View>
-        {systemIssue && contentMounted && (
-          <View
-            style={[
-              styles.cameraStatusPosition,
-              routeGuidanceReady &&
-                nextTurn &&
-                systemIssue.kind === "connection" &&
-                styles.cameraStatusBelowTurn,
-            ]}
-          >
-            <HikeSystemStatusBanner issue={systemIssue} variant="camera" />
-          </View>
-        )}
-        {routeGuidanceReady && nextTurn && (
-          <View
-            style={[
-              styles.turnHint,
-              {
-                backgroundColor: colors.glassBgStrong,
-                borderColor: colors.accent,
-              },
-            ]}
-          >
-            <Feather
-              name={nextTurn.direction === "left" ? "corner-up-left" : "corner-up-right"}
-              size={20}
-              color={colors.accent}
-            />
-            <View style={styles.turnHintCopy}>
-              <Text style={[styles.turnHintTitle, { color: colors.photoScrimText }]}>
-                {nextTurn.title}
-              </Text>
-              <Text style={[styles.turnHintLabel, { color: colors.photoScrimMuted }]}>
-                {nextTurn.label} · {formatTurnDistance(nextTurn.distanceM)}
-              </Text>
-            </View>
+        {((routeGuidanceReady && !!nextTurn) || (contentMounted && !!systemIssue)) && (
+          <View style={styles.topGuidanceStack}>
+            {routeGuidanceReady && nextTurn && (
+              <View
+                style={[
+                  styles.turnHint,
+                  {
+                    backgroundColor: colors.glassBgStrong,
+                    borderColor: colors.accent,
+                  },
+                ]}
+              >
+                <Feather
+                  name={nextTurn.direction === "left" ? "corner-up-left" : "corner-up-right"}
+                  size={20}
+                  color={colors.accent}
+                />
+                <View style={styles.turnHintCopy}>
+                  <Text style={[styles.turnHintTitle, { color: colors.photoScrimText }]}>
+                    {nextTurn.title}
+                  </Text>
+                  <Text style={[styles.turnHintLabel, { color: colors.photoScrimMuted }]}>
+                    {nextTurn.label} · {formatTurnDistance(nextTurn.distanceM)}
+                  </Text>
+                </View>
+              </View>
+            )}
+            {systemIssue && contentMounted && (
+              <HikeSystemStatusBanner issue={systemIssue} variant="camera" />
+            )}
           </View>
         )}
         <View style={[styles.imageFooter, { paddingBottom: insets.bottom + 12 }]}>
@@ -707,11 +701,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.17)",
   },
   scanLines: { ...StyleSheet.absoluteFill, opacity: 0.25 },
-  turnHint: {
+  topGuidanceStack: {
     position: "absolute",
     top: 112,
     left: 18,
     right: 18,
+    gap: 10,
+  },
+  turnHint: {
     flexDirection: "row",
     alignItems: "center",
     gap: 9,
@@ -732,15 +729,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 13,
     fontWeight: "700",
-  },
-  cameraStatusPosition: {
-    position: "absolute",
-    top: 112,
-    left: 18,
-    right: 18,
-  },
-  cameraStatusBelowTurn: {
-    top: 194,
   },
   scanLineTop: {
     position: "absolute",
