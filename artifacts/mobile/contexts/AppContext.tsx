@@ -36,7 +36,6 @@ import type { ThemeMode } from "@/constants/colors";
 import { DEFAULT_LANGUAGE, LanguageCode } from "@/lib/i18n/languageCode";
 import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
 import { iapLog, useSubscription } from "@/lib/revenuecat";
-import * as Notifications from "expo-notifications";
 import * as Location from "expo-location";
 import * as FileSystem from "expo-file-system/legacy";
 import { getApiBaseUrl } from "@/lib/apiConfig";
@@ -84,6 +83,10 @@ export interface ActiveHike {
   chapterIndex: number;
   chapterCount: number;
   updatedAt: number;
+  /** Laufende Strecke, Dauer und GPS-Spur für "Weiter wandern". */
+  distanceKm?: number;
+  durationMs?: number;
+  gpsTrack?: [number, number][];
   // Vollstaendige Route (mit Wegverlauf) mitpersistieren: Routen sind
   // online-only ohne Seed — stuerzt die App unterwegs ab, waere die Route
   // beim Fortsetzen sonst weg, wenn der Katalog (noch) nicht geladen ist.
@@ -774,12 +777,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, [authLoaded, isSignedIn, userId, hydrated, getToken]);
 
-  // Lesezeichen + Benachrichtigungseinstellungen laden + Push-Token registrieren
-  const pushTokenSyncedForUserRef = useRef<string | null>(null);
+  // Lesezeichen und Benachrichtigungseinstellungen laden. Push-Token werden
+  // ausschließlich durch usePushToken registriert, das bei Fehlern erneut prüft.
+  const profileExtrasSyncedForUserRef = useRef<string | null>(null);
   useEffect(() => {
     if (!authLoaded || !isSignedIn || !userId || !hydrated) return;
-    if (pushTokenSyncedForUserRef.current === userId) return;
-    pushTokenSyncedForUserRef.current = userId;
+    if (profileExtrasSyncedForUserRef.current === userId) return;
+    profileExtrasSyncedForUserRef.current = userId;
     void (async () => {
       const base = getApiBaseUrl();
       const token = await getToken();
@@ -800,17 +804,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch { /* nicht kritisch */ }
-      // Push-Token registrieren (nur auf nativen Plattformen)
-      try {
-        const { status } = await Notifications.getPermissionsAsync();
-        if (status !== "granted") return;
-        const tokenData = await Notifications.getExpoPushTokenAsync();
-        await fetch(`${base}api/me/push-token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ token: tokenData.data }),
-        });
-      } catch { /* Push-Token optional */ }
     })();
   }, [authLoaded, isSignedIn, userId, hydrated, getToken]);
   const {
@@ -1172,14 +1165,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [pushProgressSync]
   );
 
+  const activeHikeStorageQueueRef = useRef<Promise<void>>(Promise.resolve());
+
   const saveActiveHike = useCallback(async (hike: ActiveHike) => {
     setActiveHike(hike);
-    await AsyncStorage.setItem(KEYS.activeHike, JSON.stringify(hike));
+    const write = activeHikeStorageQueueRef.current
+      .catch(() => {})
+      .then(() => AsyncStorage.setItem(KEYS.activeHike, JSON.stringify(hike)));
+    activeHikeStorageQueueRef.current = write;
+    await write;
   }, []);
 
   const clearActiveHike = useCallback(async () => {
     setActiveHike(null);
-    await AsyncStorage.removeItem(KEYS.activeHike);
+    const write = activeHikeStorageQueueRef.current
+      .catch(() => {})
+      .then(() => AsyncStorage.removeItem(KEYS.activeHike));
+    activeHikeStorageQueueRef.current = write;
+    await write;
   }, []);
 
   const exportData = useCallback(async () => {
@@ -1229,7 +1232,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setGroupError(null);
     setSavedSagaIds([]);
     setPushWeatherEnabledState(true);
-    pushTokenSyncedForUserRef.current = null;
+    profileExtrasSyncedForUserRef.current = null;
   }, [userId]);
 
   const deleteAccount = useCallback(async () => {

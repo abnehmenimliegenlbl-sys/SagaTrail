@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import {
   getGetMyCommunitiesQueryKey,
   useCreateMeetup,
@@ -7,6 +7,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -21,7 +22,6 @@ import { Background } from "@/components/brand/Background";
 import { HomeEntryCard } from "@/components/HomeEntryCard";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
-import { SparkMountain } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useCatalog } from "@/contexts/CatalogContext";
@@ -202,10 +202,11 @@ export default function NeuerTreffpunkt() {
                     },
                   ]}
                 >
-                  <SparkMountain
-                    size={21}
-                    mountainColor={colors.accent}
-                    sparkColor={colors.altgold}
+                  <Image
+                    source={require("../../assets/images/sagatrail-logo.png")}
+                    style={styles.audienceLogo}
+                    resizeMode="contain"
+                    accessible={false}
                   />
                 </View>
                 <Text style={[styles.choiceText, { color: communityId === null ? colors.accent : colors.foreground }]}>
@@ -238,10 +239,10 @@ export default function NeuerTreffpunkt() {
                     },
                   ]}
                 >
-                  <Feather
-                    name="facebook"
+                  <FontAwesome5
+                    name="facebook-f"
                     size={16}
-                    color={communityId !== null ? colors.accent : colors.mutedForeground}
+                    color={colors.facebookBlue}
                   />
                 </View>
                 <Text style={[styles.choiceText, { color: communityId !== null ? colors.accent : colors.foreground }]}>
@@ -359,6 +360,7 @@ const styles = StyleSheet.create({
   choice: { flex: 1, minHeight: 42, borderWidth: 1, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 },
   audienceChoice: { flexDirection: "row", gap: 7, paddingHorizontal: 7 },
   audienceIcon: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  audienceLogo: { width: 22, height: 22 },
   choiceText: { fontFamily: fonts.bodyBold, fontSize: 12 },
   communityChoices: { gap: 8, marginTop: 8 },
   communityChoice: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 42, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12 },

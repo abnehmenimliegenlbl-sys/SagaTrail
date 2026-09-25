@@ -47,6 +47,7 @@
 - [SagaTrail native Modal after IAP freeze](sagatrail-iap-modal-freeze.md) — presenting our own native Modal right after StoreKit purchase sheet closes, or after screen unmount, can deadlock iOS UIKit into a full app freeze (no crash log).
 - [SagaTrail progress sync + Zod stripping](sagatrail-progress-sync.md) — hikeHistory preserves full objects; orval Zod strips to {id} despite additionalProperties:true; server uses req.body directly + no SyncMyProgressResponse.parse(); client merges local-first.
 - [Stripe Partner-Onboarding](sagatrail-stripe-partner.md) — Vollflow: WP-Formular → Stripe-Checkout → Webhook → DB-Insert + Magic-Link; Produkte by Name suchen, nie hardcoded Price-IDs.
+- [API startup Stripe reconciliation](sagatrail-api-startup-stripe-reconciliation.md) — restarting the API can reconcile live Stripe webhooks and delete endpoints absent from its managed-webhook registry.
 - [Partner-Öffnungszeiten Datenmodell](sagatrail-partner-oeffnungszeiten.md) — JSON in TEXT-Feld; Wochenplan+Saison+19 Feiertage; API gibt istOffen/schliesstUm/oeffnetAmTag/oeffnetUm zurück.
 - [SagaTrail Sagenpakete workflow](sagatrail-sagenpakete-workflow.md) — 10-Schritt-Prozess für neue Kantone: JSON analysieren, Duplikate entfernen, auf 8 auffüllen, bildmotiv motif-focused, Python-Script + write-Tool (kein Heredoc).
 - [Balanced brace JSON extraction](sagatrail-json-multiline-extraction.md) — never use `re.search(r'\{.+\}')` on curatedSagasPakete.ts summaries; some span multiple lines; use balanced-brace tracker or risk erasing all but 2 languages silently.

@@ -56,6 +56,10 @@ paths:
         Liefert die kapitelweise Erzaehlung fuer eine Sage, abgestimmt auf
         Archetyp, Alterstufe und Sprache. Bereits erzeugte Erzaehlungen kommen
         aus dem Postgres-Cache, sonst werden sie via Anthropic generiert.
+        Erfordert Anmeldung; Basisnutzer behalten den Zugang fuer ihre noch
+        offene Gratiswanderung und bereits gehoerte Sagen.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -77,6 +81,18 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Sage nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Kein Zugriff auf diese Sage
           content:
             application/json:
               schema:
@@ -1539,6 +1555,8 @@ paths:
         werden serverseitig nach Textinhalt gecacht. Nur fuer Premium-Nutzer:
         die kostenlose erste Wanderung nutzt die on-device Stimme und ruft
         diesen Endpunkt nie auf.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -1609,7 +1627,9 @@ paths:
     post:
       operationId: updateSafetyShareLocation
       tags: [safety]
-      summary: Frischen GPS-Standort eines Sicherheitslinks aktualisieren
+      summary: Frischen GPS-Standort des eigenen Sicherheitslinks aktualisieren
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: token
@@ -1627,6 +1647,8 @@ paths:
           description: Standort gespeichert
         "400":
           description: Ungültige Position
+        "401":
+          description: Anmeldung erforderlich
         "410":
           description: Link abgelaufen
   /safety-shares/{token}:
@@ -1717,6 +1739,13 @@ paths:
       operationId: getMeetups
       tags: [meetups]
       summary: Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
+      description: >-
+        Öffentliche Treffpunkte sind ohne Anmeldung sichtbar. Community-
+        Treffpunkte und die persönliche Liste erfordern Anmeldung und
+        Mitgliedschaft beziehungsweise Teilnahme.
+      security:
+        - {}
+        - bearerAuth: []
       parameters:
         - name: from
           in: query
@@ -1791,6 +1820,10 @@ paths:
       operationId: getMeetup
       tags: [meetups]
       summary: Treffpunkt mit Teilnehmern laden
+      description: Community-Treffpunkte sind nur für Mitglieder sichtbar; öffentliche Treffpunkte bleiben ohne Anmeldung sichtbar.
+      security:
+        - {}
+        - bearerAuth: []
       parameters:
         - name: id
           in: path

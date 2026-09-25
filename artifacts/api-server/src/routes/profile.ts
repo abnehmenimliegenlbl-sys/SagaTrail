@@ -115,6 +115,10 @@ router.put("/me", async (req, res): Promise<void> => {
     req.body != null &&
     typeof req.body === "object" &&
     Object.prototype.hasOwnProperty.call(req.body, "bio");
+  const hasDateOfBirth =
+    req.body != null &&
+    typeof req.body === "object" &&
+    Object.prototype.hasOwnProperty.call(req.body, "dateOfBirth");
   const normalizedBody =
     req.body && typeof req.body === "object"
       ? {
@@ -174,7 +178,9 @@ router.put("/me", async (req, res): Promise<void> => {
       set: {
         name,
         ...(hasBio ? { bio: bio ?? null } : {}),
-        dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().slice(0, 10) : null,
+        ...(hasDateOfBirth
+          ? { dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().slice(0, 10) : null }
+          : {}),
         archetype,
         homeCanton: homeCanton ?? "",
         language,
@@ -472,11 +478,29 @@ router.patch("/me/free-hike", async (req, res): Promise<void> => {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
-  const [row] = await db
-    .update(profilesTable)
-    .set({ freeHikeUsed: true, updatedAt: new Date() })
-    .where(eq(profilesTable.id, userId))
-    .returning();
+  const row = await db.transaction(async (tx) => {
+    const [current] = await tx
+      .select()
+      .from(profilesTable)
+      .where(eq(profilesTable.id, userId))
+      .for("update")
+      .limit(1);
+    if (!current) return null;
+    // Ein aktives Abo oder ein gekauftes Sagenpaket darf die einmalige
+    // Gratiswanderung nicht versehentlich verbrauchen.
+    if (
+      current.freeHikeUsed ||
+      istPremiumAktiv(current) ||
+      (current.purchasedPacks ?? []).length > 0
+    ) return current;
+
+    const [updated] = await tx
+      .update(profilesTable)
+      .set({ freeHikeUsed: true, updatedAt: new Date() })
+      .where(eq(profilesTable.id, userId))
+      .returning();
+    return updated ?? current;
+  });
 
   if (!row) {
     res.status(404).json({ error: "Kein Profil vorhanden" });

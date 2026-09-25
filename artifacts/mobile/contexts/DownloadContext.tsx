@@ -275,16 +275,17 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
 
   const download = useCallback(
     async (saga: Saga, route: HikingRoute, profile: Profile, premium: boolean) => {
-      // SagaTrail hält bewusst nur ein Offline-Paket gleichzeitig. Vor einem
-      // neuen Download werden alle bisher indexierten Pakete entfernt, damit
-      // alte Routen nicht weiter Speicher belegen oder versehentlich mit
-      // aktuellen Inhalten vermischt werden.
-      const previousDownloads = Object.values(downloads);
-      for (const previousDownload of previousDownloads) {
-        await deleteOfflinePayload(previousDownload);
+      if (!ready) {
+        throw new Error("Offline-Pakete werden noch geladen.");
       }
-      if (previousDownloads.length > 0) {
-        await persist({});
+      // SagaTrail hält bewusst nur ein Offline-Paket gleichzeitig. Vor einem
+      // neuen Download bleibt das bisherige Paket erhalten, bis der Ersatz
+      // vollständig bereitsteht.
+      const previousDownloads = Object.values(downloads);
+      const sameSagaDownload = previousDownloads.find((item) => item.sagaId === saga.id);
+      if (sameSagaDownload?.status === "complete") {
+        if (sameSagaDownload.routeId === route.id) return;
+        throw new Error("Bitte entferne zuerst das bestehende Offline-Paket dieser Sage.");
       }
 
       // Fuer Premium (KI-Erzaehlstimme) wird gsw nie als Dialekt-Text
@@ -600,10 +601,34 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         offlinePackageVersion: 7,
         emergencyNumbers: ["1414", "144", "117", "112"],
       };
-      await persist({ [saga.id]: record });
+      const canRollBackToPrevious =
+        record.status !== "complete" &&
+        previousDownloads.length > 0 &&
+        previousDownloads.every((item) => item.sagaId !== saga.id);
+      if (canRollBackToPrevious) {
+        await deleteOfflinePayload(record);
+        setProgress(null);
+        throw new Error("Der Ersatzdownload war unvollständig; das bisherige Offline-Paket bleibt erhalten.");
+      }
+
+      const nextDownloads = { [saga.id]: record };
+      try {
+        await AsyncStorage.setItem(INDEX_KEY, JSON.stringify(nextDownloads));
+      } catch (error) {
+        if (previousDownloads.every((item) => item.sagaId !== saga.id)) {
+          await deleteOfflinePayload(record);
+        }
+        throw error;
+      }
+      setDownloads(nextDownloads);
+      for (const previousDownload of previousDownloads) {
+        if (previousDownload.sagaId !== saga.id) {
+          await deleteOfflinePayload(previousDownload);
+        }
+      }
       setProgress(null);
     },
-    [downloads, persist]
+    [downloads, persist, ready]
   );
 
   const remove = useCallback(
@@ -662,7 +687,13 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
   );
 
   const getRecord = useCallback(
-    (sagaId?: string) => (sagaId ? downloads[sagaId] : undefined),
+    (sagaIdOrRouteId?: string) => {
+      if (!sagaIdOrRouteId) return undefined;
+      return (
+        downloads[sagaIdOrRouteId] ??
+        Object.values(downloads).find((record) => record.routeId === sagaIdOrRouteId)
+      );
+    },
     [downloads]
   );
 

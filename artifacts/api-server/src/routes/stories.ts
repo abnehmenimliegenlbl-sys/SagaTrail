@@ -1,8 +1,11 @@
 import { Router, type IRouter } from "express";
+import { getAuth } from "@clerk/express";
 import { and, eq } from "drizzle-orm";
-import { db, catalogSagasTable, storiesTable } from "@workspace/db";
+import { db, catalogSagasTable, profilesTable, storiesTable } from "@workspace/db";
 import { CreateStoryBody, CreateStoryResponse } from "@workspace/api-zod";
+import { istPremiumAktiv } from "../lib/premiumStatus";
 import { generateStory } from "../lib/storyGenerator";
+import { CURATED_SAGAS } from "../lib/curatedSagas";
 
 const router: IRouter = Router();
 
@@ -12,13 +15,84 @@ const router: IRouter = Router();
 // Abruf lazy ueberschrieben.
 const STORY_SOURCE = "ai-v4";
 
+function cantonSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function sagaPackSlug(canton: string, sagaIndex0: number): string {
+  const packNumber = Math.floor(sagaIndex0 / 9);
+  return packNumber === 0 ? canton : `${canton}_${packNumber + 1}`;
+}
+
 router.post("/stories", async (req, res): Promise<void> => {
+  const userId = getAuth(req)?.userId;
+  if (!userId) {
+    res.status(401).json({ error: "Nicht authentifiziert" });
+    return;
+  }
+
   const parsed = CreateStoryBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
   const { sagaId, archetype, ageTier, language } = parsed.data;
+
+  const [saga] = await db
+    .select()
+    .from(catalogSagasTable)
+    .where(eq(catalogSagasTable.id, sagaId));
+  if (!saga) {
+    res.status(404).json({ error: `Sage "${sagaId}" nicht gefunden` });
+    return;
+  }
+
+  const [profile] = await db
+    .select({
+      premium: profilesTable.premium,
+      premiumBis: profilesTable.premiumBis,
+      freeHikeUsed: profilesTable.freeHikeUsed,
+      purchasedPacks: profilesTable.purchasedPacks,
+      hikeHistory: profilesTable.hikeHistory,
+    })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+  if (!profile) {
+    res.status(404).json({ error: "Kein Profil vorhanden" });
+    return;
+  }
+
+  const canton = cantonSlug(saga.canton);
+  const sagaIndex = CURATED_SAGAS
+    .filter((item) => item.canton === saga.canton)
+    .findIndex((item) => item.id === sagaId);
+  const requiredPack = sagaIndex >= 0 ? sagaPackSlug(canton, sagaIndex) : null;
+  const hasCantonPack =
+    requiredPack !== null &&
+    (profile.purchasedPacks ?? []).some(
+      (pack) => pack === requiredPack || pack === `pack_${requiredPack}`,
+    );
+  const hasHeardSaga =
+    Array.isArray(profile.hikeHistory) &&
+    profile.hikeHistory.some(
+      (entry) =>
+        entry != null &&
+        typeof entry === "object" &&
+        "sagaId" in entry &&
+        entry.sagaId === sagaId,
+    );
+  const canAccess =
+    istPremiumAktiv(profile) || hasCantonPack || hasHeardSaga || !profile.freeHikeUsed;
+  if (!canAccess) {
+    res.status(403).json({ error: "Für diese Sage ist Premium oder ein passendes Sagenpaket erforderlich" });
+    return;
+  }
 
   // 1. Cache-Treffer? Dann direkt liefern (kein Anthropic-Aufruf noetig).
   const [cached] = await db
@@ -48,18 +122,7 @@ router.post("/stories", async (req, res): Promise<void> => {
     return;
   }
 
-  // 2. Sage laden: ausschliesslich aus dem kuratierten Katalog.
-  const [saga] = await db
-    .select()
-    .from(catalogSagasTable)
-    .where(eq(catalogSagasTable.id, sagaId));
-
-  if (!saga) {
-    res.status(404).json({ error: `Sage "${sagaId}" nicht gefunden` });
-    return;
-  }
-
-  // 3. Via Anthropic erzeugen, cachen, liefern.
+  // 2. Via Anthropic erzeugen, cachen, liefern.
   let chapters;
   try {
     chapters = await generateStory(saga, archetype, ageTier, language, req.log);

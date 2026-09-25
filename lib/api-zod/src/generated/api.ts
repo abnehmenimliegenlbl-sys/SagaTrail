@@ -114,7 +114,7 @@ export const GetCatalogResponse = zod.object({
 
 
 /**
- * Liefert die kapitelweise Erzaehlung fuer eine Sage, abgestimmt auf Archetyp, Alterstufe und Sprache. Bereits erzeugte Erzaehlungen kommen aus dem Postgres-Cache, sonst werden sie via Anthropic generiert.
+ * Liefert die kapitelweise Erzaehlung fuer eine Sage, abgestimmt auf Archetyp, Alterstufe und Sprache. Bereits erzeugte Erzaehlungen kommen aus dem Postgres-Cache, sonst werden sie via Anthropic generiert. Erfordert Anmeldung; Basisnutzer behalten den Zugang fuer ihre noch offene Gratiswanderung und bereits gehoerte Sagen.
  * @summary Sagen-Erzaehlung erzeugen oder aus dem Cache liefern
  */
 export const CreateStoryBody = zod.object({
@@ -1443,7 +1443,7 @@ export const CreateSafetyShareResponse = zod.object({
 
 
 /**
- * @summary Frischen GPS-Standort eines Sicherheitslinks aktualisieren
+ * @summary Frischen GPS-Standort des eigenen Sicherheitslinks aktualisieren
  */
 export const UpdateSafetyShareLocationParams = zod.object({
   "token": zod.coerce.string()
@@ -1631,6 +1631,7 @@ export const CreateTerrainAreaResponse = zod.object({
 
 
 /**
+ * Öffentliche Treffpunkte sind ohne Anmeldung sichtbar. Community- Treffpunkte und die persönliche Liste erfordern Anmeldung und Mitgliedschaft beziehungsweise Teilnahme.
  * @summary Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
  */
 export const getMeetupsQuerySearchMax = 120;
@@ -1727,6 +1728,7 @@ export const CreateMeetupResponse = zod.object({
 
 
 /**
+ * Community-Treffpunkte sind nur für Mitglieder sichtbar; öffentliche Treffpunkte bleiben ohne Anmeldung sichtbar.
  * @summary Treffpunkt mit Teilnehmern laden
  */
 export const GetMeetupParams = zod.object({

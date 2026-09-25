@@ -525,6 +525,26 @@ router.get("/meetups/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  const currentUserId = getAuth(req)?.userId ?? null;
+  if (row.communityId) {
+    if (!currentUserId) {
+      res.status(404).json({ error: "Treffpunkt nicht gefunden" });
+      return;
+    }
+    const [membership] = await db
+      .select({ id: communityMembersTable.id })
+      .from(communityMembersTable)
+      .where(and(
+        eq(communityMembersTable.communityId, row.communityId),
+        eq(communityMembersTable.userId, currentUserId),
+      ))
+      .limit(1);
+    if (!membership) {
+      res.status(404).json({ error: "Treffpunkt nicht gefunden" });
+      return;
+    }
+  }
+
   const participants = await db
     .select({
       userId: meetupParticipantsTable.userId,
@@ -541,7 +561,6 @@ router.get("/meetups/:id", async (req, res): Promise<void> => {
     .leftJoin(profilesTable, eq(profilesTable.id, meetupParticipantsTable.userId))
     .where(eq(meetupParticipantsTable.meetupId, row.id))
     .orderBy(asc(meetupParticipantsTable.joinedAt));
-  const currentUserId = getAuth(req)?.userId ?? null;
   if (currentUserId) {
     const [blocked] = await db
       .select({ blockedUserId: meetupBlocksTable.blockedUserId })
@@ -756,6 +775,17 @@ router.post("/meetups/:id/join", async (req, res): Promise<void> => {
       .for("update")
       .limit(1);
     if (!meetup) return { error: "not_found" as const };
+    if (meetup.communityId) {
+      const [membership] = await tx
+        .select({ id: communityMembersTable.id })
+        .from(communityMembersTable)
+        .where(and(
+          eq(communityMembersTable.communityId, meetup.communityId),
+          eq(communityMembersTable.userId, userId),
+        ))
+        .limit(1);
+      if (!membership) return { error: "not_community_member" as const };
+    }
     if (meetup.status !== "scheduled" && meetup.status !== "in_progress") {
       return { error: "not_scheduled" as const };
     }
@@ -836,7 +866,11 @@ router.post("/meetups/:id/join", async (req, res): Promise<void> => {
     await tx.insert(meetupParticipantsTable).values({ meetupId, userId }).execute();
     return { error: null };
   });
-  if (result.error === "not_found" || result.error === "blocked") {
+  if (
+    result.error === "not_found" ||
+    result.error === "blocked" ||
+    result.error === "not_community_member"
+  ) {
     res.status(404).json({ error: "Treffpunkt nicht gefunden" });
     return;
   }
@@ -1262,6 +1296,10 @@ router.post("/meetups/:id/share", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Treffpunkt nicht gefunden" });
     return;
   }
+  if (meetup.communityId) {
+    res.status(403).json({ error: "Community-Treffpunkte können nicht über öffentliche Links geteilt werden" });
+    return;
+  }
   const [participant] = await db
     .select({ userId: meetupParticipantsTable.userId })
     .from(meetupParticipantsTable)
@@ -1305,7 +1343,7 @@ router.get("/meetups/shared/:token", async (req, res): Promise<void> => {
       ),
     )
     .limit(1);
-  if (!row || !row.shareExpiresAt) {
+  if (!row || !row.shareExpiresAt || row.communityId) {
     res.status(404).json({ error: "Link unbekannt oder abgelaufen" });
     return;
   }

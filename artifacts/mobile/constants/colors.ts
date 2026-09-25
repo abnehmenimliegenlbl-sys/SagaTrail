@@ -9,6 +9,7 @@
 const shared = {
   altgold: "#B8935A", // NUR fuer Premium-/Sagenpaket-Aktionen (PrimaryButton variant="gold", Achievement-Marken) — modiuebergreifend fix
   moosgrau: "#6B7568", // gedaempfter Text, Trennlinien, Metadaten (Dunkel-Basis)
+  facebookBlue: "#1877F2",
 };
 
 const hell = {

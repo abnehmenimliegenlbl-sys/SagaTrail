@@ -101,6 +101,13 @@ import { fonts } from "@/constants/typography";
 import { useApp, useThemeModeSafe } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
+import { useSubscription } from "@/lib/revenuecat";
+import {
+  hasPurchasedPack,
+  kantonSlug,
+  packEntitlementFuerKanton,
+  sagaPackSlug,
+} from "@/lib/kantonSlug";
 import { useColors } from "@/hooks/useColors";
 import { BackButton } from "@/components/brand/BackButton";
 import { useHikeStrings } from "@/lib/i18n/screens/hike";
@@ -935,6 +942,7 @@ export default function LiveHike() {
     language,
     emergencyContact,
     premium,
+    purchasedPacks,
     freeHikeUsed,
     markFreeHikeUsed,
     saveHike,
@@ -949,6 +957,7 @@ export default function LiveHike() {
     clearActiveHike,
     hikeHistory,
   } = useApp();
+  const { isSubscribed, isElite: isEliteSubscription, hatEntitlement } = useSubscription();
 
   // Beim ersten Aufbau der Story einmalig pruefen, ob eine unterbrochene
   // Wanderung derselben Sage fortgesetzt wird — dann ab dem gespeicherten
@@ -998,7 +1007,7 @@ export default function LiveHike() {
     clientHikeIdRef.current = persistedId || createClientHikeId();
     return clientHikeIdRef.current;
   }, [activeHike?.clientHikeId, activeHike?.sagaId, id, isResume]);
-  const { getSaga, getRoute, getRouteBySaga, loadCantonRoutes } = useCatalog();
+  const { sagas, getSaga, getRoute, getRouteBySaga, loadCantonRoutes } = useCatalog();
   const {
     resolveStory,
     loadOfflineTiles,
@@ -1011,6 +1020,19 @@ export default function LiveHike() {
 
   const offlineRecord = getRecord(id);
   const saga = getSaga(id) ?? offlineRecord?.sagaSnapshot;
+  const hasPackAccessForCurrentSaga = useMemo(() => {
+    if (!saga?.canton) return false;
+    const cantonSagas = sagas.filter((item) => item.canton === saga.canton);
+    const sagaIndex = cantonSagas.findIndex((item) => item.id === saga.id);
+    if (sagaIndex < 0) return false;
+    const packSlug = sagaPackSlug(kantonSlug(saga.canton), sagaIndex);
+    return (
+      hasPurchasedPack(purchasedPacks, packSlug) ||
+      hatEntitlement(packEntitlementFuerKanton(packSlug))
+    );
+  }, [saga, sagas, purchasedPacks, hatEntitlement]);
+  const hasHikeEntitlement =
+    premium || isSubscribed || isEliteSubscription || hasPackAccessForCurrentSaga;
   // Die konkret gewaehlte Route (mit Wegverlauf) hat Vorrang; nur wenn keine
   // Route-Id durchgereicht wurde (z. B. Start aus der Sammlung), wird ueber die
   // Sage die naechste bekannte Route gesucht. Als letzter Rueckhalt dient die
@@ -1296,7 +1318,12 @@ export default function LiveHike() {
   const [startGateConfirmed, setStartGateConfirmed] = useState(false);
   const startGateConfirmedRef = useRef(false);
   const startGateShownRef = useRef(false);
-  const startTimeRef = useRef<number>(isResume ? Date.now() : 0);
+  const resumeSnapshot =
+    isResume && activeHike?.sagaId === id ? activeHike : null;
+  const resumedDurationMs = Math.max(0, resumeSnapshot?.durationMs ?? 0);
+  const startTimeRef = useRef<number>(
+    isResume ? Date.now() - resumedDurationMs : 0,
+  );
   const [startAudioReleased, setStartAudioReleased] = useState(false);
   const startAudioReleasedRef = useRef(false);
   const autoFollowRecalcStartedRef = useRef(false);
@@ -1536,7 +1563,11 @@ export default function LiveHike() {
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     };
   }, []);
-  const [distance, setDistance] = useState(0);
+  const [distance, setDistance] = useState(resumeSnapshot?.distanceKm ?? 0);
+  const distanceRef = useRef(distance);
+  useEffect(() => {
+    distanceRef.current = distance;
+  }, [distance]);
   const [steps, setSteps] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [hikePaused, setHikePaused] = useState(false);
@@ -1849,7 +1880,7 @@ export default function LiveHike() {
   /** Vorherige GPS-Position vor dem letzten signifikanten Schritt — fuer Himmelsrichtungsberechnung zum POI. */
   const prevLivePosRef = useRef<LatLng | null>(null);
   /** Aufgezeichneter GPS-Track: [lat, lng]-Paare im zeitlichen Abstand >= TRACK_LOG_INTERVAL_MS */
-  const posLogRef = useRef<[number, number][]>([]);
+  const posLogRef = useRef<[number, number][]>(resumeSnapshot?.gpsTrack?.slice(-3000) ?? []);
   const lastTrackLogTimeRef = useRef<number>(0);
   /** Zeitpunkt des letzten akzeptierten GPS-Fixes fuer die Watcher-Wiederherstellung. */
   const lastLocationAtRef = useRef<number>(0);
@@ -2870,14 +2901,19 @@ export default function LiveHike() {
   // nicht-Premium-Nutzer hier tatsaechlich eine Wanderung startet (Story ist
   // bereit). markFreeHikeUsed ist selbst ein No-op, falls bereits verbraucht.
   useEffect(() => {
-    if (!startGateConfirmedRef.current || preparing || premium || freeHikeUsed)
+    if (
+      !startGateConfirmedRef.current ||
+      preparing ||
+      hasHikeEntitlement ||
+      freeHikeUsed
+    )
       return;
     markFreeHikeUsed().catch(() => {
       // Best effort — schlaegt der Serveraufruf fehl, bleibt die Wanderung
       // trotzdem nutzbar; ein erneuter Versuch erfolgt bei der naechsten
       // Wanderung.
     });
-  }, [preparing, premium, freeHikeUsed, markFreeHikeUsed, startGateConfirmed]);
+  }, [preparing, hasHikeEntitlement, freeHikeUsed, markFreeHikeUsed, startGateConfirmed]);
 
   // Meldet den Wander-Status an eine aktive Gruppensitzung, damit andere
   // Mitglieder live sehen, wenn jemand die gemeinsame Wanderung startet.
@@ -6946,19 +6982,18 @@ export default function LiveHike() {
     triggerDecision,
   ]);
 
-  // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
-  // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
-  // Abschluss (finishHike) wird der Eintrag wieder geloescht.
-  useEffect(() => {
+  // Unterbrochene Wanderung regelmaessig vollstaendig sichern. Das Intervall
+  // bewahrt auch Strecke, Zeit und GPS-Spur, wenn die App vor dem naechsten
+  // Kapitelwechsel beendet wird.
+  const persistActiveHike = useCallback(() => {
     if (
       !startGateConfirmedRef.current ||
       preparing ||
       finished ||
       chapters.length === 0 ||
       !saga
-    )
-      return;
-    saveActiveHike({
+    ) return;
+    void saveActiveHike({
       routeId: route?.id ?? "",
       sagaId: saga.id,
       clientHikeId: ensureClientHikeId(),
@@ -6966,13 +7001,15 @@ export default function LiveHike() {
       chapterIndex: currentIndex,
       chapterCount: chapters.length,
       updatedAt: Date.now(),
+      distanceKm: distanceRef.current,
+      durationMs: Math.max(0, Date.now() - startTimeRef.current),
+      gpsTrack: posLogRef.current.slice(-3000),
       // Route komplett mitspeichern, damit die Wanderung nach einem Absturz
       // auch ohne (erneut) geladenen Katalog fortgesetzt werden kann.
       route: route ?? undefined,
       activeGeometry: acceptedRouteGeometry ?? undefined,
     });
   }, [
-    currentIndex,
     preparing,
     finished,
     chapters.length,
@@ -6981,9 +7018,32 @@ export default function LiveHike() {
     localizedSagaTitle,
     acceptedRouteGeometry,
     saveActiveHike,
-    startGateConfirmed,
+    currentIndex,
     ensureClientHikeId,
   ]);
+
+  useEffect(() => {
+    persistActiveHike();
+  }, [
+    currentIndex,
+    preparing,
+    finished,
+    chapters.length,
+    startGateConfirmed,
+    persistActiveHike,
+  ]);
+
+  useEffect(() => {
+    if (
+      !startGateConfirmed ||
+      preparing ||
+      finished ||
+      chapters.length === 0 ||
+      !saga
+    ) return;
+    const interval = setInterval(persistActiveHike, 15_000);
+    return () => clearInterval(interval);
+  }, [startGateConfirmed, preparing, finished, chapters.length, saga, persistActiveHike]);
 
   // Refs spiegeln den aktuellen Erzaehlzustand, damit der POI-Effekt unten
   // NICHT bei jeder Kapitel-/Sprechzustandsaenderung neu laeuft (und dabei

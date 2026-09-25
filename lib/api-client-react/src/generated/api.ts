@@ -308,7 +308,7 @@ export const getCreateStoryUrl = () => {
 }
 
 /**
- * Liefert die kapitelweise Erzaehlung fuer eine Sage, abgestimmt auf Archetyp, Alterstufe und Sprache. Bereits erzeugte Erzaehlungen kommen aus dem Postgres-Cache, sonst werden sie via Anthropic generiert.
+ * Liefert die kapitelweise Erzaehlung fuer eine Sage, abgestimmt auf Archetyp, Alterstufe und Sprache. Bereits erzeugte Erzaehlungen kommen aus dem Postgres-Cache, sonst werden sie via Anthropic generiert. Erfordert Anmeldung; Basisnutzer behalten den Zugang fuer ihre noch offene Gratiswanderung und bereits gehoerte Sagen.
  * @summary Sagen-Erzaehlung erzeugen oder aus dem Cache liefern
  */
 export const createStory = async (storyRequest: StoryRequest, options?: RequestInit): Promise<StoryResponse> => {
@@ -3266,7 +3266,7 @@ export const getUpdateSafetyShareLocationUrl = (token: string,) => {
 }
 
 /**
- * @summary Frischen GPS-Standort eines Sicherheitslinks aktualisieren
+ * @summary Frischen GPS-Standort des eigenen Sicherheitslinks aktualisieren
  */
 export const updateSafetyShareLocation = async (token: string,
     safetyShareLocation: SafetyShareLocation, options?: RequestInit): Promise<void> => {
@@ -3315,7 +3315,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateSafetyShareLocationMutationError = ErrorType<void>
 
     /**
- * @summary Frischen GPS-Standort eines Sicherheitslinks aktualisieren
+ * @summary Frischen GPS-Standort des eigenen Sicherheitslinks aktualisieren
  */
 export const useUpdateSafetyShareLocation = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSafetyShareLocation>>, TError,{token: string;data: BodyType<SafetyShareLocation>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -3631,6 +3631,7 @@ export const getGetMeetupsUrl = (params?: GetMeetupsParams,) => {
 }
 
 /**
+ * Öffentliche Treffpunkte sind ohne Anmeldung sichtbar. Community- Treffpunkte und die persönliche Liste erfordern Anmeldung und Mitgliedschaft beziehungsweise Teilnahme.
  * @summary Oeffentliche Treffpunkte fuer gemeinsame Wanderungen
  */
 export const getMeetups = async (params?: GetMeetupsParams, options?: RequestInit): Promise<MeetupListResponse> => {
@@ -3778,6 +3779,7 @@ export const getGetMeetupUrl = (id: string,) => {
 }
 
 /**
+ * Community-Treffpunkte sind nur für Mitglieder sichtbar; öffentliche Treffpunkte bleiben ohne Anmeldung sichtbar.
  * @summary Treffpunkt mit Teilnehmern laden
  */
 export const getMeetup = async (id: string, options?: RequestInit): Promise<MeetupDetail> => {

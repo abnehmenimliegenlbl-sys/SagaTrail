@@ -35,13 +35,14 @@ function tokenHash(token: string): string {
 
 function publicStatus(row: typeof safetySharesTable.$inferSelect) {
   const expired = row.status === "active" && row.expiresAt.getTime() <= Date.now();
+  const canShowLocation = row.status === "active" && !expired;
   return {
     status: expired ? "expired" : row.status,
     routeName: row.routeName,
     startedAt: row.startedAt.toISOString(),
     expiresAt: row.expiresAt.toISOString(),
     endedAt: row.endedAt?.toISOString() ?? null,
-    latestLocation: row.latestLat != null && row.latestLng != null && row.latestUpdatedAt
+    latestLocation: canShowLocation && row.latestLat != null && row.latestLng != null && row.latestUpdatedAt
       ? {
           lat: row.latestLat,
           lng: row.latestLng,
@@ -94,8 +95,8 @@ router.post("/safety-shares", async (req, res): Promise<void> => {
   });
 });
 
-// The public viewer uses this read-only endpoint. It intentionally returns no
-// account identity and expires links server-side as well as in the UI.
+// The public viewer returns no account identity and hides coordinates once
+// sharing has ended or expired.
 router.get("/safety-shares/:token", async (req, res): Promise<void> => {
   const token = String(req.params.token ?? "");
   if (!/^[A-Za-z0-9_-]{30,100}$/.test(token)) {
@@ -107,13 +108,35 @@ router.get("/safety-shares/:token", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Freigabe nicht gefunden" });
     return;
   }
+  if (row.status === "active" && row.expiresAt.getTime() <= Date.now()) {
+    await db.update(safetySharesTable).set({
+      status: "expired",
+      latestLat: null,
+      latestLng: null,
+      latestAccuracy: null,
+      latestUpdatedAt: null,
+    }).where(and(
+      eq(safetySharesTable.id, row.id),
+      eq(safetySharesTable.status, "active"),
+    ));
+    res.json(publicStatus({
+      ...row,
+      status: "expired",
+      latestLat: null,
+      latestLng: null,
+      latestAccuracy: null,
+      latestUpdatedAt: null,
+    }));
+    return;
+  }
   res.json(publicStatus(row));
 });
 
-// Location updates are authenticated by possession of the one-time random
-// link token. They are deliberately throttled and accept only fresh GPS data
-// supplied by the mobile client.
+// Location updates require the signed-in owner as well as the random link
+// token. They are throttled and accept only fresh GPS data.
 router.post("/safety-shares/:token/location", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const token = String(req.params.token ?? "");
   const parsed = LocationSchema.safeParse(req.body);
   if (!/^[A-Za-z0-9_-]{30,100}$/.test(token) || !parsed.success) {
@@ -121,12 +144,18 @@ router.post("/safety-shares/:token/location", async (req, res): Promise<void> =>
     return;
   }
   const row = await findActiveShare(token);
-  if (!row || row.status !== "active") {
+  if (!row || row.status !== "active" || row.ownerId !== userId) {
     res.status(410).json({ error: "Freigabe ist nicht mehr aktiv" });
     return;
   }
   if (row.expiresAt.getTime() <= Date.now()) {
-    await db.update(safetySharesTable).set({ status: "expired" }).where(eq(safetySharesTable.id, row.id));
+    await db.update(safetySharesTable).set({
+      status: "expired",
+      latestLat: null,
+      latestLng: null,
+      latestAccuracy: null,
+      latestUpdatedAt: null,
+    }).where(eq(safetySharesTable.id, row.id));
     res.status(410).json({ error: "Freigabe ist abgelaufen" });
     return;
   }
@@ -135,12 +164,20 @@ router.post("/safety-shares/:token/location", async (req, res): Promise<void> =>
     return;
   }
   const now = new Date();
-  await db.update(safetySharesTable).set({
+  const [updated] = await db.update(safetySharesTable).set({
     latestLat: parsed.data.lat,
     latestLng: parsed.data.lng,
     latestAccuracy: parsed.data.accuracy ?? null,
     latestUpdatedAt: now,
-  }).where(and(eq(safetySharesTable.id, row.id), eq(safetySharesTable.status, "active")));
+  }).where(and(
+    eq(safetySharesTable.id, row.id),
+    eq(safetySharesTable.ownerId, userId),
+    eq(safetySharesTable.status, "active"),
+  )).returning({ id: safetySharesTable.id });
+  if (!updated) {
+    res.status(410).json({ error: "Freigabe ist nicht mehr aktiv" });
+    return;
+  }
   res.json({ ok: true, updatedAt: now.toISOString() });
 });
 
@@ -156,6 +193,10 @@ router.delete("/safety-shares/:token", async (req, res): Promise<void> => {
   await db.update(safetySharesTable).set({
     status: "ended",
     endedAt: new Date(),
+    latestLat: null,
+    latestLng: null,
+    latestAccuracy: null,
+    latestUpdatedAt: null,
   }).where(eq(safetySharesTable.id, row.id));
   res.json({ ok: true });
 });

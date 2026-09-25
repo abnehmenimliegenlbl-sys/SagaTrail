@@ -1,6 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { getAuth } from "@clerk/express";
 import { CreateNarrationBody } from "@workspace/api-zod";
+import { db, profilesTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
+import { istPremiumAktiv } from "../lib/premiumStatus";
 import { getOrCreateNarrationAudio, NarrationRateLimitError } from "../lib/narrationCache";
 
 const router: IRouter = Router();
@@ -21,6 +24,15 @@ router.post("/narration", async (req, res): Promise<void> => {
   const parsed = CreateNarrationBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [profile] = await db
+    .select({ premium: profilesTable.premium, premiumBis: profilesTable.premiumBis })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+  if (!profile || !istPremiumAktiv(profile)) {
+    res.status(403).json({ error: "Premium erforderlich" });
     return;
   }
 
