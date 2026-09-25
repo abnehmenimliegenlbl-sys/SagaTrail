@@ -149,8 +149,12 @@ function ClerkGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function RootLayoutNav() {
-  const { hydrated, profile } = useApp();
+function RootLayoutNav({
+  onStartupReady,
+}: {
+  onStartupReady: () => void;
+}) {
+  const { hydrated, profile, profileReady } = useApp();
   const t = useStartupStrings();
   const { isLoaded, isSignedIn } = useAuth();
   const updatesState = Updates.useUpdates();
@@ -163,6 +167,24 @@ function RootLayoutNav() {
   const permissionCheckGenerationRef = useRef(0);
   const updateReloadStartedRef = useRef(false);
   const shouldCheckPermissions = hydrated && isLoaded && isSignedIn && Boolean(profile);
+  const inAuth = segments[0] === "(auth)";
+  const inOnboarding = segments[0] === "onboarding";
+  const inPermissions = segments[0] === "permissions";
+  const inCommunityInvite = isCommunityInviteSegments(segments);
+  const startupRouteReadyForSession =
+    inCommunityInvite ||
+    (!isSignedIn && inAuth) ||
+    (isSignedIn &&
+      (profile
+        ? permissionGateState === "missing"
+          ? inPermissions
+          : permissionGateState === "granted" &&
+            !inAuth &&
+            !inOnboarding &&
+            !inPermissions
+        : inOnboarding));
+  const startupRouteReady =
+    isLoaded && hydrated && profileReady && startupRouteReadyForSession;
 
   const refreshRequiredPermissions = useCallback(async (reason = "app-start") => {
     const generation = ++permissionCheckGenerationRef.current;
@@ -190,6 +212,10 @@ function RootLayoutNav() {
     }
     void refreshRequiredPermissions("app-start");
   }, [refreshRequiredPermissions, shouldCheckPermissions]);
+
+  useEffect(() => {
+    if (startupRouteReady) onStartupReady();
+  }, [onStartupReady, startupRouteReady]);
 
   useEffect(() => {
     if (!shouldCheckPermissions) return;
@@ -296,10 +322,6 @@ function RootLayoutNav() {
 
   useEffect(() => {
     if (!hydrated || !isLoaded) return;
-    const inAuth = segments[0] === "(auth)";
-    const inOnboarding = segments[0] === "onboarding";
-    const inPermissions = segments[0] === "permissions";
-    const inCommunityInvite = isCommunityInviteSegments(segments);
 
     if (!isSignedIn) {
       if (!inAuth && !inCommunityInvite) router.replace("/(auth)/sign-in");
@@ -327,6 +349,10 @@ function RootLayoutNav() {
     hydrated,
     isLoaded,
     isSignedIn,
+    inAuth,
+    inOnboarding,
+    inPermissions,
+    inCommunityInvite,
     profile,
     permissionGateState,
     segments,
@@ -426,6 +452,7 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [startupReady, setStartupReady] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     BigShouldersDisplay_500Medium,
     BigShouldersDisplay_700Bold,
@@ -451,9 +478,11 @@ export default function RootLayout() {
       fontsLoaded,
       fontError: Boolean(fontError),
     });
-    if (!fontsLoaded && !fontError) return;
+    if ((!fontsLoaded && !fontError) || !startupReady) return;
     void SplashScreen.hideAsync();
-  }, [fontError, fontsLoaded]);
+  }, [fontError, fontsLoaded, startupReady]);
+
+  const markStartupReady = useCallback(() => setStartupReady(true), []);
 
   if (!fontsLoaded && !fontError) {
     return Platform.OS === "web" ? (
@@ -483,7 +512,7 @@ export default function RootLayout() {
                           <AppAlertProvider>
                             <CatalogProvider>
                               <DownloadProvider>
-                                <RootLayoutNav />
+                                <RootLayoutNav onStartupReady={markStartupReady} />
                               </DownloadProvider>
                             </CatalogProvider>
                           </AppAlertProvider>

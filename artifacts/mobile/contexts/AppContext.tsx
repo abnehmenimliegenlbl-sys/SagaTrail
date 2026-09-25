@@ -102,6 +102,7 @@ export interface GroupSession {
 
 interface AppContextValue {
   hydrated: boolean;
+  profileReady: boolean;
   profile: Profile | null;
   purchasedPacks: string[];
   /**
@@ -231,6 +232,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const [hydrated, setHydrated] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [resolvedProfileUserId, setResolvedProfileUserId] = useState<string | null>(null);
   const [purchasedPacks, setPurchasedPacks] = useState<string[]>([]);
   // Aktueller Profil-Stand fuer Callbacks ohne `profile`-Abhaengigkeit
   // (z.B. applyServerProfile muss purchasedPacks erhalten koennen).
@@ -538,6 +540,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const currentUserId = userId ?? null;
     if (currentUserId !== lastUserId) {
       setLastUserId(currentUserId);
+      setResolvedProfileUserId(null);
       groupSocketRef.current?.disconnect();
       setGroupSession(null);
       setPersistedGroupCode(null);
@@ -558,6 +561,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Abgemeldet: lokalen Zustand nicht loeschen (bleibt als Cache fuer
       // erneute Anmeldung desselben Geraets), aber nicht als "eingeloggt"
       // fuehren — resetAll() bei explizitem Logout uebernimmt das Aufraeumen.
+      setResolvedProfileUserId(null);
       return;
     }
     // Erst den lokalen Cache hydratisieren, danach das Serverprofil anwenden.
@@ -604,11 +608,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       AsyncStorage.removeItem(KEYS.premium);
       AsyncStorage.removeItem(KEYS.freeHikeUsed);
     }
+    if (userId) setResolvedProfileUserId(userId);
     // Andere Fehler (401 waehrend Token noch nicht bereit, 5xx, Netzwerk):
     // bewusst NICHT als "kein Profil" behandeln — lokaler Cache/Zustand
     // bleibt erhalten, damit angemeldete Nutzer nicht faelschlich ins
     // Onboarding geschickt werden oder ihr Offline-Cache geloescht wird.
-  }, [authLoaded, isSignedIn, hydrated, profileFetched, serverProfile, profileError]);
+  }, [authLoaded, isSignedIn, userId, hydrated, profileFetched, serverProfile, profileError]);
 
   const { mutateAsync: saveMyProfileMutation } = useSaveMyProfile();
   const { mutateAsync: updateMyPremiumMutation } = useUpdateMyPremium();
@@ -1349,10 +1354,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const clearGroupError = useCallback(() => setGroupError(null), []);
 
   const language = (profile?.language as LanguageCode | undefined) ?? pendingLanguage;
+  const profileReady =
+    authLoaded &&
+    (!isSignedIn ||
+      (hydrated && Boolean(userId) && resolvedProfileUserId === userId));
 
   const value = useMemo<AppContextValue>(
     () => ({
       hydrated,
+      profileReady,
       profile,
       purchasedPacks,
       language,
@@ -1408,6 +1418,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       hydrated,
+      profileReady,
       profile,
       purchasedPacks,
       language,

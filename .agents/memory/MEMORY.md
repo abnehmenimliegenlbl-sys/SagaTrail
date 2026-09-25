@@ -56,7 +56,7 @@
 - [Start-route choice atomicity](sagatrail-start-route-choice-atomicity.md) — route recalculation must wait until the start mode is set; position and choice can arrive in separate React renders.
 - [Drizzle fire-and-forget needs .execute()](drizzle-execute-required.md) — fire-and-forget DB writes must call .execute().catch(...); plain .catch() on a query builder without .execute() silently does nothing in Drizzle.
 - [EAS build/submit from workspace](eas-build-from-workspace.md) — temp-workflow pattern (bash 120s limit), EXPO_APPLE_TEAM_ID pflicht (TTY-Prompt haengt sonst), ERRORED-Submission ohne Fehlertext = meist doppelte buildNumber in ASC; autoIncrement anlassen.
-- [EAS native project tracking](eas-native-project-tracking.md) — when ios/android directories are present, EAS needs the checked-in manifests, shared schemes, and native configs; selective ignores can break cloud builds before compilation.
+- [EAS native project tracking](eas-native-project-tracking.md) — native build checkouts need tracked projects; Expo prebuild may also clear unregistered custom Android modules.
 - [EAS Xcode log compression](eas-xcode-log-compression.md) — signed EAS Xcode logs arrive Brotli-compressed despite text/plain; decode before grepping compiler diagnostics.
 - [WP lead booking action](sagatrail-wp-lead-book.md) — POST /admin/partner-leads/wp-book sendet einzelne PartnerLeads an WP via action=sagatrail_book_lead; WP-Plugin muss diesen Handler implementieren; sagatrail_book_all läuft im Hintergrund (202).
 - [SagaTrail free-hike gating](sagatrail-free-hike-gating.md) — non-premium gate is `!premium && freeHikeUsed`, NIE `isAnchorPlace`; Regel in kanton-, route- und saga-Screen synchron halten.
