@@ -220,6 +220,7 @@ import {
 } from "@/lib/waypointPhotoUpload";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
 import { makeLogger } from "@/lib/debugLog";
+import { subscribeToNetworkStatus } from "@/lib/networkStatus";
 
 const watchLiveStateLog = makeLogger("[WATCH-STATE]", "watch_state");
 const watchPoiLog = makeLogger("[WATCH-POI]", "watch_poi");
@@ -1262,6 +1263,8 @@ export default function LiveHike() {
   const awaitingDecisionRef = useRef(false);
   awaitingDecisionRef.current = awaitingDecision;
   const [isOffline, setIsOffline] = useState<boolean>(false);
+  const isOfflineRef = useRef(false);
+  isOfflineRef.current = isOffline;
   /** GPS-Position zum Zeitpunkt der Off-Route-Erkennung — treibt die Neuberechnung. */
   const [offRoutePos, setOffRoutePos] = useState<LatLng | null>(null);
   const watchOffRoute = useMemo<WatchOffRoute | null>(() => {
@@ -1369,19 +1372,7 @@ export default function LiveHike() {
   );
 
   useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      typeof window.addEventListener !== "function"
-    )
-      return;
-    const goOnline = () => setIsOffline(false);
-    const goOffline = () => setIsOffline(true);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
+    return subscribeToNetworkStatus((online) => setIsOffline(!online));
   }, []);
 
   // Valhalla-Neuberechnung: laeuft immer wenn offRoutePos sich aendert.
@@ -2547,7 +2538,7 @@ export default function LiveHike() {
   // die Narration läuft dann ohne Wettereinleitung weiter.
   useEffect(() => {
     const coords = route?.coordinates;
-    if (!coords) return;
+    if (!coords || isOffline) return;
     let cancelled = false;
     getWeather({ lat: coords.lat, lng: coords.lng })
       .then((r) => {
@@ -2557,7 +2548,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [route?.coordinates?.lat, route?.coordinates?.lng]);
+  }, [isOffline, route?.coordinates?.lat, route?.coordinates?.lng]);
 
   // Höhenprofil einmalig pro Route laden. Die Profilpunkte werden nicht nur
   // gezeichnet: terrainCues.ts verdichtet sie für die gesprochenen
@@ -2567,7 +2558,7 @@ export default function LiveHike() {
     terrainStartedRef.current.clear();
     terrainProgressRef.current.clear();
     terrainEndedRef.current.clear();
-    if (!geometry || geometry.length < 2) {
+    if (isOffline || !geometry || geometry.length < 2) {
       setTerrainProfile(null);
       setTerrainProfileGeometry(null);
       return;
@@ -2627,12 +2618,12 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [route?.id, navigationGeometry]);
+  }, [isOffline, route?.id, navigationGeometry]);
 
   // Wegoberflaechenpunkte einmalig laden, sobald die OSM-Relation-ID bekannt ist.
   // Schlaegt die Anfrage fehl, bleibt rawSurfacePoints leer — kein Fehlerfall.
   useEffect(() => {
-    if (!osmId) return;
+    if (!osmId || isOffline) return;
     let cancelled = false;
     getRouteSurfaces({ osmId })
       .then((r) => {
@@ -2642,7 +2633,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [osmId]);
+  }, [isOffline, osmId]);
 
   // Wegoberflaechenpunkte → fraktionsbasierte Abschnitte (0–1) entlang der Route.
   // Dedupliziert konsekutive gleiche Kategorien, filtert Startbereich heraus.
@@ -3079,6 +3070,7 @@ export default function LiveHike() {
   // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
   // Wander-Verkehrsmittel) — nur mit Kartenmittelpunkt sinnvoll, best effort.
   useEffect(() => {
+    if (isOffline) return;
     const first = navigationGeometry?.[0];
     const center = first
       ? { lat: first[0], lng: first[1] }
@@ -3097,6 +3089,7 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [
+    isOffline,
     navigationGeometry,
     route?.coordinates,
     saga?.coordinates,
@@ -3107,6 +3100,7 @@ export default function LiveHike() {
   // Historische/touristische Orte im Kartenausschnitt laden, live mit
   // Wikipedia-Zusammenfassungen angereichert — best effort, kein Blocker.
   useEffect(() => {
+    if (isOffline) return;
     const first = navigationGeometry?.[0];
     const center = first
       ? { lat: first[0], lng: first[1] }
@@ -3605,7 +3599,7 @@ export default function LiveHike() {
   // die aktuelle Geometrie immer per Ref lesen kann.
   useEffect(() => {
     routeGeomRef.current = navigationGeometry;
-  }, [navigationGeometry]);
+  }, [isOffline, navigationGeometry]);
 
   // Neue GPS-Position verarbeiten: real zurueckgelegte Strecke aufaddieren,
   // Track-Punkt loggen und Off-Route-Status ueberpruefen.
@@ -8527,9 +8521,14 @@ export default function LiveHike() {
       );
       let attempt = 0;
       const tryLoad = () => {
+        if (isOfflineRef.current) return;
         getPois(bbox)
           .then((result) => {
-            if (detourPoiSearchKeyRef.current !== searchKey) return;
+            if (
+              isOfflineRef.current ||
+              detourPoiSearchKeyRef.current !== searchKey
+            )
+              return;
             // Umleitungs-POIs kommen aus einem separaten Suchpfad und dürfen
             // den normalen Endpunktfilter nicht umgehen. Sonst landen
             // Bushaltestellen mitten auf der Umleitungsstrecke wieder in
@@ -8547,7 +8546,11 @@ export default function LiveHike() {
             }
           })
           .catch(() => {
-            if (detourPoiSearchKeyRef.current !== searchKey || attempt >= 4)
+            if (
+              isOfflineRef.current ||
+              detourPoiSearchKeyRef.current !== searchKey ||
+              attempt >= 4
+            )
               return;
             attempt += 1;
             setTimeout(tryLoad, 35_000);
