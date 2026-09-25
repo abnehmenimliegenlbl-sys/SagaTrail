@@ -1,7 +1,9 @@
 import { createUseStrings, StringsDict } from "../createStrings";
 import type {
+  RecommendationCautionCode,
   RecommendationCompanion,
   RecommendationFitness,
+  RecommendationReasonCode,
   RecommendationTravel,
   ScoredRoute,
 } from "@/lib/routeRecommendation";
@@ -17,7 +19,8 @@ export type RecommendationCopy = {
   alternatives: string; open: string; weather: string; conditions: string; transit: string; parking: string;
   dataUnavailable: { weather: string; conditions: string; transit: string; parking: string };
   values: { time: Record<number, string>; fitness: Record<RecommendationFitness, string>; companion: Record<RecommendationCompanion, string>; travel: Record<RecommendationTravel, string> };
-  reason: Record<string, (route: ScoredRoute) => string>; caution: Record<string, string>;
+  reason: Record<RecommendationReasonCode, (route: ScoredRoute) => string>;
+  caution: Record<RecommendationCautionCode, string>;
 };
 
 type Locale = "de" | "gsw" | "fr" | "it" | "en" | "zh" | "es" | "pt" | "ru";
@@ -46,7 +49,10 @@ const VALUE_DATA: Record<Locale, RecommendationCopy["values"]> = {
   ru:{time:{90:"1,5 часа",180:"3 часа",300:"5 часов"},fitness:{easy:"Легко",moderate:"Средне",strong:"Сложно"},companion:{solo:"Один / взрослые",children:"С детьми",wheelchair:"На коляске"},travel:{publicTransport:"Общественный транспорт",car:"Автомобиль",flexible:"Открыто"}},
 };
 
-const REASONS: Record<Locale, Record<string, (route: ScoredRoute) => string>> = {
+const REASONS: Record<
+  Locale,
+  Record<RecommendationReasonCode, (route: ScoredRoute) => string>
+> = {
   de:{time:r=>`passt in dein Zeitbudget von ${Math.round((r.route.minutes/60)*10)/10} h`,fitness:()=> "passt zu deiner gewünschten Belastung",companion:()=> "passt zu deiner Begleitung",interest:()=> "trifft mindestens eines deiner Themen",nearby:()=> "liegt in deiner Nähe",season:()=> "ist für die aktuelle Saison eingeordnet",weather:()=> "das aktuelle Wetter spricht dafür",conditions:()=> "die aktuellen Wegbedingungen sprechen dafür",return:()=> "am Ziel gibt es passende ÖV-Abfahrten",arrival:()=> "der Start ist mit ÖV erreichbar",parking:()=> "am Start wurde ein Parkplatz gefunden"},
   gsw:{time:r=>`passt i dis Zytbudget vo ${Math.round((r.route.minutes/60)*10)/10} h`,fitness:()=> "passt zu diner gewünschte Belastig",companion:()=> "passt zu diner Begleitig",interest:()=> "trifft mindestens eis vo dine Themä",nearby:()=> "liit i diner Nöchi",season:()=> "passt zur aktuelle Saison",weather:()=> "s aktuelle Wätter spricht defür",conditions:()=> "d aktuelle Wägbedingige spreche defür",return:()=> "am Ziel git s passende ÖV-Abfahrte",arrival:()=> "de Start isch mit ÖV erreichbar",parking:()=> "am Start isch en Parkplatz gfunde"},
   fr:{time:r=>`correspond à ton budget de ${Math.round((r.route.minutes/60)*10)/10} h`,fitness:()=> "correspond à l'effort souhaité",companion:()=> "convient à ton accompagnement",interest:()=> "correspond à au moins un de tes thèmes",nearby:()=> "se trouve près de toi",season:()=> "est adapté à la saison actuelle",weather:()=> "la météo actuelle est favorable",conditions:()=> "les conditions actuelles sont favorables",return:()=> "des départs adaptés sont disponibles à l'arrivée",arrival:()=> "le départ est accessible en transports publics",parking:()=> "un parking a été trouvé au départ"},
@@ -58,16 +64,19 @@ const REASONS: Record<Locale, Record<string, (route: ScoredRoute) => string>> = 
   ru:{time:r=>`укладывается в ваш бюджет ${Math.round((r.route.minutes/60)*10)/10} ч`,fitness:()=> "соответствует выбранной нагрузке",companion:()=> "подходит вашей компании",interest:()=> "соответствует хотя бы одной теме",nearby:()=> "находится рядом с вами",season:()=> "подходит для текущего сезона",weather:()=> "текущая погода благоприятна",conditions:()=> "текущее состояние тропы благоприятно",return:()=> "в пункте назначения есть подходящие отправления",arrival:()=> "к началу можно добраться общественным транспортом",parking:()=> "у начала найдено место для парковки"},
 };
 
-const CAUTIONS: Record<Locale, Record<string,string>> = {
-  de:{time:"liegt über deinem Zeitbudget",fitness:"ist für deine gewünschte Belastung anspruchsvoller",companion:"die Eignung für deine Begleitung ist nicht ideal",interest:"deine ausgewählten Themen sind dort nicht belegt",season:"ist saisonal weniger passend",weather:"das aktuelle Wetter verlangt Vorsicht",conditions:"es gibt aktuelle Hinweise zu den Wegbedingungen",return:"ÖV-Rückweg ist nicht zuverlässig belegt",nearby:"liegt weiter von deinem Standort entfernt"},
-  gsw:{time:"liit über dim Zytbudget",fitness:"isch für dini Belastig anspruchsvoller",companion:"passt nöd ideal zu diner Begleitig",interest:"dini Themä sind det nöd belegt",season:"passt saisonal weniger",weather:"s aktuelle Wätter verlangt Vorsicht",conditions:"es git aktuelli Hiiwiis zu de Wägbedingige",return:"ÖV-Rückwäg isch nöd zuverlässig belegt",nearby:"liit wiiter vo dim Standort entfernt"},
-  fr:{time:"dépasse ton budget de temps",fitness:"demande plus d'effort que prévu",companion:"convient moins bien à ton accompagnement",interest:"tes thèmes ne sont pas attestés ici",season:"est moins adapté à la saison",weather:"la météo actuelle invite à la prudence",conditions:"des informations concernent l'état du sentier",return:"le retour en transports publics n'est pas garanti",nearby:"est plus éloigné de ta position"},
-  it:{time:"supera il tuo budget di tempo",fitness:"richiede più impegno del previsto",companion:"è meno adatto alla tua compagnia",interest:"i tuoi temi non sono documentati qui",season:"è meno adatto alla stagione",weather:"il meteo attuale richiede prudenza",conditions:"ci sono avvisi sulle condizioni del sentiero",return:"il rientro con i mezzi pubblici non è garantito",nearby:"è più lontano dalla tua posizione"},
-  en:{time:"is over your time budget",fitness:"requires more effort than desired",companion:"is not an ideal fit for your group",interest:"your selected themes are not evidenced there",season:"is less suitable for the season",weather:"current weather calls for caution",conditions:"there are current trail-condition notices",return:"the public-transport return is not reliably confirmed",nearby:"is farther from your location"},
-  zh:{time:"超过了你的时间预算",fitness:"需要更高的强度",companion:"不太适合你的同行者",interest:"当地没有所选主题的依据",season:"不太适合当前季节",weather:"当前天气需要谨慎",conditions:"路况有最新提示",return:"公共交通返程缺乏可靠信息",nearby:"距离你的位置较远"},
-  es:{time:"supera tu presupuesto de tiempo",fitness:"requiere más esfuerzo del deseado",companion:"no encaja del todo con tu compañía",interest:"tus temas no están documentados allí",season:"es menos adecuado para la temporada",weather:"el tiempo actual aconseja precaución",conditions:"hay avisos actuales sobre el sendero",return:"el regreso en transporte público no está confirmado",nearby:"está más lejos de tu ubicación"},
-  pt:{time:"ultrapassa o teu orçamento de tempo",fitness:"exige mais esforço do que o desejado",companion:"não é ideal para a tua companhia",interest:"os teus temas não estão comprovados aí",season:"é menos adequado à estação",weather:"o tempo atual exige prudência",conditions:"há avisos atuais sobre o trilho",return:"o regresso em transportes públicos não está garantido",nearby:"fica mais longe da tua localização"},
-  ru:{time:"превышает ваш запас времени",fitness:"требует большей нагрузки",companion:"не идеально подходит вашей компании",interest:"выбранные темы там не подтверждены",season:"меньше подходит для сезона",weather:"текущая погода требует осторожности",conditions:"есть свежие сообщения о состоянии тропы",return:"надёжность обратного общественного транспорта не подтверждена",nearby:"находится дальше от вашего местоположения"},
+const CAUTIONS: Record<
+  Locale,
+  Record<RecommendationCautionCode, string>
+> = {
+  de:{time:"liegt über deinem Zeitbudget",fitness:"ist für deine gewünschte Belastung anspruchsvoller",companion:"die Eignung für deine Begleitung ist nicht ideal",interest:"deine ausgewählten Themen sind dort nicht belegt",season:"ist saisonal weniger passend",weather:"das aktuelle Wetter verlangt Vorsicht",conditions:"es gibt aktuelle Hinweise zu den Wegbedingungen",return:"ÖV-Rückweg ist nicht zuverlässig belegt",arrival:"die ÖV-Anreise zum Start ist nicht zuverlässig bestätigt",nearby:"liegt weiter von deinem Standort entfernt"},
+  gsw:{time:"liit über dim Zytbudget",fitness:"isch für dini Belastig anspruchsvoller",companion:"passt nöd ideal zu diner Begleitig",interest:"dini Themä sind det nöd belegt",season:"passt saisonal weniger",weather:"s aktuelle Wätter verlangt Vorsicht",conditions:"es git aktuelli Hiiwiis zu de Wägbedingige",return:"ÖV-Rückwäg isch nöd zuverlässig belegt",arrival:"d ÖV-Aareis zum Start isch nöd zuverlässig bestätigt",nearby:"liit wiiter vo dim Standort entfernt"},
+  fr:{time:"dépasse ton budget de temps",fitness:"demande plus d'effort que prévu",companion:"convient moins bien à ton accompagnement",interest:"tes thèmes ne sont pas attestés ici",season:"est moins adapté à la saison",weather:"la météo actuelle invite à la prudence",conditions:"des informations concernent l'état du sentier",return:"le retour en transports publics n'est pas garanti",arrival:"l’accès au départ en transports publics n’est pas confirmé",nearby:"est plus éloigné de ta position"},
+  it:{time:"supera il tuo budget di tempo",fitness:"richiede più impegno del previsto",companion:"è meno adatto alla tua compagnia",interest:"i tuoi temi non sono documentati qui",season:"è meno adatto alla stagione",weather:"il meteo attuale richiede prudenza",conditions:"ci sono avvisi sulle condizioni del sentiero",return:"il rientro con i mezzi pubblici non è garantito",arrival:"l’accesso al punto di partenza con i mezzi pubblici non è confermato",nearby:"è più lontano dalla tua posizione"},
+  en:{time:"is over your time budget",fitness:"requires more effort than desired",companion:"is not an ideal fit for your group",interest:"your selected themes are not evidenced there",season:"is less suitable for the season",weather:"current weather calls for caution",conditions:"there are current trail-condition notices",return:"the public-transport return is not reliably confirmed",arrival:"public transport to the start is not reliably confirmed",nearby:"is farther from your location"},
+  zh:{time:"超过了你的时间预算",fitness:"需要更高的强度",companion:"不太适合你的同行者",interest:"当地没有所选主题的依据",season:"不太适合当前季节",weather:"当前天气需要谨慎",conditions:"路况有最新提示",return:"公共交通返程缺乏可靠信息",arrival:"无法可靠确认公共交通是否可到达起点",nearby:"距离你的位置较远"},
+  es:{time:"supera tu presupuesto de tiempo",fitness:"requiere más esfuerzo del deseado",companion:"no encaja del todo con tu compañía",interest:"tus temas no están documentados allí",season:"es menos adecuado para la temporada",weather:"el tiempo actual aconseja precaución",conditions:"hay avisos actuales sobre el sendero",return:"el regreso en transporte público no está confirmado",arrival:"no está confirmado que se pueda llegar al inicio en transporte público",nearby:"está más lejos de tu ubicación"},
+  pt:{time:"ultrapassa o teu orçamento de tempo",fitness:"exige mais esforço do que o desejado",companion:"não é ideal para a tua companhia",interest:"os teus temas não estão comprovados aí",season:"é menos adequado à estação",weather:"o tempo atual exige prudência",conditions:"há avisos atuais sobre o trilho",return:"o regresso em transportes públicos não está garantido",arrival:"não está confirmado que seja possível chegar ao início por transportes públicos",nearby:"fica mais longe da tua localização"},
+  ru:{time:"превышает ваш запас времени",fitness:"требует большей нагрузки",companion:"не идеально подходит вашей компании",interest:"выбранные темы там не подтверждены",season:"меньше подходит для сезона",weather:"текущая погода требует осторожности",conditions:"есть свежие сообщения о состоянии тропы",return:"надёжность обратного общественного транспорта не подтверждена",arrival:"возможность добраться до начала общественным транспортом не подтверждена",nearby:"находится дальше от вашего местоположения"},
 };
 
 const recommendationStrings = Object.fromEntries(

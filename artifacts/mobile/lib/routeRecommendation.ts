@@ -43,11 +43,16 @@ export type RecommendationReasonCode =
   | "parking"
   | "nearby";
 
+export type RecommendationCautionCode = Exclude<
+  RecommendationReasonCode,
+  "parking"
+>;
+
 export interface ScoredRoute {
   route: HikingRoute;
   score: number;
   reasons: RecommendationReasonCode[];
-  cautions: RecommendationReasonCode[];
+  cautions: RecommendationCautionCode[];
   signals: RecommendationSignals;
 }
 
@@ -136,7 +141,7 @@ export function scoreRoute(
   signals: RecommendationSignals = {},
 ): ScoredRoute {
   const reasons: RecommendationReasonCode[] = [];
-  const cautions: RecommendationReasonCode[] = [];
+  const cautions: RecommendationCautionCode[] = [];
   const limits = FITNESS_LIMITS[preferences.fitness];
   let score = 50;
 

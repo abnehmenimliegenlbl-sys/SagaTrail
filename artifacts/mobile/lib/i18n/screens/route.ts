@@ -396,7 +396,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
       gut: "Gueti Bedingige",
-      vorsicht: "Mit Vorsicht begehbar",
+      vorsicht: "Mit Vorsicht gangbar",
       kritisch: "Erschwirti Bedingige",
     },
     seasonLabel: "Saison",

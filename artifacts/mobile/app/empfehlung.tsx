@@ -64,7 +64,11 @@ import {
   routeThemeCache,
 } from "@/lib/routeThemeIndex";
 import { routePathWithCommunity } from "@/lib/meetupNavigation";
-import { useRecommendationStrings as useLocalizedRecommendationStrings } from "@/lib/i18n/screens/empfehlung";
+import {
+  useRecommendationStrings as useLocalizedRecommendationStrings,
+  type RecommendationCopy,
+} from "@/lib/i18n/screens/empfehlung";
+import { useRouteStrings } from "@/lib/i18n/screens/route";
 
 const WEB_TOP = 67;
 const INTERESTS: RouteThemeKey[] = [
@@ -75,76 +79,33 @@ const INTERESTS: RouteThemeKey[] = [
   "wald_wildtiere",
 ];
 
-type Copy = {
-  eyebrow: string;
-  title: string;
-  intro: string;
-  locationScope: string;
-  allCantons: string;
-  time: string;
-  fitness: string;
-  companion: string;
-  travel: string;
-  returnConnection: string;
-  nearbySearch: string;
-  nearbyLocating: string;
-  nearbyDenied: string;
-  nearbyMode: string;
-  manualMode: string;
-  manualHint: string;
-  placeOptional: string;
-  placePlaceholder: string;
-  placeSearching: string;
-  placeNoResults: string;
-  placeSelected: (place: string) => string;
-  locationGroup: string;
-  profileGroup: string;
-  travelGroup: string;
-  interestsGroup: string;
-  interests: string;
-  find: string;
-  searching: string;
-  noRoutes: string;
-  error: string;
-  bestMatch: string;
-  why: string;
-  themeArea: string;
-  noThemeEvidence: string;
-  noThemeMatch: string;
-  alternatives: string;
-  open: string;
-  weather: string;
-  conditions: string;
-  transit: string;
-  parking: string;
-  dataUnavailable: {
-    weather: string;
-    conditions: string;
-    transit: string;
-    parking: string;
-  };
-  values: {
-    time: Record<number, string>;
-    fitness: Record<RecommendationFitness, string>;
-    companion: Record<RecommendationCompanion, string>;
-    travel: Record<RecommendationTravel, string>;
-  };
-  reason: Record<string, (route: ScoredRoute) => string>;
-  caution: Record<string, string>;
-};
+type Copy = RecommendationCopy;
 
 function signalLabel(
   signals: RecommendationSignals,
   preferences: RecommendationPreferences,
   copy: Copy,
+  routeCopy: Pick<
+    ReturnType<typeof useRouteStrings>,
+    "trailConditions" | "conditions"
+  >,
 ): string[] {
   const labels: string[] = [];
-  if (signals.weather?.trailConditionLevel) {
-    labels.push(`${copy.weather}: ${signals.weather.trailConditionLevel}`);
-  } else labels.push(copy.dataUnavailable.weather);
+  const weatherLevel = signals.weather?.trailConditionLevel;
+  const weatherLabels: Record<string, string> = routeCopy.trailConditions;
+  const localizedWeatherLevel = weatherLevel
+    ? weatherLabels[weatherLevel]
+    : undefined;
+  if (localizedWeatherLevel) {
+    labels.push(`${copy.weather}: ${localizedWeatherLevel}`);
+  } else {
+    labels.push(copy.dataUnavailable.weather);
+  }
   const latest = signals.conditions?.[0];
   if (latest) {
-    labels.push(`${copy.conditions}: ${latest.condition}`);
+    labels.push(
+      `${copy.conditions}: ${routeCopy.conditions[latest.condition]}`,
+    );
   } else {
     labels.push(copy.dataUnavailable.conditions);
   }
@@ -180,6 +141,7 @@ export default function Empfehlung() {
   const { language } = useApp();
   const { loadCantonRoutes } = useCatalog();
   const copy = useLocalizedRecommendationStrings();
+  const routeCopy = useRouteStrings();
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   const [timeBudgetMin, setTimeBudgetMin] = useState(180);
@@ -444,12 +406,10 @@ export default function Empfehlung() {
 
   const selected = recommendations[0];
   const reasonLines = selected
-    ? selected.reasons
-        .map((reason) => copy.reason[reason]?.(selected))
-        .filter((value): value is string => Boolean(value))
+    ? selected.reasons.map((reason) => copy.reason[reason](selected))
     : [];
   const cautionLines = selected
-    ? selected.cautions.map((caution) => copy.caution[caution]).filter(Boolean)
+    ? selected.cautions.map((caution) => copy.caution[caution])
     : [];
   const selectedThemeKeys = selected
     ? (selected.route.themeKeys ?? []).filter(
@@ -961,7 +921,12 @@ export default function Empfehlung() {
                   </Text>
                 </View>
               ))}
-              {signalLabel(selected.signals, preferences, copy).map((line) => (
+              {signalLabel(
+                selected.signals,
+                preferences,
+                copy,
+                routeCopy,
+              ).map((line) => (
                 <Text
                   key={line}
                   style={[styles.signalText, { color: colors.mutedForeground }]}
