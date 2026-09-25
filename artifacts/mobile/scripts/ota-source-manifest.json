@@ -1,14 +1,26 @@
 {
   "app/hike/[id].tsx": {
-    "bytes": 445348,
-    "sha256": "2fe7817088adbc78ab4c271b950296fdbc95a297ca44269ee9f4dcbf44578292"
+    "bytes": 446267,
+    "sha256": "110b3031c4a2a4295745337228edf2f63203cdc35f37052c8b48c00632442735"
   },
   "assets/images/banner-wanderroute-heute.jpg": {
     "bytes": 399626,
     "sha256": "ba7643128a9bbccac78c8e6cf1cabeccbecfbbf2a65925e4f1608164aceee5f9"
   },
+  "components/brand/HikeSystemStatusBanner.tsx": {
+    "bytes": 3211,
+    "sha256": "2ee80a47da41619af6424b83b5928c36fc377abf73bec457f7bd47594af68baa"
+  },
+  "components/brand/PeakCameraOverlay.tsx": {
+    "bytes": 28174,
+    "sha256": "fc2c908d3c4d61f30d26bad88de0139f79ef5a13b97ff779c5b364bcae26cb4c"
+  },
   "components/brand/RouteTerrain3D.native.tsx": {
     "bytes": 78254,
     "sha256": "6ea89277f2cef8619b2d40ff0f82c60663c6d75174bb3cf53ef7dc52bfa703e6"
+  },
+  "lib/i18n/screens/hike.ts": {
+    "bytes": 114032,
+    "sha256": "153479fc593eca16ede98ad3c1c1125f464b43965f479da8e4c640f9e6203cb9"
   }
 }
