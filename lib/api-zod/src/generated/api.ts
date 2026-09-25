@@ -360,11 +360,12 @@ export const GetPoisResponseItem = zod.object({
 }).optional().describe('Quellenbelegte POI-Informationen und optionales Bild.'),
   "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
   "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.'),
+  "websiteUrl": zod.string().url().optional().describe('Sichere OSM website\/contact:website URL fuer die Quellenpruefung.'),
   "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.'),
   "source": zod.string().optional().describe('Primärquelle des POIs.'),
   "sourceUrl": zod.string().url().optional().describe('Direkter Nachweis des OSM-Objekts.'),
   "checkedAt": zod.coerce.date().nullish().describe('Zeitpunkt des erfolgreichen Quellenabrufs.')
-}).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
+}).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit belegten Informationen aus Wikipedia oder passenden Webseiten angereichert.\n')
 export const GetPoisResponse = zod.array(GetPoisResponseItem)
 
 
@@ -410,16 +411,17 @@ export const GetPeakPoisResponseItem = zod.object({
 }).optional().describe('Quellenbelegte POI-Informationen und optionales Bild.'),
   "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
   "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.'),
+  "websiteUrl": zod.string().url().optional().describe('Sichere OSM website\/contact:website URL fuer die Quellenpruefung.'),
   "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.'),
   "source": zod.string().optional().describe('Primärquelle des POIs.'),
   "sourceUrl": zod.string().url().optional().describe('Direkter Nachweis des OSM-Objekts.'),
   "checkedAt": zod.coerce.date().nullish().describe('Zeitpunkt des erfolgreichen Quellenabrufs.')
-}).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
+}).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit belegten Informationen aus Wikipedia oder passenden Webseiten angereichert.\n')
 export const GetPeakPoisResponse = zod.array(GetPeakPoisResponseItem)
 
 
 /**
- * Laedt belegte Fakten aus Wikipedia, Wikidata oder kuratierten Ortsquellen sowie optional ein passendes Bild. Die Antwort enthaelt getrennte Quellenangaben fuer Text und Bild. Wird erst beim Oeffnen des POI geladen und 24 h serverseitig gecacht.
+ * Laedt belegte Fakten aus Wikipedia, Wikidata, einer OSM-Webseite oder einer passenden offiziellen beziehungsweise lokalen Webseite sowie optional ein passendes Bild. Die Antwort enthaelt getrennte Quellenangaben fuer Text und Bild. Wird erst beim Oeffnen des POI geladen und 24 h serverseitig gecacht.
  * @summary Quellenbasierte Anreicherung eines einzelnen POI on demand
  */
 export const GetPoiDetailQueryParams = zod.object({
@@ -428,7 +430,8 @@ export const GetPoiDetailQueryParams = zod.object({
   "lat": zod.coerce.number(),
   "lng": zod.coerce.number(),
   "wikipediaTag": zod.coerce.string().optional(),
-  "wikidataTag": zod.coerce.string().optional()
+  "wikidataTag": zod.coerce.string().optional(),
+  "websiteUrl": zod.coerce.string().url().optional()
 })
 
 export const GetPoiDetailResponse = zod.object({

@@ -415,10 +415,11 @@ paths:
       tags: [routes]
       summary: Quellenbasierte Anreicherung eines einzelnen POI on demand
       description: >
-        Laedt belegte Fakten aus Wikipedia, Wikidata oder kuratierten Ortsquellen
-        sowie optional ein passendes Bild. Die Antwort enthaelt getrennte
-        Quellenangaben fuer Text und Bild. Wird erst beim Oeffnen des POI geladen
-        und 24 h serverseitig gecacht.
+        Laedt belegte Fakten aus Wikipedia, Wikidata, einer OSM-Webseite oder
+        einer passenden offiziellen beziehungsweise lokalen Webseite sowie optional
+        ein passendes Bild. Die Antwort enthaelt getrennte Quellenangaben fuer
+        Text und Bild. Wird erst beim Oeffnen des POI geladen und 24 h serverseitig
+        gecacht.
       parameters:
         - name: name
           in: query
@@ -450,6 +451,12 @@ paths:
           required: false
           schema:
             type: string
+        - name: websiteUrl
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uri
       responses:
         "200":
           description: Anreicherungsergebnis (wiki kann fehlen wenn nichts gefunden)
@@ -3954,7 +3961,7 @@ components:
       type: object
       description: >
         Historischer oder touristischer Ort aus OpenStreetMap, optional live mit
-        einer Wikipedia-Zusammenfassung angereichert.
+        belegten Informationen aus Wikipedia oder passenden Webseiten angereichert.
       properties:
         id:
           type: string
@@ -3981,6 +3988,10 @@ components:
           type: string
           nullable: true
           description: "OSM wikidata-Tag (z.B. 'Q123456'), fuer on-demand-Anreicherung."
+        websiteUrl:
+          type: string
+          format: uri
+          description: "Sichere OSM website/contact:website URL fuer die Quellenpruefung."
         osmContext:
           type: string
           nullable: true

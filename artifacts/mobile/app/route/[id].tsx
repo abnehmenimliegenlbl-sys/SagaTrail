@@ -469,6 +469,7 @@ export default function Routenplanung() {
       lng: selectedPoi.lng,
       ...(selectedPoi.wikipediaTag ? { wikipediaTag: selectedPoi.wikipediaTag } : {}),
       ...(selectedPoi.wikidataTag ? { wikidataTag: selectedPoi.wikidataTag } : {}),
+      ...(selectedPoi.websiteUrl ? { websiteUrl: selectedPoi.websiteUrl } : {}),
     })
       .then((r) => {
         if (!cancelled) {

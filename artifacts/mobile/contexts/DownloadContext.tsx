@@ -405,6 +405,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
                   lng: poi.lng,
                   ...(poi.wikipediaTag ? { wikipediaTag: poi.wikipediaTag } : {}),
                   ...(poi.wikidataTag ? { wikidataTag: poi.wikidataTag } : {}),
+                  ...(poi.websiteUrl ? { websiteUrl: poi.websiteUrl } : {}),
                 });
                 await cachePoiDetail(poi.id, detail.wiki ?? null);
                 if (detail.wiki?.extract?.trim()) {

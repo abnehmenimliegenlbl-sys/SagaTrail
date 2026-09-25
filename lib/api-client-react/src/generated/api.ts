@@ -809,7 +809,7 @@ export const getGetPoiDetailUrl = (params: GetPoiDetailParams,) => {
 }
 
 /**
- * Laedt belegte Fakten aus Wikipedia, Wikidata oder kuratierten Ortsquellen sowie optional ein passendes Bild. Die Antwort enthaelt getrennte Quellenangaben fuer Text und Bild. Wird erst beim Oeffnen des POI geladen und 24 h serverseitig gecacht.
+ * Laedt belegte Fakten aus Wikipedia, Wikidata, einer OSM-Webseite oder einer passenden offiziellen beziehungsweise lokalen Webseite sowie optional ein passendes Bild. Die Antwort enthaelt getrennte Quellenangaben fuer Text und Bild. Wird erst beim Oeffnen des POI geladen und 24 h serverseitig gecacht.
  * @summary Quellenbasierte Anreicherung eines einzelnen POI on demand
  */
 export const getPoiDetail = async (params: GetPoiDetailParams, options?: RequestInit): Promise<PoiDetailResponse> => {

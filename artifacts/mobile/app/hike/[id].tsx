@@ -3760,6 +3760,7 @@ export default function LiveHike() {
         kind: selectedPoi.kind,
         lat: selectedPoi.lat,
         lng: selectedPoi.lng,
+        ...(selectedPoi.websiteUrl ? { websiteUrl: selectedPoi.websiteUrl } : {}),
         ...(selectedPoi.wikipediaTag
           ? { wikipediaTag: selectedPoi.wikipediaTag }
           : {}),
@@ -7020,6 +7021,7 @@ export default function LiveHike() {
         kind: nearbyPoi.kind,
         lat: nearbyPoi.lat,
         lng: nearbyPoi.lng,
+        ...(nearbyPoi.websiteUrl ? { websiteUrl: nearbyPoi.websiteUrl } : {}),
         ...(nearbyPoi.wikipediaTag
           ? { wikipediaTag: nearbyPoi.wikipediaTag }
           : {}),

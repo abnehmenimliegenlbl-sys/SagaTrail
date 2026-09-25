@@ -13,4 +13,5 @@ lat: number;
 lng: number;
 wikipediaTag?: string;
 wikidataTag?: string;
+websiteUrl?: string;
 };

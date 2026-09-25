@@ -21,6 +21,7 @@ function toPoi(p: EnrichedPoi) {
     wiki: p.wiki ?? undefined,
     wikipediaTag: p.wikipediaTag ?? undefined,
     wikidataTag: p.wikidataTag ?? undefined,
+    websiteUrl: p.websiteUrl ?? undefined,
     osmContext: p.osmContext ?? undefined,
     source: p.source ?? "OpenStreetMap",
     sourceUrl: p.sourceUrl ?? `https://www.openstreetmap.org/${p.id}`,
@@ -88,6 +89,11 @@ const GetPoiDetailQueryParams = z.object({
   lng: z.coerce.number(),
   wikipediaTag: z.string().optional(),
   wikidataTag: z.string().optional(),
+  websiteUrl: z
+    .string()
+    .url()
+    .refine((value) => /^https?:\/\//i.test(value), "Nur HTTP(S)-Webseiten sind erlaubt")
+    .optional(),
 });
 
 // On-demand-Anreicherung eines einzelnen POI: wird aufgerufen wenn der Nutzer

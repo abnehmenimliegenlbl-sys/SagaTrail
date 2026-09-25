@@ -34,6 +34,7 @@ import { istPoiBildPassend } from "./poiImageCheck";
 import { assessSac, deriveSacFromSwissTlm3d } from "./swisstopoHiking";
 import { getCachedRoutePhoto } from "./commonsPhoto";
 import { reverseGeocode } from "./geocoding";
+import { scrapePoiWebsiteSource, searchPoiWebsiteSource } from "./poiWebSource";
 import { START_CANTON_OVERRIDES } from "./routeCantonOverrides";
 import { refreshCantonRouteThemes } from "./routeThemeRefresh";
 import { execFile } from "node:child_process";
@@ -114,17 +115,24 @@ function commonsSearchTerm(name: string, kind: string | undefined): string | nul
   return kind ? (KIND_SEARCH_LABEL[kind] ?? null) : null;
 }
 
-// Orts-Hinweis fuer die Commons-Suche: grobe Zellen reichen als Suchkontext
+// Orts-Hinweis fuer Quellenpruefung und Commons-Suche: grobe Zellen reichen
 // aus und verhindern eine Nominatim-Anfrage pro POI in derselben Ortschaft.
-const poiPlaceHintCache = new Map<string, Promise<string | null>>();
+const poiPlaceHintCache = new Map<
+  string,
+  Promise<{ place: string | null; canton: string | null }>
+>();
 
-async function getPoiPlaceHint(lat: number, lng: number, log: Logger): Promise<string | null> {
+async function getPoiLocationHint(
+  lat: number,
+  lng: number,
+  log: Logger,
+): Promise<{ place: string | null; canton: string | null }> {
   const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
   const cached = poiPlaceHintCache.get(key);
   if (cached) return cached;
   const pending = reverseGeocode(lat, lng, log)
-    .then((result) => result.place)
-    .catch(() => null);
+    .then((result) => ({ place: result.place, canton: result.canton }))
+    .catch(() => ({ place: null, canton: null }));
   poiPlaceHintCache.set(key, pending);
   return pending;
 }
@@ -319,6 +327,7 @@ const POI_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 const POI_ERROR_TTL_MS = 30 * 1000; // 30 Sekunden
 // Cache fuer on-demand-Anreicherung einzelner POIs (lazy, pro Name+Koordinate).
 const POI_DETAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const POI_DETAIL_EMPTY_TTL_MS = 60 * 60 * 1000; // 1 Stunde bei fehlendem Text
 const POI_CACHE_MAX = 150;
 const poiCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
 // Separater Fehler-Cache: nur Timestamp, kein entries-Array. Wird von
@@ -392,6 +401,7 @@ function peaksInRequestedRadius(
 // On-demand-Cache fuer einzelne POI-Anreicherungen.
 const POI_DETAIL_CACHE_MAX = 200;
 const poiDetailCache = new Map<string, { at: number; wiki: WikiSummary | null }>();
+const poiDetailInFlight = new Map<string, Promise<WikiSummary | null>>();
 
 function wikipediaPoiSource(wiki: WikiSummary): PoiSource {
   return {
@@ -436,6 +446,7 @@ async function enrichPoiWithWikipedia(
   log: Logger,
   geoSearchBudget: { rest: number },
 ): Promise<EnrichedPoi> {
+  let wikidataImageFallback: string | null = null;
   try {
     if (poi.wikipediaTag) {
       const wiki = await resolveOsmWikipediaTag(poi.wikipediaTag, "de", poi.lat, poi.lng);
@@ -485,7 +496,7 @@ async function enrichPoiWithWikipedia(
         ]);
         const image = p18Image ?? p373Image ?? nameMatch?.url ?? geoImage;
         const extractB = wikidataFactsB ?? "";
-        if (image || extractB) {
+        if (extractB) {
           const summary: WikiSummary = {
             title: poi.name,
             extract: extractB,
@@ -495,11 +506,10 @@ async function enrichPoiWithWikipedia(
           };
           return {
             ...poi,
-            wiki: extractB
-              ? withPoiSource(summary, wikidataPoiSource(poi.wikidataTag))
-              : summary,
+            wiki: withPoiSource(summary, wikidataPoiSource(poi.wikidataTag)),
           };
         }
+        wikidataImageFallback = image;
       }
     }
     // Dritte Stufe: kein OSM-Verweis vorhanden oder aufloesbar — Wikipedia-
@@ -526,8 +536,33 @@ async function enrichPoiWithWikipedia(
         };
       }
     }
+    // Eine explizite OSM-Webseite ist der beste allgemeine Einstiegspunkt.
+    // Wenn sie keinen passenden POI- und Ortsbezug enthält, folgt Firecrawl-
+    // Suche mit Name, Typ und Reverse-Geocoding-Kontext.
+    const locationHint = await getPoiLocationHint(poi.lat, poi.lng, log);
+    const webContext = {
+      name: poi.name,
+      kind:
+        KIND_SEARCH_LABEL[poi.kind] ??
+        poi.kind.split("=").at(-1)?.replace(/[_-]+/g, " ") ??
+        poi.kind,
+      place: locationHint.place,
+      canton: locationHint.canton,
+    };
+    const websiteSummary = poi.websiteUrl
+      ? await scrapePoiWebsiteSource(webContext, poi.websiteUrl, log)
+      : null;
+    const searchedSummary =
+      websiteSummary ?? (await searchPoiWebsiteSource(webContext, log));
+    if (searchedSummary) {
+      return {
+        ...poi,
+        wiki: { ...searchedSummary, image: wikidataImageFallback },
+      };
+    }
+
     // Ohne verifizierten Text bleibt nur ein optionales Bild aus Commons.
-    const placeHint = await getPoiPlaceHint(poi.lat, poi.lng, log);
+    const placeHint = locationHint.place;
     const searchTerm = commonsSearchTerm(poi.name, poi.kind);
     const [nameMatch, geoImage] = await Promise.all([
       placeHint && searchTerm
@@ -535,7 +570,7 @@ async function enrichPoiWithWikipedia(
         : Promise.resolve(null),
       fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
     ]);
-    const commonsImage = nameMatch?.url ?? geoImage;
+    const commonsImage = wikidataImageFallback ?? nameMatch?.url ?? geoImage;
     if (commonsImage) {
       return {
         ...poi,
@@ -702,6 +737,7 @@ export async function getPoiDetail(
     lng: number;
     wikipediaTag?: string;
     wikidataTag?: string;
+    websiteUrl?: string;
   },
   log: Logger,
 ): Promise<WikiSummary | null> {
@@ -715,6 +751,7 @@ export async function getPoiDetail(
     params.kind,
     params.wikipediaTag ?? "",
     params.wikidataTag ?? "",
+    params.websiteUrl ?? "",
   ].join(",");
   const remember = (wiki: WikiSummary | null) => {
     if (poiDetailCache.size >= POI_DETAIL_CACHE_MAX) {
@@ -738,35 +775,58 @@ export async function getPoiDetail(
     return curated;
   }
   const hit = poiDetailCache.get(cacheKey);
-  if (hit && Date.now() - hit.at < POI_DETAIL_TTL_MS) return hit.wiki;
-  const rawPoi: RawPoi = {
-    id: cacheKey,
-    name: params.name,
-    kind: params.kind,
-    lat: params.lat,
-    lng: params.lng,
-    elevation: null,
-    wikipediaTag: params.wikipediaTag ?? null,
-    wikidataTag: params.wikidataTag ?? null,
-    osmContext: null,
-  };
-  // Voller Anreicherungs-Budget fuer einen einzelnen POI (kein Batch-Limit).
-  const enriched = await enrichPoiWithWikipedia(rawPoi, log, { rest: 1 });
-  let wiki = enriched.wiki;
-  // KI-Passungspruefung des Bildes (nur on-demand, Ergebnis haengt am 24h-Cache):
-  // unpassende Bilder (Lok statt Refugium, Portrait statt Denkmal) verwerfen.
-  if (wiki?.image) {
-    const passend = await istPoiBildPassend(wiki.image, params.name, params.kind, log);
-    if (!passend) {
-      wiki = { ...wiki, image: null };
-    } else {
-      const imageSource = await fetchCommonsImageSource(wiki.image);
-      if (imageSource) wiki = withPoiSource(wiki, imageSource);
+  if (hit) {
+    const ttl = hit.wiki?.extract?.trim()
+      ? POI_DETAIL_TTL_MS
+      : POI_DETAIL_EMPTY_TTL_MS;
+    if (Date.now() - hit.at < ttl) return hit.wiki;
+    poiDetailCache.delete(cacheKey);
+  }
+  const inFlight = poiDetailInFlight.get(cacheKey);
+  if (inFlight) return inFlight;
+
+  const pending = (async (): Promise<WikiSummary | null> => {
+    const rawPoi: RawPoi = {
+      id: cacheKey,
+      name: params.name,
+      kind: params.kind,
+      lat: params.lat,
+      lng: params.lng,
+      elevation: null,
+      wikipediaTag: params.wikipediaTag ?? null,
+      wikidataTag: params.wikidataTag ?? null,
+      websiteUrl: params.websiteUrl ?? null,
+      osmContext: null,
+    };
+    // Voller Anreicherungs-Budget fuer einen einzelnen POI (kein Batch-Limit).
+    const enriched = await enrichPoiWithWikipedia(rawPoi, log, { rest: 1 });
+    let wiki = enriched.wiki;
+    // KI-Passungspruefung des Bildes (nur on-demand, Ergebnis haengt am Cache):
+    // unpassende Bilder (Lok statt Refugium, Portrait statt Denkmal) verwerfen.
+    if (wiki?.image) {
+      const passend = await istPoiBildPassend(wiki.image, params.name, params.kind, log);
+      if (!passend) {
+        wiki = { ...wiki, image: null };
+      } else {
+        const imageSource = await fetchCommonsImageSource(wiki.image);
+        if (imageSource) wiki = withPoiSource(wiki, imageSource);
+      }
+    }
+    remember(wiki);
+    log.info(
+      { name: params.name, hasImage: !!wiki?.image, hasExtract: !!wiki?.extract },
+      "POI-Detail angereichert",
+    );
+    return wiki;
+  })();
+  poiDetailInFlight.set(cacheKey, pending);
+  try {
+    return await pending;
+  } finally {
+    if (poiDetailInFlight.get(cacheKey) === pending) {
+      poiDetailInFlight.delete(cacheKey);
     }
   }
-  remember(wiki);
-  log.info({ name: params.name, hasImage: !!wiki?.image, hasExtract: !!wiki?.extract }, "POI-Detail angereichert");
-  return wiki;
 }
 
 /**

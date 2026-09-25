@@ -580,6 +580,8 @@ export interface RawPoi {
   elevation: number | null;
   wikipediaTag: string | null;
   wikidataTag: string | null;
+  /** OSM website/contact:website URL, used for on-demand source verification. */
+  websiteUrl?: string | null;
   /** Kuratierter Kontext aus OSM-Tags (note, description, inscription, alt_name …)
    *  als formatierter String fuer den Claude-Prompt — enthaelt keine erfundenen Daten. */
   osmContext: string | null;
@@ -645,6 +647,43 @@ function buildOsmContext(tags: Record<string, string>): string | null {
     if (val && val.trim()) lines.push(`${label}: ${val.trim()}`);
   }
   return lines.length > 0 ? lines.join("\n") : null;
+}
+
+/** Liefert die erste sichere Website-URL aus den ueblichen OSM-Kontakt-Tags. */
+export function normalizeOsmWebsiteUrl(
+  tags: Record<string, string>,
+): string | null {
+  for (const key of ["website", "contact:website", "url"]) {
+    const raw = tags[key]?.trim();
+    if (!raw) continue;
+    const candidate = raw.split(/\s*;\s*/)[0]?.trim();
+    if (!candidate) continue;
+    if (
+      /^[a-z][a-z\d+.-]*:/i.test(candidate) &&
+      !/^https?:\/\//i.test(candidate)
+    ) {
+      continue;
+    }
+    const withScheme = candidate.startsWith("//")
+      ? `https:${candidate}`
+      : /^https?:\/\//i.test(candidate)
+        ? candidate
+        : `https://${candidate}`;
+    try {
+      const url = new URL(withScheme);
+      if (
+        (url.protocol === "http:" || url.protocol === "https:") &&
+        url.hostname &&
+        !url.username &&
+        !url.password
+      ) {
+        return url.toString();
+      }
+    } catch {
+      // Ungueltige oder nicht webbasierte OSM-Werte werden ignoriert.
+    }
+  }
+  return null;
 }
 
 /**
@@ -794,6 +833,7 @@ export async function fetchHistoricPois(
       elevation: tags.ele != null ? (parseFloat(tags.ele) || null) : null,
       wikipediaTag: tags.wikipedia ?? null,
       wikidataTag: tags.wikidata ?? null,
+      websiteUrl: normalizeOsmWebsiteUrl(tags),
       osmContext: buildOsmContext(tags),
     });
   }
@@ -894,6 +934,7 @@ export async function fetchPeakPois(
       elevation: tags.ele != null ? (parseFloat(tags.ele) || null) : null,
       wikipediaTag: tags.wikipedia ?? null,
       wikidataTag: tags.wikidata ?? null,
+      websiteUrl: normalizeOsmWebsiteUrl(tags),
       osmContext: buildOsmContext(tags),
     });
   }

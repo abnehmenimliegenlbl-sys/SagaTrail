@@ -8,7 +8,7 @@
 import type { WikiSummary } from './wikiSummary';
 
 /**
- * Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.
+ * Historischer oder touristischer Ort aus OpenStreetMap, optional live mit belegten Informationen aus Wikipedia oder passenden Webseiten angereichert.
  */
 export interface Poi {
   id: string;
@@ -24,6 +24,8 @@ export interface Poi {
   wikipediaTag?: string | null;
   /** OSM wikidata-Tag (z.B. 'Q123456'), fuer on-demand-Anreicherung. */
   wikidataTag?: string | null;
+  /** Sichere OSM website/contact:website URL fuer die Quellenpruefung. */
+  websiteUrl?: string;
   /** Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt. */
   osmContext?: string | null;
   /** Primärquelle des POIs. */
