@@ -49,6 +49,13 @@ export function shouldStartCommunityInviteClaim(
   return previousClaimKey !== communityInviteClaimKey(invite);
 }
 
+export function releaseCommunityInviteClaim(
+  activeClaimKey: string | null,
+  invite: CommunityInviteRouteParams,
+): string | null {
+  return activeClaimKey === communityInviteClaimKey(invite) ? null : activeClaimKey;
+}
+
 export function isCommunityInviteSegments(segments: readonly string[]): boolean {
   return segments[0] === "community" && segments[1] === "invite";
 }

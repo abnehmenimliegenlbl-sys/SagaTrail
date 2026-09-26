@@ -5,6 +5,7 @@ import {
   communityInviteClaimKey,
   getCommunityInviteRouteParams,
   isCommunityInviteSegments,
+  releaseCommunityInviteClaim,
   resolveCommunityInviteAction,
   shouldStartCommunityInviteClaim,
 } from "./communityInviteFlow";
@@ -53,6 +54,21 @@ test("does not claim an invite twice for the same route", () => {
     shouldStartCommunityInviteClaim(claimKey, { ...invite, code: "different" }),
     true,
   );
+});
+
+test("allows a cancelled invite claim to be retried", () => {
+  const claimKey = communityInviteClaimKey(invite);
+  const releasedKey = releaseCommunityInviteClaim(claimKey, invite);
+
+  assert.equal(releasedKey, null);
+  assert.equal(shouldStartCommunityInviteClaim(releasedKey, invite), true);
+});
+
+test("does not release a different invite claim", () => {
+  const otherInvite = { slug: "bergfreunde", code: "xyz789" };
+  const otherClaimKey = communityInviteClaimKey(otherInvite);
+
+  assert.equal(releaseCommunityInviteClaim(otherClaimKey, invite), otherClaimKey);
 });
 
 test("rejects an invite when slug or code is missing", () => {

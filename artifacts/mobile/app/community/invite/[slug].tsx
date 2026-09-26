@@ -11,6 +11,7 @@ import { useCommunityInviteStrings } from "@/lib/i18n/screens/communityInvite";
 import {
   communityInviteClaimKey,
   getCommunityInviteRouteParams,
+  releaseCommunityInviteClaim,
   resolveCommunityInviteAction,
   shouldStartCommunityInviteClaim,
 } from "@/lib/communityInviteFlow";
@@ -67,6 +68,7 @@ export default function CommunityInviteScreen() {
     if (!normalizedInvite || !inviteKey) return;
     if (!shouldStartCommunityInviteClaim(claimKeyRef.current, normalizedInvite)) return;
     claimKeyRef.current = inviteKey;
+    setState("loading");
     let cancelled = false;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CLAIM_TIMEOUT_MS);
@@ -112,6 +114,10 @@ export default function CommunityInviteScreen() {
     })();
     return () => {
       cancelled = true;
+      claimKeyRef.current = releaseCommunityInviteClaim(
+        claimKeyRef.current,
+        normalizedInvite,
+      );
       if (tokenTimeoutId) clearTimeout(tokenTimeoutId);
       clearTimeout(timeoutId);
       controller.abort();
