@@ -64,6 +64,13 @@ test("allows a cancelled invite claim to be retried", () => {
   assert.equal(shouldStartCommunityInviteClaim(releasedKey, invite), true);
 });
 
+test("keeps a settled invite claim from restarting on effect cleanup", () => {
+  const claimKey = communityInviteClaimKey(invite);
+
+  assert.equal(releaseCommunityInviteClaim(claimKey, invite, true), claimKey);
+  assert.equal(shouldStartCommunityInviteClaim(claimKey, invite), false);
+});
+
 test("does not release a different invite claim", () => {
   const otherInvite = { slug: "bergfreunde", code: "xyz789" };
   const otherClaimKey = communityInviteClaimKey(otherInvite);

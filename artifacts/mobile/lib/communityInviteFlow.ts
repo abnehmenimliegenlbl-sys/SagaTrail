@@ -52,7 +52,9 @@ export function shouldStartCommunityInviteClaim(
 export function releaseCommunityInviteClaim(
   activeClaimKey: string | null,
   invite: CommunityInviteRouteParams,
+  claimSettled = false,
 ): string | null {
+  if (claimSettled) return activeClaimKey;
   return activeClaimKey === communityInviteClaimKey(invite) ? null : activeClaimKey;
 }
 

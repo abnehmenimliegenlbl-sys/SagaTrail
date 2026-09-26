@@ -25,6 +25,7 @@ export default function CommunityInviteScreen() {
   const t = useCommunityInviteStrings();
   const router = useRouter();
   const { getToken, isLoaded, isSignedIn } = useAuth();
+  const getTokenRef = useRef(getToken);
   const { code: rawCode, slug: rawSlug } = useLocalSearchParams<{
     code?: string | string[];
     slug?: string | string[];
@@ -45,6 +46,10 @@ export default function CommunityInviteScreen() {
   const redirectKeyRef = useRef<string | null>(null);
   const [state, setState] = useState<ClaimState>("loading");
   const [communityName, setCommunityName] = useState("");
+
+  useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
 
   useEffect(() => {
     if (inviteAction.kind === "wait") return;
@@ -73,6 +78,7 @@ export default function CommunityInviteScreen() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CLAIM_TIMEOUT_MS);
     let tokenTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    let claimSettled = false;
     void (async () => {
       try {
         const apiBaseUrl = getApiBaseUrl();
@@ -85,7 +91,7 @@ export default function CommunityInviteScreen() {
             TOKEN_TIMEOUT_MS,
           );
         });
-        const token = await Promise.race([getToken(), tokenTimeout]);
+        const token = await Promise.race([getTokenRef.current(), tokenTimeout]);
         const response = await fetch(`${apiBaseUrl}/api/communities/invitations/claim`, {
           method: "POST",
           headers: {
@@ -101,11 +107,13 @@ export default function CommunityInviteScreen() {
         if (!response.ok) {
           throw new Error(t.claimError);
         }
+        claimSettled = true;
         if (!cancelled) {
           setCommunityName(payload.community?.name ?? t.defaultCommunity);
           setState("success");
         }
       } catch {
+        claimSettled = true;
         if (!cancelled) setState("error");
       } finally {
         if (tokenTimeoutId) clearTimeout(tokenTimeoutId);
@@ -117,13 +125,13 @@ export default function CommunityInviteScreen() {
       claimKeyRef.current = releaseCommunityInviteClaim(
         claimKeyRef.current,
         normalizedInvite,
+        claimSettled,
       );
       if (tokenTimeoutId) clearTimeout(tokenTimeoutId);
       clearTimeout(timeoutId);
       controller.abort();
     };
   }, [
-    getToken,
     inviteActionKind,
     inviteKey,
     router,
